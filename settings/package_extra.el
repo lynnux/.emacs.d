@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-31 11:32:57 lynnux>
+;; Time-stamp: <2017-05-31 17:08:37 lynnux>
 ;; 非官方自带packages的设置
 
 (add-to-list 'load-path
@@ -50,7 +50,10 @@
 (global-set-key (kbd "<C-tab>") ;'tabbar-forward-tab
 		'my-switch-buffer
 		)
-(global-set-key (kbd "<C-S-tab>") ;'tabbar-backward-tab
+
+(global-set-key (if (string-equal system-type "windows-nt")
+		    (kbd "<C-S-tab>")
+		  (kbd "<C-S-iso-lefttab>")) ;'tabbar-backward-tab
 		(lambda () 
 		  (interactive)
 		  (my-switch-buffer t))
@@ -67,7 +70,9 @@
 	   (init-buffer (car blist))
 	   current
 	   (key-forward (kbd "<C-tab>"))
-	   (key-backward (kbd "<C-S-tab>"))
+	   (key-backward (if (string-equal system-type "windows-nt")
+			     (kbd "<C-S-tab>")
+			   (kbd "<C-S-iso-lefttab>")))
 	   done
 	   (key-stroked (if backward
 			    key-backward
