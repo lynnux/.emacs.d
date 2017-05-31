@@ -1,0 +1,41 @@
+# -*- mode: snippet -*-
+# name: supervisor
+# key: supervisort
+# --
+%% @doc
+-module(${1:`(file-name-nondirectory
+               (file-name-sans-extension
+                 (or (buffer-file-name) (buffer-name))))`}).
+-behaviour(supervisor).
+
+%% Interface exports
+-export([start_link/0]).
+
+%% Callback exports
+-export([init/1]).
+
+%%==============================================================================
+%% Interface exports
+%%==============================================================================
+
+start_link() ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, no_args).
+
+%%==============================================================================
+%% Callback exports
+%%==============================================================================
+
+init(no_args) ->
+    RestartStrategy = one_for_one, % one_for_all | rest_for_one | simple_one_for_one
+    MaxR = MaxT = 5,
+    ChildSpec = {Id = child,
+                 StartMFA = {m, f, [a]},
+                 Restart = transient, % permanent | temporary
+                 Shutdown = infinity, % brutal_kill | int() % ms
+                 Type = worker, % supervisor
+                 Modules = [child]}, % dynamic
+    {ok, {{RestartStrategy, MaxR, MaxT}, [ChildSpec]}}.
+
+%%==============================================================================
+%% Internal functions
+%%==============================================================================

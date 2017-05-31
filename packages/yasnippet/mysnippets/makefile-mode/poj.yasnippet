@@ -1,0 +1,13 @@
+#contributor: lynnux
+#name: gtest
+#key: gtest
+#key: g
+# expand-env: ((yas/indent-line 'none) (yas/wrap-around-region 'nil))
+# --
+
+$1: $1.o $1_test.o
+	\${LINKFLAGS_TEST}
+$1.o: $1.cpp
+	\${CPPFLAGS}
+$1_test.o: $1_test.cpp $1.cpp
+	\${CPPFLAGS_TEST}

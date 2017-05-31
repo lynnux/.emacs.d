@@ -1,0 +1,34 @@
+# -*- mode: snippet -*-
+# name: EUnit module
+# key: eunit
+# --
+-module(${1:`(file-name-nondirectory
+               (file-name-sans-extension
+                 (or (buffer-file-name) (buffer-name))))`}).
+
+%% Includes
+-include_lib("eunit/include/eunit.hrl").
+
+%% Tests
+-export([${1:test1}/1]).
+
+%%==============================================================================
+%% Test Cases
+%%==============================================================================
+
+all_test_() ->
+    {foreach, fun setup/0, fun teardown/1,
+     [{with, [T]} || T <- [fun ?MODULE:$1/1]]}.
+
+$1(_State) ->
+    ok.
+
+%%==============================================================================
+%% Internal functions
+%%==============================================================================
+
+setup() ->
+    state.
+
+teardown(state) ->
+    ok.
