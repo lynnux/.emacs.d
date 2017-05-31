@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-31 17:08:37 lynnux>
+;; Time-stamp: <2017-05-31 20:46:18 lynnux>
 ;; 非官方自带packages的设置
 
 (add-to-list 'load-path
@@ -770,3 +770,8 @@ and set the focus back to Emacs frame"
                             (when (use-region-p) ;; 有选中时才用sp的
                               #'sp-kill-region)))))
   )
+
+
+;; !themes要放到最后，内置theme查看 M-x customize-themes
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'zenburn t)

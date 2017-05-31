@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-31 11:31:17 lynnux>
+;; Time-stamp: <2017-05-31 20:45:32 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -163,21 +163,6 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 				  ))
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
-
-;; 内置theme查看 M-x customize-themes
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-;; (add-to-list 'load-path "~/.emacs.d/themes/")
-;(load-theme 'atom-one-dark t)
-
-;; (load-theme 'tomorrow-night-bright t)
-;; (load-theme 'tomorrow-night-eighties t) ; 这个跟atom-one-dark很类似啊！
-;; (load-theme 'tomorrow-night t)
-;; (load-theme 'sanityinc-tomorrow-bright t)
-;; (load-theme 'sanityinc-tomorrow-eighties t)
-;; (load-theme 'sanityinc-tomorrow-night t)
-(load-theme 'zenburn t)
-;; (customize-set-variable 'frame-background-mode 'dark)
-;; (load-theme 'solarized t)
 
 ;;; 窗口最大化
 (when (string-equal system-type "windows-nt")
