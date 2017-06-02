@@ -6,6 +6,7 @@ bin/*.dll
 /auto-save-list
 /.session
 /ac-comphist.dat
+/session.*
 
 packages/auto-complete/*
 !packages/auto-complete/auto-complete-master.zip
