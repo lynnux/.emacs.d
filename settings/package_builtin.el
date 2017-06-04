@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-26 15:58:26 lynnux>
+;; Time-stamp: <2017-06-05 01:14:25 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -215,7 +215,7 @@
 
 ;; 在新建文件时自动调用模版
 (auto-insert-mode)
-(setq auto-insert-directory "~/.emacs.d/plugins/auto-insert/")
+(setq auto-insert-directory "~/.emacs.d/packages/auto-insert/")
 (define-auto-insert "\\.py$" "template.py")
 
 ;;; for rgrep, grep-find
