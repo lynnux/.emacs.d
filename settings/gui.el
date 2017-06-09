@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-06-08 16:26:10 lynnux>
+;; Time-stamp: <2017-06-09 11:34:32 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -11,6 +11,8 @@
  '(tooltip-mode nil)			;windows会卡，不用
  '(tool-bar-mode nil)          		;不显示toolbar
  )
+
+(setq-default line-spacing 1)
 
 ;; (global-visual-line-mode 1); 折行但是不显示两边难看的小符号
 (set-scroll-bar-mode 'right); 滚动条在右侧(ubuntu)
@@ -137,8 +139,8 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 ;; 设置字体,Fixedsys要用修正过的，为了保证org的table显示正常，字体大小应该设置成一样大，不过这样感觉汉字大多了，大也好，慢慢适应吧
 ;;; 25上用Fixedsys Excelsior 3.01-L会卡死，可以用Fixedsys(24不能用)，但发现字体有发虚。最后发现是因为字体名带-，用Hxd替换-为_就行了(同时替换unicode)
 (qiang-set-font
- '("Source Code Pro" "Fixedsys Excelsior 3.01_L" "Consolas" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=14"
- '("WenQuanYi Bitmap Song" "宋体" "Microsoft Yahei" "文泉驿等宽微米黑" "黑体" "新宋体" "宋体") 16)
+ '("Consolas" "Source Code Pro" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New" "Fixedsys Excelsior 3.01_L") ":pixelsize=13"
+ '("WenQuanYi Bitmap Song" "宋体" "Microsoft Yahei" "文泉驿等宽微米黑" "黑体" "新宋体" "宋体") 14)
 
 ;; ctrl+鼠标滚轮调整文字大小
 (if (string-equal system-type "windows-nt")
