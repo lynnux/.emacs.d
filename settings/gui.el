@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-06-09 11:34:32 lynnux>
+;; Time-stamp: <2017-06-09 13:55:14 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -139,7 +139,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 ;; 设置字体,Fixedsys要用修正过的，为了保证org的table显示正常，字体大小应该设置成一样大，不过这样感觉汉字大多了，大也好，慢慢适应吧
 ;;; 25上用Fixedsys Excelsior 3.01-L会卡死，可以用Fixedsys(24不能用)，但发现字体有发虚。最后发现是因为字体名带-，用Hxd替换-为_就行了(同时替换unicode)
 (qiang-set-font
- '("Consolas" "Source Code Pro" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New" "Fixedsys Excelsior 3.01_L") ":pixelsize=13"
+ '("Consolas" "Source Code Pro" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New" "Fixedsys Excelsior 3.01_L") ":pixelsize=14"
  '("WenQuanYi Bitmap Song" "宋体" "Microsoft Yahei" "文泉驿等宽微米黑" "黑体" "新宋体" "宋体") 14)
 
 ;; ctrl+鼠标滚轮调整文字大小
