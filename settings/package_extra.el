@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-31 20:46:18 lynnux>
+;; Time-stamp: <2017-07-03 14:32:18 lynnux>
 ;; 非官方自带packages的设置
 
 (add-to-list 'load-path
@@ -775,3 +775,8 @@ and set the focus back to Emacs frame"
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'zenburn t)
+
+;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
+;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
+(autoload 'imenu-list-smart-toggle "imenu-list" nil t)
+(global-set-key [(control f4)] 'imenu-list-smart-toggle)

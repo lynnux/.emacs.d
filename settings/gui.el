@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-01 08:56:17 lynnux>
+;; Time-stamp: <2017-07-03 14:32:45 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -45,7 +45,6 @@
   (let ((buffer-modified-p nil))
     (kill-buffer (current-buffer))))
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
-(global-set-key [(control f4)] 'volatile-kill-buffer)
 (global-set-key (kbd "C-4") 'copy-buffer-file-name-as-kill) ;/路径
 (global-set-key (kbd "C-3") 'copy-buffer-file-name-as-kill-windows) ; \路径
 (global-set-key "\M-r" 'replace-string)
@@ -140,7 +139,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 ;;; 25上用Fixedsys Excelsior 3.01-L会卡死，可以用Fixedsys(24不能用)，但发现字体有发虚。最后发现是因为字体名带-，用Hxd替换-为_就行了(同时替换unicode)
 (qiang-set-font
  '("Fixedsys Excelsior 3.01_L" "Consolas" "Source Code Pro" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=16"
- '("微软雅黑" "WenQuanYi Bitmap Song" "宋体" "Microsoft Yahei" "文泉驿等宽微米黑" "黑体" "新宋体" "宋体") 16)
+ '("WenQuanYi Bitmap Song" "宋体" "Microsoft Yahei" "文泉驿等宽微米黑" "黑体" "新宋体" "宋体") 16)
 
 ;; 下面这两个看特殊字符时不卡，按上面的说法`set-default-font'不支持new frames，这个我暂时会用到
 ;(set-default-font "Consolas 11") ;; for 英文     
