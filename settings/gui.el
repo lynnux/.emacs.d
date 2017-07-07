@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-03 14:32:45 lynnux>
+;; Time-stamp: <2017-07-07 14:26:14 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -170,5 +170,5 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
 
 ;;; 窗口最大化 24.5没效果？
-;; (when (string-equal system-type "windows-nt")
-;;   (w32-send-sys-command 61488))
+(when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
+   (w32-send-sys-command 61488))

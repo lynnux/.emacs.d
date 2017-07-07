@@ -19,8 +19,8 @@ if "LYNNUX-PC" == utils.system_name()
    and MinorVersion == 2
    and BuildNumber == 9200
 then
-   emacsclientw = "D:\\green\\emacs-24.5-bin-i686-mingw32\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\emacs-24.5-bin-i686-mingw32\\bin\\runemacs.exe"
+   emacsclientw = "D:\\green\\emacs-25.2-x86_64\\bin\\emacsclientw.exe"
+   runemacs = "D:\\green\\emacs-25.2-x86_64\\bin\\runemacs.exe"
 end
 
 -- work pc
@@ -29,8 +29,8 @@ if "XL-PC" == utils.system_name()
    and MinorVersion == 1
    and BuildNumber == 7601
 then
-   emacsclientw = "D:\\green\\emacs-24.5-bin-i686-mingw32\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\emacs-24.5-bin-i686-mingw32\\bin\\runemacs.exe"
+   emacsclientw = "D:\\green\\emacs-25.2-x86_64\\bin\\emacsclientw.exe"
+   runemacs = "D:\\green\\emacs-25.2-x86_64\\bin\\runemacs.exe"
 end
 
 -- get commandline
