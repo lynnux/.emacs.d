@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-05-31 22:03:57 lynnux>
+;; Time-stamp: <2017-07-08 19:18:33 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -163,9 +163,13 @@ position."
 that was stored with ska-point-to-register."
   (interactive)
   (setq zmacs-region-stays t)
-  (let ((tmp (point-marker)))
-    (jump-to-register 8)
-    (set-register 8 tmp)))
+  ;; 如果没有记号，就调用M-.的功能
+  (if (get-register 8)
+    (let ((tmp (point-marker)))
+      (jump-to-register 8)
+      (set-register 8 tmp))
+    (setq unread-command-events (listify-key-sequence "\M-.")))
+  )
 
 ;; C-t 设置标记，原键用c-x t代替，用colemak后，t在食指太容易按到
 (global-set-key (kbd "C-q") 'set-mark-command)
