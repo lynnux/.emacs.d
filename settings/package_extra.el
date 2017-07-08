@@ -1,5 +1,6 @@
-;; Time-stamp: <2017-07-03 14:32:18 lynnux>
+;; Time-stamp: <2017-07-08 18:43:54 lynnux>
 ;; 非官方自带packages的设置
+;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
 (add-to-list 'load-path
 	     "~/.emacs.d/packages")
@@ -700,6 +701,7 @@ and set the focus back to Emacs frame"
   (ac-racer-setup)
   (make-local-variable 'ac-auto-start) ; 自动弹出会卡
   (setq ac-auto-start nil)
+  (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
       ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
     (eval-after-load 'smartparens-rust
