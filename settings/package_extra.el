@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-08 18:53:26 lynnux>
+;; Time-stamp: <2017-07-09 19:47:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -743,6 +743,7 @@ and set the focus back to Emacs frame"
 (smartparens-global-strict-mode)
 (show-smartparens-global-mode) ;; Show parenthesis
 
+;; 使支持hungry-delete
 (with-eval-after-load 'smartparens
   (dolist (key '( [remap delete-char]
                   [remap delete-forward-char]))
@@ -770,6 +771,14 @@ and set the focus back to Emacs frame"
                             (when (use-region-p) ;; 有选中时才用sp的
                               #'sp-kill-region)))))
   )
+;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
+(sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
+(defun my-create-newline-and-enter-sexp (&rest _ignored)
+  "Open a new brace or bracket expression, with relevant newlines and indent. "
+  (newline)
+  (indent-according-to-mode)
+  (forward-line -1)
+  (indent-according-to-mode))
 
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
