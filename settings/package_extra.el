@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-09 19:47:43 lynnux>
+;; Time-stamp: <2017-07-14 22:14:50 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -576,20 +576,27 @@
   )
 
 ;;; shell, main goal is for compile test
+(defvar smart-compile-run-last-buffer nil)
 (defun smart-compile-run ()
   (interactive)
   (if (equal (buffer-name) "*shell*")
-      (switch-to-prev-buffer)
+      (progn
+       (if smart-compile-run-last-buffer
+	   (switch-to-buffer smart-compile-run-last-buffer)
+	 (switch-to-prev-buffer))
+       (delete-other-windows))
     ;; (let ((run-exe (concat (file-name-sans-extension
     ;; 		     (file-name-nondirectory (buffer-file-name))) ".exe"))))
-    (with-current-buffer (shell)
-      (end-of-buffer)
-      (move-end-of-line nil)
-      ;(move-beginning-of-line nil)
-      ;(kill-line 1)
-      ;(insert-string run-exe)
-      ;(move-end-of-line nil)
-       )))
+    (progn
+      (setq smart-compile-run-last-buffer (buffer-name))
+      (with-current-buffer (shell)
+       (end-of-buffer)
+       (move-end-of-line nil)
+					;(move-beginning-of-line nil)
+					;(kill-line 1)
+					;(insert-string run-exe)
+					;(move-end-of-line nil)
+       ))))
 (global-set-key (kbd "<f5>") 'smart-compile-run)
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
