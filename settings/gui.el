@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-07 14:26:14 lynnux>
+;; Time-stamp: <2017-07-25 11:26:06 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -81,8 +81,11 @@
            (setq new-kill-string (file-name-nondirectory name)))
           (t (message "Quit")))
     (when new-kill-string
-      (message "%s copied" (replace-regexp-in-string "/" "\\\\" new-kill-string))
-      (kill-new new-kill-string))))
+      
+      (let ((win-path (replace-regexp-in-string "/" "\\\\" new-kill-string)))
+	(message "%s copied" win-path)
+	(kill-new win-path))
+      )))
 ;; (defun display-buffer-name ()
 ;;   (interactive)
 ;;   (message (buffer-file-name (current-buffer))))
