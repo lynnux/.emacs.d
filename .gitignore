@@ -34,3 +34,5 @@ packages/neotree/*
 
 packages/smartparens/*
 !packages/smartparens/smartparens-master.zip
+smex-items
+packages/swiper/*

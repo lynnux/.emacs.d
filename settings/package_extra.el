@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-09 19:47:43 lynnux>
+;; Time-stamp: <2017-07-27 11:07:09 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -256,6 +256,7 @@
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
+(add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -789,3 +790,32 @@ and set the focus back to Emacs frame"
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
+
+;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
+(add-to-list 'load-path "~/.emacs.d/packages/swiper")
+(require 'ivy)
+(require 'swiper)
+(require 'counsel)
+(ivy-mode 1)
+(setq ivy-use-virtual-buffers t)
+(setq enable-recursive-minibuffers t)
+(global-set-key "\C-s" 'swiper)
+(global-set-key (kbd "C-c C-r") 'ivy-resume)
+(global-set-key (kbd "<f6>") 'ivy-resume)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "<f1> f") 'counsel-describe-function)
+(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+(global-set-key (kbd "<f1> l") 'counsel-find-library)
+;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+;; (global-set-key (kbd "C-c g") 'counsel-git)
+;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
+;; (global-set-key (kbd "C-c k") 'counsel-ag)
+;; (global-set-key (kbd "C-x l") 'counsel-locate)
+;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+(define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+(define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
+(define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
+(define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+(define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
