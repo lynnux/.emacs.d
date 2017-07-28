@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-27 11:07:09 lynnux>
+;; Time-stamp: <2017-07-28 21:52:12 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -159,27 +159,51 @@
 
 ;(global-hl-line-mode t)
 
-(add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/auto-complete/mydict")
-(ac-config-default)
-(setq-default ac-sources '(ac-source-semantic
-			   ac-source-yasnippet
-			   ac-source-abbrev
-			   ac-source-dictionary 
-			   ac-source-words-in-buffer
-			   ac-source-words-in-all-buffer
-			   ac-source-imenu
-			   ac-source-files-in-current-dir
-			   ac-source-filename))
-(add-hook 
- 'auto-complete-mode-hook 
- (lambda() 
-   (define-key ac-completing-map "\C-n" 'ac-next)
-   (define-key ac-completing-map "\C-p" 'ac-previous)
-   ))
-(global-set-key (kbd "<C-return>") 'auto-complete)
-(global-set-key (kbd "<M-return>") 'auto-complete)
+
+;; 切换到company使用一段时间看看
+;; (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
+;; (require 'auto-complete-config)
+;; (add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/auto-complete/mydict")
+;; (ac-config-default)
+;; (setq-default ac-sources '(ac-source-abbrev
+;; 			   ac-source-dictionary
+;; 			   ac-source-words-in-same-mode-buffers
+;; 			   ac-source-semantic
+;; 			   ac-source-yasnippet
+;; 			   ac-source-words-in-buffer
+;; 			   ac-source-words-in-all-buffer
+;; 			   ac-source-imenu
+;; 			   ac-source-files-in-current-dir
+;; 			   ac-source-filename))
+;; (add-hook 
+;;  'auto-complete-mode-hook 
+;;  (lambda() 
+;;    (define-key ac-completing-map "\C-n" 'ac-next)
+;;    (define-key ac-completing-map "\C-p" 'ac-previous)
+;;    ))
+;; (global-set-key (kbd "<C-return>") 'auto-complete)
+;; (global-set-key (kbd "<M-return>") 'auto-complete)
+;; for erlang
+;; (add-to-list 'ac-modes 'erlang-mode)
+
+;; company mode
+(add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+(require 'company)
+(add-hook 'after-init-hook 'global-company-mode)
+(define-key company-active-map (kbd "C-n") 'company-select-next)
+(define-key company-active-map (kbd "C-p") 'company-select-previous)
+(define-key company-active-map (kbd "M-n") 'company-next-page)
+(define-key company-active-map (kbd "M-p") 'company-previous-page)
+(define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
+(define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+(setq company-idle-delay 0.2   ; 设置为nil就不自动启用补全了，参考racer设置
+      company-minimum-prefix-length 2
+      company-require-match nil
+      company-dabbrev-ignore-case nil
+      company-dabbrev-downcase nil)
+(global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
+(global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (require 'wcy-desktop)
@@ -366,7 +390,6 @@
 
 ;; erlang配置, 主要配置来自http://jixiuf.github.com/erlang/distel.html和
 ;; https://raw.github.com/jixiuf/emacs_conf/master/site-lisp/joseph/joseph-erlang.el
-(add-to-list 'ac-modes 'erlang-mode)
 (eval-after-load "erlang" 
   '(progn
      ;; (setq inferior-erlang-machine-options `("-name" ,(concat "emacs@" system-name "")  "+P" "102400")       )
@@ -436,10 +459,11 @@
 ;; ruby mode
 (add-hook 'ruby-mode-hook '(lambda()
 			     (require 'rcodetools)
-			     (setq ac-omni-completion-sources
-				   (list (cons "//." '(ac-source-rcodetools))
-					 (cons "::" '(ac-source-rcodetools))))
-			     (setq ac-sources (append (list 'ac-source-rcodetools) ac-sources))
+			     (when (featurep 'auto-complete)
+			       (setq ac-omni-completion-sources
+				     (list (cons "//." '(ac-source-rcodetools))
+					   (cons "::" '(ac-source-rcodetools))))
+			       (setq ac-sources (append (list 'ac-source-rcodetools) ac-sources)))
 			     ))
 
 ;; popup yank-pop
@@ -471,10 +495,12 @@
 ;; ))
 
 (add-to-list 'load-path "~/.emacs.d/packages/jedi")
-(autoload 'jedi:ac-setup "jedi" nil t)
-(add-hook 'python-mode-hook '(lambda ()
-			       (jedi:ac-setup)
-			       (local-set-key (kbd "<C-return>") 'jedi:complete)))
+(when (featurep 'auto-complete)
+  (autoload 'jedi:ac-setup "jedi" nil t)
+  (add-hook 'python-mode-hook '(lambda ()
+				 (jedi:ac-setup)
+				 (local-set-key (kbd "<C-return>") 'jedi:complete))))
+
 ;; (setq jedi:server-command
 ;;       (list "D:\\Python27\\Python.exe" jedi:server-script))
 
@@ -703,10 +729,17 @@ and set the focus back to Emacs frame"
 (add-hook 'rust-mode-hook #'racer-mode)
 (add-hook 'racer-mode-hook #'eldoc-mode)
 (defun my/racer-mode-hook ()
-  (require 'ac-racer)
-  (ac-racer-setup)
-  (make-local-variable 'ac-auto-start) ; 自动弹出会卡
-  (setq ac-auto-start nil)
+  (when (featurep 'auto-complete)
+    (require 'ac-racer)
+    (ac-racer-setup)
+    (make-local-variable 'ac-auto-start) ; 自动弹出会卡
+    (setq ac-auto-start nil)
+    )
+  (when (featurep 'company)
+    (make-local-variable 'company-idle-delay)
+    (setq company-idle-delay nil) 	; 不自动补全
+    (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+    (setq company-tooltip-align-annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
       ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
