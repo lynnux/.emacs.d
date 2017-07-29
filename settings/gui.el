@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-25 11:26:06 lynnux>
+;; Time-stamp: <2017-07-29 16:08:18 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -45,47 +45,7 @@
   (let ((buffer-modified-p nil))
     (kill-buffer (current-buffer))))
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
-(global-set-key (kbd "C-4") 'copy-buffer-file-name-as-kill) ;/路径
-(global-set-key (kbd "C-3") 'copy-buffer-file-name-as-kill-windows) ; \路径
 (global-set-key "\M-r" 'replace-string)
-(defun copy-buffer-file-name-as-kill(choice &optional name)
-  "Copy the buffer-file-name to the kill-ring"
-  (interactive "cCopy Buffer Name : [f]ull, [d]irectory, n[a]me?")
-  (let ((new-kill-string)
-        )
-    (setq name (or name (if (eq major-mode 'dired-mode)
-			    (dired-get-filename)
-			  (or (buffer-file-name) ""))))
-    (cond ((eq choice ?f)
-           (setq new-kill-string name))
-          ((eq choice ?d)
-           (setq new-kill-string (file-name-directory name)))
-          ((eq choice ?a)
-           (setq new-kill-string (file-name-nondirectory name)))
-          (t (message "Quit")))
-    (when new-kill-string
-      (message "%s copied" new-kill-string)
-      (kill-new new-kill-string))))
-(defun copy-buffer-file-name-as-kill-windows(choice)
-  "Copy the buffer-file-name to the kill-ring"
-  (interactive "cCopy Buffer Name : [f]ull, [d]irectory, n[a]me?")
-  (let ((new-kill-string)
-        (name (if (eq major-mode 'dired-mode)
-                  (dired-get-filename)
-                (or (buffer-file-name) ""))))
-    (cond ((eq choice ?f)
-           (setq new-kill-string name))
-          ((eq choice ?d)
-           (setq new-kill-string (file-name-directory name)))
-          ((eq choice ?a)
-           (setq new-kill-string (file-name-nondirectory name)))
-          (t (message "Quit")))
-    (when new-kill-string
-      
-      (let ((win-path (replace-regexp-in-string "/" "\\\\" new-kill-string)))
-	(message "%s copied" win-path)
-	(kill-new win-path))
-      )))
 ;; (defun display-buffer-name ()
 ;;   (interactive)
 ;;   (message (buffer-file-name (current-buffer))))

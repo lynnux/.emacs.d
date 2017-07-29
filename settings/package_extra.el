@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 13:18:14 lynnux>
+;; Time-stamp: <2017-07-29 16:24:13 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -820,10 +820,6 @@ and set the focus back to Emacs frame"
   (indent-according-to-mode))
 
 
-;; !themes要放到最后，内置theme查看 M-x customize-themes
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'zenburn t)
-
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
@@ -874,6 +870,62 @@ and set the focus back to Emacs frame"
 	    (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
 				(thing-at-point 'line)))))))
 
-;; 速度据说 ripgrep > ag > ack > grep
+;; 速度据说 ripgrep > ag > ack > grep。缺点：不支持unicode也就不支持中文，而findstr是可以的
 (global-set-key [f2] 'ripgrep-regexp)
 (autoload 'ripgrep-regexp "ripgrep" nil t)
+
+(require 'hydra)
+(global-set-key (kbd "C-c h")
+		(defhydra hydra-hideshow ()
+		  "
+_h_: hide block _s_: show block
+_H_: hide all   _S_: show all 
+_i_: hide comment _q_uit
+"
+		  ("h" hs-toggle-hiding nil :color blue)
+		  ("s" hs-show-block nil :color blue)
+		  ("H" hs-hide-all nil :color blue)
+		  ("S" hs-show-all nil :color blue)
+		  ("i" hs-hide-initial-comment-block nil :color blue)
+		  ("q" nil "nil" :color blue))) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+
+(defun copy-buffer-name (choice &optional use_win_path)
+  (let ((new-kill-string)
+        (name (if (eq major-mode 'dired-mode)
+                  (dired-get-filename)
+                (or (buffer-file-name) ""))))
+    (cond ((eq choice ?f)
+           (setq new-kill-string name))
+          ((eq choice ?d)
+           (setq new-kill-string (file-name-directory name)))
+          ((eq choice ?a)
+           (setq new-kill-string (file-name-nondirectory name)))
+          (t (message "Quit")))
+    (when new-kill-string
+      (if use_win_path
+	  (let ((win-path (replace-regexp-in-string "/" "\\\\" new-kill-string)))
+	    (message "%s copied" win-path)
+	    (kill-new win-path))
+	(message "%s copied" new-kill-string)
+	(kill-new new-kill-string)))))
+
+(global-set-key (kbd "C-4") (defhydra hydra-copybf ()
+			      "
+Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
+"
+			      ("f" (copy-buffer-name ?f) nil :color blue)
+			      ("d" (copy-buffer-name ?d) nil :color blue)
+			      ("a" (copy-buffer-name ?a) nil :color blue)
+			      ("q" nil "" :color blue)))
+(global-set-key (kbd "C-3") (defhydra hydra-copybf ()
+			      "
+Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
+"
+			      ("f" (copy-buffer-name ?f t) nil :color blue)
+			      ("d" (copy-buffer-name ?d t) nil :color blue)
+			      ("a" (copy-buffer-name ?a t) nil :color blue)
+			      ("q" nil "" :color blue)))
+
+;; !themes要放到最后，内置theme查看 M-x customize-themes
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'zenburn t)
