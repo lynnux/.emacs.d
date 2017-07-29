@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-06-05 01:14:25 lynnux>
+;; Time-stamp: <2017-07-29 13:15:29 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -217,104 +217,6 @@
 (auto-insert-mode)
 (setq auto-insert-directory "~/.emacs.d/packages/auto-insert/")
 (define-auto-insert "\\.py$" "template.py")
-
-;;; for rgrep, grep-find
-(defun rgrep_findstr (regexp &optional files dir confirm)
-  "code from lgrep, modified and used for rgrep, which replaced by findstr"
-  (interactive
-   (progn
-     (grep-compute-defaults) ;; it's autoload, so we don't call require
-     (cond
-      ((and grep-command (equal current-prefix-arg '(16)))
-       (list (read-from-minibuffer "Run: " grep-command
-				   nil nil 'grep-history)))
-      ((not grep-find-template)
-       (error "grep.el: No `grep-find-template' available"))
-      (t (let* ((regexp (grep-read-regexp))
-		(files (grep-read-files regexp))
-		(dir (read-directory-name "In directory: "
-					  nil default-directory t))
-		(confirm (equal current-prefix-arg '(4))))
-	   (list regexp files dir confirm))))))
-  (when (and (stringp regexp) (> (length regexp) 0))
-    (unless (and dir (file-directory-p dir) (file-readable-p dir))
-      (setq dir default-directory))
-    (let ((command regexp))
-      (if (null files)
-	  (if (string= command grep-command)
-	      (setq command nil))
-	(setq dir (file-name-as-directory (expand-file-name dir)))
-	(setq command (grep-expand-template
-		       grep-find-template
-		       regexp
-		       files
-		       nil
-		       (and grep-find-ignored-files
-			    (concat " --exclude="
-				    (mapconcat
-				     #'(lambda (ignore)
-					 (cond ((stringp ignore)
-						(shell-quote-argument ignore))
-					       ((consp ignore)
-						(and (funcall (car ignore) dir)
-						     (shell-quote-argument
-						      (cdr ignore))))))
-				     grep-find-ignored-files
-				     " --exclude=")))))
-	(when command
-	  (if confirm
-	      (setq command
-		    (read-from-minibuffer "Confirm: "
-					  command nil nil 'grep-history))
-	    (add-to-history 'grep-history command))))
-      (when command
-	(let ((default-directory dir))
-	  ;; Setting process-setup-function makes exit-message-function work
-	  ;; even when async processes aren't supported.
-	  (compilation-start (if (and grep-use-null-device null-device)
-				 (concat command " " null-device)
-			       command)
-			     'grep-mode))
-	(if (eq next-error-last-buffer (current-buffer))
-	    (setq default-directory dir))))))
-
-(if (string-equal system-type "windows-nt")
-    (progn
-      (global-set-key [f2] 'rgrep_findstr)
-      
-      ;;; 经测试，findstr支持切换到其它目录搜索
-      (eval-after-load "grep" '(progn (grep-apply-setting
-      				       'grep-template ;; for lgrep
-      				       "findstr /n <C> <R> <F>")
-      				      (grep-apply-setting 
-      				       'grep-find-template ;; for rgrep
-      				       "findstr /sn <C> <R> <F>")
-				      (if (< emacs-major-version 25)
-					  (setq grep-expand-keywords
-						'(("<C>" . (and cf (isearch-no-upper-case-p regexp t) "/i"))
-						  ("<D>" . dir)
-						  ("<F>" . files)
-						  ("<N>" . null-device)
-						  ("<X>" . excl)
-						  ("<R>" . (shell-quote-argument (or regexp ""))))
-						)
-					(setq grep-expand-keywords
-					      '(("<C>" . (mapconcat #'identity opts " ")) ; 25我都不知道怎么改了，结果findstr支持-i参数(win8)
-						("<D>" . (or dir "."))
-						("<F>" . files)
-						("<N>" . null-device)
-						("<X>" . excl)
-						("<R>" . (shell-quote-argument (or regexp ""))))
-					      )
-					  )
-				      
-      				      ))
-      ;;(setq grep-find-command '("findstr /sn * " . 13))
-      )
-  ;;; not windows
-  (global-set-key [f2] 'rgrep) 
-  )
-(global-set-key [(control f2)] 'lgrep)
 
 ;;; occur
 (global-set-key (kbd "C-c o") 'occur-select)

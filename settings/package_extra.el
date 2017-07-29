@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 11:30:17 lynnux>
+;; Time-stamp: <2017-07-29 13:18:14 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -242,11 +242,11 @@
   (setq c-auto-newline 1)
   (c-set-style "stroustrup")
   (gtags-settings)
-  (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
+  ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
   (local-set-key (kbd "C-c C-c") 'comment-eclipse)
   (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
   (local-set-key [(meta f8)] 'clang-format-auto)
-)
+  )
 
 (defun lynnux-c++-mode-hook()
   ;;c++ types
@@ -292,6 +292,7 @@
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
 (add-to-list 'jl-insert-marker-funcs "racer-find-definition")
+(add-to-list 'jl-insert-marker-funcs "swiper")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -827,6 +828,7 @@ and set the focus back to Emacs frame"
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
+(global-set-key [(control f2)] 'imenu-list-smart-toggle)
 
 ;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
 (add-to-list 'load-path "~/.emacs.d/packages/swiper")
@@ -858,5 +860,20 @@ and set the focus back to Emacs frame"
 (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 
 ;; 跨buffer同mode/project，这下NB了
-(require 'imenu-anywhere)
+(autoload 'ivy-imenu-anywhere "imenu-anywhere" nil t)
 (global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
+
+;; 自动indent
+(autoload 'aggressive-indent-mode "aggressive-indent" nil t)
+(add-hook 'prog-mode-hook #'aggressive-indent-mode)
+(eval-after-load 'aggressive-indent
+  '(progn
+     (add-to-list
+      'aggressive-indent-dont-indent-if
+      '(and (derived-mode-p 'c++-mode)
+	    (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+				(thing-at-point 'line)))))))
+
+;; 速度据说 ripgrep > ag > ack > grep
+(global-set-key [f2] 'ripgrep-regexp)
+(autoload 'ripgrep-regexp "ripgrep" nil t)
