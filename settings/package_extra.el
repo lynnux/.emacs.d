@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-28 21:52:12 lynnux>
+;; Time-stamp: <2017-07-29 09:35:05 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -114,7 +114,7 @@
 
 ;;org的C-tab基本上不用
 (add-hook 'org-mode-hook (lambda()
-			   (define-key org-mode-map (kbd "<C-tab>") 'my-switch-buffer)))
+			   (define-key org-mode-map (kbd "<C-tab>") nil)))
 (setq EmacsPortable-global-tabbar 't)
 (require 'tabbar-ruler)
 (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
@@ -159,50 +159,55 @@
 
 ;(global-hl-line-mode t)
 
-
 ;; 切换到company使用一段时间看看
-;; (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
-;; (require 'auto-complete-config)
-;; (add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/auto-complete/mydict")
-;; (ac-config-default)
-;; (setq-default ac-sources '(ac-source-abbrev
-;; 			   ac-source-dictionary
-;; 			   ac-source-words-in-same-mode-buffers
-;; 			   ac-source-semantic
-;; 			   ac-source-yasnippet
-;; 			   ac-source-words-in-buffer
-;; 			   ac-source-words-in-all-buffer
-;; 			   ac-source-imenu
-;; 			   ac-source-files-in-current-dir
-;; 			   ac-source-filename))
-;; (add-hook 
-;;  'auto-complete-mode-hook 
-;;  (lambda() 
-;;    (define-key ac-completing-map "\C-n" 'ac-next)
-;;    (define-key ac-completing-map "\C-p" 'ac-previous)
-;;    ))
-;; (global-set-key (kbd "<C-return>") 'auto-complete)
-;; (global-set-key (kbd "<M-return>") 'auto-complete)
-;; for erlang
-;; (add-to-list 'ac-modes 'erlang-mode)
-
-;; company mode
-(add-to-list 'load-path "~/.emacs.d/packages/company-mode")
-(require 'company)
-(add-hook 'after-init-hook 'global-company-mode)
-(define-key company-active-map (kbd "C-n") 'company-select-next)
-(define-key company-active-map (kbd "C-p") 'company-select-previous)
-(define-key company-active-map (kbd "M-n") 'company-next-page)
-(define-key company-active-map (kbd "M-p") 'company-previous-page)
-(define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
-(define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-(setq company-idle-delay 0.2   ; 设置为nil就不自动启用补全了，参考racer设置
-      company-minimum-prefix-length 2
-      company-require-match nil
-      company-dabbrev-ignore-case nil
-      company-dabbrev-downcase nil)
-(global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
-(global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+(if nil
+    (progn
+      (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
+      (require 'auto-complete-config)
+      (add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/auto-complete/mydict")
+      (ac-config-default)
+      (setq-default ac-sources '(ac-source-abbrev
+				 ac-source-dictionary
+				 ac-source-words-in-same-mode-buffers
+				 ac-source-semantic
+				 ac-source-yasnippet
+				 ac-source-words-in-buffer
+				 ac-source-words-in-all-buffer
+				 ac-source-imenu
+				 ac-source-files-in-current-dir
+				 ac-source-filename))
+      (add-hook 
+       'auto-complete-mode-hook 
+       (lambda() 
+	 (define-key ac-completing-map "\C-n" 'ac-next)
+	 (define-key ac-completing-map "\C-p" 'ac-previous)
+	 ))
+      (global-set-key (kbd "<C-return>") 'auto-complete)
+      (global-set-key (kbd "<M-return>") 'auto-complete)
+      ;; for erlang
+      (add-to-list 'ac-modes 'erlang-mode)
+      )
+  (progn
+    ;; company mode，这个支持comment中文
+    (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+    (require 'company)
+    (add-hook 'after-init-hook 'global-company-mode)
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous)
+    (define-key company-active-map (kbd "M-n") 'company-next-page)
+    (define-key company-active-map (kbd "M-p") 'company-previous-page)
+    (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
+    (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+    (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+    (setq company-idle-delay 0.2   ; 设置为nil就不自动启用补全了，参考racer设置
+	  company-minimum-prefix-length 2
+	  company-require-match nil
+	  company-dabbrev-ignore-case nil
+	  company-dabbrev-downcase nil)
+    (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
+    (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+    )
+  )
 
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
@@ -313,19 +318,6 @@
 		("\\.cmake\\'" . cmake-mode))
 	      auto-mode-alist))
 
-;; paredit
-;; (autoload 'paredit-mode "paredit"
-;;   "Minor mode for pseudo-structurally editing Lisp code." t)
-;; (eval-after-load "paredit" '(progn
-;; 			      (require 'eldoc)
-;; 			      (eldoc-add-command
-;; 			       'paredit-backward-delete
-;; 			       'paredit-close-round)
-;; 			      (define-key paredit-mode-map (kbd "C-h") 'paredit-backward-delete)
-;; 			      (define-key paredit-mode-map (kbd "M-h") 'paredit-backward-kill-word)
-;; 			      ))
-;; (electric-pair-mode) ; replace autopair
-
 (defun my-elisp-hook()
   (defvar electrify-return-match
     "[\]}\)\"]"
@@ -344,7 +336,6 @@
       (newline arg)
       (indent-according-to-mode)))
   (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
-;  (paredit-mode t) ; 习惯非常好用
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
 ;  (local-set-key (kbd "RET") 'electrify-return-if-match)
@@ -847,6 +838,7 @@ and set the focus back to Emacs frame"
 (global-set-key (kbd "<f1> f") 'counsel-describe-function)
 (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
 (global-set-key (kbd "<f1> l") 'counsel-find-library)
+(global-set-key (kbd "M-m") 'counsel-imenu) ;类似vc的Alt+M，只有imenu比较合适
 ;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
 ;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
 ;; (global-set-key (kbd "C-c g") 'counsel-git)
