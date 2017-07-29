@@ -1,0 +1,14 @@
+太讨厌有make的了
+需要屏蔽package_builtin.el里的(add-hook 'find-file-hook 'view-exist-file)
+
+先编译emacs-async-master
+用emacs打开Makefile，提取出eval字符串：
+(let ((generated-autoload-file (expand-file-name "async-autoloads.el" ".")) (backup-inhibited t)) (update-directory-autoloads "."))
+C-X C-E就生成async-autoloads.el了
+
+然后就是配置里(require 'async-autoloads)
+
+重启emacs，打开helm里的Makefile，提取出eval字符串：
+(let ((generated-autoload-file (expand-file-name "helm-autoloads.el" ".")) (backup-inhibited t)) (update-directory-autoloads "."))
+C-X C-E就生成helm-autoloads.el了
+但只须require helm-config，它自己require helm-autoloads了

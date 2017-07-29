@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 20:05:53 lynnux>
+;; Time-stamp: <2017-07-29 23:17:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -660,11 +660,6 @@ and set the focus back to Emacs frame"
 (eval-after-load "compile" '(add-to-list 'compilation-finish-functions
 					 'notify-compilation-result))
 
-;; (add-to-list 'load-path "~/.emacs.d/packages/helm")
-;; (require 'helm-config)
-					;(global-set-key (kbd "C-c h") 'helm-mini)
-					;(helm-mode 1)
-
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (autoload 'er/expand-region "expand-region" nil t)
 (global-set-key "\C-t" 'er/expand-region)
@@ -833,40 +828,74 @@ and set the focus back to Emacs frame"
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
 (global-set-key [(control f2)] 'imenu-list-smart-toggle)
 
-;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
-(add-to-list 'load-path "~/.emacs.d/packages/swiper")
-(autoload 'swiper "swiper" nil t)
-(setq ivy-use-virtual-buffers t)
-(setq enable-recursive-minibuffers t)
-(global-set-key "\C-s" 'swiper)
-(autoload 'ivy-resume "ivy" nil t)
-(autoload 'ivy-mode "ivy" nil t)
-(global-set-key (kbd "C-c C-r") 'ivy-resume)
-(global-set-key (kbd "<f6>") 'ivy-resume)
-(autoload 'counsel-M-x "counsel" nil t)
-(autoload 'counsel-find-file "counsel" nil t)
-(autoload 'counsel-describe-function "counsel" nil t)
-(autoload 'counsel-describe-variable "counsel" nil t)
-(autoload 'counsel-find-library "counsel" nil t)
-(global-set-key (kbd "M-x") 'counsel-M-x)
-(global-set-key (kbd "C-x C-f") 'counsel-find-file)
-(global-set-key (kbd "<f1> f") 'counsel-describe-function)
-(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-(global-set-key (kbd "<f1> l") 'counsel-find-library)
-(eval-after-load 'ivy '(progn
-			 (ivy-mode 1)
-			 (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-			 (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-			 (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
-			 (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-			 (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-			 ))
-(defadvice completing-read (before my-completing-read activate)
-  (ivy-mode 1))
+(if t
+    (progn
+      (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
+      (require 'async-autoloads)
+      (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
+      (add-to-list 'load-path "~/.emacs.d/packages/helm")
+      (require 'helm-config)
+      ;;(global-set-key (kbd "C-c h") 'helm-mini)
+      (global-set-key (kbd "M-x") 'helm-M-x)
+      (global-set-key (kbd "C-x C-f") 'helm-find-files)
+      (global-set-key (kbd "C-x b") 'helm-buffers-list)
+      (with-eval-after-load 'helm
+	(helm-mode 1)
+	(define-key helm-map (kbd "C-h") 'nil)
+	(define-key helm-map (kbd "C-r") 'helm-previous-line)
+	(define-key helm-map (kbd "C-s") 'helm-next-line)
+	(define-key helm-map (kbd "TAB") 'helm-next-line)
+	(define-key helm-map (kbd "<backtab>") 'helm-previous-line)
+	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+	)
+      
+      (autoload 'helm-swoop "helm-swoop" nil t)
+      (global-set-key (kbd "C-s") 'helm-swoop)
+      
+      (defadvice completing-read (before my-completing-read activate)
+	(helm-mode 1))
+      
+      (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
+      )
+  (progn
+    ;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
+    (add-to-list 'load-path "~/.emacs.d/packages/swiper")
+    (autoload 'swiper "swiper" nil t)
+    (setq ivy-use-virtual-buffers t)
+    (setq enable-recursive-minibuffers t)
+    (global-set-key "\C-s" 'swiper)
+    (autoload 'ivy-resume "ivy" nil t)
+    (autoload 'ivy-mode "ivy" nil t)
+    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+    (global-set-key (kbd "<f6>") 'ivy-resume)
+    (autoload 'counsel-M-x "counsel" nil t)
+    (autoload 'counsel-find-file "counsel" nil t)
+    (autoload 'counsel-describe-function "counsel" nil t)
+    (autoload 'counsel-describe-variable "counsel" nil t)
+    (autoload 'counsel-find-library "counsel" nil t)
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    (global-set-key (kbd "<f1> l") 'counsel-find-library)
+    (eval-after-load 'ivy '(progn
+			     (ivy-mode 1)
+			     (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+			     (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
+			     (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
+			     (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+			     (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+			     ))
+    (defadvice completing-read (before my-completing-read activate)
+      (ivy-mode 1))
 
-;; 定位函数，跨buffer同mode/project，这下NB了
-(autoload 'ivy-imenu-anywhere "imenu-anywhere" nil t)
-(global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
+    ;; imenu-anywhere
+    ;; 定位函数，跨buffer同mode/project，这下NB了
+    (autoload 'ivy-imenu-anywhere "imenu-anywhere" nil t)
+    (global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
+    
+    ))
+
 
 ;; 自动indent
 (autoload 'aggressive-indent-mode "aggressive-indent" nil t)
@@ -893,13 +922,22 @@ _h_: hide block _s_: show block
 _H_: hide all   _S_: show all 
 _i_: hide comment _q_uit
 "
-	     ("h" hs-toggle-hiding nil :color blue)
+	     ("h" hs-toggle-hiding-all nil :color blue)
 	     ("s" hs-show-block nil :color blue)
-	     ("H" hs-hide-all nil :color blue)
+	     ("H" hs-toggle-hiding nil :color blue)
 	     ("S" hs-show-all nil :color blue)
 	     ("i" hs-hide-initial-comment-block nil :color blue)
 	     ("q" nil "nil" :color blue))))
 (global-set-key (kbd "C-c h") 'hydra-hideshow/body) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+
+(defvar my-hs-hide nil "Current state of hideshow for toggling all.")
+  ;;;###autoload
+(defun hs-toggle-hiding-all () "Toggle hideshow all."
+       (interactive)
+       (setq-local my-hs-hide (not my-hs-hide))
+       (if my-hs-hide
+	   (hs-hide-all)
+	 (hs-show-all)))
 
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
@@ -971,3 +1009,4 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (hideshowvis-setting))
 (defadvice hs-hide-block (before my-hs-hide-block activate)
   (hideshowvis-setting))
+
