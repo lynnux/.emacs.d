@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-08 19:18:33 lynnux>
+;; Time-stamp: <2017-07-29 09:34:14 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -223,8 +223,6 @@ that was stored with ska-point-to-register."
 
 (global-set-key (kbd "C-j") 'my-insert-char-prev-line) ;原想用C-I的，结果会影响TAB键
 (global-set-key (kbd "C-S-j") 'my-insert-char-next-line) ;
-(eval-after-load "paredit"
-  #'(define-key paredit-mode-map (kbd "C-j") 'my-insert-char-prev-line))
 
 (defun move-text-internal (arg)
   (cond
