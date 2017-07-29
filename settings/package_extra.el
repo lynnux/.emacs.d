@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 09:35:05 lynnux>
+;; Time-stamp: <2017-07-29 10:42:22 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -160,7 +160,7 @@
 ;(global-hl-line-mode t)
 
 ;; 切换到company使用一段时间看看
-(if nil
+(if t
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
       (require 'auto-complete-config)
@@ -176,6 +176,12 @@
 				 ac-source-imenu
 				 ac-source-files-in-current-dir
 				 ac-source-filename))
+      (setq ac-use-fuzzy t ; 貌似自动弹出的menu的是没有fuzzy的，但手动补全是可以的
+	    ;; ac-auto-show-menu 0.1
+	    ac-use-quick-help nil
+	    ac-ignore-case t
+	    ac-use-comphist t
+	    )
       (add-hook 
        'auto-complete-mode-hook 
        (lambda() 
@@ -188,7 +194,7 @@
       (add-to-list 'ac-modes 'erlang-mode)
       )
   (progn
-    ;; company mode，这个支持comment中文
+    ;; company mode，这个支持comment中文，但不支持补全history
     (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
     (require 'company)
     (add-hook 'after-init-hook 'global-company-mode)
