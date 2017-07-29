@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 16:24:13 lynnux>
+;; Time-stamp: <2017-07-29 20:05:53 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -35,7 +35,14 @@
 	'("~/.emacs.d/packages/yasnippet/yasnippet-snippets-master"
 	  "~/.emacs.d/packages/yasnippet/mysnippets" ;; personal snippets
 	  ))
-  (yas-global-mode 1))
+  (yas-global-mode 1)
+
+  ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
+  (autoload 'aya-create "auto-yasnippet" nil t)
+  (autoload 'aya-expand "auto-yasnippet" nil t)
+  (global-set-key (kbd "C-c y") #'aya-create)
+  (global-set-key (kbd "C-c e") #'aya-expand)
+  )
 (yas)
 
 (require 'session)
@@ -121,13 +128,13 @@
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
 (require 'highlight-symbol)
-;zenburn
+					;zenburn
 (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
-; (set-face-foreground 'highlight-symbol-face "yellow")
-;atom-one-dark
-; (set-face-background 'highlight-symbol-face "black")
-;normal
-; (set-face-background 'highlight-symbol-face "yellow")
+					; (set-face-foreground 'highlight-symbol-face "yellow")
+					;atom-one-dark
+					; (set-face-background 'highlight-symbol-face "black")
+					;normal
+					; (set-face-background 'highlight-symbol-face "yellow")
 (setq highlight-symbol-idle-delay 0.1)
 (global-set-key [(control f3)] 'highlight-symbol-at-point)
 (global-set-key [f3] 'highlight-symbol-next)
@@ -157,7 +164,7 @@
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
-;(global-hl-line-mode t)
+					;(global-hl-line-mode t)
 
 ;; 切换到company使用一段时间看看
 (if t
@@ -345,7 +352,7 @@
   (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
-;  (local-set-key (kbd "RET") 'electrify-return-if-match)
+					;  (local-set-key (kbd "RET") 'electrify-return-if-match)
   (eldoc-add-command 'electrify-return-if-match)
   (show-paren-mode t)
   (local-set-key (kbd "<f12>") 'xref-find-definitions)
@@ -380,10 +387,10 @@
 				       ))
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
   (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
-;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
+					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
   (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
   (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
-  ;(turn-on-eldoc-mode) ; 会卡
+					;(turn-on-eldoc-mode) ; 会卡
   )
 
 ;; erlang配置, 主要配置来自http://jixiuf.github.com/erlang/distel.html和
@@ -429,7 +436,7 @@
 ;;;; 当打开erl  文件时，自动启动一个shell 以便distel进行补全
 (add-hook 'erlang-mode-hook 
 	  '(lambda () (unless erl-nodename-cache (distel-load-shell))
-	     ;(local-set-key [(control ?\.)] 'erl-find-source-under-point)
+					;(local-set-key [(control ?\.)] 'erl-find-source-under-point)
 	     (local-set-key (kbd "<f12>") 'erl-find-source-under-point)
 	     (local-set-key (kbd "M-.") 'etags-select-find-tag-at-point) ; when distel does't work
 	     (local-set-key (kbd "C-'")  'erl-complete)
@@ -565,7 +572,7 @@
 ;; 	    (local-set-key (kbd "<C-return>") 'ac-complete-lcEngine) ;; 补全
 ;; 	    (local-set-key (kbd "<f12>") 'lcEngine-goto-definition) ;; 跳转到声明
 ;; 	    (local-set-key (kbd "<C-f4>") 'lcEngine-syntax-check) ;; 检查错误
-	    
+
 ;; 	    (ac-lcEngine-setup) ; 感觉用起来太卡了，补全卡，flymake也卡
 ;; 	    ; 用上来的按键
 ;; 	    (setq flymake-no-changes-timeout 1.0)
@@ -606,22 +613,22 @@
   (interactive)
   (if (equal (buffer-name) "*shell*")
       (progn
-       (if smart-compile-run-last-buffer
-	   (switch-to-buffer smart-compile-run-last-buffer)
-	 (switch-to-prev-buffer))
-       (delete-other-windows))
+	(if smart-compile-run-last-buffer
+	    (switch-to-buffer smart-compile-run-last-buffer)
+	  (switch-to-prev-buffer))
+	(delete-other-windows))
     ;; (let ((run-exe (concat (file-name-sans-extension
     ;; 		     (file-name-nondirectory (buffer-file-name))) ".exe"))))
     (progn
       (setq smart-compile-run-last-buffer (buffer-name))
       (with-current-buffer (shell)
-       (end-of-buffer)
-       (move-end-of-line nil)
+	(end-of-buffer)
+	(move-end-of-line nil)
 					;(move-beginning-of-line nil)
 					;(kill-line 1)
 					;(insert-string run-exe)
 					;(move-end-of-line nil)
-       ))))
+	))))
 (global-set-key (kbd "<f5>") 'smart-compile-run)
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
@@ -641,10 +648,10 @@ close the *compilation* buffer if the compilation is successful,
 and set the focus back to Emacs frame"
   (when (equal (buffer-name) "*compilation*") 
     (when (string-match "^finished" msg)
-	(progn
-	  (delete-windows-on buffer)
-	  ;; (tooltip-show "\n Compilation Successful :-) \n ")
-	  )
+      (progn
+	(delete-windows-on buffer)
+	;; (tooltip-show "\n Compilation Successful :-) \n ")
+	)
       ;; (tooltip-show "\n Compilation Failed :-( \n ")
       )
     (setq current-frame (car (car (cdr (current-frame-configuration)))))
@@ -708,10 +715,10 @@ and set the focus back to Emacs frame"
 (autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
 (define-key global-map (kbd "C-o") 'ace-jump-mode)
 (eval-after-load 'ace-jump-mode '(setq ace-jump-mode-submode-list
-				  '(ace-jump-word-mode
-				    ace-jump-mode-pop-mark
-				    ace-jump-char-mode
-				    ace-jump-line-mode)))
+				       '(ace-jump-word-mode
+					 ace-jump-mode-pop-mark
+					 ace-jump-char-mode
+					 ace-jump-line-mode)))
 
 ;;; autohotkey文件编辑
 (autoload 'xahk-mode "xahk-mode"
@@ -740,12 +747,12 @@ and set the focus back to Emacs frame"
     (setq company-tooltip-align-annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
-      ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
+    ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
     (eval-after-load 'smartparens-rust
       '(progn
-	(sp-local-pair 'rust-mode "'" nil :actions nil)
-	(sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
-	))))
+	 (sp-local-pair 'rust-mode "'" nil :actions nil)
+	 (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
+	 ))))
 (add-hook 'racer-mode-hook 'my/racer-mode-hook)
 (setq racer-cmd "racer") ;; 自己添加racer到PATH环境变量
 ;;; (setq racer-rust-src-path "") 自己设置RUST_SRC_PATH环境变量指向rust源码的src目录
@@ -828,34 +835,36 @@ and set the focus back to Emacs frame"
 
 ;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
 (add-to-list 'load-path "~/.emacs.d/packages/swiper")
-(require 'ivy)
-(require 'swiper)
-(require 'counsel)
-(ivy-mode 1)
+(autoload 'swiper "swiper" nil t)
 (setq ivy-use-virtual-buffers t)
 (setq enable-recursive-minibuffers t)
 (global-set-key "\C-s" 'swiper)
+(autoload 'ivy-resume "ivy" nil t)
+(autoload 'ivy-mode "ivy" nil t)
 (global-set-key (kbd "C-c C-r") 'ivy-resume)
 (global-set-key (kbd "<f6>") 'ivy-resume)
+(autoload 'counsel-M-x "counsel" nil t)
+(autoload 'counsel-find-file "counsel" nil t)
+(autoload 'counsel-describe-function "counsel" nil t)
+(autoload 'counsel-describe-variable "counsel" nil t)
+(autoload 'counsel-find-library "counsel" nil t)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "<f1> f") 'counsel-describe-function)
 (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
 (global-set-key (kbd "<f1> l") 'counsel-find-library)
-;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-;; (global-set-key (kbd "C-c g") 'counsel-git)
-;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
-;; (global-set-key (kbd "C-c k") 'counsel-ag)
-;; (global-set-key (kbd "C-x l") 'counsel-locate)
-;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-(define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-(define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-(define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
-(define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-(define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+(eval-after-load 'ivy '(progn
+			 (ivy-mode 1)
+			 (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+			 (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
+			 (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
+			 (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+			 (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+			 ))
+(defadvice completing-read (before my-completing-read activate)
+  (ivy-mode 1))
 
-;; 跨buffer同mode/project，这下NB了
+;; 定位函数，跨buffer同mode/project，这下NB了
 (autoload 'ivy-imenu-anywhere "imenu-anywhere" nil t)
 (global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
 
@@ -874,20 +883,23 @@ and set the focus back to Emacs frame"
 (global-set-key [f2] 'ripgrep-regexp)
 (autoload 'ripgrep-regexp "ripgrep" nil t)
 
-(require 'hydra)
-(global-set-key (kbd "C-c h")
-		(defhydra hydra-hideshow ()
-		  "
+;; hydra使用autoload的方式 https://github.com/abo-abo/hydra/issues/149
+(defun hydra-hideshow/body()
+  (interactive)
+  (require 'hydra)
+  (funcall (defhydra hydra-hideshow ()
+	     "
 _h_: hide block _s_: show block
 _H_: hide all   _S_: show all 
 _i_: hide comment _q_uit
 "
-		  ("h" hs-toggle-hiding nil :color blue)
-		  ("s" hs-show-block nil :color blue)
-		  ("H" hs-hide-all nil :color blue)
-		  ("S" hs-show-all nil :color blue)
-		  ("i" hs-hide-initial-comment-block nil :color blue)
-		  ("q" nil "nil" :color blue))) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+	     ("h" hs-toggle-hiding nil :color blue)
+	     ("s" hs-show-block nil :color blue)
+	     ("H" hs-hide-all nil :color blue)
+	     ("S" hs-show-all nil :color blue)
+	     ("i" hs-hide-initial-comment-block nil :color blue)
+	     ("q" nil "nil" :color blue))))
+(global-set-key (kbd "C-c h") 'hydra-hideshow/body) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
 
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
@@ -908,24 +920,54 @@ _i_: hide comment _q_uit
 	    (kill-new win-path))
 	(message "%s copied" new-kill-string)
 	(kill-new new-kill-string)))))
-
-(global-set-key (kbd "C-4") (defhydra hydra-copybf ()
-			      "
+(defun hydra-copybf4/body()
+  (interactive)
+  (require 'hydra)
+  (funcall (defhydra hydra-copybf4 ()
+	     "
 Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 "
-			      ("f" (copy-buffer-name ?f) nil :color blue)
-			      ("d" (copy-buffer-name ?d) nil :color blue)
-			      ("a" (copy-buffer-name ?a) nil :color blue)
-			      ("q" nil "" :color blue)))
-(global-set-key (kbd "C-3") (defhydra hydra-copybf ()
-			      "
+	     ("f" (copy-buffer-name ?f) nil :color blue)
+	     ("d" (copy-buffer-name ?d) nil :color blue)
+	     ("a" (copy-buffer-name ?a) nil :color blue)
+	     ("q" nil "" :color blue))))
+(global-set-key (kbd "C-4") 'hydra-copybf4/body)
+(defun hydra-copybf3/body() ()
+       (interactive)
+       (require 'hydra)
+       (funcall (defhydra hydra-copybf3 ()
+		  "
 Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 "
-			      ("f" (copy-buffer-name ?f t) nil :color blue)
-			      ("d" (copy-buffer-name ?d t) nil :color blue)
-			      ("a" (copy-buffer-name ?a t) nil :color blue)
-			      ("q" nil "" :color blue)))
+		  ("f" (copy-buffer-name ?f t) nil :color blue)
+		  ("d" (copy-buffer-name ?d t) nil :color blue)
+		  ("a" (copy-buffer-name ?a t) nil :color blue)
+		  ("q" nil "" :color blue))))
+(global-set-key (kbd "C-3") 'hydra-copybf3/body)
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'zenburn t)
+
+;; 为了延迟加载hideshowvis也是够拼了
+(defvar hideshowvis-inited nil "")
+(defun hideshowvis-setting()
+  (unless hideshowvis-inited
+    (setq hideshowvis-inited t)
+    ;; 配合hideshow，更好地区分被折叠的代码
+    (require 'hideshowvis)
+    (custom-set-variables '(hideshowvis-ignore-same-line nil)) ; hideshowvis-enable会卡，必须用这个
+    (hideshowvis-symbols) ;; 显示+号和折叠行数
+    ;; 抄这里的配置http://www.cnblogs.com/aaron2015/p/4882652.html，没想到最适合zenburn主题
+    (custom-set-faces
+     '(hs-fringe-face ((t (:foreground "#afeeee" :box (:line-width 2 :color "grey75" :style released-button))))) ; 那个+号
+     '(hs-face ((t (:background "#444" :box t)))) ; 替换原来的...，很清楚地显示是被折叠了，并且显示被折叠了多少行
+     '(hideshowvis-hidable-face ((t (:foreground "#2f4f4f")))) ; 这样设置那个难看的-就看不清了
+     )
+    (add-hook 'prog-mode-hook 'hideshowvis-enable) ;; 其实不需要这个也可以，这个可以让点击+号就展开，方便鼠标操作
+    (hideshowvis-enable) ;; fix当前buffer不能点击+
+    ))
+(defadvice hs-hide-all (before my-hs-hide-all activate)
+  (hideshowvis-setting))
+(defadvice hs-hide-block (before my-hs-hide-block activate)
+  (hideshowvis-setting))
