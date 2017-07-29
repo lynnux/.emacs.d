@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 10:42:22 lynnux>
+;; Time-stamp: <2017-07-29 11:30:17 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -844,7 +844,6 @@ and set the focus back to Emacs frame"
 (global-set-key (kbd "<f1> f") 'counsel-describe-function)
 (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
 (global-set-key (kbd "<f1> l") 'counsel-find-library)
-(global-set-key (kbd "M-m") 'counsel-imenu) ;类似vc的Alt+M，只有imenu比较合适
 ;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
 ;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
 ;; (global-set-key (kbd "C-c g") 'counsel-git)
@@ -857,3 +856,7 @@ and set the focus back to Emacs frame"
 (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
 (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
 (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+
+;; 跨buffer同mode/project，这下NB了
+(require 'imenu-anywhere)
+(global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
