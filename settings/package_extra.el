@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 23:17:44 lynnux>
+;; Time-stamp: <2017-07-30 10:23:46 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -829,6 +829,8 @@ and set the focus back to Emacs frame"
 (global-set-key [(control f2)] 'imenu-list-smart-toggle)
 
 (if t
+    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个
+    ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
       (require 'async-autoloads)
@@ -836,21 +838,36 @@ and set the focus back to Emacs frame"
       (add-to-list 'load-path "~/.emacs.d/packages/helm")
       (require 'helm-config)
       ;;(global-set-key (kbd "C-c h") 'helm-mini)
+      (global-set-key (kbd "M-x") 'undefined)
       (global-set-key (kbd "M-x") 'helm-M-x)
+      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
       (global-set-key (kbd "C-x C-f") 'helm-find-files)
       (global-set-key (kbd "C-x b") 'helm-buffers-list)
+      (global-set-key (kbd "C-c C-r") 'helm-resume)
+      (global-set-key (kbd "<f6>") 'helm-resume)
+      
+      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 代替etags-select
+      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select)
+      
       (with-eval-after-load 'helm
 	(helm-mode 1)
 	(define-key helm-map (kbd "C-h") 'nil)
+	(define-key helm-map (kbd "C-v") 'nil)
 	(define-key helm-map (kbd "C-r") 'helm-previous-line)
 	(define-key helm-map (kbd "C-s") 'helm-next-line)
 	(define-key helm-map (kbd "TAB") 'helm-next-line)
 	(define-key helm-map (kbd "<backtab>") 'helm-previous-line)
 	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 	)
-      
+
       (autoload 'helm-swoop "helm-swoop" nil t)
       (global-set-key (kbd "C-s") 'helm-swoop)
+
+      ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
+      (setq helm-grep-default-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
+	    helm-grep-default-recurse-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
+	    helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
+	    )
       
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
