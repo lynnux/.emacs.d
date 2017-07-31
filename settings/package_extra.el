@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 20:36:00 lynnux>
+;; Time-stamp: <2017-07-31 20:45:30 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -728,8 +728,8 @@ and set the focus back to Emacs frame"
       (with-eval-after-load 'helm
 	(helm-mode 1)
 
-	(defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
-	  (message (ad-get-arg 2)))
+	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	;;   (message (ad-get-arg 2)))
 	
 	;; 光标移动时也自动定位到所在位置
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
@@ -772,8 +772,6 @@ and set the focus back to Emacs frame"
 					      (require 'w32-browser)
 					      (w32explore file)
 					      )))))
-
-        
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
