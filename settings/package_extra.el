@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 17:08:47 lynnux>
+;; Time-stamp: <2017-07-31 20:36:00 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -292,7 +292,6 @@
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
 (add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 (add-to-list 'jl-insert-marker-funcs "swiper")
-(add-to-list 'jl-insert-marker-funcs "ripgrep-regexp")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
@@ -696,6 +695,8 @@ and set the focus back to Emacs frame"
       (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
       (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
       (global-set-key (kbd "C-`") 'helm-show-kill-ring)
+      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，这个有坑啊，居然读gitignore! 文档rg --help
+
       (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
       (global-set-key (kbd "C-x b") 'helm-buffers-list)
       (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
@@ -709,22 +710,27 @@ and set the focus back to Emacs frame"
       (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
 
       ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
-      (setq helm-grep-default-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
-	    helm-grep-default-recurse-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
-	    helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
-	    helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个没法过去了
-	    helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-	    helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
-	    helm-ff-file-name-history-use-recentf t
-	    helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-	    helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
-	    helm-recentf-fuzzy-match    t
-	    helm-follow-mode-persistent t
-	    helm-allow-mouse t
-	    )
+      (setq
+       ;; smart case跟emacs类似，默认读gitignore实在不习惯
+       helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore %s %s %s"
+       ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; 貌似没什么用
+       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个没法过去了
+       helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+       helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
+       helm-ff-file-name-history-use-recentf t
+       helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+       helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
+       helm-recentf-fuzzy-match    t
+       helm-follow-mode-persistent t
+       helm-allow-mouse t
+       )
       
       (with-eval-after-load 'helm
 	(helm-mode 1)
+
+	(defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	  (message (ad-get-arg 2)))
+	
 	;; 光标移动时也自动定位到所在位置
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	
@@ -734,6 +740,7 @@ and set the focus back to Emacs frame"
 	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))))
 	(define-key helm-map (kbd "<f1>") 'nil)
 	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+
 	(define-key helm-map (kbd "C-h") 'nil)
 	(define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
 	(define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
@@ -748,6 +755,14 @@ and set the focus back to Emacs frame"
 	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
 	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 
+	;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原无
+	(define-key helm-map (kbd "C-r") 'helm-previous-line) ; 原history
+	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ;原无
+	(define-key helm-find-files-map (kbd "C-r") 'helm-previous-line) ;原history
+	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
+	(define-key helm-buffer-map (kbd "C-r") 'helm-previous-line) ; 原history
+
 	;; helm-locate即everything里打开所在位置
 	(define-key helm-generic-files-map (kbd "C-x C-d")
 	  (lambda ()
@@ -758,7 +773,7 @@ and set the focus back to Emacs frame"
 					      (w32explore file)
 					      )))))
 
-	(define-key helm-command-map (kbd "I") 'helm-imenu-in-all-buffers)
+        
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
@@ -812,10 +827,6 @@ and set the focus back to Emacs frame"
    '(and (derived-mode-p 'c++-mode)
 	 (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
 			     (thing-at-point 'line))))))
-
-;; 速度据说 ripgrep > ag > ack > grep。缺点：不支持unicode也就不支持中文，而findstr是可以的
-(global-set-key [f2] 'ripgrep-regexp)
-(autoload 'ripgrep-regexp "ripgrep" nil t)
 
 ;; hydra使用autoload的方式 https://github.com/abo-abo/hydra/issues/149
 (defun hydra-hideshow/body()
