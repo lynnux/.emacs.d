@@ -1,10 +1,13 @@
-;; Time-stamp: <2017-07-30 10:23:46 lynnux>
+;; Time-stamp: <2017-07-31 13:29:41 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
 
 (add-to-list 'load-path
 	     "~/.emacs.d/packages")
+
+;; !themes要放到最后，内置theme查看 M-x customize-themes
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 ;;; global-linum-mode居然会托慢屏显速度，我一直还以为是emacs的问题！
 (require 'nlinum)
@@ -128,13 +131,13 @@
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
 (require 'highlight-symbol)
-					;zenburn
+;; zenburn
 (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
-					; (set-face-foreground 'highlight-symbol-face "yellow")
-					;atom-one-dark
-					; (set-face-background 'highlight-symbol-face "black")
-					;normal
-					; (set-face-background 'highlight-symbol-face "yellow")
+;; (set-face-foreground 'highlight-symbol-face "yellow")
+;;atom-one-dark
+;; (set-face-background 'highlight-symbol-face "black")
+;;normal
+;; (set-face-background 'highlight-symbol-face "yellow")
 (setq highlight-symbol-idle-delay 0.1)
 (global-set-key [(control f3)] 'highlight-symbol-at-point)
 (global-set-key [f3] 'highlight-symbol-next)
@@ -164,10 +167,10 @@
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
-					;(global-hl-line-mode t)
+;; (global-hl-line-mode t)
 
-;; 切换到company使用一段时间看看
 (if t
+    ;; auto complete
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
       (require 'auto-complete-config)
@@ -197,8 +200,6 @@
 	 ))
       (global-set-key (kbd "<C-return>") 'auto-complete)
       (global-set-key (kbd "<M-return>") 'auto-complete)
-      ;; for erlang
-      (add-to-list 'ac-modes 'erlang-mode)
       )
   (progn
     ;; company mode，这个支持comment中文，但不支持补全history
@@ -281,16 +282,6 @@
 (setq auto-mode-alist (append '(("\\.proto\\'" .
 				 protobuf-mode)) auto-mode-alist))
 
-(eval-after-load "calendar" 
-  '(progn
-     (require 'cal-china-x)
-     (setq mark-holidays-in-calendar t)
-     (setq cal-china-x-priority1-holidays cal-china-x-chinese-holidays)
-     (setq calendar-holidays cal-china-x-priority1-holidays))) 
-
-(global-set-key (kbd "<f4>") 'next-error)
-(global-set-key (kbd "S-<f4>") 'previous-error)
-
 (require 'jumplist)
 (global-set-key (kbd "M-n") 'jl-jump-forward)
 (global-set-key (kbd "M-p") 'jl-jump-backward)
@@ -300,6 +291,7 @@
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
 (add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 (add-to-list 'jl-insert-marker-funcs "swiper")
+(add-to-list 'jl-insert-marker-funcs "ripgrep-regexp")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -311,20 +303,19 @@
   (define-key iss-mode-map [(meta f6)] 'iss-run-installer))
 
 ;; (add-hook 'dired-mode-hook (lambda () (require 'w32-browser)))
-(eval-after-load "dired"
-  '(progn
-     (unless (string-equal system-type "windows-nt")
-       (require 'w32-browser)
-       (define-key dired-mode-map [f3] 'dired-w32-browser)
-       (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser)
-       (define-key dired-mode-map [f4] 'dired-w32explore)
-       (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-	 '("Open Associated Application" . dired-w32-browser))
-       ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
-       ;;   '("Windows Explorer" . dired-w32explore))
-       (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
-       (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-	 '("Open Associated Applications" . dired-multiple-w32-browser)))))
+(with-eval-after-load 'dired
+  (unless (string-equal system-type "windows-nt")
+    (require 'w32-browser)
+    (define-key dired-mode-map [f3] 'dired-w32-browser)
+    (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser)
+    (define-key dired-mode-map [f4] 'dired-w32explore)
+    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
+      '("Open Associated Application" . dired-w32-browser))
+    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
+    ;;   '("Windows Explorer" . dired-w32explore))
+    (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
+    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
+      '("Open Associated Applications" . dired-multiple-w32-browser))))
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
 (setq auto-mode-alist
@@ -352,7 +343,7 @@
   (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
-					;  (local-set-key (kbd "RET") 'electrify-return-if-match)
+  ;;  (local-set-key (kbd "RET") 'electrify-return-if-match)
   (eldoc-add-command 'electrify-return-if-match)
   (show-paren-mode t)
   (local-set-key (kbd "<f12>") 'xref-find-definitions)
@@ -393,74 +384,6 @@
 					;(turn-on-eldoc-mode) ; 会卡
   )
 
-;; erlang配置, 主要配置来自http://jixiuf.github.com/erlang/distel.html和
-;; https://raw.github.com/jixiuf/emacs_conf/master/site-lisp/joseph/joseph-erlang.el
-(eval-after-load "erlang" 
-  '(progn
-     ;; (setq inferior-erlang-machine-options `("-name" ,(concat "emacs@" system-name "")  "+P" "102400")       )
-     (require 'erlang-flymake)
-     (defun erlang-flymake-get-app-dir() ;重新定义erlang-flymake中的此函数,find out app-root dir
-       ;; 有时,代码会放在 src/deep/dir/of/source/这样比较深的目录,erlang-flymake自带的此函数
-       ;; 无法处理这种情况
-       (let ((erlang-root (locate-dominating-file default-directory "Emakefile")))
-	 (if erlang-root
-	     (expand-file-name erlang-root)
-	   (setq erlang-root (locate-dominating-file default-directory "rebar"))
-	   (if erlang-root
-	       (expand-file-name erlang-root)
-	     (file-name-directory (directory-file-name
-				   (file-name-directory (buffer-file-name)))))
-	   )))
-     (defun my-erlang-flymake-get-include-dirs-function()
-       (let* ((app-root (erlang-flymake-get-app-dir))
-	      (dir (list (concat app-root "include") ;不支持通配符,
-			 (concat  app-root "src/include")
-			 (concat  app-root "deps")))
-	      (deps (concat  app-root "deps")))
-	 (when (file-directory-p deps)
-	   (dolist (subdir (directory-files deps))
-	     (when (and (file-directory-p (expand-file-name subdir deps))
-			(not (string= "." subdir))
-			(not (string= ".." subdir)))
-	       (add-to-list 'dir (expand-file-name (concat subdir "/include" ) deps))
-	       )))
-	 dir))
-     (setq erlang-flymake-get-include-dirs-function 'my-erlang-flymake-get-include-dirs-function)
-
-     ;;这个没办法,不能单方面设置,只能拷贝系统home下的.erlang.cookie到emacs的home目录里
-     ;; (setq derl-cookie "when_home_not_equal")
-     (require 'distel)
-     (distel-setup)
-     ))
-
-;;;; 当打开erl  文件时，自动启动一个shell 以便distel进行补全
-(add-hook 'erlang-mode-hook 
-	  '(lambda () (unless erl-nodename-cache (distel-load-shell))
-					;(local-set-key [(control ?\.)] 'erl-find-source-under-point)
-	     (local-set-key (kbd "<f12>") 'erl-find-source-under-point)
-	     (local-set-key (kbd "M-.") 'etags-select-find-tag-at-point) ; when distel does't work
-	     (local-set-key (kbd "C-'")  'erl-complete)
-	     ))
-
-(defun distel-load-shell ()
-  "Load/reload the erlang shell connection to a distel node"
-  (interactive)
-  ;; Set default distel node name
-  (setq erl-nodename-cache (intern (concat "emacs@" system-name "")))
-  ;; (setq derl-cookie (read-home-erlang-cookie)) ;;new added can work
-  (setq distel-modeline-node "distel")
-  (force-mode-line-update)
-  ;; Start up an inferior erlang with node name `distel'
-  (let ((file-buffer (current-buffer))
-        (file-window (selected-window)))
-    ;; (setq inferior-erlang-machine-options '("-sname" "emacs@localhost" "-setcookie" "cookie_for_distel"))
-    (setq inferior-erlang-machine-options `("-name" ,(concat "emacs@" system-name "") )) ;; erl -name emacs
-    (switch-to-buffer-other-window file-buffer)
-    (inferior-erlang)
-    (select-window file-window)
-    (switch-to-buffer file-buffer)
-    (delete-other-windows)))
-
 ;; ruby mode
 (add-hook 'ruby-mode-hook '(lambda()
 			     (require 'rcodetools)
@@ -471,59 +394,15 @@
 			       (setq ac-sources (append (list 'ac-source-rcodetools) ac-sources)))
 			     ))
 
-;; popup yank-pop
-(autoload 'popup-kill-ring "popup-kill-ring" nil t)
-(global-set-key "\M-y" 'popup-kill-ring)
-(global-set-key (kbd "C-`") 'popup-kill-ring)
-(eval-after-load "popup-kill-ring" 
-  '(progn
-     (define-key popup-kill-ring-keymap "\M-n" 'popup-kill-ring-next)
-     (define-key popup-kill-ring-keymap (kbd "C-`") 'popup-kill-ring-next)
-     (define-key popup-kill-ring-keymap "\M-p" 'popup-kill-ring-previous)
-     (setq 
-      popup-kill-ring-interactive-insert t
-      popup-kill-ring-item-min-width nil
-      popup-kill-ring-item-size-max 26
-      popup-kill-ring-popup-margin-left 1 
-      popup-kill-ring-popup-margin-right 0)     
-					;     (define-key popup-kill-ring-keymap "\M-y" 'popup-kill-ring-next)
-					; 如果有选中，会删除选中，需开启delete-selecton-mode
-     (put 'popup-kill-ring 'delete-selection 'yank)
-     ))
-
 ;; python
-;; (add-hook 'python-mode-hook '(lambda()
-;; 			       (require 'pymacs)
-;; 			       (pymacs-load "ropemacs" "rope-")
-;; 			       (ropemacs-mode)
-;; 			       (setq ropemacs-enable-autoimport t)
-;; ))
-
 (add-to-list 'load-path "~/.emacs.d/packages/jedi")
 (when (featurep 'auto-complete)
   (autoload 'jedi:ac-setup "jedi" nil t)
   (add-hook 'python-mode-hook '(lambda ()
 				 (jedi:ac-setup)
 				 (local-set-key (kbd "<C-return>") 'jedi:complete))))
-
 ;; (setq jedi:server-command
 ;;       (list "D:\\Python27\\Python.exe" jedi:server-script))
-
-;; gnu global
-
-(setq minibuffer-complete-cycle t)
-(require 'minibuffer-complete-cycle) ;; modified for Emacs24
-(custom-set-faces
- '(minibuffer-complete-cycle ((t (:background "blue" :foreground "snow")))))
-
-;;; slime + sbcl，安装配置见~/.emacs.d/packages里的说明
-(when (file-exists-p "~/.emacs.d/packages/slime") ; 安装了再进行下一步
-  (add-to-list 'load-path "~/.emacs.d/packages/slime")
-  (autoload 'slime "slime-autoloads" nil t)
-  (eval-after-load "slime-autoloads" '(progn
-					(slime-setup '(slime-fancy))
-					))
-  )
 
 ;; ctags
 (setq ctags-program "ctags")
@@ -552,18 +431,6 @@
 	   (concat "\"" (expand-file-name "TAGS" dir-name) "\"") ;目录含有空格的话
 	   (concat "\"" (expand-file-name "." dir-name) "\"")
 	   )))
-;;; 增强M-.
-(setq etags-table-search-up-depth 10) ;; 自动向目录上层找TAGS的层次数
-(autoload 'etags-select-find-tag-at-point "etags-select" nil t)
-(autoload 'etags-select-find-tag "etags-select" nil t)
-(global-set-key (kbd "<f12>") 'etags-select-find-tag-at-point)
-(global-set-key (kbd "M-.") 'etags-select-find-tag-at-point) ; 除了elisp和ggtags支持的都用这个
-(global-set-key (kbd "<C-down-mouse-1>") 'etags-select-find-tag-at-point)
-
-(eval-after-load "etags-select" '
-  (progn 
-    (require 'etags-table)
-    (require 'etags-stack)))
 
 ;; lcEngine
 ;; (add-hook 'c-mode-common-hook
@@ -592,21 +459,6 @@
 ;; 				 (message err)))))
 ;; 	    ))
 
-;; everything, awesome! 就是中文路径有点问题，待修正
-(when (string-equal system-type "windows-nt")
-  (setq everything-use-ftp t)
-  (defun everything-ffap-guesser-wrapper (file)
-    (require 'everything)
-    (everything-ffap-guesser file)
-    )
-  (eval-after-load "ffap" '(setf (cdr (last ffap-alist)) '(("\\.*\\'" . everything-ffap-guesser-wrapper)))) ; when C-x f can't find anything, try everything
-  (autoload 'everything "everything" nil t)
-  ;; 这样就解决乱码问题了，包括搜索输入,emacs is awesome! 进程是话设置`process-coding-system-alist'，文件设置`file-coding-system-alist'
-  (eval-after-load "everything" '(add-to-list 'network-coding-system-alist
-					      '(21 . (utf-8 . utf-8))
-					      )); 默认21端口
-  )
-
 ;;; shell, main goal is for compile test
 (defvar smart-compile-run-last-buffer nil)
 (defun smart-compile-run ()
@@ -633,7 +485,8 @@
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
 ;; compile，加入了单独编译某个文件
-(setq compilation-auto-jump-to-first-error t compilation-scroll-output t)
+(setq compilation-auto-jump-to-first-error t
+      compilation-scroll-output t)
 (autoload 'smart-compile "smart-compile" nil t)
 (autoload 'smart-compile-c-compile "smart-compile" nil t)
 (global-set-key [f7] 'smart-compile)
@@ -657,8 +510,8 @@ and set the focus back to Emacs frame"
     (setq current-frame (car (car (cdr (current-frame-configuration)))))
     (select-frame-set-input-focus current-frame)
     ))
-(eval-after-load "compile" '(add-to-list 'compilation-finish-functions
-					 'notify-compilation-result))
+(with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
+					    'notify-compilation-result))
 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (autoload 'er/expand-region "expand-region" nil t)
@@ -709,11 +562,11 @@ and set the focus back to Emacs frame"
 ;;; 屏幕内快速跳过，默认是跳到字母开头的单词位置，C-u C-j改为跳回原来的位置，C-u C-u C-j是跳到行
 (autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
 (define-key global-map (kbd "C-o") 'ace-jump-mode)
-(eval-after-load 'ace-jump-mode '(setq ace-jump-mode-submode-list
-				       '(ace-jump-word-mode
-					 ace-jump-mode-pop-mark
-					 ace-jump-char-mode
-					 ace-jump-line-mode)))
+(with-eval-after-load 'ace-jump-mode (setq ace-jump-mode-submode-list
+					   '(ace-jump-word-mode
+					     ace-jump-mode-pop-mark
+					     ace-jump-char-mode
+					     ace-jump-line-mode)))
 
 ;;; autohotkey文件编辑
 (autoload 'xahk-mode "xahk-mode"
@@ -743,11 +596,10 @@ and set the focus back to Emacs frame"
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
     ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
-    (eval-after-load 'smartparens-rust
-      '(progn
-	 (sp-local-pair 'rust-mode "'" nil :actions nil)
-	 (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
-	 ))))
+    (with-eval-after-load 'smartparens-rust
+      (sp-local-pair 'rust-mode "'" nil :actions nil)
+      (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
+      )))
 (add-hook 'racer-mode-hook 'my/racer-mode-hook)
 (setq racer-cmd "racer") ;; 自己添加racer到PATH环境变量
 ;;; (setq racer-rust-src-path "") 自己设置RUST_SRC_PATH环境变量指向rust源码的src目录
@@ -755,7 +607,6 @@ and set the focus back to Emacs frame"
 (add-to-list 'load-path "~/.emacs.d/packages/neotree")
 (autoload 'neotree-toggle "neotree" nil t)
 (global-set-key (kbd "<C-f1>") 'neotree-toggle)
-(global-set-key (kbd "C-x d") 'neotree-toggle) ; dired基本不用
 (setq neo-window-width 32
       neo-create-file-auto-open t
       neo-show-updir-line t
@@ -829,7 +680,7 @@ and set the focus back to Emacs frame"
 (global-set-key [(control f2)] 'imenu-list-smart-toggle)
 
 (if t
-    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个
+    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
@@ -841,41 +692,96 @@ and set the focus back to Emacs frame"
       (global-set-key (kbd "M-x") 'undefined)
       (global-set-key (kbd "M-x") 'helm-M-x)
       (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
+      (global-set-key (kbd "C-`") 'helm-show-kill-ring)
       (global-set-key (kbd "C-x C-f") 'helm-find-files)
       (global-set-key (kbd "C-x b") 'helm-buffers-list)
-      (global-set-key (kbd "C-c C-r") 'helm-resume)
+      (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
+      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
       (global-set-key (kbd "<f6>") 'helm-resume)
-      
-      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 代替etags-select
-      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select)
-      
-      (with-eval-after-load 'helm
-	(helm-mode 1)
-	(define-key helm-map (kbd "C-h") 'nil)
-	(define-key helm-map (kbd "C-v") 'nil)
-	(define-key helm-map (kbd "C-r") 'helm-previous-line)
-	(define-key helm-map (kbd "C-s") 'helm-next-line)
-	(define-key helm-map (kbd "TAB") 'helm-next-line)
-	(define-key helm-map (kbd "<backtab>") 'helm-previous-line)
-	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-	)
 
-      (autoload 'helm-swoop "helm-swoop" nil t)
-      (global-set-key (kbd "C-s") 'helm-swoop)
+      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
+      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
+      (global-set-key (kbd "<f12>") 'helm-etags-select)
+      (global-set-key (kbd "M-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
+      (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
 
       ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
       (setq helm-grep-default-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-default-recurse-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
+	    helm-move-to-line-cycle-in-source t ; 使可以循环
+	    helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+	    helm-split-window-in-side-p t
+	    helm-ff-file-name-history-use-recentf t
+	    helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+	    helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
+	    helm-recentf-fuzzy-match    t
 	    )
       
+      (with-eval-after-load 'helm
+	(helm-mode 1)
+	(define-key helm-map (kbd "<f1>") 'nil)
+	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+	(define-key helm-map (kbd "C-h") 'nil)
+	(define-key helm-map (kbd "C-t") 'nil)
+	(define-key helm-map (kbd "C-v") 'nil)
+	(define-key helm-map (kbd "C-r") 'helm-previous-line)
+	(define-key helm-map (kbd "C-s") 'helm-next-line)
+	(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+	;; (define-key helm-map (kbd "TAB") 'helm-next-line)
+	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
+	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+
+	(when helm-echo-input-in-header-line
+	  (add-hook 'helm-minibuffer-set-up-hook
+		    'helm-hide-minibuffer-maybe)))
+
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
-      
       (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
+
+      ;; helm swoop配置
+      (autoload 'helm-swoop "helm-swoop" nil t)
+      (global-set-key (kbd "C-s") 'helm-swoop)
+      ;; (setq helm-swoop-use-fuzzy-match t)
+      (setq helm-swoop-pre-input-function
+	    (lambda ()
+	      (if (or (not transient-mark-mode) (region-active-p))
+		  (buffer-substring-no-properties (region-beginning) (region-end))
+		""))) ; 不自动填写搜索内容，如果有选中就搜索选中内容
+
+      (defun my-helm-swoop-yank-thing-at-point ()
+	"Insert string at which the point helm-swoop started."
+	(interactive)
+	(let ($amend $buf)
+	  (with-selected-window helm-swoop-synchronizing-window
+	    (setq $buf (get-buffer (cdr helm-swoop-last-point)))
+	    (when $buf
+	      (with-current-buffer $buf
+		(goto-char (car helm-swoop-last-point))
+		(let ((pt (point))
+		      (le (line-end-position)))
+		  (forward-word 1)
+		  (if (> (point) le)
+		      (goto-char pt)
+		    (setq $amend (buffer-substring-no-properties pt (point)))))
+		(setcar helm-swoop-last-point (point))
+		)))
+	  (when $amend
+	    (with-selected-window (minibuffer-window)
+	      (insert $amend)))))
+      (with-eval-after-load 'helm-swoop
+	(define-key helm-swoop-map (kbd "C-r") 'helm-previous-line)
+	(define-key helm-swoop-map (kbd "C-s") 'helm-next-line)
+	(define-key helm-swoop-map (kbd "C-w") 'my-helm-swoop-yank-thing-at-point)
+	(define-key helm-multi-swoop-map (kbd "C-r") 'helm-previous-line)
+	(define-key helm-multi-swoop-map (kbd "C-s") 'helm-next-line))
+      
       )
   (progn
-    ;; ivy确实好用，就是有时c-x c-f会有延迟。helm还要make配置麻烦
+    ;; ivy确实好用，就是公司win7机子有时c-x c-f会有延迟
     (add-to-list 'load-path "~/.emacs.d/packages/swiper")
     (autoload 'swiper "swiper" nil t)
     (setq ivy-use-virtual-buffers t)
@@ -895,35 +801,28 @@ and set the focus back to Emacs frame"
     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
     (global-set-key (kbd "<f1> l") 'counsel-find-library)
-    (eval-after-load 'ivy '(progn
-			     (ivy-mode 1)
-			     (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-			     (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-			     (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
-			     (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-			     (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-			     ))
+    (with-eval-after-load 'ivy
+      (ivy-mode 1)
+      (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+      (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
+      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
+      (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+      (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+      )
     (defadvice completing-read (before my-completing-read activate)
       (ivy-mode 1))
-
-    ;; imenu-anywhere
-    ;; 定位函数，跨buffer同mode/project，这下NB了
-    (autoload 'ivy-imenu-anywhere "imenu-anywhere" nil t)
-    (global-set-key (kbd "M-m") 'ivy-imenu-anywhere) ;类似vc的Alt+M
-    
     ))
 
 
 ;; 自动indent
 (autoload 'aggressive-indent-mode "aggressive-indent" nil t)
 (add-hook 'prog-mode-hook #'aggressive-indent-mode)
-(eval-after-load 'aggressive-indent
-  '(progn
-     (add-to-list
-      'aggressive-indent-dont-indent-if
-      '(and (derived-mode-p 'c++-mode)
-	    (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-				(thing-at-point 'line)))))))
+(with-eval-after-load 'aggressive-indent
+  (add-to-list
+   'aggressive-indent-dont-indent-if
+   '(and (derived-mode-p 'c++-mode)
+	 (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+			     (thing-at-point 'line))))))
 
 ;; 速度据说 ripgrep > ag > ack > grep。缺点：不支持unicode也就不支持中文，而findstr是可以的
 (global-set-key [f2] 'ripgrep-regexp)
@@ -1000,10 +899,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 		  ("q" nil "" :color blue))))
 (global-set-key (kbd "C-3") 'hydra-copybf3/body)
 
-;; !themes要放到最后，内置theme查看 M-x customize-themes
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'zenburn t)
-
 ;; 为了延迟加载hideshowvis也是够拼了
 (defvar hideshowvis-inited nil "")
 (defun hideshowvis-setting()
@@ -1027,3 +922,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defadvice hs-hide-block (before my-hs-hide-block activate)
   (hideshowvis-setting))
 
+
+
+(load-theme 'zenburn t)

@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 13:15:29 lynnux>
+;; Time-stamp: <2017-07-31 11:21:05 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -10,7 +10,7 @@
   (cond ((eq selected ?f) 
 	 (call-interactively 'file-cache-switch-file))
 	((eq selected ?e) 
-	 (call-interactively 'everything))
+	 (call-interactively 'helm-locate))
 	((eq selected ?c) 
 	 (call-interactively 'files-recent-changed))
 	((eq selected ?v) 
@@ -40,12 +40,12 @@
 
 ;;buffer管理，真的太好用了！
 (global-set-key (kbd "C-x C-b") 'bs-show) ;这个更好
-(eval-after-load "bs" '(progn
-			 (setq bs-default-configuration "files-and-scratch")
-			 (define-key bs-mode-map "s"       'bs-show-sorted)
-			 (define-key bs-mode-map "S"       'bs-save)
-			 (define-key bs-mode-map "<"       'beginning-of-buffer)
-			 (define-key bs-mode-map ">"       'end-of-buffer)))
+(with-eval-after-load 'bs 
+  (setq bs-default-configuration "files-and-scratch")
+  (define-key bs-mode-map "s"       'bs-show-sorted)
+  (define-key bs-mode-map "S"       'bs-save)
+  (define-key bs-mode-map "<"       'beginning-of-buffer)
+  (define-key bs-mode-map ">"       'end-of-buffer))
 
 ;; 折叠
 (add-hook 'java-mode-hook 'hs-minor-mode)
@@ -77,7 +77,7 @@
 	    (setq org-agenda-follow-mode t))
 	  )
 (autoload 'org-remember-insinuate "org-remember" nil t)
-(eval-after-load "remember" '(org-remember-insinuate)) ;必须加'，否则直接执行
+(with-eval-after-load 'remember (org-remember-insinuate)) ;必须加'，否则直接执行
 ;; org-remember已经被remember代替(还是要结合org使用)
 (define-key global-map "\C-cr" 'remember)
 ;; tabbar配置那里有对org的C-TAB的设置
@@ -158,7 +158,7 @@
   ;; (setq cua-keep-region-after-copy t) ;选中复制后保持选中状态
 )
 ;; )
-(eval-after-load "cua-base" '(my-cua-mode-setting))
+(with-eval-after-load 'cua-base (my-cua-mode-setting))
 
 (defvar view-mode-setted nil)
 (defun view-mode-settings ()
@@ -201,10 +201,9 @@
 	   `((view-mode " ") (view-mode ,view-mode-line-format))
 	   (delq (assq 'view-mode minor-mode-alist) minor-mode-alist) ))
     )
-)
+  )
 
 ;; eval-after-load里的view-mode-setting总是执行，所以改为add-hook方式，估计是因为emacs的默认主页就是view mode的关系吧
-;; (eval-after-load "view" `(view-mode-settings)) 
 (add-hook 'view-mode-hook 'view-mode-settings)
 (defun view-exist-file ()
   (when (file-exists-p (buffer-file-name))

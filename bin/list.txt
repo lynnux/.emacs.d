@@ -1,0 +1,9 @@
+ ctags.exe
+ emacs-win32-launcher.exe
+ es.exe  (Everything的命令接口，还支持中文!)
+ global.exe
+ gozilla.exe
+ gtags-cscope.exe
+ gtags.exe
+ htags.exe
+ rg.exe

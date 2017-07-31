@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 09:34:14 lynnux>
+;; Time-stamp: <2017-07-31 13:19:52 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -7,7 +7,7 @@
 (and (>= emacs-major-version 23) (defun server-ensure-safe-dir (dir) "Noop" t))
 (when (string-equal system-type "windows-nt")
   (server-start))
-(eval-after-load "server" '(remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; 去掉关闭emacsclientw打开的文件的提示
+(with-eval-after-load 'server (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; 去掉关闭emacsclientw打开的文件的提示
 (define-key global-map "\C-r" 'kill-ring-save); M-w经常不起作用
 (define-key global-map (kbd "C-x SPC") (lambda () (interactive)
       (switch-to-buffer (other-buffer (current-buffer) 1)))) ; 最近buffer切换
@@ -268,3 +268,6 @@ that was stored with ska-point-to-register."
 
 ;;; m-o切换h/cpp文件
 (global-set-key (kbd "M-o") 'ff-find-other-file)
+
+(global-set-key (kbd "<f4>") 'next-error)
+(global-set-key (kbd "S-<f4>") 'previous-error)
