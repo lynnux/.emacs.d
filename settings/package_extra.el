@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 16:07:09 lynnux>
+;; Time-stamp: <2017-07-31 17:08:47 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -293,6 +293,7 @@
 (add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "ripgrep-regexp")
+(add-to-list 'jl-insert-marker-funcs "helm-occur")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -711,19 +712,20 @@ and set the focus back to Emacs frame"
       (setq helm-grep-default-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-default-recurse-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
-	    helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环
+	    helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个没法过去了
 	    helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-	    helm-split-window-in-side-p t
+	    helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
 	    helm-ff-file-name-history-use-recentf t
 	    helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
 	    helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
 	    helm-recentf-fuzzy-match    t
 	    helm-follow-mode-persistent t
+	    helm-allow-mouse t
 	    )
       
       (with-eval-after-load 'helm
 	(helm-mode 1)
-	;; 光标移动时也定位位置
+	;; 光标移动时也自动定位到所在位置
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	
 	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
@@ -746,6 +748,18 @@ and set the focus back to Emacs frame"
 	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
 	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 
+	;; helm-locate即everything里打开所在位置
+	(define-key helm-generic-files-map (kbd "C-x C-d")
+	  (lambda ()
+	    (interactive)
+	    (with-helm-alive-p
+	      (helm-exit-and-execute-action (lambda (file)
+					      (require 'w32-browser)
+					      (w32explore file)
+					      )))))
+
+	(define-key helm-command-map (kbd "I") 'helm-imenu-in-all-buffers)
+	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
 		    'helm-hide-minibuffer-maybe))        
