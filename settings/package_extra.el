@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 13:29:41 lynnux>
+;; Time-stamp: <2017-07-31 16:07:09 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -186,12 +186,13 @@
 				 ac-source-imenu
 				 ac-source-files-in-current-dir
 				 ac-source-filename))
-      (setq ac-use-fuzzy t ; 貌似自动弹出的menu的是没有fuzzy的，但手动补全是可以的
-	    ;; ac-auto-show-menu 0.1
-	    ac-use-quick-help nil
-	    ac-ignore-case t
-	    ac-use-comphist t
-	    )
+      (setq
+       ac-use-fuzzy t ; 貌似自动弹出的menu的是没有fuzzy的，但手动补全是可以的
+       ;; ac-auto-show-menu 0.1
+       ac-use-quick-help nil
+       ;; ac-ignore-case t
+       ac-use-comphist t
+       )
       (add-hook 
        'auto-complete-mode-hook 
        (lambda() 
@@ -691,9 +692,10 @@ and set the focus back to Emacs frame"
       ;;(global-set-key (kbd "C-c h") 'helm-mini)
       (global-set-key (kbd "M-x") 'undefined)
       (global-set-key (kbd "M-x") 'helm-M-x)
+      (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
       (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
       (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-      (global-set-key (kbd "C-x C-f") 'helm-find-files)
+      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
       (global-set-key (kbd "C-x b") 'helm-buffers-list)
       (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
       (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
@@ -709,24 +711,34 @@ and set the focus back to Emacs frame"
       (setq helm-grep-default-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-default-recurse-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
 	    helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number %s %s %s"
-	    helm-move-to-line-cycle-in-source t ; 使可以循环
+	    helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环
 	    helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
 	    helm-split-window-in-side-p t
 	    helm-ff-file-name-history-use-recentf t
 	    helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
 	    helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
 	    helm-recentf-fuzzy-match    t
+	    helm-follow-mode-persistent t
 	    )
       
       (with-eval-after-load 'helm
 	(helm-mode 1)
+	;; 光标移动时也定位位置
+	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	
+	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+	(custom-set-faces
+	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
+	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))))
 	(define-key helm-map (kbd "<f1>") 'nil)
 	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
 	(define-key helm-map (kbd "C-h") 'nil)
-	(define-key helm-map (kbd "C-t") 'nil)
+	(define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
+	(define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
 	(define-key helm-map (kbd "C-v") 'nil)
-	(define-key helm-map (kbd "C-r") 'helm-previous-line)
-	(define-key helm-map (kbd "C-s") 'helm-next-line)
+	(define-key helm-map (kbd "<f4>") 'helm-next-line)
+	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
+	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
 	(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
 	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
 	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
@@ -736,49 +748,12 @@ and set the focus back to Emacs frame"
 
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
-		    'helm-hide-minibuffer-maybe)))
+		    'helm-hide-minibuffer-maybe))        
+	)
 
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
       (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
-
-      ;; helm swoop配置
-      (autoload 'helm-swoop "helm-swoop" nil t)
-      (global-set-key (kbd "C-s") 'helm-swoop)
-      ;; (setq helm-swoop-use-fuzzy-match t)
-      (setq helm-swoop-pre-input-function
-	    (lambda ()
-	      (if (or (not transient-mark-mode) (region-active-p))
-		  (buffer-substring-no-properties (region-beginning) (region-end))
-		""))) ; 不自动填写搜索内容，如果有选中就搜索选中内容
-
-      (defun my-helm-swoop-yank-thing-at-point ()
-	"Insert string at which the point helm-swoop started."
-	(interactive)
-	(let ($amend $buf)
-	  (with-selected-window helm-swoop-synchronizing-window
-	    (setq $buf (get-buffer (cdr helm-swoop-last-point)))
-	    (when $buf
-	      (with-current-buffer $buf
-		(goto-char (car helm-swoop-last-point))
-		(let ((pt (point))
-		      (le (line-end-position)))
-		  (forward-word 1)
-		  (if (> (point) le)
-		      (goto-char pt)
-		    (setq $amend (buffer-substring-no-properties pt (point)))))
-		(setcar helm-swoop-last-point (point))
-		)))
-	  (when $amend
-	    (with-selected-window (minibuffer-window)
-	      (insert $amend)))))
-      (with-eval-after-load 'helm-swoop
-	(define-key helm-swoop-map (kbd "C-r") 'helm-previous-line)
-	(define-key helm-swoop-map (kbd "C-s") 'helm-next-line)
-	(define-key helm-swoop-map (kbd "C-w") 'my-helm-swoop-yank-thing-at-point)
-	(define-key helm-multi-swoop-map (kbd "C-r") 'helm-previous-line)
-	(define-key helm-multi-swoop-map (kbd "C-s") 'helm-next-line))
-      
       )
   (progn
     ;; ivy确实好用，就是公司win7机子有时c-x c-f会有延迟
@@ -921,7 +896,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (hideshowvis-setting))
 (defadvice hs-hide-block (before my-hs-hide-block activate)
   (hideshowvis-setting))
-
 
 
 (load-theme 'zenburn t)
