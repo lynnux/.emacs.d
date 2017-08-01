@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 20:45:30 lynnux>
+;; Time-stamp: <2017-08-01 09:15:09 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -293,6 +293,7 @@
 (add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
+(add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -737,7 +738,9 @@ and set the focus back to Emacs frame"
 	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
 	(custom-set-faces
 	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
-	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))))
+	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
+	 ;;helm-match-item 
+	 )
 	(define-key helm-map (kbd "<f1>") 'nil)
 	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
 
@@ -919,6 +922,5 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (hideshowvis-setting))
 (defadvice hs-hide-block (before my-hs-hide-block activate)
   (hideshowvis-setting))
-
 
 (load-theme 'zenburn t)
