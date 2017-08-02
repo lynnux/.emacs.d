@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-01 09:15:09 lynnux>
+;; Time-stamp: <2017-08-02 21:52:34 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -518,6 +518,12 @@ and set the focus back to Emacs frame"
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (autoload 'er/expand-region "expand-region" nil t)
 (global-set-key "\C-t" 'er/expand-region)
+;; see https://github.com/magnars/expand-region.el/issues/229
+(with-eval-after-load "expand-region"
+  (global-set-key (kbd "C-t") #'(lambda (arg)
+				  (interactive "P")
+				  (setq transient-mark-mode t)
+				  (set-mark-command arg))))
 ;;; 解决被(setq show-paren-style 'expression)覆盖的问题
 (defadvice show-paren-function (around not-show-when-expand-region activate)
   (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
