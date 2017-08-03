@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-03 09:46:14 lynnux>
+;; Time-stamp: <2017-08-03 15:05:10 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -827,14 +827,16 @@ and set the focus back to Emacs frame"
 
 
 ;; 自动indent
-(autoload 'aggressive-indent-mode "aggressive-indent" nil t)
-(add-hook 'prog-mode-hook #'aggressive-indent-mode)
+(require 'aggressive-indent)
+(global-aggressive-indent-mode 1)
 (with-eval-after-load 'aggressive-indent
+  (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
   (add-to-list
    'aggressive-indent-dont-indent-if
    '(and (derived-mode-p 'c++-mode)
 	 (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
 			     (thing-at-point 'line))))))
+
 
 ;; hydra使用autoload的方式 https://github.com/abo-abo/hydra/issues/149
 (defun hydra-hideshow/body()
