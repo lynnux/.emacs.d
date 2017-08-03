@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-03 08:52:04 lynnux>
+;; Time-stamp: <2017-08-03 09:46:14 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -520,7 +520,7 @@ and set the focus back to Emacs frame"
 (global-set-key "\C-t" 'er/expand-region)
 ;; see https://github.com/magnars/expand-region.el/issues/229
 (with-eval-after-load "expand-region"
-  (global-set-key (kbd "C-t") #'(lambda (arg)
+  (global-set-key (kbd "C-q") #'(lambda (arg)
 				  (interactive "P")
 				  (setq transient-mark-mode t)
 				  (set-mark-command arg))))
