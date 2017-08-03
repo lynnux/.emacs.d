@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-02 21:52:34 lynnux>
+;; Time-stamp: <2017-08-03 08:52:04 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -740,6 +740,7 @@ and set the focus back to Emacs frame"
 	
 	;; 光标移动时也自动定位到所在位置
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	(push "RG" helm-source-names-using-follow)
 	
 	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
 	(custom-set-faces
