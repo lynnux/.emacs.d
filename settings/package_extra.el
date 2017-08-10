@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-03 15:05:10 lynnux>
+;; Time-stamp: <2017-08-10 15:44:36 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -623,6 +623,7 @@ and set the focus back to Emacs frame"
       neo-show-hidden-files t
       neo-auto-indent-point t
       neo-vc-integration nil)
+(with-eval-after-load 'neotree (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node))
 
 ;; 有点类似自动截段长行的效果，默认绑定到m-q，elisp-mode无效
 (autoload 'unfill-toggle "unfill" nil t)
