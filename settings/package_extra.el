@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-10 16:47:19 lynnux>
+;; Time-stamp: <2017-08-14 10:09:39 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -487,7 +487,7 @@
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
 ;; compile，加入了单独编译某个文件
-(setq compilation-auto-jump-to-first-error t
+(setq compilation-auto-jump-to-first-error nil ; 自动跳到错误，这个在只有warning时相当烦！
       compilation-scroll-output t)
 (autoload 'smart-compile "smart-compile" nil t)
 (autoload 'smart-compile-c-compile "smart-compile" nil t)
