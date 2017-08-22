@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 11:21:05 lynnux>
+;; Time-stamp: <2017-08-22 19:50:38 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -39,7 +39,7 @@
   (files-recent-type (mapcar (lambda (x) (car x)) session-file-alist)))
 
 ;;buffer管理，真的太好用了！
-(global-set-key (kbd "C-x C-b") 'bs-show) ;这个更好
+(global-set-key (kbd "C-x b") 'bs-show) ;这个更好
 (with-eval-after-load 'bs 
   (setq bs-default-configuration "files-and-scratch")
   (define-key bs-mode-map "s"       'bs-show-sorted)

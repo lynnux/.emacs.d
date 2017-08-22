@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-14 10:09:39 lynnux>
+;; Time-stamp: <2017-08-22 19:51:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -708,7 +708,6 @@ and set the focus back to Emacs frame"
       (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，这个有坑啊，居然读gitignore! 文档rg --help
 
       (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
-      (global-set-key (kbd "C-x b") 'helm-buffers-list)
       (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
       (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
       (global-set-key (kbd "<f6>") 'helm-resume)
