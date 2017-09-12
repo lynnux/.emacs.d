@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-22 19:51:20 lynnux>
+;; Time-stamp: <2017-09-12 13:35:37 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -248,7 +248,7 @@
 (defun lynnux-c-mode-hook ()
   (setq tab-width 4 indent-tabs-mode nil)
   (setq c-hungry-delete-key t)		; 
-  (setq c-auto-newline 1)
+  ;;(setq c-auto-newline 1)
   (c-set-style "stroustrup")
   (gtags-settings)
   ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
