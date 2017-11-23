@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-09-12 13:35:37 lynnux>
+;; Time-stamp: <2017-11-23 19:08:08 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -254,7 +254,7 @@
   ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
   (local-set-key (kbd "C-c C-c") 'comment-eclipse)
   (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
-  (local-set-key [(meta f8)] 'clang-format-auto)
+  ;; (local-set-key [(meta f8)] 'clang-format-auto)
   )
 
 (defun lynnux-c++-mode-hook()
@@ -371,7 +371,7 @@
   (defun gtags-update-hook ()
     (when (gtags-root-dir)		;没有多余的副作用
       (gtags-update)))
-  (add-hook 'after-save-hook #'gtags-update-hook)
+  ;; (add-hook 'after-save-hook #'gtags-update-hook)
   (require 'ggtags)
   (ggtags-mode 1)
   (add-hook 'ggtags-global-mode-hook (lambda()
