@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-31 13:19:52 lynnux>
+;; Time-stamp: <2017-12-07 10:38:29 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -45,6 +45,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
       (comment-or-uncomment-region (line-beginning-position) (line-end-position))
     (comment-dwim arg)))
 (global-set-key "\M-;" 'qiang-comment-dwim-line)
+(global-set-key [(meta ?/)] 'comment-line)
+
 (defun comment-eclipse ()
   (interactive)
   (let ((start (line-beginning-position))
@@ -52,11 +54,11 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
     (when (or (not transient-mark-mode) (region-active-p))
       (setq start (save-excursion
                     (goto-char (region-beginning))
-;;                    (beginning-of-line)
+		    ;;                    (beginning-of-line)
                     (point))
             end (save-excursion
                   (goto-char (region-end))
-;;                  (end-of-line)
+		  ;;                  (end-of-line)
                   (point))))
     (comment-or-uncomment-region start end)))
 (global-set-key (kbd "C-c C-c") 'comment-eclipse)
@@ -146,30 +148,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
 	((looking-at "\\s\)") (forward-char 1) (backward-list 1))
 	(t (self-insert-command (or arg 1)))))
-
-;; 临时记号, C-,标记，C-.返回到标记，并且C-.可以来回切换
-(global-set-key [(control ?\,)] 'ska-point-to-register)
-(global-set-key [(control ?\.)] 'ska-jump-to-register)
-(defun ska-point-to-register()
-  "Store cursorposition _fast_ in a register. 
-Use ska-jump-to-register to jump back to the stored 
-position."
-  (interactive)
-  (setq zmacs-region-stays t)
-  (point-to-register 8))
-
-(defun ska-jump-to-register()
-  "Switches between current cursorposition and position
-that was stored with ska-point-to-register."
-  (interactive)
-  (setq zmacs-region-stays t)
-  ;; 如果没有记号，就调用M-.的功能
-  (if (get-register 8)
-    (let ((tmp (point-marker)))
-      (jump-to-register 8)
-      (set-register 8 tmp))
-    (setq unread-command-events (listify-key-sequence "\M-.")))
-  )
 
 ;; C-t 设置标记，原键用c-x t代替，用colemak后，t在食指太容易按到
 (global-set-key (kbd "C-q") 'set-mark-command)

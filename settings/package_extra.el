@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-05 20:48:42 lynnux>
+;; Time-stamp: <2017-12-07 10:31:51 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -294,6 +294,12 @@
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
+(global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
+(defun my-save-pos()
+  (interactive)
+  )
+(add-to-list 'jl-insert-marker-funcs "my-save-pos")
+
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
