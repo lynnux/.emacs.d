@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-07 10:31:51 lynnux>
+;; Time-stamp: <2017-12-07 11:14:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -573,7 +573,9 @@ and set the focus back to Emacs frame"
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-(with-eval-after-load 'multiple-cursors (define-key mc/keymap (kbd "C-v") nil))
+(with-eval-after-load 'multiple-cursors
+  (define-key mc/keymap (kbd "C-v") nil)
+  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode))
 
 ;;; 屏幕内快速跳过，默认是跳到字母开头的单词位置，C-u C-j改为跳回原来的位置，C-u C-u C-j是跳到行
 (autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
