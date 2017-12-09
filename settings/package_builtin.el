@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-08-22 19:50:38 lynnux>
+;; Time-stamp: <2017-12-07 10:33:26 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -332,8 +332,7 @@ For later retrieval using `file-cache-read-cache-from-file'"
 (add-hook 'kill-emacs-hook 'lynnux-save-filecache)
 (setq completion-ignore-case t) 	; filecache中是不区分大小写的，而补全需要
 
-;; M-/更好用
-(global-set-key [(meta ?/)] 'hippie-expand)
+(global-set-key [(control ?\.)] 'hippie-expand)
 (defun try-zwz-expand-dabbrev-visible (old)
   (save-excursion (try-expand-dabbrev-visible old)))
 (setq hippie-expand-try-functions-list 

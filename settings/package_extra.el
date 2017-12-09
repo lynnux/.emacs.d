@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-09-12 13:35:37 lynnux>
+;; Time-stamp: <2017-12-07 11:14:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -254,7 +254,7 @@
   ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
   (local-set-key (kbd "C-c C-c") 'comment-eclipse)
   (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
-  (local-set-key [(meta f8)] 'clang-format-auto)
+  ;; (local-set-key [(meta f8)] 'clang-format-auto)
   )
 
 (defun lynnux-c++-mode-hook()
@@ -294,6 +294,12 @@
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
+(global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
+(defun my-save-pos()
+  (interactive)
+  )
+(add-to-list 'jl-insert-marker-funcs "my-save-pos")
+
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -350,7 +356,7 @@
   (show-paren-mode t)
   (local-set-key (kbd "<f12>") 'xref-find-definitions)
   (local-set-key (kbd "M-.") 'xref-find-definitions) ; 这个还是原生的好用
-  (local-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
+  (local-set-key (kbd "<M-down-mouse-1>") 'xref-find-definitions)
   )
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
@@ -371,7 +377,7 @@
   (defun gtags-update-hook ()
     (when (gtags-root-dir)		;没有多余的副作用
       (gtags-update)))
-  (add-hook 'after-save-hook #'gtags-update-hook)
+  ;; (add-hook 'after-save-hook #'gtags-update-hook)
   (require 'ggtags)
   (ggtags-mode 1)
   (add-hook 'ggtags-global-mode-hook (lambda()
@@ -381,7 +387,7 @@
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
   (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
 					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
+  (local-set-key (kbd "<M-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
   (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
 					;(turn-on-eldoc-mode) ; 会卡
   )
@@ -538,6 +544,7 @@ and set the focus back to Emacs frame"
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
 (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
+(modify-coding-system-alist 'file "\\.lua\\'" 'utf-8) ; 不要带BOM，BOM是ms特有的
 
 ;; markdown
 (autoload 'markdown-mode "markdown-mode"
@@ -556,16 +563,19 @@ and set the focus back to Emacs frame"
 (autoload 'mc/mark-previous-like-this "multiple-cursors" nil t)
 (autoload 'mc/mark-next-like-this "multiple-cursors" nil t)
 (autoload 'mc/edit-lines "multiple-cursors" nil t)
-(global-unset-key (kbd "M-<down-mouse-1>"))  ; CTRL + 鼠标单击给ggtag用了
-(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
+(global-unset-key (kbd "C-<down-mouse-1>"))
+(global-set-key (kbd "C-<mouse-1>") 'mc/add-cursor-on-click)
 (global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
 (global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
-(global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
-(global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<wheel-up>") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-<wheel-down>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+(with-eval-after-load 'multiple-cursors
+  (define-key mc/keymap (kbd "C-v") nil)
+  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode))
 
 ;;; 屏幕内快速跳过，默认是跳到字母开头的单词位置，C-u C-j改为跳回原来的位置，C-u C-u C-j是跳到行
 (autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
@@ -716,7 +726,7 @@ and set the focus back to Emacs frame"
       ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
       (global-set-key (kbd "<f12>") 'helm-etags-select)
       (global-set-key (kbd "M-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
-      (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
+      (global-set-key (kbd "<M-down-mouse-1>") 'helm-etags-select)
 
       ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
       (setq

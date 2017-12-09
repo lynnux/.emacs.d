@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-07-29 16:08:18 lynnux>
+;; Time-stamp: <2017-12-05 20:38:26 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -112,8 +112,8 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (if (string-equal system-type "windows-nt")
     (progn 
       ;; For Windows
-      (global-set-key (kbd "<C-wheel-up>") 'text-scale-increase)
-      (global-set-key (kbd "<C-wheel-down>") 'text-scale-decrease))
+      (global-set-key (kbd "<M-wheel-up>") 'text-scale-increase)
+      (global-set-key (kbd "<M-wheel-down>") 'text-scale-decrease))
   (progn
     (global-set-key (kbd "<C-mouse-4>") 'text-scale-increase)
     (global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease)

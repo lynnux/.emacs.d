@@ -29,8 +29,8 @@ if "XL-PC" == utils.system_name()
    and MinorVersion == 1
    and BuildNumber == 7601
 then
-   emacsclientw = "D:\\green\\emacs-25.2-x86_64\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\emacs-25.2-x86_64\\bin\\runemacs.exe"
+   emacsclientw = "D:\\green\\emacs-w64-25.3-O2-with-modules\\emacs\\bin\\emacsclientw.exe"
+   runemacs = "D:\\green\\emacs-w64-25.3-O2-with-modules\\emacs\\bin\\runemacs.exe"
 end
 
 -- get commandline
