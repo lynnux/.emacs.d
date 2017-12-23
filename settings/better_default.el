@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-07 10:38:29 lynnux>
+;; Time-stamp: <2017-12-23 16:03:14 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -138,16 +138,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (put 'downcase-region 'disabled nil);; 选中区域 C-X C-L 
 (put 'upcase-region 'disabled nil);; 选中区域 C-X C-U
-
-(global-set-key "%" 'match-paren)
-
-;; 括号匹配跳转
-(defun match-paren (arg)
-  "Go to the matching paren if on a paren; otherwise insert %."
-  (interactive "p")
-  (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-	((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-	(t (self-insert-command (or arg 1)))))
 
 ;; C-t 设置标记，原键用c-x t代替，用colemak后，t在食指太容易按到
 (global-set-key (kbd "C-q") 'set-mark-command)
