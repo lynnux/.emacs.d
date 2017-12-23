@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-07 11:14:42 lynnux>
+;; Time-stamp: <2017-12-23 09:55:17 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -543,8 +543,10 @@ and set the focus back to Emacs frame"
 
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+(add-to-list 'auto-mode-alist '("\\.nse$" . lua-mode))
 (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
 (modify-coding-system-alist 'file "\\.lua\\'" 'utf-8) ; 不要带BOM，BOM是ms特有的
+(modify-coding-system-alist 'file "\\.nse\\'" 'utf-8)
 
 ;; markdown
 (autoload 'markdown-mode "markdown-mode"
