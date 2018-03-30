@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-03-30 14:33:10 lynnux>
+;; Time-stamp: <2018-03-30 14:56:46 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -949,6 +949,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; go lang
 (autoload 'go-mode "go-mode" nil t)
 (add-to-list 'auto-mode-alist (cons "\\.go\\'" 'go-mode))
-(with-eval-after-load 'go-mode (add-hook 'before-save-hook 'gofmt-before-save))
+;; (with-eval-after-load 'go-mode (add-hook 'before-save-hook 'gofmt-before-save))
 
 (load-theme 'zenburn t)
