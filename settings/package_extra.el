@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-05-23 14:51:57 lynnux>
+;; Time-stamp: <2018-05-23 15:37:49 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -156,8 +156,8 @@
   )
 (define-globalized-minor-mode global-highlight-symbol-mode highlight-symbol-mode highlight-symbol-mode-on)
 (global-highlight-symbol-mode 1)
-;;(require 'highlight-symbol-scroll-out)
-;;(global-highlight-symbol-scroll-out-mode)
+(require 'highlight-symbol-scroll-out)
+(global-highlight-symbol-scroll-out-mode)
 
 (require 'cursor-chg)
 (change-cursor-mode )

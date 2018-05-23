@@ -39,7 +39,7 @@
   "previous highlighted symbol")
 (make-variable-buffer-local 'previous-highlighted-symbol)
 
-(defun highlight-symbol-jump-in-viewport (&optional symbol &optional dir)
+(defun highlight-symbol-jump-in-viewport (&optional symbol dir)
   (let ((symbol (or symbol (highlight-symbol-get-symbol)))
 	(dir (or dir (if previous-window-pos
 			 (if (> (window-start) previous-window-pos)
