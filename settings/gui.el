@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-05 20:38:26 lynnux>
+;; Time-stamp: <2018-05-23 15:08:20 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -120,14 +120,14 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
     ))
 
 ;; 设置颜色，根据theme来设置，M-X list-colors-display 可以显示更多的颜色
-(set-face-background 'show-paren-match-face "slate blue")
-;(set-face-foreground 'show-paren-match-face "gray15")
+;; (set-face-background 'show-paren-match-face "slate blue") ;; 27无效
+;;(set-face-foreground 'show-paren-match-face "gray15")
 
 ;; 当光标位于括号上时，类似选中的效果
 (add-hook 'emacs-lisp-mode-hook (lambda ()
 				  (make-local-variable 'show-paren-style)
 				  (setq show-paren-style 'expression)
-				  ;(face-remap-add-relative 'show-paren-match '((:background "black"))) ; elisp单独一个颜色
+					;(face-remap-add-relative 'show-paren-match '((:background "black"))) ; elisp单独一个颜色
 				  ))
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
