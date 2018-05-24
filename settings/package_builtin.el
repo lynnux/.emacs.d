@@ -1,4 +1,4 @@
-;; Time-stamp: <2017-12-07 10:33:26 lynnux>
+;; Time-stamp: <2018-05-24 16:23:41 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -272,7 +272,7 @@ Run occur in all buffers whose names match this type for REXP."
 
 ;; ctags/etags，更多设置在plugin_basic里
 (global-set-key (kbd "C-;") 'complete-tag)
-(global-set-key (kbd "C-'") 'completion-at-point) ; 24.x增强了
+;; (global-set-key (kbd "C-'") 'completion-at-point) ; 24.x增强了
 (setq completion-cycle-threshold 3) 	; 不超过3个补全数的话就不显示补全窗口
 
 ;;; isearch
@@ -332,7 +332,7 @@ For later retrieval using `file-cache-read-cache-from-file'"
 (add-hook 'kill-emacs-hook 'lynnux-save-filecache)
 (setq completion-ignore-case t) 	; filecache中是不区分大小写的，而补全需要
 
-(global-set-key [(control ?\.)] 'hippie-expand)
+(global-set-key (kbd "C-'") 'hippie-expand)
 (defun try-zwz-expand-dabbrev-visible (old)
   (save-excursion (try-expand-dabbrev-visible old)))
 (setq hippie-expand-try-functions-list 

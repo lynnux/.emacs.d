@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-05-23 15:37:49 lynnux>
+;; Time-stamp: <2018-05-24 16:25:47 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -355,8 +355,8 @@
   (eldoc-add-command 'electrify-return-if-match)
   (show-paren-mode t)
   (local-set-key (kbd "<f12>") 'xref-find-definitions)
-  (local-set-key (kbd "M-.") 'xref-find-definitions) ; 这个还是原生的好用
-  (local-set-key (kbd "<M-down-mouse-1>") 'xref-find-definitions)
+  (local-set-key (kbd "C-.") 'xref-find-definitions) ; 这个还是原生的好用
+  (local-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
   )
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
@@ -387,7 +387,7 @@
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
   (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
 					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  (local-set-key (kbd "<M-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
+  (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
   (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
 					;(turn-on-eldoc-mode) ; 会卡
   )
@@ -564,12 +564,12 @@ and set the focus back to Emacs frame"
 (autoload 'mc/mark-previous-like-this "multiple-cursors" nil t)
 (autoload 'mc/mark-next-like-this "multiple-cursors" nil t)
 (autoload 'mc/edit-lines "multiple-cursors" nil t)
-(global-unset-key (kbd "C-<down-mouse-1>"))
-(global-set-key (kbd "C-<mouse-1>") 'mc/add-cursor-on-click)
+(global-unset-key (kbd "<M-down-mouse-1>"))
+(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
 (global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
 (global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
-(global-set-key (kbd "C-<wheel-up>") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-<wheel-down>") 'mc/mark-next-like-this)
+(global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
+(global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
@@ -726,8 +726,8 @@ and set the focus back to Emacs frame"
       ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
       ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
       (global-set-key (kbd "<f12>") 'helm-etags-select)
-      (global-set-key (kbd "M-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
-      (global-set-key (kbd "<M-down-mouse-1>") 'helm-etags-select)
+      (global-set-key (kbd "C-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
+      (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
 
       ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
       (setq
@@ -779,12 +779,9 @@ and set the focus back to Emacs frame"
 	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 
 	;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原无
-	(define-key helm-map (kbd "C-r") 'helm-previous-line) ; 原history
-	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ;原无
-	(define-key helm-find-files-map (kbd "C-r") 'helm-previous-line) ;原history
+	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
 	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
-	(define-key helm-buffer-map (kbd "C-r") 'helm-previous-line) ; 原history
 
 	;; helm-locate即everything里打开所在位置
 	(define-key helm-generic-files-map (kbd "C-x C-d")
