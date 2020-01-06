@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-05-24 16:25:47 lynnux>
+;; Time-stamp: <2020-01-06 16:32:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -156,8 +156,8 @@
   )
 (define-globalized-minor-mode global-highlight-symbol-mode highlight-symbol-mode highlight-symbol-mode-on)
 (global-highlight-symbol-mode 1)
-(require 'highlight-symbol-scroll-out)
-(global-highlight-symbol-scroll-out-mode)
+;; (require 'highlight-symbol-scroll-out)
+;; (global-highlight-symbol-scroll-out-mode)
 
 (require 'cursor-chg)
 (change-cursor-mode )
@@ -387,9 +387,10 @@
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
   (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
 					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
   (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
-					;(turn-on-eldoc-mode) ; 会卡
+  (local-set-key (kbd "C-.") 'ggtags-find-tag-dwim)
+  (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
+  ;;(turn-on-eldoc-mode) ; 会卡
   )
 
 ;; ruby mode
