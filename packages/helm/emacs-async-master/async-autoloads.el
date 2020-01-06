@@ -3,11 +3,11 @@
 ;;; Code:
 
 
-;;;### (autoloads nil "async" "async.el" (22844 55276 0 0))
+;;;### (autoloads nil "async" "async.el" (0 0 0 0))
 ;;; Generated autoloads from async.el
 
 (autoload 'async-start-process "async" "\
-Start the executable PROGRAM asynchronously.  See `async-start'.
+Start the executable PROGRAM asynchronously named NAME.  See `async-start'.
 PROGRAM is passed PROGRAM-ARGS, calling FINISH-FUNC with the
 process object when done.  If FINISH-FUNC is nil, the future
 object will return the process object when the program is
@@ -66,10 +66,12 @@ returns nil.  It can still be useful, however, as an argument to
 
 \(fn START-FUNC &optional FINISH-FUNC)" nil nil)
 
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "async" '("async-")))
+
 ;;;***
 
-;;;### (autoloads nil "async-bytecomp" "async-bytecomp.el" (22844
-;;;;;;  55276 0 0))
+;;;### (autoloads nil "async-bytecomp" "async-bytecomp.el" (0 0 0
+;;;;;;  0))
 ;;; Generated autoloads from async-bytecomp.el
 
 (autoload 'async-byte-recompile-directory "async-bytecomp" "\
@@ -95,10 +97,25 @@ Async compilation of packages can be controlled by
 
 \(fn &optional ARG)" t nil)
 
+(autoload 'async-byte-compile-file "async-bytecomp" "\
+Byte compile Lisp code FILE asynchronously.
+
+Same as `byte-compile-file' but asynchronous.
+
+\(fn FILE)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "async-bytecomp" '("async-byte")))
+
 ;;;***
 
-;;;### (autoloads nil "dired-async" "dired-async.el" (22844 55276
-;;;;;;  0 0))
+;;;### (autoloads nil "async-test" "async-test.el" (0 0 0 0))
+;;; Generated autoloads from async-test.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "async-test" '("async-test-")))
+
+;;;***
+
+;;;### (autoloads nil "dired-async" "dired-async.el" (0 0 0 0))
 ;;; Generated autoloads from dired-async.el
 
 (defvar dired-async-mode nil "\
@@ -116,10 +133,39 @@ Do dired actions asynchronously.
 
 \(fn &optional ARG)" t nil)
 
+(autoload 'dired-async-do-copy "dired-async" "\
+Run ‘dired-do-copy’ asynchronously.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'dired-async-do-symlink "dired-async" "\
+Run ‘dired-do-symlink’ asynchronously.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'dired-async-do-hardlink "dired-async" "\
+Run ‘dired-do-hardlink’ asynchronously.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'dired-async-do-rename "dired-async" "\
+Run ‘dired-do-rename’ asynchronously.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "dired-async" '("dired-async-")))
+
 ;;;***
 
-;;;### (autoloads nil nil ("async-pkg.el" "async-test.el" "smtpmail-async.el")
-;;;;;;  (22844 55276 0 0))
+;;;### (autoloads nil "smtpmail-async" "smtpmail-async.el" (0 0 0
+;;;;;;  0))
+;;; Generated autoloads from smtpmail-async.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "smtpmail-async" '("async-smtpmail-")))
+
+;;;***
+
+;;;### (autoloads nil nil ("async-pkg.el") (0 0 0 0))
 
 ;;;***
 
