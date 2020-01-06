@@ -5,7 +5,7 @@
 ;; Author: Phil Dawes
 ;; URL: https://github.com/racer-rust/emacs-racer
 ;; Version: 1.3
-;; Package-Requires: ((emacs "24.3") (rust-mode "0.2.0") (dash "2.13.0") (s "1.10.0") (f "0.18.2"))
+;; Package-Requires: ((emacs "25.1") (rust-mode "0.2.0") (dash "2.13.0") (s "1.10.0") (f "0.18.2") (pos-tip "0.4.6"))
 ;; Keywords: abbrev, convenience, matching, rust, tools
 
 ;; This file is not part of GNU Emacs.
@@ -68,6 +68,7 @@
 (require 'thingatpt)
 (require 'button)
 (require 'help-mode)
+(autoload 'pos-tip-show-no-propertize "pos-tip")
 
 (defgroup racer nil
   "Code completion, goto-definition and docs browsing for Rust via racer."
@@ -188,8 +189,10 @@ racer or racer.el."
   "Call racer command COMMAND with args ARGS.
 Return stdout if COMMAND exits normally, otherwise show an
 error."
-  (let ((rust-src-path (or racer-rust-src-path (getenv "RUST_SRC_PATH")))
-        (cargo-home (or racer-cargo-home (getenv "CARGO_HOME"))))
+  (let ((rust-src-path (or (when racer-rust-src-path (expand-file-name racer-rust-src-path))
+                           (getenv "RUST_SRC_PATH")))
+        (cargo-home (or (when racer-cargo-home (expand-file-name racer-cargo-home))
+                        (getenv "CARGO_HOME"))))
     (when (null rust-src-path)
       (user-error "You need to set `racer-rust-src-path' or `RUST_SRC_PATH'"))
     (unless (file-exists-p rust-src-path)
@@ -197,8 +200,8 @@ error."
                   rust-src-path))
     (let ((default-directory (or (racer--cargo-project-root) default-directory))
           (process-environment (append (list
-                                        (format "RUST_SRC_PATH=%s" (expand-file-name rust-src-path))
-                                        (format "CARGO_HOME=%s" (expand-file-name cargo-home)))
+                                        (format "RUST_SRC_PATH=%s" rust-src-path)
+                                        (format "CARGO_HOME=%s" cargo-home))
                                        process-environment)))
       (-let [(exit-code stdout _stderr)
              (racer--shell-command racer-cmd (cons command args))]
@@ -224,56 +227,91 @@ Evaluate BODY, then delete the temporary file."
     (insert-file-contents-literally file)
     (buffer-string)))
 
+(defmacro racer--with-temp-buffers (stdout-sym stderr-sym &rest body)
+  (declare (indent 2) (debug (symbolp body)))
+  `(let ((kill-buffer-query-functions nil)
+         (,stdout-sym (generate-new-buffer " *racer-stdout*"))
+         (,stderr-sym (generate-new-buffer " *racer-stderr*")))
+     (unwind-protect
+         (progn ,@body)
+       (when (buffer-name ,stdout-sym)
+         (kill-buffer ,stdout-sym))
+       (when (buffer-name ,stderr-sym)
+         (kill-buffer ,stderr-sym)))))
+
+(defcustom racer-command-timeout nil
+  "Abandon completion if racer process fails to respond for that
+many seconds (maybe float). nil means wait indefinitely."
+  :type 'number
+  :group 'racer)
+
 (defun racer--shell-command (program args)
-  "Execute PROGRAM with ARGS.
-Return a list (exit-code stdout stderr)."
-  (racer--with-temporary-file tmp-file-for-stderr
-    (let (exit-code stdout stderr)
-      ;; Create a temporary buffer for `call-process` to write stdout
-      ;; into.
-      (with-temp-buffer
-        (setq exit-code
-              (apply #'call-process program nil
-                     (list (current-buffer) tmp-file-for-stderr)
-                     nil args))
-        (setq stdout (buffer-string)))
-      (setq stderr (racer--slurp tmp-file-for-stderr))
+  "Execute PROGRAM with ARGS. Return a list (exit-code stdout
+stderr)."
+  (racer--with-temp-buffers stdout stderr
+    (let (exit-code
+          stdout-result
+          stderr-result
+          (proc (make-process :name "*async-racer*"
+                              :buffer stdout
+                              :command (cons program args)
+                              :connection-type 'pipe
+                              :stderr stderr)))
+      (while
+          (and (process-live-p proc)
+               (with-local-quit
+                 (accept-process-output proc racer-command-timeout))))
+      (when (process-live-p proc) (kill-process proc))
+      (setq exit-code (process-exit-status proc)
+            stderr-result (with-current-buffer stderr (buffer-string))
+            stdout-result (with-current-buffer stdout (buffer-string)))
       (setq racer--prev-state
             (list
              :program program
              :args args
              :exit-code exit-code
-             :stdout stdout
-             :stderr stderr
+             :stdout stdout-result
+             :stderr stderr-result
              :default-directory default-directory
              :process-environment process-environment))
-      (list exit-code stdout stderr))))
+      (list exit-code stdout-result stderr-result))))
+
 
 (defun racer--call-at-point (command)
   "Call racer command COMMAND at point of current buffer.
 Return a list of all the lines returned by the command."
   (racer--with-temporary-file tmp-file
     (write-region nil nil tmp-file nil 'silent)
-    (s-lines
-     (s-trim-right
-      (racer--call command
-                   (number-to-string (line-number-at-pos))
-                   (number-to-string (racer--current-column))
-                   (buffer-file-name (buffer-base-buffer))
-                   tmp-file)))))
+    (let ((racer-args (list
+                       command
+                       (number-to-string (line-number-at-pos))
+                       (number-to-string (racer--current-column)))))
+      ;; If this buffer is backed by a file, pass that to racer too.
+      (-when-let (file-name (buffer-file-name (buffer-base-buffer)))
+        (setq racer-args
+              (append racer-args (list file-name))))
+
+      (setq racer-args (append racer-args (list tmp-file)))
+      (s-lines
+       (s-trim-right
+        (apply #'racer--call racer-args))))))
 
 (defun racer--read-rust-string (string)
   "Convert STRING, a rust string literal, to an elisp string."
   (when string
-    (->> string
-         ;; Remove outer double quotes.
-         (s-chop-prefix "\"")
-         (s-chop-suffix "\"")
-         ;; Replace escaped characters.
-         (s-replace "\\n" "\n")
-         (s-replace "\\\"" "\"")
-         (s-replace "\\'" "'")
-         (s-replace "\\;" ";"))))
+    ;; Remove outer double quotes.
+    (setq string (s-chop-prefix "\"" string))
+    (setq string (s-chop-suffix "\"" string))
+    ;; Translate escape sequences.
+    (replace-regexp-in-string
+     (rx "\\" (group anything))
+     (lambda (whole-match)
+       (let ((escaped-char (match-string 1 whole-match)))
+         (if (equal escaped-char "n")
+             "\n"
+           escaped-char)))
+     string
+     t t)))
 
 (defun racer--split-parts (raw-output)
   "Given RAW-OUTPUT from racer, split on semicolons and doublequotes.
@@ -310,10 +348,18 @@ split it into its constituent parts."
             :signature (nth 6 match-parts)
             :docstring (if (> (length docstring) 0) docstring nil)))))
 
+(defun racer--order-descriptions (descriptions)
+  (sort descriptions
+        (lambda (a b)
+          (let ((a (or (plist-get a :docstring) ""))
+                (b (or (plist-get b :docstring) "")))
+            (> (length a) (length b))))))
+
 (defun racer--describe-at-point (name)
-  "Get a description of the symbol at point matching NAME.
-If there are multiple possibilities with this NAME, prompt
-the user to choose."
+  "Get a descriptions of the symbols matching symbol at point and
+NAME.  If there are multiple possibilities with this NAME, prompt
+the user to choose.  Return a list of all possibilities that
+start with the user's selection."
   (let* ((output-lines (save-excursion
                          ;; Move to the end of the current symbol, to
                          ;; increase racer accuracy.
@@ -324,14 +370,20 @@ the user to choose."
                              output-lines))
          (relevant-matches (--filter (equal (plist-get it :name) name)
                                      all-matches)))
-    (if (> (length relevant-matches) 1)
-        ;; We might have multiple matches with the same name but
-        ;; different types. E.g. Vec::from.
-        (let ((signature
-               (completing-read "Multiple matches: "
-                                (--map (plist-get it :signature) relevant-matches))))
-          (--first (equal (plist-get it :signature) signature) relevant-matches))
-      (-first-item relevant-matches))))
+    (racer--order-descriptions
+     (if (> (length relevant-matches) 1)
+         ;; We might have multiple matches with the same name but
+         ;; different types. E.g. Vec::from.
+         (let ((signature
+                (completing-read "Multiple matches: "
+                                 (--map (plist-get it :signature) relevant-matches))))
+           (-filter
+            (lambda (x)
+              (let ((sig (plist-get x :signature)))
+                (equal (substring sig 0 (min (length sig) (length signature)))
+                       signature)))
+            relevant-matches))
+       relevant-matches))))
 
 (defun racer--help-buf (contents)
   "Create a *Racer Help* buffer with CONTENTS."
@@ -371,7 +423,8 @@ the user to choose."
            (racer--url-button link-text link-target)
          ;; Otherwise, just discard the target.
          link-text)))
-   markdown))
+   markdown
+   t t))
 
 (defun racer--propertize-all-inline-code (markdown)
   "Given a single line MARKDOWN, replace all instances of `foo` or
@@ -379,13 +432,18 @@ the user to choose."
   (let ((highlight-group
          (lambda (whole-match)
            (racer--syntax-highlight (match-string 1 whole-match)))))
-    (->> markdown
-         (replace-regexp-in-string
-          (rx "[`" (group (+? anything)) "`]")
-          highlight-group)
-         (replace-regexp-in-string
-          (rx "`" (group (+? anything)) "`")
-          highlight-group))))
+    (setq markdown
+          (replace-regexp-in-string
+           (rx "[`" (group (+? anything)) "`]")
+           highlight-group
+           markdown
+           t t))
+    (setq markdown
+          (replace-regexp-in-string
+           (rx "`" (group (+? anything)) "`")
+           highlight-group
+           markdown
+           t t))))
 
 (defun racer--indent-block (str)
   "Indent every line in STR."
@@ -475,9 +533,9 @@ fenced code delimiters and code annotations."
                  sections)))
     (s-join "\n\n" propertized-sections)))
 
-(defun racer--find-file (path line column)
+(defun racer--find-file (path line column find-file-func)
   "Open PATH and move point to LINE and COLUMN."
-  (find-file path)
+  (funcall find-file-func path)
   (goto-char (point-min))
   (forward-line (1- line))
   (forward-char column))
@@ -486,7 +544,8 @@ fenced code delimiters and code annotations."
   (racer--find-file
    (button-get button 'path)
    (button-get button 'line)
-   (button-get button 'column)))
+   (button-get button 'column)
+   #'find-file))
 
 (define-button-type 'racer-src-button
   'action 'racer--button-go-to-src
@@ -531,29 +590,39 @@ For example, 'EnumKind' -> 'an enum kind'."
   "Return a *Racer Help* buffer for the function or type at point.
 If there are multiple candidates at point, use NAME to find the
 correct value."
-  (let ((description (racer--describe-at-point name)))
-    (when description
-      (let* ((name (plist-get description :name))
-             (raw-docstring (plist-get description :docstring))
-             (docstring (if raw-docstring
-                            (racer--propertize-docstring raw-docstring)
-                          "Not documented."))
-             (kind (plist-get description :kind)))
-        (racer--help-buf
-         (format
-          "%s is %s defined in %s.\n\n%s%s"
-          name
-          (racer--kind-description kind)
-          (racer--src-button
-           (plist-get description :path)
-           (plist-get description :line)
-           (plist-get description :column))
-          (if (equal kind "Module")
-              ;; No point showing the 'signature' of modules, which is
-              ;; just their full path.
-              ""
-            (format "    %s\n\n" (racer--syntax-highlight (plist-get description :signature))))
-          docstring))))))
+  (let ((descriptions (racer--describe-at-point name)))
+    (when descriptions
+      (racer--help-buf
+       (let ((output "")
+             (first-iteration t))
+         (dolist (description descriptions output)
+           (unless first-iteration
+             (setf output
+                   (concat output (format "\n---------------------------------------------------------------\n"))))
+           (setf output
+                 (concat
+                  output
+                  (let* ((name (plist-get description :name))
+                         (raw-docstring (plist-get description :docstring))
+                         (docstring (if raw-docstring
+                                        (racer--propertize-docstring raw-docstring)
+                                      "Not documented."))
+                         (kind (plist-get description :kind)))
+                    (setf first-iteration nil)
+                    (format
+                     "%s is %s defined in %s.\n\n%s%s"
+                     name
+                     (racer--kind-description kind)
+                     (racer--src-button
+                      (plist-get description :path)
+                      (plist-get description :line)
+                      (plist-get description :column))
+                     (if (equal kind "Module")
+                         ;; No point showing the 'signature' of modules, which is
+                         ;; just their full path.
+                         ""
+                       (format "    %s\n\n" (racer--syntax-highlight (plist-get description :signature))))
+                     docstring))))))))))
 
 (defun racer-describe ()
   "Show a *Racer Help* buffer for the function or type at point."
@@ -562,6 +631,24 @@ correct value."
     (if buf
         (temp-buffer-window-show buf)
       (user-error "No function or type found at point"))))
+
+(defface racer-tooltip
+  '((((min-colors 16777216))
+     :background "#292C33" :foreground "white")
+    (t
+     :background "black" :foreground "white"))
+  "Face used for the tooltip with `racer-describe-tooltip'")
+
+(defun racer-describe-tooltip ()
+  "Show the docstring in a tooltip.
+The tooltip's face is `racer-tooltip'
+See `racer-describe'."
+  (interactive)
+  (-some-> (symbol-at-point)
+           (symbol-name)
+           (racer--describe)
+           (with-current-buffer (concat "\n" (buffer-string) "\n\n"))
+           (pos-tip-show-no-propertize 'racer-tooltip nil nil 1000)))
 
 (defvar racer-help-mode-map
   (let ((map (make-sparse-keymap)))
@@ -583,6 +670,13 @@ Commands:
   :type 'boolean
   :group 'racer)
 
+(defcustom racer-complete-insert-argument-placeholders
+  t
+  "If non-nil, insert argument placeholders after completion.
+Note that this feature is only available when `company-mode' is installed."
+  :type 'boolean
+  :group 'racer)
+
 (defun racer-complete-at-point ()
   "Complete the symbol at point."
   (let* ((ppss (syntax-ppss))
@@ -600,7 +694,43 @@ Commands:
               :company-prefix-length (racer-complete--prefix-p beg end)
               :company-docsig #'racer-complete--docsig
               :company-doc-buffer #'racer--describe
-              :company-location #'racer-complete--location)))))
+              :company-location #'racer-complete--location
+	      :exit-function #'racer-complete--insert-args)))))
+
+(declare-function company-template-c-like-templatify 'company-template)
+
+(defun racer-complete--insert-args (arg &optional _finished)
+  "If a ARG is the name of a completed function, try to find and insert its arguments."
+  (when (and racer-complete-insert-argument-placeholders
+             (require 'company-template nil t)
+             (equal "Function"
+                    (get-text-property 0 'matchtype arg))
+             ;; Don't add arguments if the user has already added
+             ;; some.
+             (not (eq (char-after) ?\()))
+    (let* ((ctx (get-text-property 0 'ctx arg))
+	   (arguments (racer-complete--extract-args ctx)))
+      (insert arguments)
+      (company-template-c-like-templatify arguments))))
+
+(defun racer-complete--extract-args (str)
+  "Extract function arguments from STR (excluding a possible self argument)."
+  (string-match
+   (rx
+    (or (seq "(" (zero-or-more (not (any ","))) "self)")
+	(seq "("
+	     (zero-or-more (seq (zero-or-more (not (any "(")))
+				"self"
+				(zero-or-more space)
+				","))
+	     (zero-or-more space)
+	     (group (zero-or-more (not (any ")"))))
+	     ")")))
+   str)
+  (let ((extract (match-string 1 str)))
+    (if extract
+	(format "(%s)" extract)
+      "()")))
 
 (defun racer--file-and-parent (path)
   "Convert /foo/bar/baz/q.txt to baz/q.txt."
@@ -668,10 +798,8 @@ Commands:
   (length (buffer-substring-no-properties
            (line-beginning-position) (point))))
 
-;;;###autoload
-(defun racer-find-definition ()
-  "Run the racer find-definition command and process the results."
-  (interactive)
+
+(defun racer--find-definition(find-file-func)
   (-if-let (match (--first (s-starts-with? "MATCH" it)
                            (racer--call-at-point "find-definition")))
       (-let [(_name line col file _matchtype _ctx)
@@ -680,8 +808,26 @@ Commands:
             (xref-push-marker-stack)
           (with-no-warnings
             (ring-insert find-tag-marker-ring (point-marker))))
-        (racer--find-file file (string-to-number line) (string-to-number col)))
+        (racer--find-file file (string-to-number line) (string-to-number col) find-file-func))
     (error "No definition found")))
+
+;;;###autoload
+(defun racer-find-definition ()
+  "Run the racer find-definition command and process the results."
+  (interactive)
+  (racer--find-definition #'find-file))
+
+;;;###autoload
+(defun racer-find-definition-other-window ()
+  "Run the racer find-definition command and process the results."
+  (interactive)
+  (racer--find-definition #'find-file-other-window))
+
+;;;###autoload
+(defun racer-find-definition-other-frame ()
+  "Run the racer find-definition command and process the results."
+  (interactive)
+  (racer--find-definition #'find-file-other-frame))
 
 (defun racer--syntax-highlight (str)
   "Apply font-lock properties to a string STR of Rust code."
@@ -696,13 +842,20 @@ Commands:
         (with-no-warnings
           (font-lock-fontify-buffer)))
       (setq result (buffer-string)))
-    (when (and
-           ;; If we haven't applied any properties yet,
-           (null (text-properties-at 0 result))
-           ;; and if it's a standalone symbol, then assume it's a
-           ;; variable.
-           (string-match-p (rx bos (+ (any lower "_")) eos) str))
-      (setq result (propertize str 'face 'font-lock-variable-name-face)))
+
+    ;; If we haven't applied any text properties yet, apply some
+    ;; heuristics to try to find an appropriate colour.
+    (when (null (text-properties-at 0 result))
+      (cond
+       ;; If it's a standalone symbol, then assume it's a
+       ;; variable.
+       ((string-match-p (rx bos (+ (any lower "_")) eos) str)
+        (setq result (propertize str 'face 'font-lock-variable-name-face)))
+       ;; If it starts with a backslash, treat it as a string. See
+       ;; .lines() on strings.
+       ((string-match-p (rx bos "\\") str)
+        (setq result (propertize str 'face 'font-lock-string-face)))))
+
     result))
 
 (defun racer--goto-func-name ()
@@ -730,13 +883,20 @@ If PATH is not in DIRECTORY, just abbreviate it."
       (concat "./" (f-relative path directory))
     (f-abbrev path)))
 
+(defcustom racer-eldoc-timeout 0.5
+  "Abandon Eldoc hinting if racer process fails to respond for
+that many seconds (maybe float)."
+  :type 'number
+  :group 'racer)
+
 (defun racer-eldoc ()
   "Show eldoc for context at point."
   (save-excursion
     (racer--goto-func-name)
     ;; If there's a variable at point:
     (-when-let* ((rust-sym (symbol-at-point))
-                 (comp-possibilities (racer-complete))
+                 (comp-possibilities (let ((racer-command-timeout racer-eldoc-timeout))
+                                       (racer-complete)))
                  (matching-possibility
                   (--find (string= it (symbol-name rust-sym)) comp-possibilities))
                  (prototype (get-text-property 0 'ctx matching-possibility))
@@ -749,6 +909,8 @@ If PATH is not in DIRECTORY, just abbreviate it."
 (defvar racer-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "M-.") #'racer-find-definition)
+    (define-key map (kbd "C-x 4 .") #'racer-find-definition-other-window)
+    (define-key map (kbd "C-x 5 .") #'racer-find-definition-other-frame)
     (define-key map (kbd "M-,") #'pop-tag-mark)
     map))
 

@@ -1,10 +1,10 @@
 ;;; mwim.el --- Switch between the beginning/end of line or code  -*- lexical-binding: t -*-
 
-;; Copyright © 2015, 2016 Alex Kost
+;; Copyright © 2015, 2016, 2018 Alex Kost
 
 ;; Author: Alex Kost <alezost@gmail.com>
 ;; Created: 9 Jan 2015
-;; Version: 0.3
+;; Version: 0.4
 ;; URL: https://github.com/alezost/mwim.el
 ;; Keywords: convenience
 
@@ -51,17 +51,32 @@
 Move the point to various line positions."
   :group 'convenience)
 
-(defcustom mwim-beginning-of-line-function #'beginning-of-line
-  "Function used to move the point to the beginning of line."
+(defcustom mwim-beginning-of-line-function
+  '((t . beginning-of-line)
+    (message-mode . message-beginning-of-line)
+    (org-mode . org-beginning-of-line))
+  "Function(s) used to move the point to the beginning of line.
+Can either be a function or an alist of the following form:
+
+  ((MODE-NAME . FUNCTION) ...)
+
+where MODE-NAME is either a `major-mode' name or `t' (used as a
+default value for any unspecified mode), and FUNCTION is the
+moving function for this mode."
   :type '(choice (function-item beginning-of-visual-line)
                  (function-item beginning-of-line)
+                 (alist :key-type symbol :value-type function)
                  (function :tag "Another function"))
   :group 'mwim)
 
-(defcustom mwim-end-of-line-function #'end-of-line
-  "Function used to move the point to the end of line."
+(defcustom mwim-end-of-line-function
+  '((t . end-of-line)
+    (org-mode . org-end-of-line))
+  "Function(s) used to move the point to the end of line.
+See also `mwim-beginning-of-line-function'."
   :type '(choice (function-item end-of-visual-line)
                  (function-item end-of-line)
+                 (alist :key-type symbol :value-type function)
                  (function :tag "Another function"))
   :group 'mwim)
 
@@ -96,7 +111,8 @@ for complex cases."
   :group 'mwim)
 
 (defcustom mwim-beginning-position-functions
-  '(mwim-code-beginning
+  '(mwim-block-beginning
+    mwim-code-beginning
     mwim-line-beginning
     mwim-comment-beginning)
   "List of functions used by `\\[mwim-beginning]' command."
@@ -104,11 +120,33 @@ for complex cases."
   :group 'mwim)
 
 (defcustom mwim-end-position-functions
-  '(mwim-code-end
+  '(mwim-block-end
+    mwim-code-end
     mwim-line-end)
   "List of functions used by `\\[mwim-end]' command."
   :type '(repeat function)
   :group 'mwim)
+
+(defcustom mwim-position-functions
+  '(mwim-line-beginning
+    mwim-code-beginning
+    mwim-comment-beginning
+    mwim-code-end
+    mwim-line-end)
+  "List of functions used by `\\[mwim]' command."
+  :type '(repeat function)
+  :group 'mwim)
+
+(defun mwim-function (fun-or-alist)
+  "Return function depending on FUN-OR-ALIST and the current `major-mode'.
+FUN-OR-ALIST should have the same form as
+`mwim-beginning-of-line-function' variable."
+  (cond
+   ((functionp fun-or-alist)
+    fun-or-alist)
+   ((listp fun-or-alist)
+    (or (cdr (assq major-mode fun-or-alist))
+        (cdr (assq t fun-or-alist))))))
 
 
 ;;; Calculating positions
@@ -261,10 +299,14 @@ Return nil, if there is no comment beginning on the current line."
   "Return position of a comment start on the current line.
 Comment start means beginning of the text inside the comment.
 Return nil, if there is no comment beginning on the current line."
-  (save-excursion
-    (goto-char (line-beginning-position))
-    (let ((beg (comment-search-forward (line-end-position) t)))
-      (when beg (point)))))
+  ;; If `comment-start-skip' is not set by a major mode (this is the
+  ;; case for `sql-mode', for example), then `comment-search-forward'
+  ;; errors, so check that `comment-start-skip' is not nil.
+  (when comment-start-skip
+    (save-excursion
+      (goto-char (line-beginning-position))
+      (let ((beg (comment-search-forward (line-end-position) t)))
+        (when beg (point))))))
 
 (defalias 'mwim-comment-beginning #'mwim-line-comment-text-beginning)
 
@@ -286,6 +328,22 @@ Use `mwim-end-of-line-function'."
   "Return position in the end of code."
   (mwim-point-at (mwim-end-of-code)))
 
+(defun mwim-block-beginning ()
+  "Return position in the beginning of code or comment.
+If the point is inside a comment, return beginning position of
+the current comment, otherwise - of the code."
+  (if (mwim-current-comment-beginning)
+      (mwim-comment-beginning)
+    (mwim-code-beginning)))
+
+(defun mwim-block-end ()
+  "Return position in the end of code or line.
+If the point is inside a comment, return end position of
+the current comment, otherwise - of the code."
+  (if (mwim-current-comment-beginning)
+      (mwim-line-end)
+    (mwim-code-end)))
+
 
 ;;; Moving commands
 
@@ -301,17 +359,15 @@ If the comment does not exist, do nothing."
   "Move point to the beginning of line.
 Use `mwim-beginning-of-line-function'."
   (interactive "^")
-  (if (functionp mwim-beginning-of-line-function)
-      (funcall mwim-beginning-of-line-function)
-    (beginning-of-line)))
+  (funcall (or (mwim-function mwim-beginning-of-line-function)
+               #'beginning-of-line)))
 
 (defun mwim-end-of-line ()
   "Move point to the end of line.
 Use `mwim-end-of-line-function'."
   (interactive "^")
-  (if (functionp mwim-end-of-line-function)
-      (funcall mwim-end-of-line-function)
-    (end-of-line)))
+  (funcall (or (mwim-function mwim-end-of-line-function)
+               #'end-of-line)))
 
 (defun mwim-beginning-of-code ()
   "Move point to the first non-whitespace character on the current line."
@@ -411,15 +467,11 @@ Interactively, with prefix argument, move to the previous position."
 ;;;###autoload
 (defun mwim (&optional arg)
   "Switch between various positions on the current line.
-
-Available positions are defined by using both
-`mwim-beginning-position-functions' and
-`mwim-end-position-functions'.
-
+Available positions are defined by `mwim-position-functions'
+variable.
 Interactively, with prefix argument, move to the previous position."
   (interactive "^P")
-  (mwim-move-to-next-position (append mwim-beginning-position-functions
-                                      mwim-end-position-functions)
+  (mwim-move-to-next-position mwim-position-functions
                               (if arg #'> #'<)))
 
 (provide 'mwim)

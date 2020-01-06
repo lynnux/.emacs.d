@@ -4,7 +4,7 @@
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
-;; Version: 0.19.0
+;; Version: 0.20.0
 ;; Keywords: files, directories
 ;; URL: http://github.com/rejeep/f.el
 ;; Package-Requires: ((s "1.7.0") (dash "2.2.0"))
@@ -75,9 +75,13 @@ If PATH is not allowed to be modified, throw error."
       parts)))
 
 (defun f-expand (path &optional dir)
-  "Expand PATH relative to DIR (or `default-directory')."
+  "Expand PATH relative to DIR (or `default-directory').
+PATH and DIR can be either a directory names or directory file
+names.  Return a directory name if PATH is a directory name, and
+a directory file name otherwise.  File name handlers are
+ignored."
   (let (file-name-handler-alist)
-    (directory-file-name (expand-file-name path dir))))
+    (expand-file-name path dir)))
 
 (defun f-filename (path)
   "Return the name of PATH."
@@ -86,7 +90,8 @@ If PATH is not allowed to be modified, throw error."
 (defalias 'f-parent 'f-dirname)
 (defun f-dirname (path)
   "Return the parent directory to PATH."
-  (let ((parent (file-name-directory (f-expand path default-directory))))
+  (let ((parent (file-name-directory
+                 (directory-file-name (f-expand path default-directory)))))
     (unless (f-same? path parent)
       (if (f-relative? path)
           (f-relative parent)
@@ -230,15 +235,7 @@ TEXT with.  PATH is a file name to write to."
   "Write binary DATA to PATH.
 
 DATA is a unibyte string.  PATH is a file name to write to."
-  (f--destructive path
-    (unless (f-unibyte-string-p data)
-      (signal 'wrong-type-argument (list 'f-unibyte-string-p data)))
-    (let ((file-coding-system-alist nil)
-          (coding-system-for-write 'binary))
-      (with-temp-file path
-        (setq buffer-file-coding-system 'binary)
-        (set-buffer-multibyte nil)
-        (insert data)))))
+  (f--write-bytes data path nil))
 
 (defalias 'f-append 'f-append-text)
 (defun f-append-text (text coding path)
@@ -251,11 +248,19 @@ If PATH does not exist, it is created."
   "Append binary DATA to PATH.
 
 If PATH does not exist, it is created."
-  (let ((content
-         (if (f-file? path)
-             (f-read-bytes path)
-           "")))
-    (f-write-bytes (concat content data) path)))
+  (f--write-bytes data path :append))
+
+(defun f--write-bytes (data filename append)
+  "Write binary DATA to FILENAME.
+If APPEND is non-nil, append the DATA to the existing contents."
+  (f--destructive filename
+    (unless (f-unibyte-string-p data)
+      (signal 'wrong-type-argument (list 'f-unibyte-string-p data)))
+    (let ((coding-system-for-write 'binary)
+          (write-region-annotate-functions nil)
+          (write-region-post-annotation-function nil))
+      (write-region data nil filename append :silent)
+      nil)))
 
 
 ;;;; Destructive
@@ -284,11 +289,14 @@ If FORCE is t, a directory will be deleted recursively."
   (f--destructive path (make-symbolic-link source path)))
 
 (defun f-move (from to)
-  "Move or rename FROM to TO."
+  "Move or rename FROM to TO.
+If TO is a directory name, move FROM into TO."
   (f--destructive to (rename-file from to t)))
 
 (defun f-copy (from to)
-  "Copy file or directory FROM to TO."
+  "Copy file or directory FROM to TO.
+If FROM names a directory and TO is a directory name, copy FROM
+into TO as a subdirectory."
   (f--destructive to
     (if (f-file? from)
         (copy-file from to)
@@ -312,7 +320,7 @@ If FORCE is t, a directory will be deleted recursively."
   (unless (f-dir? from)
     (error "Cannot copy contents as %s is a file" from))
   (--each (f-entries from)
-    (f-copy it to)))
+    (f-copy it (file-name-as-directory to))))
 
 (defun f-touch (path)
   "Update PATH last modification date or create if it does not exist."
@@ -409,8 +417,8 @@ The extension, in a file name, is the part that follows the last
   (when (and (f-exists? path-a)
              (f-exists? path-b))
     (equal
-     (f-canonical (f-expand path-a))
-     (f-canonical (f-expand path-b)))))
+     (f-canonical (directory-file-name (f-expand path-a)))
+     (f-canonical (directory-file-name (f-expand path-b))))))
 
 (defalias 'f-same-p 'f-same?)
 
@@ -452,6 +460,15 @@ The extension, in a file name, is the part that follows the last
 
 (defalias 'f-hidden-p 'f-hidden?)
 
+(defun f-empty? (path)
+  "If PATH is a file, return t if the file in PATH is empty, nil otherwise.
+If PATH is directory, return t if directory has no files, nil otherwise."
+  (if (f-directory? path)
+      (equal (f-files path nil t) nil)
+    (= (f-size path) 0)))
+
+(defalias 'f-empty-p 'f-empty?)
+
 
 ;;;; Stats
 
@@ -483,9 +500,13 @@ detect the depth.
     byte-compile-current-file)
    (:else (buffer-file-name))))
 
+(defvar f--path-separator nil
+  "A variable to cache result of `f-path-separator'.")
+
 (defun f-path-separator ()
   "Return path separator."
-  (substring (f-join "x" "y") 1 2))
+  (or f--path-separator
+      (setq f--path-separator (substring (f-join "x" "y") 1 2))))
 
 (defun f-glob (pattern &optional path)
   "Find PATTERN in PATH."
@@ -541,7 +562,7 @@ RECURSIVE - Search for files and directories recursive."
     ,recursive))
 
 (defun f-directories (path &optional fn recursive)
-  "Find all directories in PATH.  See `f-entries`."
+  "Find all directories in PATH.  See `f-entries'."
   (let ((directories (-select 'f-directory? (f--collect-entries path recursive))))
     (if fn (-select fn directories) directories)))
 
@@ -555,7 +576,7 @@ RECURSIVE - Search for files and directories recursive."
     ,recursive))
 
 (defun f-files (path &optional fn recursive)
-  "Find all files in PATH.  See `f-entries`."
+  "Find all files in PATH.  See `f-entries'."
   (let ((files (-select 'f-file? (f--collect-entries path recursive))))
     (if fn (-select fn files) files)))
 
@@ -587,7 +608,7 @@ returned."
   (f-traverse-upwards 'f-root?))
 
 (defmacro f-with-sandbox (path-or-paths &rest body)
-  "Only allow PATH-OR-PATHS and decendants to be modified in BODY."
+  "Only allow PATH-OR-PATHS and descendants to be modified in BODY."
   (declare (indent 1))
   `(let ((paths (if (listp ,path-or-paths)
                     ,path-or-paths

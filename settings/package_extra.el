@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-06 16:32:28 lynnux>
+;; Time-stamp: <2020-01-06 17:42:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -169,8 +169,8 @@
 
 ;; (global-hl-line-mode t)
 
-(if t
-    ;; auto complete
+(if nil
+    ;; auto complete 很可惜已停止维护了，暂时保留吧
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
       (require 'auto-complete-config)
@@ -441,15 +441,8 @@
 	   (concat "\"" (expand-file-name "." dir-name) "\"")
 	   )))
 
-;; lcEngine
 ;; (add-hook 'c-mode-common-hook
 ;; 	  (lambda ()
-;; 	    (require 'lcEngine)
-;; 	    (local-set-key (kbd "<C-return>") 'ac-complete-lcEngine) ;; 补全
-;; 	    (local-set-key (kbd "<f12>") 'lcEngine-goto-definition) ;; 跳转到声明
-;; 	    (local-set-key (kbd "<C-f4>") 'lcEngine-syntax-check) ;; 检查错误
-
-;; 	    (ac-lcEngine-setup) ; 感觉用起来太卡了，补全卡，flymake也卡
 ;; 	    ; 用上来的按键
 ;; 	    (setq flymake-no-changes-timeout 1.0)
 ;; 	    (local-set-key (kbd "<f4>") 
