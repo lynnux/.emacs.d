@@ -1,4 +1,5 @@
 ;; compile all: C-u 0 M-x byte-recompile-directory
+;; 唯一不能用elc的只有packages\tabbar\tabbar.elc，删除之tabbar就正常了
 ;; 包不能放下面个目录，应该放plugin目录，否则require的时候找不到
 (mapc 'load (directory-files "~/.emacs.d/settings" t "^[a-zA-Z0-9].*.el$"))
 
