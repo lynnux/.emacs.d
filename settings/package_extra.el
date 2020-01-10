@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-10 13:32:33 lynnux>
+;; Time-stamp: <2020-01-10 22:36:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -810,8 +810,16 @@
 	  (add-hook 'helm-minibuffer-set-up-hook
 		    'helm-hide-minibuffer-maybe))        
 	)
+      ;; 这功能不好写，将就用总比没有好吧
+      (defun helm-grep-search-parent-directory ()
+	(interactive)
+	(helm-run-after-exit (lambda ()
+			       (let* ((parent (file-name-directory (directory-file-name default-directory)))
+				      (default-directory parent))
+				 (helm-grep-ag (expand-file-name parent) nil)))))
       (with-eval-after-load 'helm-grep
 	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	(define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
 	)
       (with-eval-after-load 'helm-find
 	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
