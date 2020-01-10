@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-10 12:24:34 lynnux>
+;; Time-stamp: <2020-01-10 13:32:33 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -755,6 +755,7 @@
        helm-recentf-fuzzy-match    t
        helm-follow-mode-persistent t
        helm-allow-mouse t
+       helm-grep-input-idle-delay 0.02 	; 后来加的默认0.6，让搜索有延迟
        )
       
       (with-eval-after-load 'helm
@@ -809,7 +810,12 @@
 	  (add-hook 'helm-minibuffer-set-up-hook
 		    'helm-hide-minibuffer-maybe))        
 	)
-
+      (with-eval-after-load 'helm-grep
+	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	)
+      (with-eval-after-load 'helm-find
+	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	)
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
       (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
