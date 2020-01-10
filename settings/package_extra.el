@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-09 13:33:47 lynnux>
+;; Time-stamp: <2020-01-10 12:24:34 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -151,6 +151,7 @@
 	    (eq major-mode 'occur-mode)
 	    (eq major-mode 'occur-edit-mode)
 	    (eq major-mode 'erc-mode)
+	    (eq major-mode 'fundamental-mode)
 	    )
     (highlight-symbol-mode)) 
   )
@@ -497,23 +498,39 @@
 (defun smart-compile-regenerate()
   (interactive)
   (smart-compile 4))
-(defun notify-compilation-result(buffer msg)
-  "Notify that the compilation is finished,
-close the *compilation* buffer if the compilation is successful,
-and set the focus back to Emacs frame"
-  (when (equal (buffer-name) "*compilation*") 
-    (when (string-match "^finished" msg)
-      (progn
-	(delete-windows-on buffer)
-	;; (tooltip-show "\n Compilation Successful :-) \n ")
-	)
-      ;; (tooltip-show "\n Compilation Failed :-( \n ")
-      )
+
+(defun bury-compile-buffer-if-successful (buffer string)
+  "Bury a compilation buffer if succeeded without warnings "
+  (when (and
+         (buffer-live-p buffer)
+         (string-match "compilation" (buffer-name buffer))
+         (if (string-match "finished" string)
+	     ;; 找不到如何获取代码buffer的方法，只有在compilation里变色了
+	     (progn (face-remap-add-relative
+		     'mode-line-inactive '((:foreground "ivory" :background "SeaGreen") mode-line))
+		    (face-remap-add-relative
+		     'mode-line '((:foreground "ivory" :background "SeaGreen") mode-line))
+		    t)
+	   (progn (face-remap-add-relative
+		   'mode-line-inactive '((:foreground "ivory" :background "DarkOrange2") mode-line))
+		  (face-remap-add-relative
+		   'mode-line '((:foreground "ivory" :background "DarkOrange2") mode-line))
+		  nil))
+         (not
+          (with-current-buffer buffer
+            (goto-char (point-min))
+            (search-forward "warning" nil t))))
+    (delete-windows-on buffer)
+    ;; (run-with-timer 1 nil
+    ;; 		    (lambda (buf)
+    ;; 		      (bury-buffer buf)
+    ;; 		      (switch-to-prev-buffer (get-buffer-window buf) 'kill))
+    ;; 		    buffer)  ;; 这个左右两个窗口并不会退出窗口
     (setq current-frame (car (car (cdr (current-frame-configuration)))))
-    (select-frame-set-input-focus current-frame)
+    (select-frame-set-input-focus current-frame) ; 最后这两句好像没作用，保留吧
     ))
 (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
-					    'notify-compilation-result))
+					    'bury-compile-buffer-if-successful))
 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (autoload 'er/expand-region "expand-region" nil t)
@@ -936,7 +953,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (hideshowvis-setting))
 (defadvice hs-hide-block (before my-hs-hide-block activate)
   (hideshowvis-setting))
-
 
 ;; go lang
 (autoload 'go-mode "go-mode" nil t)
