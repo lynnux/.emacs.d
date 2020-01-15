@@ -201,7 +201,8 @@ error."
     (let ((default-directory (or (racer--cargo-project-root) default-directory))
           (process-environment (append (list
                                         (format "RUST_SRC_PATH=%s" rust-src-path)
-                                        (format "CARGO_HOME=%s" cargo-home))
+                                        ;; (format "CARGO_HOME=%s" cargo-home)
+					)
                                        process-environment)))
       (-let [(exit-code stdout _stderr)
              (racer--shell-command racer-cmd (cons command args))]
