@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-10 22:36:28 lynnux>
+;; Time-stamp: <2020-01-15 15:49:02 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -152,6 +152,7 @@
 	    (eq major-mode 'occur-edit-mode)
 	    (eq major-mode 'erc-mode)
 	    (eq major-mode 'fundamental-mode)
+	    (eq major-mode 'helm-major-mode)
 	    )
     (highlight-symbol-mode)) 
   )
