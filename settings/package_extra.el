@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-01-15 15:49:02 lynnux>
+;; Time-stamp: <2020-02-11 20:52:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -216,11 +216,18 @@
     (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
     (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
     (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-    (setq company-idle-delay 0.2   ; 设置为nil就不自动启用补全了，参考racer设置
+    (setq company-idle-delay 0 ; TabNine加成直接为0!
 	  company-minimum-prefix-length 2
 	  company-require-match nil
 	  company-dabbrev-ignore-case nil
-	  company-dabbrev-downcase nil)
+	  company-dabbrev-downcase nil
+	  company-show-numbers t)
+    ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
+    (with-eval-after-load 'dash
+      (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
+      (require 'company-tabnine)
+      (add-to-list 'company-backends #'company-tabnine)
+      )
     (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
     (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
     )
@@ -622,8 +629,8 @@
     (setq ac-auto-start nil)
     )
   (when (featurep 'company)
-    (make-local-variable 'company-idle-delay)
-    (setq company-idle-delay nil) 	; 不自动补全
+    ;; (make-local-variable 'company-idle-delay)
+    ;; (setq company-idle-delay nil) 	; 不自动补全
     (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
     (setq company-tooltip-align-annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！

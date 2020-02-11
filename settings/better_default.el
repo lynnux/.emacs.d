@@ -1,8 +1,9 @@
-;; Time-stamp: <2017-12-28 11:00:35 lynnux>
+;; Time-stamp: <2020-02-11 20:53:23 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
 (require 'server)
+(setq load-prefer-newer t) ; since 24.4 不加载过期elc文件
 ;; 解决win7上的不安全提示信息
 (and (>= emacs-major-version 23) (defun server-ensure-safe-dir (dir) "Noop" t))
 (when (string-equal system-type "windows-nt")
