@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-02-11 20:52:20 lynnux>
+;; Time-stamp: <2020-03-03 13:59:55 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -591,6 +591,7 @@
 (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 (with-eval-after-load 'multiple-cursors
@@ -629,8 +630,8 @@
     (setq ac-auto-start nil)
     )
   (when (featurep 'company)
-    ;; (make-local-variable 'company-idle-delay)
-    ;; (setq company-idle-delay nil) 	; 不自动补全
+    (make-local-variable 'company-idle-delay)
+    (setq company-idle-delay nil) 	; 不自动补全
     (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
     (setq company-tooltip-align-annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
@@ -641,8 +642,6 @@
       (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
       )))
 (add-hook 'racer-mode-hook 'my/racer-mode-hook)
-(setq racer-cmd "racer") ;; 自己添加racer到PATH环境变量
-;;; (setq racer-rust-src-path "") 自己设置RUST_SRC_PATH环境变量指向rust源码的src目录
 
 (add-to-list 'load-path "~/.emacs.d/packages/neotree")
 (autoload 'neotree-toggle "neotree" nil t)
