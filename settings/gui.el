@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-05-24 16:25:03 lynnux>
+;; Time-stamp: <2020-05-03 08:46:31 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -12,7 +12,7 @@
  '(tool-bar-mode nil)          		;不显示toolbar
  )
 
-(setq-default line-spacing 1)
+;; (setq-default line-spacing 1) ; 这个设置会导致F3到下一个时滚动出问题
 
 ;; (global-visual-line-mode 1); 折行但是不显示两边难看的小符号
 (set-scroll-bar-mode 'right); 滚动条在右侧(ubuntu)
