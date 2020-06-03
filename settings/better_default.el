@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-02-11 20:53:23 lynnux>
+;; Time-stamp: <2020-06-03 14:26:58 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -62,7 +62,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 		  ;;                  (end-of-line)
                   (point))))
     (comment-or-uncomment-region start end)))
-(global-set-key (kbd "C-c C-c") 'comment-eclipse)
+;; (global-set-key (kbd "C-c C-c") 'comment-eclipse)
 
 (setq kill-do-not-save-duplicates t)
 ;; 每次拷贝其他程序的文字来替换时常常会删除，这样剪切板里是内容就没有了

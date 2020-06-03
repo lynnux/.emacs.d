@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-06-03 13:51:46 lynnux>
+;; Time-stamp: <2020-06-03 14:27:22 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -983,5 +983,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; magit
 (add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
 (autoload 'magit "magit" nil t)
+(global-set-key (kbd "C-c C-c") 'magit)
 
 (load-theme 'zenburn t)
