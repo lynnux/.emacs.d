@@ -24,13 +24,13 @@ then
 end
 
 -- work pc
-if "XL-PC" == utils.system_name()
+if "DESKTOP-QU8BECD" == utils.system_name()
    and MajorVersion == 6
-   and MinorVersion == 1
-   and BuildNumber == 7601
+   and MinorVersion == 2
+   and BuildNumber == 9200
 then
-   emacsclientw = "D:\\green\\emacs-26.3-x86_64\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\emacs-26.3-x86_64\\bin\\runemacs.exe"
+   emacsclientw = "F:\\green\\Emacs\\x86_64\\bin\\emacsclientw.exe"
+   runemacs = "F:\\green\\Emacs\\x86_64\\bin\\runemacs.exe"
 end
 
 -- get commandline
