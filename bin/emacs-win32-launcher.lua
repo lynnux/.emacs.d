@@ -24,13 +24,13 @@ then
 end
 
 -- work pc
-if "DESKTOP-QU8BECD" == utils.system_name()
+if "WIN7-2020BAORMZ" == utils.system_name()
    and MajorVersion == 6
-   and MinorVersion == 2
-   and BuildNumber == 9200
+   and MinorVersion == 1
+   and BuildNumber == 7601
 then
-   emacsclientw = "F:\\green\\Emacs\\x86_64\\bin\\emacsclientw.exe"
-   runemacs = "F:\\green\\Emacs\\x86_64\\bin\\runemacs.exe"
+   emacsclientw = "E:\\green\\Emacs\\x86_64\\bin\\emacsclientw.exe"
+   runemacs = "E:\\green\\Emacs\\x86_64\\bin\\runemacs.exe"
 end
 
 -- get commandline
