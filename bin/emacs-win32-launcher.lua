@@ -29,8 +29,8 @@ if "WIN7-2020BAORMZ" == utils.system_name()
    and MinorVersion == 1
    and BuildNumber == 7601
 then
-   emacsclientw = "E:\\green\\Emacs\\x86_64\\bin\\emacsclientw.exe"
-   runemacs = "E:\\green\\Emacs\\x86_64\\bin\\runemacs.exe"
+   emacsclientw = "E:\\green\\Emacs\\emacs-26.3-x86_64\\bin\\emacsclientw.exe"
+   runemacs = "E:\\green\\Emacs\\emacs-26.3-x86_64\\bin\\runemacs.exe"
 end
 
 -- get commandline
