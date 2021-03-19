@@ -40,3 +40,4 @@ packages/company-mode/*
 recentf
 packages/magit/*
 transient/*
+/eshell/*

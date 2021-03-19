@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-06-03 14:27:22 lynnux>
+;; Time-stamp: <2021-03-19 10:16:34 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -216,12 +216,14 @@
     (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
     (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
     (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-    (setq company-idle-delay 0 ; TabNine加成直接为0!
-	  company-minimum-prefix-length 2
-	  company-require-match nil
-	  company-dabbrev-ignore-case nil
-	  company-dabbrev-downcase nil
-	  company-show-numbers t)
+    (dotimes (i 10)
+      (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
+    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
+     company-minimum-prefix-length 2
+     company-require-match nil
+     company-dabbrev-ignore-case nil
+     company-dabbrev-downcase nil
+     company-show-numbers t)
     ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
     (with-eval-after-load 'dash
       (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
