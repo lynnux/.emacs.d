@@ -143,11 +143,14 @@ Useful when binding keys to temporarily query other completion backends."
   :type 'integer)
 
 (defcustom company-tabnine-context-radius 3000
-  "The number of chars before and after point to send for completion.
-For example, setting this to 2000 will send 4000 chars in total per query.
-It is not recommended to change this.
+  "The number of chars before point to send for completion.
 
 Note that setting this too small will cause TabNine to not be able to read the entire license activation key."
+  :group 'company-tabnine
+  :type 'integer)
+
+(defcustom company-tabnine-context-radius-after 1000
+  "The number of chars after point to send for completion."
   :group 'company-tabnine
   :type 'integer)
 
@@ -277,27 +280,42 @@ Resets every time successful completion is returned.")
 
 (defun company-tabnine--get-target ()
   "Return TabNine's system configuration.  Used for finding the correct binary."
-  (let ((architecture
-         (cond
-          ((string= (s-left 6 system-configuration) "x86_64")
-           "x86_64")
-          (t
-           "i686")))
+  (let* ((system-architecture (car (s-split "-" system-configuration)))
+         (tabnine-architecture
+          (cond
+           ((or (string= system-architecture "aarch64")
+                (and (eq system-type 'darwin)
+                     (string= system-architecture "x86_64")
+                     ;; Detect AArch64 running x86_64 Emacs
+                     (string= (shell-command-to-string "arch -arm64 uname -m") "arm64\n")))
+            "aarch64")
+           ((or (string= system-architecture "arm")
+                (and (eq system-type 'darwin)
+                     (string= system-architecture "x86_64")
+                     ;; Detect AArch64 running x86_64 Emacs
+                     (string= (shell-command-to-string "arch -arm64 uname -m") "arm64\n")))
+            "aarch64")
+           ((string= system-architecture "x86_64")
+            "x86_64")
+           ((string-match system-architecture "i.86")
+            "i686")
+           (t
+            (error "Unknown or unsupported architecture %s" system-architecture))))
 
-        (os
-         (cond
-          ((or (eq system-type 'ms-dos)
-               (eq system-type 'windows-nt)
-               (eq system-type 'cygwin))
-           "pc-windows-gnu")
-          ((or (eq system-type 'darwin))
-           "apple-darwin")
-          (company-tabnine-install-static-binary
-           "unknown-linux-musl")
-          (t
-           "unknown-linux-gnu"))))
+         (os
+          (cond
+           ((or (eq system-type 'ms-dos)
+                (eq system-type 'windows-nt)
+                (eq system-type 'cygwin))
+            "pc-windows-gnu")
+           ((or (eq system-type 'darwin))
+            "apple-darwin")
+           (company-tabnine-install-static-binary
+            "unknown-linux-musl")
+           (t
+            "unknown-linux-gnu"))))
 
-    (concat architecture "-" os)))
+    (concat tabnine-architecture "-" os)))
 
 (defun company-tabnine--get-exe ()
   "Return TabNine's binary file name.  Used for finding the correct binary."
@@ -326,14 +344,14 @@ Resets every time successful completion is returned.")
                (target (company-tabnine--get-target))
                (filename (company-tabnine--get-exe)))
           (cl-loop
-             for ver in sorted
-             for fullpath = (expand-file-name (format "%s/%s/%s"
-                                                      ver target filename)
-                                              parent)
-             if (and (file-exists-p fullpath)
-                     (file-regular-p fullpath))
-             return fullpath
-             finally do (company-tabnine--error-no-binaries)))
+           for ver in sorted
+           for fullpath = (expand-file-name (format "%s/%s/%s"
+                                                    ver target filename)
+                                            parent)
+           if (and (file-exists-p fullpath)
+                   (file-regular-p fullpath))
+           return fullpath
+           finally do (company-tabnine--error-no-binaries)))
       (company-tabnine--error-no-binaries))))
 
 (defun company-tabnine-start-process ()
@@ -350,6 +368,7 @@ Resets every time successful completion is returned.")
                               "--log-file-path"
                               (expand-file-name
                                company-tabnine-log-file-path))))
+                     (list "--client" "emacs")
                      company-tabnine-executable-args)
            :coding 'utf-8
            :connection-type 'pipe
@@ -401,7 +420,7 @@ Resets every time successful completion is returned.")
            (before-point
             (max (point-min) (- (point) company-tabnine-context-radius)))
            (after-point
-            (min (point-max) (+ (point) company-tabnine-context-radius))))
+            (min (point-max) (+ (point) company-tabnine-context-radius-after))))
 
       (list
        :version company-tabnine--protocol-version
@@ -616,26 +635,42 @@ Return completion candidates.  Must be called after `company-tabnine-query'."
     (message version-tempfile)
     (message "Getting current version...")
     (make-directory (file-name-directory version-tempfile) t)
-    (url-copy-file "https://update.tabnine.com/version" version-tempfile t)
+    (url-copy-file "https://update.tabnine.com/bundles/version" version-tempfile t)
     (let ((version (s-trim (with-temp-buffer (insert-file-contents version-tempfile) (buffer-string)))))
       (when (= (length version) 0)
         (error "TabNine installation failed.  Please try again"))
       (message "Current version is %s" version)
-      (let ((url (concat "https://update.tabnine.com/" version "/" target "/" exe)))
-        (let ((target-path
-               (concat
-                (file-name-as-directory
-                 (concat
-                  (file-name-as-directory
-                   (concat (file-name-as-directory binaries-dir) version))
-                  target))
-                exe)))
-          (message "Installing at %s. Downloading %s ..." target-path url)
-          (make-directory (file-name-directory target-path) t)
-          (url-copy-file url target-path t)
-          (set-file-modes target-path (string-to-number "744" 8))
-          (delete-file version-tempfile)
-          (message "TabNine installation complete."))))))
+      (let* ((url (concat "https://update.tabnine.com/bundles/" version "/" target "/TabNine.zip"))
+             (version-directory (file-name-as-directory
+                                 (concat
+                                  (file-name-as-directory
+                                   (concat (file-name-as-directory binaries-dir) version)))))
+             (target-directory (file-name-as-directory (concat version-directory target) ))
+             (bundle-path (concat version-directory (format "%s.zip" target)))
+             (target-path (concat target-directory exe)))
+        (message "Installing at %s. Downloading %s ..." target-path url)
+        (make-directory target-directory t)
+        (url-copy-file url bundle-path t)
+        (condition-case ex
+            (let ((default-directory target-directory))
+              (if (or (eq system-type 'ms-dos)
+                      (eq system-type 'windows-nt)
+                      (eq system-type 'cygwin))
+                  (shell-command (format "tar -xf %s" (expand-file-name bundle-path)))
+                (shell-command (format "unzip -o %s -d %s"
+                                       (expand-file-name bundle-path)
+                                       (expand-file-name target-directory)))))
+          ('error
+           (error "Unable to unzip automatically. Please go to [%s] and unzip the content of [%s] into [%s/]."
+                  (expand-file-name version-directory)
+                  (file-name-nondirectory bundle-path)
+                  (file-name-sans-extension (file-name-nondirectory bundle-path)))))
+        (mapc (lambda (filename)
+                (set-file-modes (concat target-directory filename) (string-to-number "744" 8)))
+              (--remove (member it '("." "..")) (directory-files target-directory)))
+        (delete-file bundle-path)
+        (delete-file version-tempfile)
+        (message "TabNine installation complete.")))))
 
 (defun company-tabnine-call-other-backends ()
   "Invoke company completion but disable TabNine once, passing query to other backends in `company-backends'.
