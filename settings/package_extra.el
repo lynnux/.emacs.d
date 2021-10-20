@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-04-19 10:14:48 lynnux>
+;; Time-stamp: <2021-04-19 11:01:31 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -991,5 +991,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'zig-mode "zig-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.zig\\'" . zig-mode))
 (modify-coding-system-alist 'file "\\.zig\\'" 'utf-8-with-signature) ; 强制zig文件视为utf8，否则有中文显示问题
+(setq zig-format-on-save nil)
+(with-eval-after-load 'zig-mode (add-hook 'zig-mode-hook (lambda () (local-set-key [(meta f8)] 'zig-format-buffer))))
 
 (load-theme 'zenburn t)

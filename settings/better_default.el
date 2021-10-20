@@ -1,4 +1,4 @@
-;; Time-stamp: <2020-06-03 14:26:58 lynnux>
+;; Time-stamp: <2021-10-20 10:40:40 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -87,7 +87,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (defadvice kill-ring-save (around slick-copy activate)
   "When called interactively with no active region, copy a single line instead."
-  (if (or (use-region-p) (not (called-interactively-p)))
+  (if (or (use-region-p) (not (called-interactively-p 'any)))
       ad-do-it
     (kill-new (buffer-substring (line-beginning-position)
 				(line-beginning-position 2))
@@ -96,7 +96,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (defadvice kill-region (around slick-copy activate)
   "When called interactively with no active region, kill a single line instead."
-  (if (or (use-region-p) (not (called-interactively-p)))
+  (if (or (use-region-p) (not (called-interactively-p 'any)))
       ad-do-it
     (kill-new (filter-buffer-substring (line-beginning-position)
 				       (line-beginning-position 2) t)
