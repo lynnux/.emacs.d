@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-04-19 11:01:31 lynnux>
+;; Time-stamp: <2021-10-22 13:57:54 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -719,12 +719,12 @@
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
-(global-set-key [(control f2)] 'imenu-list-smart-toggle)
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
+      (icomplete-mode 1)		; 这个跟swiper冲突，helm没问题
       (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
       (require 'async-autoloads)
       (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
@@ -749,6 +749,10 @@
       (global-set-key (kbd "<f12>") 'helm-etags-select)
       (global-set-key (kbd "C-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
       (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
+      (global-set-key [(control f2)] (lambda () (interactive)
+				       (require 'vc)
+				       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
 
       ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
       (setq
@@ -826,9 +830,15 @@
 			       (let* ((parent (file-name-directory (directory-file-name default-directory)))
 				      (default-directory parent))
 				 (helm-grep-ag (expand-file-name parent) nil)))))
+      (defun helm-show-search()
+	(interactive)
+	(yank)
+	)
+      
       (with-eval-after-load 'helm-grep
 	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
 	(define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+	;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
 	)
       (with-eval-after-load 'helm-find
 	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
@@ -848,6 +858,8 @@
     (autoload 'ivy-mode "ivy" nil t)
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
     (global-set-key (kbd "<f6>") 'ivy-resume)
+    (global-set-key [f2] 'counsel-rg) 	; Great! 貌似是解决了rg卡死的问题了，不频繁启动rg的方式https://github.com/abo-abo/swiper/pull/2552
+    (autoload 'counsel-rg "counsel" nil t)
     (autoload 'counsel-M-x "counsel" nil t)
     (autoload 'counsel-find-file "counsel" nil t)
     (autoload 'counsel-describe-function "counsel" nil t)
@@ -865,9 +877,14 @@
       (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
       (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
       (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+      (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
+      (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
       )
+    ;; (with-eval-after-load 'counsel
+    ;;   (append counsel-rg-base-command "--no-ignore")) ; 好像不用加，不会搜索ignore的
     (defadvice completing-read (before my-completing-read activate)
       (ivy-mode 1))
+    (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
     ))
 
 
@@ -984,6 +1001,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; magit
 (add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
+(add-to-list 'load-path "~/.emacs.d/packages/magit")
 (autoload 'magit "magit" nil t)
 (global-set-key (kbd "C-c C-c") 'magit)
 

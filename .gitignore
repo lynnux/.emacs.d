@@ -42,3 +42,4 @@ packages/magit/*
 transient/*
 /eshell/*
 /eln-cache/*
+/tramp

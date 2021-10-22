@@ -439,6 +439,46 @@ remote.
 
 ;;;***
 
+;;;### (autoloads nil "helm-epa" "helm-epa.el" (0 0 0 0))
+;;; Generated autoloads from helm-epa.el
+
+(defvar helm-epa-mode nil "\
+Non-nil if Helm-Epa mode is enabled.
+See the `helm-epa-mode' command
+for a description of this minor mode.
+Setting this variable directly does not take effect;
+either customize it (see the info node `Easy Customization')
+or call the function `helm-epa-mode'.")
+
+(custom-autoload 'helm-epa-mode "helm-epa" nil)
+
+(autoload 'helm-epa-mode "helm-epa" "\
+Enable helm completion on gpg keys in epa functions.
+
+This is a minor mode.  If called interactively, toggle the
+`Helm-Epa mode' mode.  If the prefix argument is positive, enable
+the mode, and if it is zero or negative, disable the mode.
+
+If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
+the mode if ARG is nil, omitted, or is a positive number.
+Disable the mode if ARG is a negative number.
+
+To check whether the minor mode is enabled in the current buffer,
+evaluate `(default-value 'helm-epa-mode)'.
+
+The mode's hook is called both when the mode is enabled and when
+it is disabled.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'helm-epa-list-keys "helm-epa" "\
+List all gpg keys.
+This is the helm interface for `epa-list-keys'." t nil)
+
+(register-definition-prefixes "helm-epa" '("helm-epa"))
+
+;;;***
+
 ;;;### (autoloads nil "helm-eshell" "helm-eshell.el" (0 0 0 0))
 ;;; Generated autoloads from helm-eshell.el
 
