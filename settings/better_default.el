@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-10-21 18:08:52 lynnux>
+;; Time-stamp: <2021-10-26 17:18:10 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -21,7 +21,8 @@
 ;; (icomplete-mode 1);; 用M-x执行某个命令的时候，在输入的同时给出可选的命令名提示，跟swiper冲突
 
 ;; 不创建~和#文件
-(global-set-key [(meta f8)] 'indent-region)
+(global-set-key [(meta f8)] (lambda () (interactive) (unless (use-region-p) (mark-page))
+			      (call-interactively 'indent-region)))
 (setq default-major-mode 'text-mode); 默认text模式
 
 (setq gdb-non-stop-setting nil)
