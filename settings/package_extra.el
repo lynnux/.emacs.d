@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-10-22 13:57:54 lynnux>
+;; Time-stamp: <2021-10-27 15:36:00 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -35,7 +35,7 @@
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
   (require 'yasnippet)
   (setq yas-snippet-dirs
-	'("~/.emacs.d/packages/yasnippet/yasnippet-snippets-master"
+	'("~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
 	  "~/.emacs.d/packages/yasnippet/mysnippets" ;; personal snippets
 	  ))
   (yas-global-mode 1)
@@ -365,9 +365,6 @@
   ;;  (local-set-key (kbd "RET") 'electrify-return-if-match)
   (eldoc-add-command 'electrify-return-if-match)
   (show-paren-mode t)
-  (local-set-key (kbd "<f12>") 'xref-find-definitions)
-  (local-set-key (kbd "C-.") 'xref-find-definitions) ; 这个还是原生的好用
-  (local-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
   )
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
@@ -398,21 +395,11 @@
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
   (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
 					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
-  (local-set-key (kbd "C-.") 'ggtags-find-tag-dwim)
-  (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
+  ;; (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
+  ;; (local-set-key (kbd "C-.") 'ggtags-find-tag-dwim)
+  ;; (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
   ;;(turn-on-eldoc-mode) ; 会卡
   )
-
-;; ruby mode
-(add-hook 'ruby-mode-hook '(lambda()
-			     (require 'rcodetools)
-			     (when (featurep 'auto-complete)
-			       (setq ac-omni-completion-sources
-				     (list (cons "//." '(ac-source-rcodetools))
-					   (cons "::" '(ac-source-rcodetools))))
-			       (setq ac-sources (append (list 'ac-source-rcodetools) ac-sources)))
-			     ))
 
 ;; python
 (add-to-list 'load-path "~/.emacs.d/packages/jedi")
@@ -544,7 +531,10 @@
 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (autoload 'er/expand-region "expand-region" nil t)
+(autoload 'er/contract-region "expand-region" nil t)
 (global-set-key "\C-t" 'er/expand-region)
+(global-set-key (kbd "C-S-t") 'er/contract-region)
+
 ;; see https://github.com/magnars/expand-region.el/issues/229
 (with-eval-after-load "expand-region"
   (global-set-key (kbd "C-q") #'(lambda (arg)
@@ -591,7 +581,7 @@
 (global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
 (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
 (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
+;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
@@ -668,7 +658,9 @@
 
 (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
 (require 'smartparens-config)
-(sp-use-paredit-bindings)
+;; (sp-use-paredit-bindings)
+(sp-use-smartparens-bindings)
+(define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
 ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
 (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
 (set-default 'sp-autoskip-closing-pair 'always)
@@ -676,6 +668,7 @@
 (set-default 'sp-hybrid-kill-entire-symbol nil)
 (smartparens-global-strict-mode)
 (show-smartparens-global-mode) ;; Show parenthesis
+(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
 
 ;; 使支持hungry-delete
 (with-eval-after-load 'smartparens
@@ -746,9 +739,6 @@
 
       ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
       ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
-      (global-set-key (kbd "<f12>") 'helm-etags-select)
-      (global-set-key (kbd "C-.") 'helm-etags-select) ; 除了elisp和ggtags支持的都用这个
-      (global-set-key (kbd "<C-down-mouse-1>") 'helm-etags-select)
       (global-set-key [(control f2)] (lambda () (interactive)
 				       (require 'vc)
 				       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
@@ -780,7 +770,7 @@
 	;; 光标移动时也自动定位到所在位置
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	(push "RG" helm-source-names-using-follow)
-	
+
 	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
 	(custom-set-faces
 	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
@@ -1012,4 +1002,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (setq zig-format-on-save nil)
 (with-eval-after-load 'zig-mode (add-hook 'zig-mode-hook (lambda () (local-set-key [(meta f8)] 'zig-format-buffer))))
 
+;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
+(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+(autoload 'dumb-jump-xref-activate "dumb-jump" nil t)
+(setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
+(global-set-key (kbd "<f12>") 'xref-find-definitions) 
+(global-set-key (kbd "C-.") 'xref-find-definitions) ; 除了ggtags支持的都用这个
+(global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
+(with-eval-after-load 'dumb-jump
+  (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
+    ;; arount设置有问题
+    (setq dumb-jump-default-project default-directory) ; 默认设置为当前目录
+    )
+  )
+
+
+;; 这是需要最后加载
 (load-theme 'zenburn t)

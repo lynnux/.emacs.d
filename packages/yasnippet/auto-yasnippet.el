@@ -3,7 +3,7 @@
 ;; Author: Oleh Krehel <ohwoeowho@gmail.com>
 ;; URL: https://github.com/abo-abo/auto-yasnippet
 ;; Version: 0.3
-;; Package-Requires: ((yasnippet "0.8.0"))
+;; Package-Requires: ((yasnippet "0.13.0"))
 
 ;; This file is not part of GNU Emacs
 
@@ -104,6 +104,14 @@
   "If non-nil `aya-create' creates snippet with trailing newline."
   :type 'boolean)
 
+(defcustom aya-case-fold t
+  "If non-nil `aya-create' creates snippets matching mixed cases."
+  :type 'boolean)
+
+(defcustom aya-trim-one-line nil
+  "If non-nil one-line snippets will begin from the first non-space character."
+  :type 'boolean)
+
 (defvar aya-current ""
   "Used as snippet body, when `aya-expand' is called.")
 
@@ -133,6 +141,45 @@ But \"\\sw\\|\\s_\", Foo_bar will expand to $1.")
       (concat str "\n")
     str))
 
+(defun aya--alist-create-value-specifier (alist all)
+  "Create yasnippet template specifier for value in ALIST.
+Use ALL to ensure proper template is generated."
+  (if (and aya-case-fold
+           (cdr (assoc 'ucase alist))
+           (aya--matching-lowercase-value-exists alist all))
+      (format "${%d:$(aya--upcase-first-char yas-text)}" (cdr (assoc 'idx alist)))
+    (format "$%d" (cdr (assoc 'idx alist)))))
+
+(defun aya--matching-lowercase-value-exists (alist all)
+  "Verify ALL has lowercase value for idx in ALIST."
+  (cl-some (lambda (other)
+              (and (= (cdr (assoc 'idx alist)) (cdr (assoc 'idx other)))
+                   (not (cdr (assoc 'ucase other)))))
+            (cl-remove-if-not (lambda (x) (listp x)) all)))
+
+(defun aya--alist-get-proper-case-value (alist)
+  "Get value from ALIST with proper case."
+  (if (and aya-case-fold (cdr (assoc 'ucase alist)))
+      (aya--upcase-first-char (cdr (assoc 'value alist)))
+    (cdr (assoc 'value alist))))
+
+(defun aya--upcase-first-char (str)
+  "Set first char in STR to uppercase."
+  (if (not (string= "" str))
+      (concat (upcase (substring str 0 1)) (substring str 1))
+    str))
+
+(defun aya--maybe-downcase-first-char (str)
+  "Set first char in STR to lowercase."
+  (if (and aya-case-fold (not (string= "" str)))
+      (concat (downcase (substring str 0 1)) (substring str 1))
+    str))
+
+(defun aya--first-char-is-upcase (str)
+  "Check if first char in STR is uppercase."
+  (let ((char (string-to-char str)))
+    (= (upcase char) char)))
+
 ;;;###autoload
 (defun aya-create-one-line ()
   "A simplistic `aya-create' to create only one mirror.
@@ -143,7 +190,7 @@ You can use it to quickly generate one-liners such as
 menu.add_item(spamspamspam, \"spamspamspam\")"
   (interactive)
   (when aya-marker-one-line
-    (let* ((beg (line-beginning-position))
+    (let* ((beg (aya--beginning-of-line))
            (end (line-end-position))
            (line (buffer-substring-no-properties beg (point)))
            (re (regexp-quote aya-marker-one-line)))
@@ -158,6 +205,7 @@ menu.add_item(spamspamspam, \"spamspamspam\")"
         (delete-region beg end)
         (when aya-create-with-newline (delete-char 1))
         (setq aya-current line)
+        (yas-minor-mode 1)
         (yas-expand-snippet line)))))
 
 (defun aya--parse (str)
@@ -174,42 +222,64 @@ menu.add_item(spamspamspam, \"spamspamspam\")"
       (unless (= (match-beginning 0) start)
         (push (substring str start (match-beginning 0)) res))
       (let* ((mirror (match-string 1 str))
-             (idx (gethash mirror mirror-tbl)))
+             (cased-mirror (aya--maybe-downcase-first-char mirror))
+             (idx (gethash cased-mirror mirror-tbl))
+             (ucase (aya--first-char-is-upcase mirror)))
         (unless idx
           (setq idx (cl-incf mirror-idx))
-          (puthash mirror idx mirror-tbl))
-        (push (cons idx mirror) res))
+          (puthash cased-mirror idx mirror-tbl))
+        (push (list (cons 'idx idx)
+                    (cons 'value cased-mirror)
+                    (cons 'ucase ucase)) res))
       (setq start (match-end 0)))
     (unless (= start (length str))
       (push (substring str start) res))
     (nreverse res)))
 
+(defun aya--beginning-of-line ()
+  "Return the beginning of the line.
+If `aya-trim-one-line' is non-nil return the position of the first
+non-space character.  Otherwise just return the position of the first
+character in the current line."
+  (if aya-trim-one-line
+      (save-excursion
+        (move-beginning-of-line nil)
+        (re-search-forward "[\t ]*")
+        (point))
+    (line-beginning-position)))
+
 ;;;###autoload
-(defun aya-create ()
-  "Works on either the current line, or, if `mark-active', the current region.
-Removes `aya-marker' prefixes,
-writes the corresponding snippet to `aya-current',
-with words prefixed by `aya-marker' as fields, and mirrors properly set up."
+(defun aya-create (&optional beg end)
+  "Create a snippet from the text between BEG and END.
+When the bounds are not given, use either the current region or line.
+
+Remove `aya-marker' prefixes, write the corresponding snippet to
+`aya-current', with words prefixed by `aya-marker' as fields, and
+mirrors properly set up."
   (interactive)
   (unless (aya-create-one-line)
-    (let* ((beg (if (region-active-p)
-                    (region-beginning)
-                  (line-beginning-position)))
-           (end (if (region-active-p)
-                    (region-end)
-                  (line-end-position)))
+    (let* ((beg (cond (beg)
+                      ((region-active-p)
+                       (region-beginning))
+                      (t
+                       (aya--beginning-of-line))))
+           (end (cond (end)
+                      ((region-active-p)
+                       (region-end))
+                      (t
+                       (line-end-position))))
            (str (buffer-substring-no-properties beg end))
            (case-fold-search nil)
            (res (aya--parse str)))
-      (when (cl-some #'consp res)
+      (when (cl-some #'listp res)
         (delete-region beg end)
         (insert (mapconcat
-                 (lambda (x) (if (consp x) (cdr x) x))
+                 (lambda (x) (if (listp x) (aya--alist-get-proper-case-value x) x))
                  res ""))
         (setq aya-current
               (aya--maybe-append-newline
                (mapconcat
-                (lambda (x) (if (consp x) (format "$%d" (car x)) x))
+                (lambda (x) (if (listp x) (aya--alist-create-value-specifier x res) x))
                 res "")))
         ;; try some other useful action if it's defined for current buffer
         (and (functionp aya-default-function)
@@ -278,14 +348,13 @@ move to the next field.  Call `open-line' if nothing else applies."
         ((progn
            (unless yas-global-mode
              (yas-global-mode 1))
-           (yas--snippets-at-point))
+           (yas-active-snippets))
          (yas-next-field-or-maybe-expand))
         ((ignore-errors
            (setq aya-invokation-point (point))
            (setq aya-invokation-buffer (current-buffer))
            (setq aya-tab-position (- (point) (line-beginning-position)))
-           (let ((yas-fallback-behavior 'return-nil))
-             (yas-expand))))
+           (yas-expand)))
         ((and (fboundp 'tiny-expand)
               (funcall 'tiny-expand)))
         (t
