@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-10-27 15:36:00 lynnux>
+;; Time-stamp: <2021-10-28 14:33:36 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -529,11 +529,12 @@
 (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
 					    'bury-compile-buffer-if-successful))
 
+;; expand-region被easy-kill的easy-mark替换了，但要保留会被调用
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
-(autoload 'er/expand-region "expand-region" nil t)
-(autoload 'er/contract-region "expand-region" nil t)
-(global-set-key "\C-t" 'er/expand-region)
-(global-set-key (kbd "C-S-t") 'er/contract-region)
+;; (autoload 'er/expand-region "expand-region" nil t)
+;; (autoload 'er/contract-region "expand-region" nil t)
+;; (global-set-key "\C-t" 'er/expand-region)
+;; (global-set-key (kbd "C-S-t") 'er/contract-region)
 
 ;; see https://github.com/magnars/expand-region.el/issues/229
 (with-eval-after-load "expand-region"
@@ -544,7 +545,7 @@
 ;;; 解决被(setq show-paren-style 'expression)覆盖的问题
 (defadvice show-paren-function (around not-show-when-expand-region activate)
   (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
-	   (memq last-command '(er/expand-region er/contract-region)))
+	   (memq last-command '(er/expand-region er/contract-region easy-mark easy-kill-er-expand easy-kill-er-unexpand)))
       (progn
 	(setq show-paren-style 'parenthesis)
 	ad-do-it
@@ -1016,6 +1017,48 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 
+;; easy-kill，添加类似vim里yi/a的东西！
+(add-to-list 'load-path "~/.emacs.d/packages/easy-kill")
+(global-set-key [remap kill-ring-save] 'easy-kill)
+(autoload 'easy-kill "easy-kill" nil t)
+(autoload 'easy-mark "easy-kill" nil t)
+(global-set-key "\C-t" 'easy-mark) ; 替换expand-region
+(with-eval-after-load 'easy-kill
+  (require 'easy-kill-er)
+  (require 'extra-things)
+  (require 'easy-kill-extras)
+  ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
+  (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
+  (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
+  (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
+  (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
+  (define-key easy-kill-base-map (kbd "C-d") 'easy-kill-region)
+  (define-key easy-kill-base-map (kbd "C-h") 'easy-kill-region)
+  (autoload 'er--expand-region-1 "expand-region" nil t)
+  (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
+  (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
+  (add-to-list 'easy-kill-alist '(?a buffer ""))
+  ;; (add-to-list 'easy-kill-alist '(?< buffer-before-point "")) ;; 拿给copy<>感觉更常用
+  ;; (add-to-list 'easy-kill-alist '(?> buffer-after-point ""))
+  (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
+  (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
+  (add-to-list 'easy-kill-alist '(?t string-to-char-backward ""))
+  (add-to-list 'easy-kill-alist '(?T string-up-to-char-backward ""))
+  (add-to-list 'easy-kill-alist '(?W  WORD " ") t)
+  (add-to-list 'easy-kill-alist '(?\' squoted-string "") t)
+  (add-to-list 'easy-kill-alist '(?\" dquoted-string "") t)
+  (add-to-list 'easy-kill-alist '(?\` bquoted-string "") t)
+  (add-to-list 'easy-kill-alist '(?q  quoted-string "") t)
+  (add-to-list 'easy-kill-alist '(?Q  quoted-string-universal "") t)
+  (add-to-list 'easy-kill-alist '(?\) parentheses-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?\( parentheses-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?\] brackets-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?\[ brackets-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?}  curlies-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?{  curlies-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
+  )
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

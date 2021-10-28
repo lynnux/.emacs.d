@@ -43,3 +43,4 @@ transient/*
 /eshell/*
 /eln-cache/*
 /tramp
+/packages/easy-kill/*
