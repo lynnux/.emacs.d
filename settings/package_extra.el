@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-10-28 14:33:36 lynnux>
+;; Time-stamp: <2021-10-29 21:44:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -1027,6 +1027,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (require 'easy-kill-er)
   (require 'extra-things)
   (require 'easy-kill-extras)
+  (setq easy-mark-try-things '(word url email sexp)) ; word优先，特别是有横杠什么都时候
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
   (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
