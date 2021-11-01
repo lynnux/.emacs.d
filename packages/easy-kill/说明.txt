@@ -1,1 +1,1 @@
-需要删除 easy-kill-er.elc，文件不然会报repeat错误
+elc除了easy-kill.elc，其它都要删除，不然功能不正常，郁闷！
