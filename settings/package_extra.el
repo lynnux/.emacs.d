@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-10-29 22:58:52 lynnux>
+;; Time-stamp: <2021-11-02 11:28:19 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -481,7 +481,7 @@
 					;(insert-string run-exe)
 					;(move-end-of-line nil)
 	))))
-(global-set-key (kbd "<f5>") 'smart-compile-run)
+;; (global-set-key (kbd "<f5>") 'smart-compile-run) ; 用projetile的f5 x s代替
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
 ;; compile，加入了单独编译某个文件
@@ -1061,6 +1061,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
+
+;; projectile搜索配合rg
+(add-to-list 'load-path "~/.emacs.d/packages/projectile")
+(defun invoke_projectile ()
+  (interactive)
+  (require 'projectile)
+  (projectile-mode +1)
+  (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
+  )
+(global-set-key (kbd "C-;") 'invoke_projectile)
+(global-set-key (kbd "<f5>") 'invoke_projectile) ; 原功能可以用f5 x s
+
+(with-eval-after-load 'projectile
+  (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "<f5>") 'projectile-command-map))
+
+;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
+(global-set-key (kbd "C-S-f") 'rg-dwim)
+(autoload 'rg-dwim "rg" nil t)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

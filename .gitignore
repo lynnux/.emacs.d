@@ -44,3 +44,6 @@ transient/*
 /eln-cache/*
 /tramp
 /packages/easy-kill/*
+/projectile.cache
+/projectile-bookmarks.eld
+/packages/projectile/*.el

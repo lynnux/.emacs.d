@@ -1,4 +1,4 @@
-;; Time-stamp: <2018-05-24 16:23:41 lynnux>
+;; Time-stamp: <2021-11-02 09:29:03 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -254,9 +254,9 @@ Run occur in all buffers whose names match this type for REXP."
    (cons
     (let* ((choice (read-char "Occur in: [a]ll, [t]ype, [m]ode, or just this buffer(any other key)?"))
 	   (more  (list (cond ((eq choice ?a) nil)
-			 ((eq choice ?t) (read-string "Extension: "))
-			 ((eq choice ?m) (read-command "Mode:"))
-			 (t ?o)))) ; 即occur
+			      ((eq choice ?t) (read-string "Extension: "))
+			      ((eq choice ?m) (read-command "Mode:"))
+			      (t ?o)))) ; 即occur
 	   )
       (add-to-list 'more choice)
       (nreverse more)) ; nreverse是配合前面的cons
@@ -267,11 +267,11 @@ Run occur in all buffers whose names match this type for REXP."
 	  ((eq choice ?t) (type-occur morearg regx))
 	  ((eq choice ?m) (mode-occur morearg regx))
 	  (t (occur regx))
-     )))
+	  )))
 
 
 ;; ctags/etags，更多设置在plugin_basic里
-(global-set-key (kbd "C-;") 'complete-tag)
+;; (global-set-key (kbd "C-;") 'complete-tag)
 ;; (global-set-key (kbd "C-'") 'completion-at-point) ; 24.x增强了
 (setq completion-cycle-threshold 3) 	; 不超过3个补全数的话就不显示补全窗口
 
