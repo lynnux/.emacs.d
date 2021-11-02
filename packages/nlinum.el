@@ -1,10 +1,10 @@
 ;;; nlinum.el --- Show line numbers in the margin  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012, 2014-2017  Free Software Foundation, Inc.
+;; Copyright (C) 2012, 2014-2019  Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: convenience
-;; Version: 1.8.1
+;; Version: 1.9
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,7 +24,10 @@
 ;; This is like linum-mode, but uses jit-lock to be (hopefully)
 ;; more efficient.
 
-;;; News:
+;;;; News:
+
+;; v1.9:
+;; - Add `nlinu-widen'.
 
 ;; v1.8:
 ;; - Add `nlinum-use-right-margin'.
@@ -43,6 +46,12 @@
 ;; - New global mode `global-nlinum-mode'.
 ;; - New config var `nlinum-format-function'.
 
+;;;; Known bugs:
+;; - When narrowed, there can be a "bogus" line number that appears at the
+;;   very end of the buffer.
+;; - After widening, the current line's number may stay stale until the
+;;   next command.
+
 ;;; Code:
 
 (require 'linum)                        ;For its face
@@ -59,6 +68,10 @@
   "Whether the current line number should be highlighted.
 When non-nil, the current line number is highlighted in `nlinum-current-line'
 face."
+  :type 'boolean)
+
+(defcustom nlinum-widen nil
+  "If nil, count lines within the current narrowing only."
   :type 'boolean)
 
 (defface nlinum-current-line
@@ -95,7 +108,9 @@ Linum mode is a buffer-local minor mode."
   (remove-hook 'text-scale-mode-hook #'nlinum--setup-window :local)
   (remove-hook 'after-change-functions #'nlinum--after-change :local)
   (remove-hook 'post-command-hook #'nlinum--current-line-update :local)
+  (remove-hook 'pre-redisplay-functions #'nlinum--check-narrowing :local)
   (kill-local-variable 'nlinum--line-number-cache)
+  (kill-local-variable 'nlinum--last-point-min)
   (remove-overlays (point-min) (point-max) 'nlinum t)
   ;; (kill-local-variable 'nlinum--ol-counter)
   (kill-local-variable 'nlinum--width)
@@ -112,9 +127,9 @@ Linum mode is a buffer-local minor mode."
     (add-hook 'text-scale-mode-hook #'nlinum--setup-window nil :local)
     (add-hook 'window-configuration-change-hook #'nlinum--setup-window nil t)
     (add-hook 'after-change-functions #'nlinum--after-change nil :local)
+    (add-hook 'pre-redisplay-functions #'nlinum--check-narrowing nil :local)
     (if nlinum-highlight-current-line
-        (add-hook 'post-command-hook #'nlinum--current-line-update nil :local)
-      (remove-hook 'post-command-hook #'nlinum--current-line-update :local))
+        (add-hook 'post-command-hook #'nlinum--current-line-update nil :local))
     (jit-lock-register #'nlinum--region :contextual))
   (nlinum--setup-windows))
 
@@ -171,17 +186,23 @@ Linum mode is a buffer-local minor mode."
 
 (defun nlinum--flush ()
   (nlinum--setup-windows)
-  ;; (kill-local-variable 'nlinum--ol-counter)
-  (remove-overlays (point-min) (point-max) 'nlinum t)
-  (run-with-timer 0 nil
-                  (lambda (buf)
-                    (with-current-buffer buf
-                      (with-silent-modifications
-                        ;; FIXME: only remove `fontified' on those parts of the
-                        ;; buffer that had an nlinum overlay!
-                        (remove-text-properties
-                         (point-min) (point-max) '(fontified)))))
-                  (current-buffer)))
+  (save-excursion
+    (save-restriction
+      (widen)
+      ;; (kill-local-variable 'nlinum--ol-counter)
+      (remove-overlays (point-min) (point-max) 'nlinum t)
+      (run-with-timer 0 nil
+                      (lambda (buf)
+                        (with-current-buffer buf
+                          (with-silent-modifications
+                            ;; FIXME: only remove `fontified' on those parts of
+                            ;; the buffer that had an nlinum overlay!
+                            (save-excursion
+                              (save-restriction
+                                (widen)
+                                (remove-text-properties
+                                 (point-min) (point-max) '(fontified)))))))
+                      (current-buffer)))))
 
 (defun nlinum--current-line-update ()
   "Update current line number."
@@ -271,22 +292,42 @@ Linum mode is a buffer-local minor mode."
 (defun nlinum--after-change (&rest _args)
   (setq nlinum--line-number-cache nil))
 
+(defvar nlinum--last-point-min nil)
+(make-variable-buffer-local 'nlinum--last-point-min)
+
+(defun nlinum--check-narrowing (&optional _win)
+  ;; FIXME: We should also flush if nlinum-widen was changed.
+  ;; Note: if nlinum-widen is t the flush is still needed when
+  ;; point-min is/was in the middle of a line.
+  (unless (eql nlinum--last-point-min (point-min))
+    (unless nlinum-widen (setq nlinum--line-number-cache nil))
+    (nlinum--current-line-update)
+    (setq nlinum--last-point-min (point-min))
+    (nlinum--flush)))
+
 (defun nlinum--line-number-at-pos ()
   "Like `line-number-at-pos' but sped up with a cache.
 Only works right if point is at BOL."
   ;; (cl-assert (bolp))
-  (let ((pos
-         (if (and nlinum--line-number-cache
-                  (> (- (point) (point-min))
-                     (abs (- (point) (car nlinum--line-number-cache)))))
-             (funcall (if (> (point) (car nlinum--line-number-cache))
-                          #'+ #'-)
-                      (cdr nlinum--line-number-cache)
-                      (count-lines (point) (car nlinum--line-number-cache)))
-           (line-number-at-pos))))
-    ;;(assert (= pos (line-number-at-pos)))
-    (setq nlinum--line-number-cache (cons (point) pos))
-    pos))
+  (if nlinum-widen
+      (save-excursion
+        (save-restriction
+          (widen)
+          (forward-line 0)              ;In case (point-min) was not at BOL.
+          (let ((nlinum-widen nil))
+            (nlinum--line-number-at-pos))))
+    (let ((pos
+           (if (and nlinum--line-number-cache
+                    (> (- (point) (point-min))
+                       (abs (- (point) (car nlinum--line-number-cache)))))
+               (funcall (if (> (point) (car nlinum--line-number-cache))
+                            #'+ #'-)
+                        (cdr nlinum--line-number-cache)
+                        (count-lines (point) (car nlinum--line-number-cache)))
+             (line-number-at-pos))))
+      ;;(assert (= pos (line-number-at-pos)))
+      (setq nlinum--line-number-cache (cons (point) pos))
+      pos)))
 
 (defcustom nlinum-format "%d"
   "Format of the line numbers.
@@ -353,6 +394,29 @@ it may cause the margin to be resized and line numbers to be recomputed.")
 
 ;;;; ChangeLog:
 
+;; 2019-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+;; 
+;; 	* packages/nlinum/nlinum.el (nlinum--flush): Widen to really flush all.
+;; 
+;; 2019-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+;; 
+;; 	* packages/nlinum/nlinum.el (nlinum--check-narrowing): Reset
+;; 	current-line
+;; 
+;; 2019-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+;; 
+;; 	* packages/nlinum/nlinum.el (nlinum--check-narrowing): Flush the
+;; 	line-number-cache as well.
+;; 
+;; 2019-03-26  Stefan Monnier  <monnier@iro.umontreal.ca>
+;; 
+;; 	* packages/nlinum/nlinum.el (nlinum-widen): New custom var
+;; 
+;; 	(nlinum--line-number-at-pos): Use it.
+;; 	(nlinum--last-point-min): New var.
+;; 	(nlinum--check-narrowing): New function.
+;; 	(nlinum-mode): Use it.
+;; 
 ;; 2017-11-04  Noam Postavsky  <npostavs@users.sourceforge.net>
 ;; 
 ;; 	* packages/nlinum/nlinum.el: Bump version to 1.8.1.

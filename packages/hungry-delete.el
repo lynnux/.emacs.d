@@ -4,7 +4,7 @@
 
 ;; Author: Nathaniel Flath <flat0103@gmail.com>
 ;; URL: http://github.com/nflath/hungry-delete
-;; Version: 1.1.5
+;; Version: 1.1.7
 
 ;; This file is not part of GNU Emacs.
 
@@ -56,11 +56,24 @@
 (define-key hungry-delete-mode-map [remap c-electric-backspace] 'hungry-delete-backward)
 (define-key hungry-delete-mode-map [remap c-electric-delete-forward] 'hungry-delete-forward)
 
-(defvar hungry-delete-chars-to-skip " \t\n\r\f\v"
-  "String of characters to skip.")
+(defcustom hungry-delete-join-reluctantly nil
+  "If truthy, the hungry deletion functions will leave words
+seperated by a single space if they would have been joined,
+unless the words were separated by just one space to begin with"
+  :type 'boolean
+  :group 'hungry-delete)
 
-(defvar hungry-delete-except-modes '(help-mode minibuffer-inactive-mode calc-mode)
-  "List of modes hungry-delete will not be turned on in.")
+(defcustom hungry-delete-chars-to-skip " \t\n\r\f\v"
+  "String of characters to skip. Note that whitespace characters
+are not escaped and may look as if it is empty on the customize
+screen"
+  :type 'string
+  :group 'hungry-delete)
+
+(defcustom hungry-delete-except-modes '(help-mode minibuffer-inactive-mode calc-mode)
+  "List of modes hungry-delete will not be turned on in."
+  :type '(repeat (symbol :tag "Major mode exception"))
+  :group 'hungry-delete)
 
 (defun hungry-delete-skip-ws-forward ()
   "Skip over any whitespace following point.
@@ -79,18 +92,20 @@ line continuations."
   "Skip over any whitespace preceding point.
 This function skips over horizontal and vertical whitespace and
 line continuations."
-  (skip-chars-backward hungry-delete-chars-to-skip)
-  (while (and
-          (eolp)
-          (eq (char-before) ?\\)
-          (progn
-            (backward-char)
-            (or
-             (= (point) (point-min))
-             (< (skip-chars-backward hungry-delete-chars-to-skip) 0)
-             (forward-char)))))
-  (while (get-text-property (point) 'read-only)
-    (forward-char)))
+  (let ((original-point (point)))
+    (skip-chars-backward hungry-delete-chars-to-skip)
+
+    (while (and
+            (eolp)
+            (eq (char-before) ?\\)
+            (progn
+              (backward-char)
+              (or
+               (= (point) (point-min))
+               (< (skip-chars-backward hungry-delete-chars-to-skip) 0)
+               (forward-char)))))
+    (while (and (get-text-property (point) 'read-only) (< (point) original-point))
+      (forward-char))))
 
 ;;;###autoload
 (defun hungry-delete-forward (n &optional killflag)
@@ -109,6 +124,8 @@ KILLFLAG is set if N was explicitly specified."
   (interactive "p\nP")
   (unless (integerp n)
     (signal 'wrong-type-argument (list 'integerp n)))
+  (if (bound-and-true-p rectangle-mark-mode)
+      (delete-forward-char n killflag)
   (cond ((and
           (use-region-p)
 	      delete-active-region
@@ -120,7 +137,7 @@ KILLFLAG is set if N was explicitly specified."
 	;; If a prefix argument has been given, delete n characters.
 	(current-prefix-arg (delete-char n killflag))
 	;; Otherwise, call hungry-delete-forward-impl.
-	(t (hungry-delete-forward-impl))))
+	(t (hungry-delete-forward-impl)))))
 
 
 
@@ -146,50 +163,70 @@ arg, and KILLFLAG is set if N is explicitly specified."
   (interactive "p\nP")
   (unless (integerp n)
     (signal 'wrong-type-argument (list 'integerp n)))
-  (cond ((and
-          (use-region-p)
-          delete-active-region
-          (= n 1))
-         ;; If a region is active, kill or delete it.
-         (if (eq delete-active-region 'kill)
-             (kill-region (region-beginning) (region-end))
-           (delete-region (region-beginning) (region-end))))
-        ;; In Overwrite mode, maybe untabify while deleting
-        ((null (or (null overwrite-mode)
-                   (<= n 0)
-                   (memq (char-before) '(?\t ?\n))
-                   (eobp)
-                   (eq (char-after) ?\n)))
-         (let ((ocol (current-column)))
-           (delete-char (- n) killflag)
-           (save-excursion
-             (insert-char ?\s (- ocol (current-column)) nil))))
-        ;; If a prefix has been given, delete n characters backwards.
-        (current-prefix-arg (delete-char (- n) killflag))
-        ;; Otherwise, call hungry-delete-backward-impl.
-        (t (hungry-delete-backward-impl))))
+  (if (bound-and-true-p rectangle-mark-mode)
+      (delete-backward-char n killflag)
+    (cond ((and
+            (use-region-p)
+            delete-active-region
+            (= n 1))
+           ;; If a region is active, kill or delete it.
+           (if (eq delete-active-region 'kill)
+               (kill-region (region-beginning) (region-end))
+             (delete-region (region-beginning) (region-end))))
+          ;; In Overwrite mode, maybe untabify while deleting
+          ((null (or (null overwrite-mode)
+                     (<= n 0)
+                     (memq (char-before) '(?\t ?\n))
+                     (eobp)
+                     (eq (char-after) ?\n)))
+           (let ((ocol (current-column)))
+             (delete-char (- n) killflag)
+             (save-excursion
+               (insert-char ?\s (- ocol (current-column)) nil))))
+          ;; If a prefix has been given, delete n characters backwards.
+          (current-prefix-arg (delete-char (- n) killflag))
+          ;; Otherwise, call hungry-delete-backward-impl.
+          (t (hungry-delete-backward-impl)))))
 
-(defun hungry-delete-impl (fn n)
+(defun hungry-delete-impl (fn n insertion-fn)
   "Implementation of hungry-delete functionality.
 FN is the function to call to go to the end of whitespace (will
 be either hungry-delete-skip-ws-forward or
 hungry-delete-skip-ws-backwards by default).  N is the number of
 characters to delete if there is no whitespace (will be either 1
-or -1 by default)."
+or -1 by default).
+
+insertion-fn is inserts before point for delete backwards and after
+point for delete-forwards"
   (let ((here (point)))
     (funcall fn)
-    (if (/= (point) here)
-        (delete-region (point) here)
-      (let ((hungry-delete-mode nil))
-        (delete-char n)))))
+    (let* ((region-start (min (point) here))
+           (region-end (max (point) here))
+           (region-size (- region-end region-start)))
+      (if (/= region-start region-end)
+          (if (and hungry-delete-join-reluctantly
+                   (or (>= region-size 2)
+                       (and (= region-size 1)
+                            (not (seq-contains " " (char-before region-end)))))
+                   (not (= region-start (point-min)))
+                   (not (= region-end (point-max)))
+                   (not (seq-contains hungry-delete-chars-to-skip (char-before region-start)))
+                   (not (seq-contains hungry-delete-chars-to-skip (char-after region-end))))
+              (progn
+                (delete-region region-start region-end)
+                (funcall insertion-fn " "))
+            (delete-region region-start region-end))
+        (let ((hungry-delete-mode nil))
+          (delete-char n))))))
 
 (defun hungry-delete-forward-impl ()
   "Do the dirty work of calling hungry-delete-forward."
-  (hungry-delete-impl 'hungry-delete-skip-ws-forward 1))
+  (hungry-delete-impl 'hungry-delete-skip-ws-forward 1
+                      (lambda (x) (save-excursion (insert x)))))
 
 (defun hungry-delete-backward-impl ()
   "Do the dirty work of calling hungry-delete-backward."
-  (hungry-delete-impl 'hungry-delete-skip-ws-backward -1))
+  (hungry-delete-impl 'hungry-delete-skip-ws-backward -1 #'insert))
 
 ;;;###autoload
 (define-minor-mode hungry-delete-mode
@@ -208,7 +245,8 @@ executed."
     (hungry-delete-mode t)))
 
 ;;;###autoload
-(define-globalized-minor-mode global-hungry-delete-mode hungry-delete-mode turn-on-hungry-delete-mode)
+(define-globalized-minor-mode global-hungry-delete-mode hungry-delete-mode turn-on-hungry-delete-mode
+  :group 'hungry-delete)
 
 (provide 'hungry-delete)
 ;;; hungry-delete.el ends here
