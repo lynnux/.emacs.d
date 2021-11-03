@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-03 10:37:56 lynnux>
+;; Time-stamp: <2021-11-03 16:24:24 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -59,68 +59,61 @@
 (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
 (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
 
-(global-set-key (kbd "<C-tab>") ;'tabbar-forward-tab
-		'my-switch-buffer
+;; 参考easy-kill重写了C-TAB
+(defvar myswitch-buffer-list nil)
+(defvar myswitch-buffer-current nil)
+(defun myswitch-activate-keymap ()
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "<C-tab>") 'myswitch_next_buffer)
+    (define-key map (if (string-equal system-type "windows-nt")
+			(kbd "<C-S-tab>")
+		      (kbd "<C-S-iso-lefttab>"))
+      'myswitch_prev_buffer)
+    (set-transient-map ;; 关键函数！
+     map
+     t ;; 继续keymap
+     (lambda ()
+       ;; 退出时真正切换
+       (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list)); 不带t，最终切换过去
+       )
+     )))
+(defun myswitch_next_buffer()
+  (interactive)
+  (incf myswitch-buffer-current)
+  (if (>= myswitch-buffer-current (length myswitch-buffer-list))
+      (setq myswitch-buffer-current 0))
+  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
+  )
+(defun myswitch_prev_buffer()
+  (interactive)
+  (decf myswitch-buffer-current)
+  (if (< myswitch-buffer-current 0)
+      (setq myswitch-buffer-current (1- (length myswitch-buffer-list))))
+  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
+  )
+(defun myswitch_next_buffer_start(&optional backward)
+  (interactive)
+  (setq myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
+						(ep-tabbar-buffer-list)
+					      (buffer-list))
+					    ))
+  (message "C-tab to cycle forward, C-S-tab backward...")
+  (setq myswitch-buffer-current 0)
+  (if backward
+      (myswitch_prev_buffer)
+    (myswitch_next_buffer))
+  (myswitch-activate-keymap)
+  )
+(global-set-key (kbd "<C-tab>")
+		'myswitch_next_buffer_start
 		)
-
 (global-set-key (if (string-equal system-type "windows-nt")
 		    (kbd "<C-S-tab>")
-		  (kbd "<C-S-iso-lefttab>")) ;'tabbar-backward-tab
+		  (kbd "<C-S-iso-lefttab>"))
 		(lambda () 
 		  (interactive)
-		  (my-switch-buffer t))
+		  (myswitch_next_buffer_start t))
 		)
-
-(defun my-switch-buffer (&optional backward)
-  "Switch buffers, but don't record the change until the last one."
-  (interactive)
-  (save-excursion ; when C-g don't work
-    (let* ((blist (copy-sequence (if (featurep 'tabbar-ruler) 
-				     (ep-tabbar-buffer-list)
-				   (buffer-list))
-				 ))
-	   (init-buffer (car blist))
-	   current
-	   (key-forward (kbd "<C-tab>"))
-	   (key-backward (if (string-equal system-type "windows-nt")
-			     (kbd "<C-S-tab>")
-			   (kbd "<C-S-iso-lefttab>")))
-	   done
-	   (key-stroked (if backward
-			    key-backward
-			  key-forward))
-	   key-previous)
-      (setq key-previous key-stroked)
-      (if backward
-	  (setq blist (nreverse blist))
-	(setq blist (append (cdr blist) (list (car blist)))))
-      (while (not done)
-	(setq current (car blist))
-	(setq blist (append (cdr blist) (list current)))
-	(switch-to-buffer current t)	; 第二个参数表明不记录
-	(when (featurep 'cursor-chg)
-	  (curchg-change-cursor-on-overwrite/read-only)) ; 修正cursor光标显示
-	(message "C-tab to cycle forward, C-S-tab backward...")
-	(setq key-stroked (make-vector 1 (read-event)))
-	(unless (equal key-previous key-stroked)
-	  (setq blist (nreverse blist))
-	  (setq blist (append (cdr blist) (list (car blist)))))
-	(setq key-previous key-stroked)
-	(cond ((equal key-forward key-stroked)
-	       t)
-	      ((equal key-backward key-stroked)
-	       t)
-	      ((equal (kbd "<C-g>") key-stroked) ; don't work
-	       (switch-to-buffer init-buffer t))
-	      (t 
-	       (setq done t)
-	       (switch-to-buffer current)
-	       (clear-this-command-keys t)
-	       (setq unread-command-events (list last-input-event))))
-	)
-      ;; (when (= last-input-event ?\C-g) ; don't work 会引发warning
-      ;; 	(switch-to-buffer init-buffer t))
-      )))
 
 ;;org的C-tab基本上不用
 (add-hook 'org-mode-hook (lambda()
