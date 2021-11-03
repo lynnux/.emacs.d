@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-02 14:33:06 lynnux>
+;; Time-stamp: <2021-11-03 10:37:56 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -160,6 +160,13 @@
 (global-highlight-symbol-mode 1)
 ;; (require 'highlight-symbol-scroll-out)
 ;; (global-highlight-symbol-scroll-out-mode)
+;; 高亮选中项
+(defadvice highlight-symbol-get-symbol (around my-highlight-symbol-get-symbol activate)
+  (if (use-region-p)
+      (setq ad-return-value (buffer-substring (region-beginning) (region-end)))
+    ad-do-it
+    )
+  )
 
 (require 'cursor-chg)
 (change-cursor-mode )
@@ -243,6 +250,9 @@
           (lambda ()
             (ignore-errors
               (wcy-desktop-open-last-opened-files))))
+(defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
+  (setq buffer-undo-list nil)
+  );; 解决undo-tree冲突
 
 ;; clang-format
 (autoload 'clang-format-region "clang-format" "" t)
@@ -305,6 +315,7 @@
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
+(add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
 (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
 (defun my-save-pos()
   (interactive)
