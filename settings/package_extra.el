@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 14:37:07 lynnux>
+;; Time-stamp: <2021-11-04 17:23:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -796,7 +796,23 @@
 	(define-key helm-map (kbd "<f4>") 'helm-next-line)
 	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
 	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
-	(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+	;; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+	;; tab自动补全光标所在的symbol，TODO：本来想只对空输入有效，但是判断空有问题
+	(define-key helm-map (kbd "<tab>") (lambda ()(interactive)
+					     (let ((src (helm-get-current-source)))
+					       (if (member (assoc-default 'name src)
+							   (list "RG" "Occur"))
+						   (let ((symbol-under-cursor (with-helm-current-buffer
+									       (thing-at-point 'symbol))))
+						     (if symbol-under-cursor
+							 (helm-set-pattern symbol-under-cursor)
+						       )
+						     )
+						 (call-interactively 'helm-execute-persistent-action)
+						 )
+					       )
+					     ))
+	
 	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
 	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
 	;; (define-key helm-map (kbd "TAB") 'helm-next-line)
@@ -813,10 +829,10 @@
 	  (lambda ()
 	    (interactive)
 	    (with-helm-alive-p
-	      (helm-exit-and-execute-action (lambda (file)
-					      (require 'w32-browser)
-					      (w32explore file)
-					      )))))
+	     (helm-exit-and-execute-action (lambda (file)
+					     (require 'w32-browser)
+					     (w32explore file)
+					     )))))
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
