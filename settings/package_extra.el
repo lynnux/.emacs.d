@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-03 16:24:24 lynnux>
+;; Time-stamp: <2021-11-04 10:00:09 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -1087,6 +1087,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
 (autoload 'rg-dwim "rg" nil t)
+
+;; which-key确实好用
+(require 'which-key)
+(which-key-mode)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

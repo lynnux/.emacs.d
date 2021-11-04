@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-01 17:08:43 lynnux>
+;; Time-stamp: <2021-11-04 09:30:28 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -139,4 +139,6 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 ;;; 窗口最大化 24.5没效果？
 (when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
-   (w32-send-sys-command 61488))
+  (w32-send-sys-command 61488))
+
+(setq enable-local-variables :safe)
