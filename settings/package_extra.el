@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 21:39:30 lynnux>
+;; Time-stamp: <2021-11-04 22:18:54 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -678,9 +678,15 @@
 (set-default 'sp-autoskip-closing-pair 'always)
 ;; Don't kill the entire symbol on C-k
 (set-default 'sp-hybrid-kill-entire-symbol nil)
+;; 参考doom设置
+(setq sp-highlight-pair-overlay nil
+      sp-highlight-wrap-overlay nil
+      sp-highlight-wrap-tag-overlay nil)
+(setq sp-max-prefix-length 25)
+(setq sp-max-pair-length 4)
 (smartparens-global-strict-mode)
-(show-smartparens-global-mode) ;; Show parenthesis
-(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
+;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
+;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
 
 ;; 使支持hungry-delete
 (with-eval-after-load 'smartparens
