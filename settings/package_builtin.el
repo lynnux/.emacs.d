@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-02 09:29:03 lynnux>
+;; Time-stamp: <2021-11-04 21:47:11 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -47,26 +47,6 @@
   (define-key bs-mode-map "<"       'beginning-of-buffer)
   (define-key bs-mode-map ">"       'end-of-buffer))
 
-;; 折叠
-(add-hook 'java-mode-hook 'hs-minor-mode)
-(add-hook 'perl-mode-hook 'hs-minor-mode)
-(add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
-(add-hook 'python-mode-hook 'hs-minor-mode)
-(add-hook 'c-mode-common-hook 'hs-minor-mode)
-(define-prefix-command 'ctl-m-map)
-(defvar my-hs-hide nil "Current state of hideshow for toggling all.")
-(defun my-toggle-hideshow-all () "Toggle hideshow all."
-  (interactive)
-  (setq my-hs-hide (not my-hs-hide))
-  (if my-hs-hide
-      (hs-hide-all)
-    (hs-show-all)))
-
-;; eldoc
-;; (add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)
-;; (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-;; (add-hook 'ielm-mode-hook 'turn-on-eldoc-mode)
-
 ;; org mode
 (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
 (define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表
@@ -86,50 +66,47 @@
 (add-hook 'org-mode-hook
 	  (lambda()
 	    (setq truncate-lines nil)
-	    ;(define-key org-mode-map  [(control ?\,)] 'ska-point-to-register)
+					;(define-key org-mode-map  [(control ?\,)] 'ska-point-to-register)
 	    ;; 建站专用
 	    ;; (require 'org-publish)
 	    (when (and website-org-path website-org-publish-path)
-	     (setq org-publish-project-alist
+	      (setq org-publish-project-alist
 					;notes组件
-		   `((			;; note ` instead of '
-		      "org-notes"
-		      :base-directory ,(format "%s" website-org-path) ;设置存放.org文件位置 
-		      :base-extension "org" ;仅处理 .org 格式文件
-		      :publishing-directory ,(format "%s" website-org-publish-path) ;导出html文件位置
-		      :recursive t
-		      :publishing-function org-publish-org-to-html
-		      :headline-levels 4 ;Just the default for this project.
-		      :auto-preamble t
-		      :auto-sitemap t	;自动生成 sitemap.org
-		      :sitemap-filename "sitemap.org" ;默认名称
-		      :sitemap-title "SiteMap"
-		      :export-creator-info nil ;禁止在 postamble 显示"Created by Org"
-		      :export-author-info nil ;禁止在 postamble 显示 "Author: Your Name"
-		      :auto-postamble nil         
-		      :table-of-contents nil ;禁止生成文章目录，如果要生成，将 nil 改为 t
-		      :section-numbers nil ;禁止在段落标题前使用数字，如果使用，将 nil 改为 t
-		      :html-postamble html-last-updated ;自定义 postamble 显示字样
-		      :style-include-default nil ;禁用默认 css 样式,使用自定义css
-		      )
-		     ;;static 组件
-		     ("org-static"
-		      :base-directory ,(format "%s" website-org-path)
-		      :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
-		      :publishing-directory ,(format "%s" website-org-publish-path)
-		      :recursive t
-		      :publishing-function org-publish-attachment
-		      )
-		     ;;publish 组件
-		     ("org" :components ("org-notes" "org-static"))
-		     ))
-	     (defun html-last-updated() 
-	       (concat "<div id=\"footer\">Last Updated: " (format-time-string "%Y-%m-%d %H:%M") ". contact: lynnux@qq.com</a></div> ")))
+		    `((			;; note ` instead of '
+		       "org-notes"
+		       :base-directory ,(format "%s" website-org-path) ;设置存放.org文件位置 
+		       :base-extension "org" ;仅处理 .org 格式文件
+		       :publishing-directory ,(format "%s" website-org-publish-path) ;导出html文件位置
+		       :recursive t
+		       :publishing-function org-publish-org-to-html
+		       :headline-levels 4 ;Just the default for this project.
+		       :auto-preamble t
+		       :auto-sitemap t	;自动生成 sitemap.org
+		       :sitemap-filename "sitemap.org" ;默认名称
+		       :sitemap-title "SiteMap"
+		       :export-creator-info nil ;禁止在 postamble 显示"Created by Org"
+		       :export-author-info nil ;禁止在 postamble 显示 "Author: Your Name"
+		       :auto-postamble nil         
+		       :table-of-contents nil ;禁止生成文章目录，如果要生成，将 nil 改为 t
+		       :section-numbers nil ;禁止在段落标题前使用数字，如果使用，将 nil 改为 t
+		       :html-postamble html-last-updated ;自定义 postamble 显示字样
+		       :style-include-default nil ;禁用默认 css 样式,使用自定义css
+		       )
+		      ;;static 组件
+		      ("org-static"
+		       :base-directory ,(format "%s" website-org-path)
+		       :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
+		       :publishing-directory ,(format "%s" website-org-publish-path)
+		       :recursive t
+		       :publishing-function org-publish-attachment
+		       )
+		      ;;publish 组件
+		      ("org" :components ("org-notes" "org-static"))
+		      ))
+	      (defun html-last-updated() 
+		(concat "<div id=\"footer\">Last Updated: " (format-time-string "%Y-%m-%d %H:%M") ". contact: lynnux@qq.com</a></div> ")))
 	    ))
 
-;; awesome!窗口的撤消！
-;; (require 'winner)
-;; (winner-mode 1) ;; 平常用得很少！
 
 ;; cua mode line
 (defun my-cua-mode-setting ()
@@ -156,7 +133,7 @@
   (put 'mouse-set-point 'CUA 'move)
   (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
   ;; (setq cua-keep-region-after-copy t) ;选中复制后保持选中状态
-)
+  )
 ;; )
 (with-eval-after-load 'cua-base (my-cua-mode-setting))
 
@@ -211,11 +188,6 @@
 (add-hook 'find-file-hook 'view-exist-file)
 (keyboard-translate ?\C-i ?\H-i)	;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
-
-;; 在新建文件时自动调用模版
-(auto-insert-mode)
-(setq auto-insert-directory "~/.emacs.d/packages/auto-insert/")
-(define-auto-insert "\\.py$" "template.py")
 
 ;;; occur
 (global-set-key (kbd "C-c o") 'occur-select)
@@ -452,10 +424,12 @@ about what flexible matching means in this context."
 ;; autosave 这个会卡
 (setq auto-save-default nil
       delete-auto-save-files nil)
-;; bakup
-(setq make-backup-files t)
+;; bakup 
+(setq make-backup-files nil)
 (setq auto-save-file-name-transforms (quote ((".*" "~/.emacs.d/autosave/" t)))
       backup-directory-alist (quote (("." . "~/.emacs.d/backups/"))))
+
+(setq create-lockfiles nil) ;; 禁止创建#.开头的同名文件
 
 ;;; inf文件
 (add-to-list 'auto-mode-alist '("\\.inf\\'" . conf-windows-mode))

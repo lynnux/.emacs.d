@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 17:23:07 lynnux>
+;; Time-stamp: <2021-11-04 21:39:30 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -671,6 +671,8 @@
 ;; (sp-use-paredit-bindings)
 (sp-use-smartparens-bindings)
 (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
+(define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
+(define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
 ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
 (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
 (set-default 'sp-autoskip-closing-pair 'always)
@@ -919,6 +921,7 @@
 (defun hydra-hideshow/body()
   (interactive)
   (require 'hydra)
+  (hs-minor-mode)
   (funcall (defhydra hydra-hideshow ()
 	     "
 _h_: hide block _s_: show block
