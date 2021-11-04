@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 10:00:09 lynnux>
+;; Time-stamp: <2021-11-04 14:37:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -232,6 +232,11 @@
       )
     (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
     (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+    ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
+    ;; (company-posframe-mode 1)
+    ;; (setq company-posframe-quickhelp-delay 0.1)
+    (require 'company-ctags)
+    (company-ctags-auto-setup)
     )
   )
 
@@ -712,7 +717,6 @@
   (forward-line -1)
   (indent-according-to-mode))
 
-
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
@@ -754,7 +758,7 @@
        ;; smart case跟emacs类似，默认读gitignore实在不习惯
        helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore %s %s %s"
        ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; 貌似没什么用
-       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个没法过去了
+       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
        helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
        helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
        helm-ff-file-name-history-use-recentf t
@@ -1091,6 +1095,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; which-key确实好用
 (require 'which-key)
 (which-key-mode)
+
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

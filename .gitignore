@@ -47,3 +47,4 @@ transient/*
 /projectile.cache
 /projectile-bookmarks.eld
 /packages/projectile/*.el
+/TAGS

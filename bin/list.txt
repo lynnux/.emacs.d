@@ -1,9 +1,14 @@
  ctags.exe
  emacs-win32-launcher.exe
  es.exe  (Everything的命令接口，还支持中文!)
+ fd.exe
  global.exe
  gozilla.exe
  gtags-cscope.exe
  gtags.exe
  htags.exe
+ readtags.exe (ctags)
  rg.exe
+
+ctags来自新版，包含readtags：
+https://github.com/universal-ctags/ctags-win32/releases

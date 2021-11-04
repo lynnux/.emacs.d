@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 09:30:28 lynnux>
+;; Time-stamp: <2021-11-04 14:12:10 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -141,4 +141,5 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
   (w32-send-sys-command 61488))
 
-(setq enable-local-variables :safe)
+(setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
+(setq visible-bell t) ;; ** 关闭 beep
