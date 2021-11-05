@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-05 15:16:55 lynnux>
+;; Time-stamp: <2021-11-05 19:39:06 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -26,7 +26,7 @@ _a_: file at point  _q_uit
       ("e" helm-locate nil :color blue)
       ("c" files-recent-changed nil :color blue)
       ("v" files-recent-visited nil :color blue)
-      ("a" find-file-at-point nil :color blue)r
+      ("a" find-file-at-point nil :color blue)
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
@@ -1074,14 +1074,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (require 'which-key)
 (which-key-mode)
 
-;; eglot，对比lsp小巧，c++装个llvm(包含clangd)就可以直接用了
+;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
+;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(add-hook 'c++-mode-hook 'eglot-ensure)
-(add-hook 'python-mode-hook 'eglot-ensure)
+(add-hook 'prog-mode-hook (lambda ()
+			    (unless  (or 
+				      (eq major-mode 'emacs-lisp-mode)
+				      (eq major-mode 'lisp-interaction-mode)
+				      )
+			      (eglot-ensure))))
 (autoload 'eglot-ensure "eglot" nil t)
 (autoload 'eglot "eglot" nil t)
 (autoload 'eglot-rename "eglot" nil t)
-;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
