@@ -48,3 +48,4 @@ transient/*
 /projectile-bookmarks.eld
 /packages/projectile/*.el
 /TAGS
+/packages/lsp/*

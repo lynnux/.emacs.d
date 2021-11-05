@@ -1,7 +1,6 @@
-;; Time-stamp: <2021-11-05 10:11:37 lynnux>
+;; Time-stamp: <2021-11-05 15:16:55 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
-;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
 
 (add-to-list 'load-path
 	     "~/.emacs.d/packages")
@@ -27,7 +26,7 @@ _a_: file at point  _q_uit
       ("e" helm-locate nil :color blue)
       ("c" files-recent-changed nil :color blue)
       ("v" files-recent-visited nil :color blue)
-      ("a" find-file-at-point nil :color blue)
+      ("a" find-file-at-point nil :color blue)r
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
@@ -95,8 +94,9 @@ _c_: hide comment        _q_uit
 (setq undo-tree-visualizer-timestamps t)
 (setq undo-tree-visualizer-diff t)
 (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
-(setq undo-tree-auto-save-history t
-      undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/")))) ;; 这个功能爽呆了
+(setq undo-tree-auto-save-history nil
+      undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
+;; 这个功能爽呆了
 (global-set-key (kbd "C-z") 'undo-tree-undo)
 (global-set-key (kbd "C-S-z") 'undo-tree-redo)
 
@@ -379,7 +379,6 @@ _c_: hide comment        _q_uit
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
 (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
-(add-to-list 'jl-insert-marker-funcs "racer-find-definition")
 (add-to-list 'jl-insert-marker-funcs "swiper")
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
@@ -480,63 +479,6 @@ _c_: hide comment        _q_uit
   ;;(turn-on-eldoc-mode) ; 会卡
   )
 
-;; python
-(add-to-list 'load-path "~/.emacs.d/packages/jedi")
-(when (featurep 'auto-complete)
-  (autoload 'jedi:ac-setup "jedi" nil t)
-  (add-hook 'python-mode-hook '(lambda ()
-				 (jedi:ac-setup)
-				 (local-set-key (kbd "<C-return>") 'jedi:complete))))
-;; (setq jedi:server-command
-;;       (list "D:\\Python27\\Python.exe" jedi:server-script))
-
-;; ctags
-(setq ctags-program "ctags")
-(when (string-equal system-type "windows-nt")
-  (progn
-    (setq ctags-program (concat "\"" (file-truename "~/.emacs.d/bin/ctags.exe") "\""))
-    ))
-
-(defun create-tags (dir-name)
-  "Create tags file."
-  (interactive "DDirectory: ")
-  (shell-command
-   ;; (message
-   (format "%s -f %s -e -R %s" ctags-program 
-	   (concat "\"" (expand-file-name "TAGS" dir-name) "\"") ;目录含有空格的话
-	   (concat "\"" (expand-file-name "." dir-name) "\"")
-	   )))
-
-;; stl文件名无后辍，对vc来说只有vcinstalldir/include这个目录
-(defun create-tags-cppstl (dir-name)
-  "Create stl tags file."
-  (interactive "DDirectory: ")
-  (shell-command
-   ;; (message
-   (format "%s --c++-kinds=+p --fields=+iaS --extra=+q --language-force=c++ -f %s -e -R %s" ctags-program 
-	   (concat "\"" (expand-file-name "TAGS" dir-name) "\"") ;目录含有空格的话
-	   (concat "\"" (expand-file-name "." dir-name) "\"")
-	   )))
-
-;; (add-hook 'c-mode-common-hook
-;; 	  (lambda ()
-;; 	    ; 用上来的按键
-;; 	    (setq flymake-no-changes-timeout 1.0)
-;; 	    (local-set-key (kbd "<f4>") 
-;; 			   (lambda ()
-;; 			     (interactive)
-;; 			     (flymake-goto-next-error)
-;; 			     (let ((err (get-char-property (point) 'help-echo)))
-;; 			       (when err
-;; 				 (message err)))))
-;; 	    (local-set-key [(shift f4)]
-;; 			   (lambda ()
-;; 			     (interactive)
-;; 			     (flymake-goto-prev-error)
-;; 			     (let ((err (get-char-property (point) 'help-echo)))
-;; 			       (when err
-;; 				 (message err)))))
-;; 	    ))
 
 ;;; shell, main goal is for compile test
 (defvar smart-compile-run-last-buffer nil)
@@ -685,26 +627,18 @@ _c_: hide comment        _q_uit
 (add-to-list 'auto-mode-alist '("\\.ahk\\'" . xahk-mode))
 
 ;;; rust mode
-(add-to-list 'load-path "~/.emacs.d/packages/rust")
 (autoload 'rust-mode "rust-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 (modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; 带中文必须这个编码，干脆就默认
-
-;;; racer补全
-(autoload 'racer-mode "racer" nil t)
-(add-hook 'rust-mode-hook #'racer-mode)
-(add-hook 'racer-mode-hook #'eldoc-mode)
-(defun my/racer-mode-hook ()
+(with-eval-after-load 'rust-mode
   (when (featurep 'auto-complete)
-    (require 'ac-racer)
-    (ac-racer-setup)
     (make-local-variable 'ac-auto-start) ; 自动弹出会卡
     (setq ac-auto-start nil)
     )
   (when (featurep 'company)
-    (make-local-variable 'company-idle-delay)
-    (setq company-idle-delay nil) 	; 不自动补全
-    (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+    ;; (make-local-variable 'company-idle-delay)
+    ;; (setq company-idle-delay nil) 	; 不自动补全
+    ;; (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
     (setq company-tooltip-align-annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
@@ -712,8 +646,8 @@ _c_: hide comment        _q_uit
     (with-eval-after-load 'smartparens-rust
       (sp-local-pair 'rust-mode "'" nil :actions nil)
       (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
-      )))
-(add-hook 'racer-mode-hook 'my/racer-mode-hook)
+      ))
+  )
 
 (add-to-list 'load-path "~/.emacs.d/packages/neotree")
 (autoload 'neotree-toggle "neotree" nil t)
@@ -1139,6 +1073,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; which-key确实好用
 (require 'which-key)
 (which-key-mode)
+
+;; eglot，对比lsp小巧，c++装个llvm(包含clangd)就可以直接用了
+(add-to-list 'load-path "~/.emacs.d/packages/lsp")
+(add-hook 'c++-mode-hook 'eglot-ensure)
+(add-hook 'python-mode-hook 'eglot-ensure)
+(autoload 'eglot-ensure "eglot" nil t)
+(autoload 'eglot "eglot" nil t)
+(autoload 'eglot-rename "eglot" nil t)
+;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
