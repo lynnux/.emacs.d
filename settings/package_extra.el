@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-04 22:18:54 lynnux>
+;; Time-stamp: <2021-11-05 10:11:37 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 一般都是eldoc会卡，如ggtag和racer mode都是因为调用了其它进程造成卡的
@@ -8,6 +8,76 @@
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+(autoload 'defhydra "hydra" nil t)
+(global-set-key (kbd "C-x f") 'hydra-find-file-select)
+(global-set-key (kbd "C-c o") 'hydra-occur-select)
+(global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+
+(defun hydra-find-file-select ()
+  (interactive)
+  (unless (functionp 'hydra-find-file/body)
+    (defhydra hydra-find-file ()
+      "
+_f_: file cache     _e_: helm locate
+_c_: file changed   _v_: file visited
+_a_: file at point  _q_uit
+"
+      ("f" file-cache-switch-file nil :color blue)
+      ("e" helm-locate nil :color blue)
+      ("c" files-recent-changed nil :color blue)
+      ("v" files-recent-visited nil :color blue)
+      ("a" find-file-at-point nil :color blue)
+      ("q" nil "nil" :color blue))
+    )
+  (funcall 'hydra-find-file/body)
+  )
+
+(defun hydra-occur-select ()
+  (interactive)
+  (unless (functionp 'hydra-occur/body)
+    (defhydra hydra-occur ()
+      "
+_a_: all   _t_: type
+_m_: mode  _RET_: this buffer
+_q_uit
+"
+      ("a" all-occur nil :color blue)
+      ("t" type-occur nil :color blue)
+      ("m" mode-occur nil :color blue)
+      ("RET" occur nil :color blue)
+      ("q" nil "nil" :color blue))
+    )
+  (funcall 'hydra-occur/body)
+  )
+
+;; hydra使用autoload的方式 https://github.com/abo-abo/hydra/issues/149
+(defun hydra-hideshow-select()
+  (interactive)
+  (hs-minor-mode)
+  (unless (functionp 'hydra-hideshow/body)
+    (defhydra hydra-hideshow ()
+      "
+_h_: hide all toggle     _s_: show block
+_H_: hide block toggle   _S_: show all 
+_c_: hide comment        _q_uit
+"
+      ("h" hs-toggle-hiding-all nil :color blue)
+      ("s" hs-show-block nil :color blue)
+      ("H" hs-toggle-hiding nil :color blue)
+      ("S" hs-show-all nil :color blue)
+      ("c" hs-hide-initial-comment-block nil :color blue)
+      ("q" nil "nil" :color blue)))
+  (funcall 'hydra-hideshow/body))
+
+(defvar my-hs-hide nil "Current state of hideshow for toggling all.")
+  ;;;###autoload
+(defun hs-toggle-hiding-all () "Toggle hideshow all."
+       (interactive)
+       (setq-local my-hs-hide (not my-hs-hide))
+       (if my-hs-hide
+	   (hs-hide-all)
+	 (hs-show-all)))
 
 ;;; global-linum-mode居然会托慢屏显速度，我一直还以为是emacs的问题！
 (require 'nlinum)
@@ -923,34 +993,6 @@
 			     (thing-at-point 'line))))))
 
 
-;; hydra使用autoload的方式 https://github.com/abo-abo/hydra/issues/149
-(defun hydra-hideshow/body()
-  (interactive)
-  (require 'hydra)
-  (hs-minor-mode)
-  (funcall (defhydra hydra-hideshow ()
-	     "
-_h_: hide block _s_: show block
-_H_: hide all   _S_: show all 
-_i_: hide comment _q_uit
-"
-	     ("h" hs-toggle-hiding-all nil :color blue)
-	     ("s" hs-show-block nil :color blue)
-	     ("H" hs-toggle-hiding nil :color blue)
-	     ("S" hs-show-all nil :color blue)
-	     ("i" hs-hide-initial-comment-block nil :color blue)
-	     ("q" nil "nil" :color blue))))
-(global-set-key (kbd "C-c h") 'hydra-hideshow/body) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
-
-(defvar my-hs-hide nil "Current state of hideshow for toggling all.")
-  ;;;###autoload
-(defun hs-toggle-hiding-all () "Toggle hideshow all."
-       (interactive)
-       (setq-local my-hs-hide (not my-hs-hide))
-       (if my-hs-hide
-	   (hs-hide-all)
-	 (hs-show-all)))
-
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
         (name (if (eq major-mode 'dired-mode)
@@ -994,29 +1036,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 		  ("a" (copy-buffer-name ?a t) nil :color blue)
 		  ("q" nil "" :color blue))))
 (global-set-key (kbd "C-3") 'hydra-copybf3/body)
-
-;; 为了延迟加载hideshowvis也是够拼了
-(defvar hideshowvis-inited nil "")
-(defun hideshowvis-setting()
-  (unless hideshowvis-inited
-    (setq hideshowvis-inited t)
-    ;; 配合hideshow，更好地区分被折叠的代码
-    (require 'hideshowvis)
-    (custom-set-variables '(hideshowvis-ignore-same-line nil)) ; hideshowvis-enable会卡，必须用这个
-    (hideshowvis-symbols) ;; 显示+号和折叠行数
-    ;; 抄这里的配置http://www.cnblogs.com/aaron2015/p/4882652.html，没想到最适合zenburn主题
-    (custom-set-faces
-     '(hs-fringe-face ((t (:foreground "#afeeee" :box (:line-width 2 :color "grey75" :style released-button))))) ; 那个+号
-     '(hs-face ((t (:background "#444" :box t)))) ; 替换原来的...，很清楚地显示是被折叠了，并且显示被折叠了多少行
-     '(hideshowvis-hidable-face ((t (:foreground "#2f4f4f")))) ; 这样设置那个难看的-就看不清了
-     )
-    (add-hook 'prog-mode-hook 'hideshowvis-enable) ;; 其实不需要这个也可以，这个可以让点击+号就展开，方便鼠标操作
-    (hideshowvis-enable) ;; fix当前buffer不能点击+
-    ))
-(defadvice hs-hide-all (before my-hs-hide-all activate)
-  (hideshowvis-setting))
-(defadvice hs-hide-block (before my-hs-hide-block activate)
-  (hideshowvis-setting))
 
 ;; go lang
 (autoload 'go-mode "go-mode" nil t)
@@ -1120,7 +1139,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; which-key确实好用
 (require 'which-key)
 (which-key-mode)
-
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

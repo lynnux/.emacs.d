@@ -1,25 +1,8 @@
-;; Time-stamp: <2021-11-04 21:47:11 lynnux>
+;; Time-stamp: <2021-11-05 09:49:48 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
 ;; C-x f filecache everything recent-visit/changed find-file-at-point
-
-(defun find-file-select (selected)
-  (interactive
-   (list (read-char "find in [f]ilecache/[e]verything/recent[v]isit/[c]hanged/[a]t point")))
-  (cond ((eq selected ?f) 
-	 (call-interactively 'file-cache-switch-file))
-	((eq selected ?e) 
-	 (call-interactively 'helm-locate))
-	((eq selected ?c) 
-	 (call-interactively 'files-recent-changed))
-	((eq selected ?v) 
-	 (call-interactively 'files-recent-visited))
-	((eq selected ?a) 
-	 (call-interactively 'find-file-at-point))
-	;; (t (message "other"))
-	))
-(global-set-key (kbd "C-x f") 'find-file-select)
 
 ;; (recentf-mode 1) 用session代替了
 (setq history-length 200)
@@ -190,7 +173,6 @@
 (global-set-key [?\H-i] 'view-mode)
 
 ;;; occur
-(global-set-key (kbd "C-c o") 'occur-select)
 (add-hook 'occur-mode-hook (lambda () 
 			     (local-set-key (kbd "p") 'occur-prev)
 			     (local-set-key (kbd "n") 'occur-next)))
@@ -220,27 +202,26 @@ Run occur in all buffers whose names match this type for REXP."
                rexp))
 
 ;;; 参考multi-occur实现，写这个函数很考验lisp功力，调试方法C-X C-E
-(defun occur-select (more regx &optional nothing)
-  "select what you wan't to see occur"
-  (interactive 
-   (cons
-    (let* ((choice (read-char "Occur in: [a]ll, [t]ype, [m]ode, or just this buffer(any other key)?"))
-	   (more  (list (cond ((eq choice ?a) nil)
-			      ((eq choice ?t) (read-string "Extension: "))
-			      ((eq choice ?m) (read-command "Mode:"))
-			      (t ?o)))) ; 即occur
-	   )
-      (add-to-list 'more choice)
-      (nreverse more)) ; nreverse是配合前面的cons
-    (occur-read-primary-args))) ;填充regx
-  (let* ((choice (cadr more))
-	 (morearg (car more)))
-    (cond ((eq choice ?a) (all-occur regx))
-	  ((eq choice ?t) (type-occur morearg regx))
-	  ((eq choice ?m) (mode-occur morearg regx))
-	  (t (occur regx))
-	  )))
-
+;; (defun occur-select (more regx &optional nothing)
+;;   "select what you wan't to see occur"
+;;   (interactive 
+;;    (cons
+;;     (let* ((choice (read-char "Occur in: [a]ll, [t]ype, [m]ode, or just this buffer(any other key)?"))
+;; 	   (more  (list (cond ((eq choice ?a) nil)
+;; 			      ((eq choice ?t) (read-string "Extension: "))
+;; 			      ((eq choice ?m) (read-command "Mode:"))
+;; 			      (t ?o)))) ; 即occur
+;; 	   )
+;;       (add-to-list 'more choice)
+;;       (nreverse more)) ; nreverse是配合前面的cons
+;;     (occur-read-primary-args))) ;填充regx
+;;   (let* ((choice (cadr more))
+;; 	 (morearg (car more)))
+;;     (cond ((eq choice ?a) (all-occur regx))
+;; 	  ((eq choice ?t) (type-occur morearg regx))
+;; 	  ((eq choice ?m) (mode-occur morearg regx))
+;; 	  (t (occur regx))
+;; 	  )))
 
 ;; ctags/etags，更多设置在plugin_basic里
 ;; (global-set-key (kbd "C-;") 'complete-tag)
