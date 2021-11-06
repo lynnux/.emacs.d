@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-05 19:39:06 lynnux>
+;; Time-stamp: <2021-11-06 18:53:40 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -193,43 +193,18 @@ _c_: hide comment        _q_uit
 (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
-(require 'highlight-symbol)
+;; highlight-symbol下岗啦，会影响输入。下面ahs好像只对可见范围高亮所以不卡
 ;; zenburn
-(set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
-;; (set-face-foreground 'highlight-symbol-face "yellow")
-;;atom-one-dark
-;; (set-face-background 'highlight-symbol-face "black")
-;;normal
-;; (set-face-background 'highlight-symbol-face "yellow")
-(setq highlight-symbol-idle-delay 0.1)
-(global-set-key [(control f3)] 'highlight-symbol-at-point)
-(global-set-key [f3] 'highlight-symbol-next)
-(global-set-key [(shift f3)] 'highlight-symbol-prev)
-(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
-;; (highlight-symbol-mode 1)
-;; 定义全局mode
-(defun highlight-symbol-mode-on ()
-  (unless  (or 
-	    ;; 排除的mode，在此加
-	    (eq major-mode 'occur-mode)
-	    (eq major-mode 'occur-edit-mode)
-	    (eq major-mode 'erc-mode)
-	    (eq major-mode 'fundamental-mode)
-	    (eq major-mode 'helm-major-mode)
-	    )
-    (highlight-symbol-mode)) 
-  )
-(define-globalized-minor-mode global-highlight-symbol-mode highlight-symbol-mode highlight-symbol-mode-on)
-(global-highlight-symbol-mode 1)
-;; (require 'highlight-symbol-scroll-out)
-;; (global-highlight-symbol-scroll-out-mode)
+;; (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
+;; (global-set-key [(control f3)] 'highlight-symbol-at-point)
+;;(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
+(global-set-key [f3] 'ahs-forward) ;; 这个只能在可见范围跳啊！还是用C-s搜索吧！
+(global-set-key [(shift f3)] 'ahs-backward)
 ;; 高亮选中项
-(defadvice highlight-symbol-get-symbol (around my-highlight-symbol-get-symbol activate)
-  (if (use-region-p)
-      (setq ad-return-value (buffer-substring (region-beginning) (region-end)))
-    ad-do-it
-    )
-  )
+(require 'auto-highlight-symbol)
+(setq ahs-suppress-log t)
+(setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
+(global-auto-highlight-symbol-mode t)
 
 (require 'cursor-chg)
 (change-cursor-mode )
@@ -295,11 +270,12 @@ _c_: hide comment        _q_uit
      company-dabbrev-downcase nil
      company-show-numbers t)
     ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
-    (with-eval-after-load 'dash
-      (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
-      (require 'company-tabnine)
-      (add-to-list 'company-backends #'company-tabnine)
-      )
+    ;; (with-eval-after-load 'dash
+    ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
+    ;;   (require 'company-tabnine)
+    ;;   (add-to-list 'company-backends #'company-tabnine)
+    ;;   )
+    
     (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
     (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
     ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
@@ -339,9 +315,9 @@ _c_: hide comment        _q_uit
   (setq c-hungry-delete-key t)		; 
   ;;(setq c-auto-newline 1)
   (c-set-style "stroustrup")
-  (gtags-settings)
+  ;;  (gtags-settings)
   ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
-  (local-set-key (kbd "C-c C-c") 'comment-eclipse)
+  (local-set-key (kbd "C-c C-c") 'magit)
   (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
   ;; (local-set-key [(meta f8)] 'clang-format-auto)
   )
@@ -734,7 +710,7 @@ _c_: hide comment        _q_uit
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
 
-(if t
+(if nil
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
@@ -775,7 +751,7 @@ _c_: hide comment        _q_uit
        helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
        helm-ff-file-name-history-use-recentf t
        helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-       helm-buffers-fuzzy-matching t    ; 这种细化的fuzzy最喜欢了
+       helm-buffers-fuzzy-matching t
        helm-recentf-fuzzy-match    t
        helm-follow-mode-persistent t
        helm-allow-mouse t
@@ -897,6 +873,7 @@ _c_: hide comment        _q_uit
     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
     (global-set-key (kbd "<f1> l") 'counsel-find-library)
+    (global-set-key (kbd "M-m") 'counsel-imenu)
     (with-eval-after-load 'ivy
       (ivy-mode 1)
       (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
@@ -1077,15 +1054,53 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
+(setq read-process-output-max (* 1024 1024)) ; lsp-mode docker会提示这个
+(if t
+    ;; eglot
+    (progn
+      (defun lsp-ensure() (eglot-ensure))
+      (autoload 'eglot-ensure "eglot" nil t)
+      (autoload 'eglot "eglot" nil t)
+      (autoload 'eglot-rename "eglot" nil t)
+      (with-eval-after-load 'eglot
+	(setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
+	(push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+              eglot-ignored-server-capabilities) 
+	;; (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode -1)))
+	;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
+        
+	)
+      ;; 临时禁止view-mode
+      (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	(setq tmp-disable-view-mode-hook t)
+	ad-do-it
+	(setq tmp-disable-view-mode-hook nil)
+	)
+      )
+  
+  ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
+  ;; 但是eldoc提示API参数还是非常有用的！
+  (progn
+    (defun lsp-ensure() (nox-ensure))
+    (autoload 'nox-ensure "nox" nil t)
+    (autoload 'nox "nox" nil t)
+    (autoload 'nox-rename "nox" nil t)
+    (setq nox-autoshutdown t)
+    (with-eval-after-load 'nox
+      (add-to-list 'nox-server-programs '((c++-mode c-mode) "clangd"))
+      )
+    (defadvice nox--apply-workspace-edit (around my-nox--apply-workspace-edit activate)
+      (setq tmp-disable-view-mode-hook t)
+      ad-do-it
+      (setq tmp-disable-view-mode-hook nil)
+      )
+    ))
 (add-hook 'prog-mode-hook (lambda ()
 			    (unless  (or 
 				      (eq major-mode 'emacs-lisp-mode)
 				      (eq major-mode 'lisp-interaction-mode)
 				      )
-			      (eglot-ensure))))
-(autoload 'eglot-ensure "eglot" nil t)
-(autoload 'eglot "eglot" nil t)
-(autoload 'eglot-rename "eglot" nil t)
+			      (lsp-ensure))))
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

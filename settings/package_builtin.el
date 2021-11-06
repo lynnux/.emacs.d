@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-05 09:49:48 lynnux>
+;; Time-stamp: <2021-11-06 17:58:29 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -171,6 +171,39 @@
 (add-hook 'find-file-hook 'view-exist-file)
 (keyboard-translate ?\C-i ?\H-i)	;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
+;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
+(defun run-with-local-idle-timer (secs repeat function &rest args)
+  "Like `run-with-idle-timer', but always runs in the `current-buffer'.
+
+Cancels itself, if this buffer was killed."
+  (let* (;; Chicken and egg problem.
+         (fns (make-symbol "local-idle-timer"))
+         (timer (apply 'run-with-idle-timer secs repeat fns args))
+         (fn `(lambda (&rest args)
+                (if (not (buffer-live-p ,(current-buffer)))
+                    (cancel-timer ,timer)
+                  (with-current-buffer ,(current-buffer)
+                    (apply (function ,function) args))))))
+    (fset fns fn)
+    fn))
+(defvar tmp-disable-view-mode-hook nil);; 在需要的函数defadvice里设置
+(defun check-tmp-disable-view-mode-hook ()
+  (when (and tmp-disable-view-mode-hook (bufferp ad-return-value))
+    (with-current-buffer ad-return-value
+      (when view-mode
+	(view-mode -1) ;; 临时禁用
+	;; 2秒后恢复只读，实际上idle可能超过2秒
+	(run-with-local-idle-timer 2 nil (lambda ()
+					   (view-mode 1)
+					   )) 
+	)
+      ))
+  )
+;; 如果有另外的函数仿此加
+(defadvice find-file-noselect (around my-find-file-noselect activate)
+  ad-do-it
+  (check-tmp-disable-view-mode-hook)
+  )
 
 ;;; occur
 (add-hook 'occur-mode-hook (lambda () 
