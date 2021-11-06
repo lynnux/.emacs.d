@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-06 18:53:40 lynnux>
+;; Time-stamp: <2021-11-06 23:01:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -709,6 +709,39 @@ _c_: hide comment        _q_uit
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
+
+;; emacs内置很多改进的minibuffer模式了，如icomplete[-vertical]-mode, fido[-vertical]-mode
+;; 现在都是组合拳了！
+(when nil
+  (progn
+    (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
+    (require 'vertico)
+    (vertico-mode 1)
+    ;;(require 'icomplete-vertical)
+    ;;(icomplete-mode)
+    ;;(icomplete-vertical-mode)
+    ;;(setq completion-styles '(partial-completion substring))
+    ;;(setq completion-category-overrides '((file (styles basic substring))))
+    (setq read-file-name-completion-ignore-case t
+	  read-buffer-completion-ignore-case t
+	  completion-ignore-case t)
+    (require 'marginalia) ;; 美化
+    (marginalia-mode)
+    (require 'consult) ;; 核心功能
+    (require 'orderless) ;; 实现空格分词，consult-line变成C-s效果！
+    (defun sanityinc/use-orderless-in-minibuffer ()
+      (setq-local completion-styles '(substring orderless)))
+    (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
+    ;; embark提供minibuffer额外的菜单暂时不需要
+    ;; (with-eval-after-load 'vertico
+    ;;   (require 'embark)
+    ;;   (define-key vertico-map (kbd "C-o") 'embark-export)
+    ;;   (define-key vertico-map (kbd "C-z") 'embark-act))
+    (global-set-key (kbd "C-s") 'consult-line) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
+    (global-set-key [(control f2)] (lambda () (interactive)
+				     (require 'vc)
+				     (consult-ripgrep (or (vc-find-root "." ".git") (helm-current-directory)))))
+    ))
 
 (if nil
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
