@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-06 23:01:44 lynnux>
+;; Time-stamp: <2021-11-09 17:58:56 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -743,7 +743,7 @@ _c_: hide comment        _q_uit
 				     (consult-ripgrep (or (vc-find-root "." ".git") (helm-current-directory)))))
     ))
 
-(if nil
+(if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
@@ -817,19 +817,15 @@ _c_: hide comment        _q_uit
 	(define-key helm-map (kbd "<f4>") 'helm-next-line)
 	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
 	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
-	;; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-	;; tab自动补全光标所在的symbol，TODO：本来想只对空输入有效，但是判断空有问题
 	(define-key helm-map (kbd "<tab>") (lambda ()(interactive)
-					     (let ((src (helm-get-current-source)))
-					       (if (member (assoc-default 'name src)
-							   (list "RG" "Occur"))
-						   (let ((symbol-under-cursor (with-helm-current-buffer
-									       (thing-at-point 'symbol))))
-						     (if symbol-under-cursor
-							 (helm-set-pattern symbol-under-cursor)
-						       )
-						     )
-						 (call-interactively 'helm-execute-persistent-action)
+					     (let* ((src (helm-get-current-source))
+						    (name (assoc-default 'name src)))
+					       (if (or (member name (list "RG" "Occur"))
+						       (string= name "Helm occur")
+						       (string= name "RG")) ;; TODO 
+						   (call-interactively 'next-history-element)
+						 ;; 其它模式还是helm-execute-persistent-action，比如文件补全
+						 (call-interactively 'helm-execute-persistent-action) 
 						 )
 					       )
 					     ))
@@ -850,10 +846,10 @@ _c_: hide comment        _q_uit
 	  (lambda ()
 	    (interactive)
 	    (with-helm-alive-p
-	     (helm-exit-and-execute-action (lambda (file)
-					     (require 'w32-browser)
-					     (w32explore file)
-					     )))))
+	      (helm-exit-and-execute-action (lambda (file)
+					      (require 'w32-browser)
+					      (w32explore file)
+					      )))))
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
@@ -884,17 +880,25 @@ _c_: hide comment        _q_uit
       (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
       )
   (progn
-    ;; ivy确实好用，就是公司win7机子有时c-x c-f会有延迟
+    ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
+    ;; minibuffer也不能用鼠标
     (add-to-list 'load-path "~/.emacs.d/packages/swiper")
     (autoload 'swiper "swiper" nil t)
+    (setq ivy-wrap t) ;; 可以loop选择
+    (setq ivy-count-format "(%d/%d) ")
     (setq ivy-use-virtual-buffers t)
+    (setq ivy-height 20)
     (setq enable-recursive-minibuffers t)
-    (global-set-key "\C-s" 'swiper)
+    (global-set-key "\C-s" (lambda ()(interactive)
+			     (swiper (thing-at-point 'symbol))))
+    (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
     (autoload 'ivy-resume "ivy" nil t)
     (autoload 'ivy-mode "ivy" nil t)
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
     (global-set-key (kbd "<f6>") 'ivy-resume)
-    (global-set-key [f2] 'counsel-rg) 	; Great! 貌似是解决了rg卡死的问题了，不频繁启动rg的方式https://github.com/abo-abo/swiper/pull/2552
+    ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
+    (global-set-key [f2] (lambda ()(interactive)
+			   (counsel-rg (thing-at-point 'symbol) default-directory)));; 默认git根目录，还是改为当前目录开始
     (autoload 'counsel-rg "counsel" nil t)
     (autoload 'counsel-M-x "counsel" nil t)
     (autoload 'counsel-find-file "counsel" nil t)
@@ -911,11 +915,16 @@ _c_: hide comment        _q_uit
       (ivy-mode 1)
       (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
       (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-line)
+      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
       (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
       (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
       (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
       (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
+      ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
+      (push (cons #'swiper (lambda () (setq ivy-calling t)))
+            ivy-hooks-alist)
+      (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
+            ivy-hooks-alist)
       )
     ;; (with-eval-after-load 'counsel
     ;;   (append counsel-rg-base-command "--no-ignore")) ; 好像不用加，不会搜索ignore的
