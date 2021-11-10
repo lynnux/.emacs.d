@@ -1,42 +1,42 @@
-;; Time-stamp: <2021-11-04 17:05:18 lynnux>
-;; guiÏà¹ØÉèÖÃÔÚset_gui.elÖĞ
-;; ÄÚÖÃpluginÉèÖÃÔÚplugin_basic.elÖĞ,·Ç¹Ù·½µÄÔÚplugin_extra.elÖĞ
+;; Time-stamp: <2021-11-10 10:34:32 lynnux>
+;; guiç›¸å…³è®¾ç½®åœ¨set_gui.elä¸­
+;; å†…ç½®pluginè®¾ç½®åœ¨plugin_basic.elä¸­,éå®˜æ–¹çš„åœ¨plugin_extra.elä¸­
 
 (require 'server)
-(setq load-prefer-newer t) ; since 24.4 ²»¼ÓÔØ¹ıÆÚelcÎÄ¼ş
-;; ½â¾öwin7ÉÏµÄ²»°²È«ÌáÊ¾ĞÅÏ¢
+(setq load-prefer-newer t) ; since 24.4 ä¸åŠ è½½è¿‡æœŸelcæ–‡ä»¶
+;; è§£å†³win7ä¸Šçš„ä¸å®‰å…¨æç¤ºä¿¡æ¯
 (and (>= emacs-major-version 23) (defun server-ensure-safe-dir (dir) "Noop" t))
 (when (string-equal system-type "windows-nt")
   (server-start))
-(with-eval-after-load 'server (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; È¥µô¹Ø±Õemacsclientw´ò¿ªµÄÎÄ¼şµÄÌáÊ¾
-(define-key global-map "\C-r" 'kill-ring-save); M-w¾­³£²»Æğ×÷ÓÃ
+(with-eval-after-load 'server (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; å»æ‰å…³é—­emacsclientwæ‰“å¼€çš„æ–‡ä»¶çš„æç¤º
+(define-key global-map "\C-r" 'kill-ring-save); M-wç»å¸¸ä¸èµ·ä½œç”¨
 (define-key global-map (kbd "C-x SPC") (lambda () (interactive)
-      (switch-to-buffer (other-buffer (current-buffer) 1)))) ; ×î½übufferÇĞ»»
-(global-set-key (kbd "C-v") 'yank)	; ·­Ò³»ù±¾²»ÓÃ
+      (switch-to-buffer (other-buffer (current-buffer) 1)))) ; æœ€è¿‘bufferåˆ‡æ¢
+(global-set-key (kbd "C-v") 'yank)	; ç¿»é¡µåŸºæœ¬ä¸ç”¨
 (global-set-key (kbd "C-S-v") 'popup-kill-ring)
-(delete-selection-mode 1);; Ñ¡ÖĞÌæ»»Ä£Ê½£¬±È½Ï·½±ã£¬µ«ÊÇ¾İËµÓĞ¸±×÷ÓÃ£¬ÏÈÓÃÓÃÔÙËµ
-(global-set-key [?\C-h] 'delete-backward-char) ;C-Hµ±É¾³ıºÜºÃÓÃ£¡
-(global-set-key [?\M-h] 'backward-kill-word) ;M-HË³±ãÒ²ÅªÉÏ
-(setq x-select-enable-clipboard t);; Ö§³ÖemacsºÍÍâ²¿³ÌĞòµÄÕ³(ubuntu)
-;; (icomplete-mode 1);; ÓÃM-xÖ´ĞĞÄ³¸öÃüÁîµÄÊ±ºò£¬ÔÚÊäÈëµÄÍ¬Ê±¸ø³ö¿ÉÑ¡µÄÃüÁîÃûÌáÊ¾£¬¸úswiper³åÍ»
+(delete-selection-mode 1);; é€‰ä¸­æ›¿æ¢æ¨¡å¼ï¼Œæ¯”è¾ƒæ–¹ä¾¿ï¼Œä½†æ˜¯æ®è¯´æœ‰å‰¯ä½œç”¨ï¼Œå…ˆç”¨ç”¨å†è¯´
+(global-set-key [?\C-h] 'delete-backward-char) ;C-Hå½“åˆ é™¤å¾ˆå¥½ç”¨ï¼
+(global-set-key [?\M-h] 'backward-kill-word) ;M-Hé¡ºä¾¿ä¹Ÿå¼„ä¸Š
+(setq x-select-enable-clipboard t);; æ”¯æŒemacså’Œå¤–éƒ¨ç¨‹åºçš„ç²˜(ubuntu)
+;; (icomplete-mode 1);; ç”¨M-xæ‰§è¡ŒæŸä¸ªå‘½ä»¤çš„æ—¶å€™ï¼Œåœ¨è¾“å…¥çš„åŒæ—¶ç»™å‡ºå¯é€‰çš„å‘½ä»¤åæç¤ºï¼Œè·Ÿswiperå†²çª
 
-;; ²»´´½¨~ºÍ#ÎÄ¼ş
+;; ä¸åˆ›å»º~å’Œ#æ–‡ä»¶
 (global-set-key [(meta f8)] (lambda () (interactive) (unless (use-region-p) (mark-page))
 			      (call-interactively 'indent-region)))
-(setq default-major-mode 'text-mode); Ä¬ÈÏtextÄ£Ê½
+(setq default-major-mode 'text-mode); é»˜è®¤textæ¨¡å¼
 
 (setq gdb-non-stop-setting nil)
-(put 'narrow-to-region 'disabled nil) ; C-x n nºÍC-x n w£¬Ö»²Ù×÷²¿·Öbuffer
+(put 'narrow-to-region 'disabled nil) ; C-x n nå’ŒC-x n wï¼Œåªæ“ä½œéƒ¨åˆ†buffer
 
-(fset 'yes-or-no-p 'y-or-n-p) ; ½«yes/noÌæ»»Îªy/n
+(fset 'yes-or-no-p 'y-or-n-p) ; å°†yes/noæ›¿æ¢ä¸ºy/n
 ;; insert-date
 (defun insert-date () ;
   "Insert date at point." ;
   (interactive) ;
-  (insert (format-time-string "%YÄê%mÔÂ%eÈÕ %l:%M %a %p"))) ;
+  (insert (format-time-string "%Yå¹´%mæœˆ%eæ—¥ %l:%M %a %p"))) ;
 
-;; Alt;ÊÇÌí¼Ó×¢ÊÍ£¬ºÜºÃÓÃ£¬ÕâÀïÊÇ¼ÓÇ¿ËüµÄ¹¦ÄÜ:
-;; Ã»ÓĞ¼¤»îµÄÇøÓò£¬¾Í×¢ÊÍ/·´×¢ÊÍµ±Ç°ĞĞ£¬½öµ±ÔÚĞĞÎ²µÄÊ±ºò²ÅÔÚĞĞÎ²¼Ó×¢ÊÍ
+;; Alt;æ˜¯æ·»åŠ æ³¨é‡Šï¼Œå¾ˆå¥½ç”¨ï¼Œè¿™é‡Œæ˜¯åŠ å¼ºå®ƒçš„åŠŸèƒ½:
+;; æ²¡æœ‰æ¿€æ´»çš„åŒºåŸŸï¼Œå°±æ³¨é‡Š/åæ³¨é‡Šå½“å‰è¡Œï¼Œä»…å½“åœ¨è¡Œå°¾çš„æ—¶å€™æ‰åœ¨è¡Œå°¾åŠ æ³¨é‡Š
 (defun qiang-comment-dwim-line (&optional arg)
   "Replacement for the comment-dwim command.
 If no region is selected and current line is not blank and we are not at the end of the line,
@@ -67,7 +67,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; (global-set-key (kbd "C-c C-c") 'comment-eclipse)
 
 (setq kill-do-not-save-duplicates t)
-;; Ã¿´Î¿½±´ÆäËû³ÌĞòµÄÎÄ×ÖÀ´Ìæ»»Ê±³£³£»áÉ¾³ı£¬ÕâÑù¼ôÇĞ°åÀïÊÇÄÚÈİ¾ÍÃ»ÓĞÁË
+;; æ¯æ¬¡æ‹·è´å…¶ä»–ç¨‹åºçš„æ–‡å­—æ¥æ›¿æ¢æ—¶å¸¸å¸¸ä¼šåˆ é™¤ï¼Œè¿™æ ·å‰ªåˆ‡æ¿é‡Œæ˜¯å†…å®¹å°±æ²¡æœ‰äº†
 (when (string-equal system-type "windows-nt")
   (defadvice kill-region (before save-clip activate)
     (let* ((clip-str (w32-get-clipboard-data)))
@@ -75,7 +75,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 	   (unless (equal (nth 0 kill-ring) clip-str)
 	     (kill-new clip-str))))))
 
-;; atl+w¸´ÖÆµ±Ç°ĞĞ, atl+k¸´ÖÆµ½ĞĞÎ²£¨Ô­¹¦ÄÜ²»³£ÓÃ°É£©
+;; atl+wå¤åˆ¶å½“å‰è¡Œ, atl+kå¤åˆ¶åˆ°è¡Œå°¾ï¼ˆåŸåŠŸèƒ½ä¸å¸¸ç”¨å§ï¼‰
 ;; Smart copy, if no region active, it simply copy the current whole line
 (defadvice kill-line (before check-position activate)
   (if (member major-mode
@@ -115,7 +115,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 ;; (global-set-key (kbd "M-k") 'qiang-copy-line)
 
-;; ¿½±´´úÂëºó×Ô¶¯¸ñÊ½»¯
+;; æ‹·è´ä»£ç åè‡ªåŠ¨æ ¼å¼åŒ–
 ;; (dolist (command '(yank yank-pop))
 ;;   (eval
 ;;    `(defadvice ,command (after indent-region activate)
@@ -139,16 +139,16 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; 	   (let ((mark-even-if-inactive transient-mark-mode))
 ;; 	     (indent-region (region-beginning) (region-end) nil))))))
 
-(put 'downcase-region 'disabled nil);; Ñ¡ÖĞÇøÓò C-X C-L 
-(put 'upcase-region 'disabled nil);; Ñ¡ÖĞÇøÓò C-X C-U
+(put 'downcase-region 'disabled nil);; é€‰ä¸­åŒºåŸŸ C-X C-L 
+(put 'upcase-region 'disabled nil);; é€‰ä¸­åŒºåŸŸ C-X C-U
 
-;; C-t ÉèÖÃ±ê¼Ç£¬Ô­¼üÓÃc-x t´úÌæ£¬ÓÃcolemakºó£¬tÔÚÊ³Ö¸Ì«ÈİÒ×°´µ½
+;; C-t è®¾ç½®æ ‡è®°ï¼ŒåŸé”®ç”¨c-x tä»£æ›¿ï¼Œç”¨colemakåï¼Œtåœ¨é£ŸæŒ‡å¤ªå®¹æ˜“æŒ‰åˆ°
 (global-set-key (kbd "C-q") 'set-mark-command)
 (global-set-key (kbd "\C-xt") 'transpose-chars)
 
 (put 'dired-find-alternate-file 'disabled nil)
 
-;; windowsÖĞ´ò¿ª²¢Ñ¡ÖĞbuffer¶ÔÓ¦µÄÎÄ¼ş£¬C-X 6 ÊÇ2C modeµÄÇ°ê¡
+;; windowsä¸­æ‰“å¼€å¹¶é€‰ä¸­bufferå¯¹åº”çš„æ–‡ä»¶ï¼ŒC-X 6 æ˜¯2C modeçš„å‰è¾
 (when (string-equal system-type "windows-nt")
   (global-set-key (kbd "C-x C-d")
 		(lambda () (interactive)
@@ -157,7 +157,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 		  (w32explore (buffer-file-name (current-buffer)))
 		  )))
 
-;; Ê±¼ä´ÁÓÃ·¨£ºTime-stamp: <>»òÕßTime-stamp: " "£¬Ö»»á¸üĞÂµÚÒ»¸öÊ±¼ä´Á
+;; æ—¶é—´æˆ³ç”¨æ³•ï¼šTime-stamp: <>æˆ–è€…Time-stamp: " "ï¼Œåªä¼šæ›´æ–°ç¬¬ä¸€ä¸ªæ—¶é—´æˆ³
 (add-hook 'before-save-hook 'time-stamp)
 
 (setq user-full-name "lynnux")
@@ -192,7 +192,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (interactive "p")
   (my-insert-char-next-line (- arg)))
 
-(global-set-key (kbd "C-j") 'my-insert-char-prev-line) ;Ô­ÏëÓÃC-IµÄ£¬½á¹û»áÓ°ÏìTAB¼ü
+(global-set-key (kbd "C-j") 'my-insert-char-prev-line) ;åŸæƒ³ç”¨C-Içš„ï¼Œç»“æœä¼šå½±å“TABé”®
 (global-set-key (kbd "C-S-j") 'my-insert-char-next-line) ;
 
 (defun move-text-internal (arg)
@@ -237,12 +237,12 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-<up>") 'move-text-up)
 (global-set-key (kbd "C-<down>") 'move-text-down)
 
-;;; m-oÇĞ»»h/cppÎÄ¼ş
+;;; m-oåˆ‡æ¢h/cppæ–‡ä»¶
 (global-set-key (kbd "M-o") 'ff-find-other-file)
 
 (global-set-key (kbd "<f4>") 'next-error)
 (global-set-key (kbd "S-<f4>") 'previous-error)
 
-;; ½ûÖ¹narrow¹¦ÄÜ
+;; ç¦æ­¢narrowåŠŸèƒ½
 (global-set-key (kbd "C-x n-") nil)
 (global-set-key (kbd "C-x n") 'next-line)

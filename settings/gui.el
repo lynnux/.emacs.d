@@ -1,36 +1,36 @@
-;; Time-stamp: <2021-11-04 14:12:10 lynnux>
-;; ½çÃæÏà¹ØµÄ
+;; Time-stamp: <2021-11-10 10:34:16 lynnux>
+;; ç•Œé¢ç›¸å…³çš„
 
 (custom-set-variables
- '(blink-cursor-mode nil)		;¹â±êÊÇ·ñÉÁË¸
- '(column-number-mode t)		;×´Ì¬À¸ÀïÏÔÊ¾ĞĞºÅºÍÁĞºÅ
+ '(blink-cursor-mode nil)		;å…‰æ ‡æ˜¯å¦é—ªçƒ
+ '(column-number-mode t)		;çŠ¶æ€æ é‡Œæ˜¾ç¤ºè¡Œå·å’Œåˆ—å·
  '(line-number-mode t)
- '(display-time-mode t) 		;ÏÔÊ¾Ê±¼ä
- '(inhibit-startup-screen t)		;½ûÖ¹ÏÔÊ¾Æô¶¯»­Ãæ
- '(show-paren-mode t)			;()Æ¥ÅäÌáÊ¾
- '(tooltip-mode nil)			;windows»á¿¨£¬²»ÓÃ
- '(tool-bar-mode nil)          		;²»ÏÔÊ¾toolbar
+ '(display-time-mode t) 		;æ˜¾ç¤ºæ—¶é—´
+ '(inhibit-startup-screen t)		;ç¦æ­¢æ˜¾ç¤ºå¯åŠ¨ç”»é¢
+ '(show-paren-mode t)			;()åŒ¹é…æç¤º
+ '(tooltip-mode nil)			;windowsä¼šå¡ï¼Œä¸ç”¨
+ '(tool-bar-mode nil)          		;ä¸æ˜¾ç¤ºtoolbar
  )
 
-;; (setq-default line-spacing 1) ; Õâ¸öÉèÖÃ»áµ¼ÖÂF3µ½ÏÂÒ»¸öÊ±¹ö¶¯³öÎÊÌâ
+;; (setq-default line-spacing 1) ; è¿™ä¸ªè®¾ç½®ä¼šå¯¼è‡´F3åˆ°ä¸‹ä¸€ä¸ªæ—¶æ»šåŠ¨å‡ºé—®é¢˜
 
-;; (global-visual-line-mode 1); ÕÛĞĞµ«ÊÇ²»ÏÔÊ¾Á½±ßÄÑ¿´µÄĞ¡·ûºÅ
-(setq-default word-wrap t)	    ; »»ĞĞ²»´ò¶Ïµ¥´Ê
+;; (global-visual-line-mode 1); æŠ˜è¡Œä½†æ˜¯ä¸æ˜¾ç¤ºä¸¤è¾¹éš¾çœ‹çš„å°ç¬¦å·
+(setq-default word-wrap t)	    ; æ¢è¡Œä¸æ‰“æ–­å•è¯
 ;; (setq-default truncate-lines t)
 ;; (setq truncate-partial-width-windows nil)
 ;; (add-hook 'text-mode-hook #'visual-line-mode)
 
-(set-scroll-bar-mode 'right); ¹ö¶¯ÌõÔÚÓÒ²à(ubuntu)
+(set-scroll-bar-mode 'right); æ»šåŠ¨æ¡åœ¨å³ä¾§(ubuntu)
 
 (setq scroll-step 1
-      ;scroll-margin 3 ; Õâ¸öÓĞµãĞ¡Ó°Ïìhighlight-symbol-scroll-out
-      scroll-conservatively 10000) ; ¹ö¶¯Ò³ÃæÊ±±È½ÏÊæ·ş£¬²»ÒªÕûÒ³µÄ¹ö¶¯
-;; Êó±ê¹öÂÖ£¬Ä¬ÈÏµÄ¹ö¶¯Ì«¿ì£¬ÕâÀï¸ÄÎª3ĞĞ
+      ;scroll-margin 3 ; è¿™ä¸ªæœ‰ç‚¹å°å½±å“highlight-symbol-scroll-out
+      scroll-conservatively 10000) ; æ»šåŠ¨é¡µé¢æ—¶æ¯”è¾ƒèˆ’æœï¼Œä¸è¦æ•´é¡µçš„æ»šåŠ¨
+;; é¼ æ ‡æ»šè½®ï¼Œé»˜è®¤çš„æ»šåŠ¨å¤ªå¿«ï¼Œè¿™é‡Œæ”¹ä¸º3è¡Œ
 (defun up-slightly () (interactive) (scroll-up 3))
 (defun down-slightly () (interactive) (scroll-down 3))
 
 (if (string-equal system-type "windows-nt")
-    (progn				;windows£¬ÄÑ¹ÖÒÔÇ°ÉèÖÃÃ»Ğ§¹û
+    (progn				;windowsï¼Œéš¾æ€ªä»¥å‰è®¾ç½®æ²¡æ•ˆæœ
       (global-set-key [wheel-up] 'down-slightly)
       (global-set-key [wheel-down] 'up-slightly) 
       )
@@ -41,8 +41,8 @@
   )
 
 
-;;´°¿Ú°´¼üÉèÖÃ
-(global-set-key (kbd "C-1") 'delete-other-windows) ; Alt-1 ¹Ø±ÕÆäËü´°¿Ú
+;;çª—å£æŒ‰é”®è®¾ç½®
+(global-set-key (kbd "C-1") 'delete-other-windows) ; Alt-1 å…³é—­å…¶å®ƒçª—å£
 (global-set-key (kbd "M-1") 'other-window)
 (defun volatile-kill-buffer ()
   "Kill current buffer unconditionally."
@@ -54,16 +54,16 @@
 ;; (defun display-buffer-name ()
 ;;   (interactive)
 ;;   (message (buffer-file-name (current-buffer))))
-;; (global-set-key (kbd "C-5") 'display-buffer-name);Alt-5 ÏÔÊ¾bufferÎÄ¼şÃû
+;; (global-set-key (kbd "C-5") 'display-buffer-name);Alt-5 æ˜¾ç¤ºbufferæ–‡ä»¶å
 
-(setq display-time-24hr-format t) ; 24Ğ¡Ê±¸ñÊ½
-(setq display-time-day-and-date t) ; ÏÔÊ¾ÈÕÆÚ
-;(mouse-avoidance-mode 'animate) ; ¹â±êÒÆ¶¯µ½Êó±êÏÂÊ±£¬Êó±ê×Ô¶¯µ¯¿ª
-;(setq frame-title-format "%f")		; ÏÔÊ¾µ±Ç°±à¼­µÄÎÄµµ
-; toobar-rulerÒòÎª24.3ÊÇbug¶ÔĞŞ¸ÄµÄÊÇbuffer²»¼Ó´ÖÏÔÊ¾ÁË
+(setq display-time-24hr-format t) ; 24å°æ—¶æ ¼å¼
+(setq display-time-day-and-date t) ; æ˜¾ç¤ºæ—¥æœŸ
+;(mouse-avoidance-mode 'animate) ; å…‰æ ‡ç§»åŠ¨åˆ°é¼ æ ‡ä¸‹æ—¶ï¼Œé¼ æ ‡è‡ªåŠ¨å¼¹å¼€
+;(setq frame-title-format "%f")		; æ˜¾ç¤ºå½“å‰ç¼–è¾‘çš„æ–‡æ¡£
+; toobar-rulerå› ä¸º24.3æ˜¯bugå¯¹ä¿®æ”¹çš„æ˜¯bufferä¸åŠ ç²—æ˜¾ç¤ºäº†
 (setq frame-title-format '("%f" (:eval (if (buffer-modified-p) " *" ""))))
 
-;; ×ÖÌåÉèÖÃ£¬ÏÂÔØConsolas×ÖÌå£¬ºÜºÃ¿´£¬¾İËµÊÇms×¨ÃÅ¸øvs studioÓÃµÄ
+;; å­—ä½“è®¾ç½®ï¼Œä¸‹è½½Consolaså­—ä½“ï¼Œå¾ˆå¥½çœ‹ï¼Œæ®è¯´æ˜¯msä¸“é—¨ç»™vs studioç”¨çš„
 (defun qiang-font-existsp (font)
   (if (null (x-list-fonts font))
       nil t))
@@ -103,17 +103,17 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 			charset
 			zh-font))))
 
-;; ÉèÖÃ×ÖÌå,FixedsysÒªÓÃĞŞÕı¹ıµÄ£¬ÎªÁË±£Ö¤orgµÄtableÏÔÊ¾Õı³££¬×ÖÌå´óĞ¡Ó¦¸ÃÉèÖÃ³ÉÒ»Ñù´ó£¬²»¹ıÕâÑù¸Ğ¾õºº×Ö´ó¶àÁË£¬´óÒ²ºÃ£¬ÂıÂıÊÊÓ¦°É
-;;; 25ÉÏÓÃFixedsys Excelsior 3.01-L»á¿¨ËÀ£¬¿ÉÒÔÓÃFixedsys(24²»ÄÜÓÃ)£¬µ«·¢ÏÖ×ÖÌåÓĞ·¢Ğé¡£×îºó·¢ÏÖÊÇÒòÎª×ÖÌåÃû´ø-£¬ÓÃHxdÌæ»»-Îª_¾ÍĞĞÁË(Í¬Ê±Ìæ»»unicode)
+;; è®¾ç½®å­—ä½“,Fixedsysè¦ç”¨ä¿®æ­£è¿‡çš„ï¼Œä¸ºäº†ä¿è¯orgçš„tableæ˜¾ç¤ºæ­£å¸¸ï¼Œå­—ä½“å¤§å°åº”è¯¥è®¾ç½®æˆä¸€æ ·å¤§ï¼Œä¸è¿‡è¿™æ ·æ„Ÿè§‰æ±‰å­—å¤§å¤šäº†ï¼Œå¤§ä¹Ÿå¥½ï¼Œæ…¢æ…¢é€‚åº”å§
+;;; 25ä¸Šç”¨Fixedsys Excelsior 3.01-Lä¼šå¡æ­»ï¼Œå¯ä»¥ç”¨Fixedsys(24ä¸èƒ½ç”¨)ï¼Œä½†å‘ç°å­—ä½“æœ‰å‘è™šã€‚æœ€åå‘ç°æ˜¯å› ä¸ºå­—ä½“åå¸¦-ï¼Œç”¨Hxdæ›¿æ¢-ä¸º_å°±è¡Œäº†(åŒæ—¶æ›¿æ¢unicode)
 (qiang-set-font
  '("Fixedsys Excelsior 3.01_L" "Consolas" "Source Code Pro" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=16"
- '("WenQuanYi Bitmap Song" "ËÎÌå" "Microsoft Yahei" "ÎÄÈªæäµÈ¿íÎ¢Ã×ºÚ" "ºÚÌå" "ĞÂËÎÌå" "ËÎÌå") 16)
+ '("WenQuanYi Bitmap Song" "å®‹ä½“" "Microsoft Yahei" "æ–‡æ³‰é©¿ç­‰å®½å¾®ç±³é»‘" "é»‘ä½“" "æ–°å®‹ä½“" "å®‹ä½“") 16)
 
-;; ÏÂÃæÕâÁ½¸ö¿´ÌØÊâ×Ö·ûÊ±²»¿¨£¬°´ÉÏÃæµÄËµ·¨`set-default-font'²»Ö§³Önew frames£¬Õâ¸öÎÒÔİÊ±»áÓÃµ½
-;(set-default-font "Consolas 11") ;; for Ó¢ÎÄ     
-;(set-fontset-font "fontset-default" 'unicode "Î¢ÈíÑÅºÚ 11") ;; for ÖĞÎÄ
+;; ä¸‹é¢è¿™ä¸¤ä¸ªçœ‹ç‰¹æ®Šå­—ç¬¦æ—¶ä¸å¡ï¼ŒæŒ‰ä¸Šé¢çš„è¯´æ³•`set-default-font'ä¸æ”¯æŒnew framesï¼Œè¿™ä¸ªæˆ‘æš‚æ—¶ä¼šç”¨åˆ°
+;(set-default-font "Consolas 11") ;; for è‹±æ–‡     
+;(set-fontset-font "fontset-default" 'unicode "å¾®è½¯é›…é»‘ 11") ;; for ä¸­æ–‡
 
-;; ctrl+Êó±ê¹öÂÖµ÷ÕûÎÄ×Ö´óĞ¡
+;; ctrl+é¼ æ ‡æ»šè½®è°ƒæ•´æ–‡å­—å¤§å°
 (if (string-equal system-type "windows-nt")
     (progn 
       ;; For Windows
@@ -124,22 +124,22 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
     (global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease)
     ))
 
-;; ÉèÖÃÑÕÉ«£¬¸ù¾İthemeÀ´ÉèÖÃ£¬M-X list-colors-display ¿ÉÒÔÏÔÊ¾¸ü¶àµÄÑÕÉ«
-;; (set-face-background 'show-paren-match-face "slate blue") ;; 27ÎŞĞ§
+;; è®¾ç½®é¢œè‰²ï¼Œæ ¹æ®themeæ¥è®¾ç½®ï¼ŒM-X list-colors-display å¯ä»¥æ˜¾ç¤ºæ›´å¤šçš„é¢œè‰²
+;; (set-face-background 'show-paren-match-face "slate blue") ;; 27æ— æ•ˆ
 ;;(set-face-foreground 'show-paren-match-face "gray15")
 
-;; µ±¹â±êÎ»ÓÚÀ¨ºÅÉÏÊ±£¬ÀàËÆÑ¡ÖĞµÄĞ§¹û
+;; å½“å…‰æ ‡ä½äºæ‹¬å·ä¸Šæ—¶ï¼Œç±»ä¼¼é€‰ä¸­çš„æ•ˆæœ
 (add-hook 'emacs-lisp-mode-hook (lambda ()
 				  (make-local-variable 'show-paren-style)
 				  (setq show-paren-style 'expression)
-					;(face-remap-add-relative 'show-paren-match '((:background "black"))) ; elispµ¥¶ÀÒ»¸öÑÕÉ«
+					;(face-remap-add-relative 'show-paren-match '((:background "black"))) ; elispå•ç‹¬ä¸€ä¸ªé¢œè‰²
 				  ))
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
 
-;;; ´°¿Ú×î´ó»¯ 24.5Ã»Ğ§¹û£¿
+;;; çª—å£æœ€å¤§åŒ– 24.5æ²¡æ•ˆæœï¼Ÿ
 (when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
   (w32-send-sys-command 61488))
 
-(setq enable-local-variables :safe) ;; ¹Ø±Õ´ò¿ªÒ»Ğ©ÎÄ¼şÊ±risk local variableÌáÊ¾
-(setq visible-bell t) ;; ** ¹Ø±Õ beep
+(setq enable-local-variables :safe) ;; å…³é—­æ‰“å¼€ä¸€äº›æ–‡ä»¶æ—¶risk local variableæç¤º
+(setq visible-bell t) ;; ** å…³é—­ beep

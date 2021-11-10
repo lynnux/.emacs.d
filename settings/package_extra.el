@@ -1,17 +1,17 @@
-;; Time-stamp: <2021-11-10 09:51:57 lynnux>
-;; ·Ç¹Ù·½×Ô´øpackagesµÄÉèÖÃ
-;; benchmark: Ê¹ÓÃprofiler-startºÍprofiler-reportÀ´²é¿´»áÓ°ÏìemacsĞÔÄÜ£¬ÈçÔì³É¿¨¶ÙµÄÃüÁîµÈ
+;; Time-stamp: <2021-11-10 10:33:47 lynnux>
+;; éå®˜æ–¹è‡ªå¸¦packagesçš„è®¾ç½®
+;; benchmark: ä½¿ç”¨profiler-startå’Œprofiler-reportæ¥æŸ¥çœ‹ä¼šå½±å“emacsæ€§èƒ½ï¼Œå¦‚é€ æˆå¡é¡¿çš„å‘½ä»¤ç­‰
 
 (add-to-list 'load-path
 	     "~/.emacs.d/packages")
 
-;; !themesÒª·Åµ½×îºó£¬ÄÚÖÃtheme²é¿´ M-x customize-themes
+;; !themesè¦æ”¾åˆ°æœ€åï¼Œå†…ç½®themeæŸ¥çœ‹ M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (autoload 'defhydra "hydra" nil t)
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
-(global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:×îºóÒ»¸öµÚ3²ÎÊı±ØĞë´øÃû×Ö£¬·ñÔòÉÏÃæ×îºóÒ»ĞĞ²»ÏÔÊ¾
+(global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:æœ€åä¸€ä¸ªç¬¬3å‚æ•°å¿…é¡»å¸¦åå­—ï¼Œå¦åˆ™ä¸Šé¢æœ€åä¸€è¡Œä¸æ˜¾ç¤º
 
 (defun hydra-find-file-select ()
   (interactive)
@@ -50,7 +50,7 @@ _q_uit
   (funcall 'hydra-occur/body)
   )
 
-;; hydraÊ¹ÓÃautoloadµÄ·½Ê½ https://github.com/abo-abo/hydra/issues/149
+;; hydraä½¿ç”¨autoloadçš„æ–¹å¼ https://github.com/abo-abo/hydra/issues/149
 (defun hydra-hideshow-select()
   (interactive)
   (hs-minor-mode)
@@ -78,9 +78,9 @@ _c_: hide comment        _q_uit
 	   (hs-hide-all)
 	 (hs-show-all)))
 
-;;; global-linum-mode¾ÓÈ»»áÍĞÂıÆÁÏÔËÙ¶È£¬ÎÒÒ»Ö±»¹ÒÔÎªÊÇemacsµÄÎÊÌâ£¡
+;;; global-linum-modeå±…ç„¶ä¼šæ‰˜æ…¢å±æ˜¾é€Ÿåº¦ï¼Œæˆ‘ä¸€ç›´è¿˜ä»¥ä¸ºæ˜¯emacsçš„é—®é¢˜ï¼
 (require 'nlinum)
-(setq nlinum-format "%4d") ; ÓĞµãÌ«¿¿×ó£¬ÉèÖÃ4×Ö·û¸ÕºÏÊÊ
+(setq nlinum-format "%4d") ; æœ‰ç‚¹å¤ªé å·¦ï¼Œè®¾ç½®4å­—ç¬¦åˆšåˆé€‚
 (global-nlinum-mode)
 
 ;;; better C-A C-E
@@ -96,7 +96,7 @@ _c_: hide comment        _q_uit
 (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
 (setq undo-tree-auto-save-history nil
       undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
-;; Õâ¸ö¹¦ÄÜË¬´ôÁË
+;; è¿™ä¸ªåŠŸèƒ½çˆ½å‘†äº†
 (global-set-key (kbd "C-z") 'undo-tree-undo)
 (global-set-key (kbd "C-S-z") 'undo-tree-redo)
 
@@ -110,7 +110,7 @@ _c_: hide comment        _q_uit
 	  ))
   (yas-global-mode 1)
 
-  ;; Õâ¸öÆäÊµ»¹Í¦ºÃÓÃµÄ£¬ÓÃ~xxx´úÌæÒªÌæ»»µÄ£¬»òÕß`xxx'£¬¶àĞĞÒªÑ¡ÖĞµ¥ĞĞ²»ÓÃÑ¡ÖĞ
+  ;; è¿™ä¸ªå…¶å®è¿˜æŒºå¥½ç”¨çš„ï¼Œç”¨~xxxä»£æ›¿è¦æ›¿æ¢çš„ï¼Œæˆ–è€…`xxx'ï¼Œå¤šè¡Œè¦é€‰ä¸­å•è¡Œä¸ç”¨é€‰ä¸­
   (autoload 'aya-create "auto-yasnippet" nil t)
   (autoload 'aya-expand "auto-yasnippet" nil t)
   (global-set-key (kbd "C-c y") #'aya-create)
@@ -129,7 +129,7 @@ _c_: hide comment        _q_uit
 (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
 (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
 
-;; ²Î¿¼easy-killÖØĞ´ÁËC-TAB
+;; å‚è€ƒeasy-killé‡å†™äº†C-TAB
 (defvar myswitch-buffer-list nil)
 (defvar myswitch-buffer-current nil)
 (defun myswitch-activate-keymap ()
@@ -139,12 +139,12 @@ _c_: hide comment        _q_uit
 			(kbd "<C-S-tab>")
 		      (kbd "<C-S-iso-lefttab>"))
       'myswitch_prev_buffer)
-    (set-transient-map ;; ¹Ø¼üº¯Êı£¡
+    (set-transient-map ;; å…³é”®å‡½æ•°ï¼
      map
-     t ;; ¼ÌĞøkeymap
+     t ;; ç»§ç»­keymap
      (lambda ()
-       ;; ÍË³öÊ±ÕæÕıÇĞ»»
-       (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list)); ²»´øt£¬×îÖÕÇĞ»»¹ıÈ¥
+       ;; é€€å‡ºæ—¶çœŸæ­£åˆ‡æ¢
+       (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list)); ä¸å¸¦tï¼Œæœ€ç»ˆåˆ‡æ¢è¿‡å»
        )
      )))
 (defun myswitch_next_buffer()
@@ -152,14 +152,14 @@ _c_: hide comment        _q_uit
   (incf myswitch-buffer-current)
   (if (>= myswitch-buffer-current (length myswitch-buffer-list))
       (setq myswitch-buffer-current 0))
-  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; µÚ¶ş¸ö²ÎÊı±íÃ÷²»ÕæÕıÇĞ»»
+  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; ç¬¬äºŒä¸ªå‚æ•°è¡¨æ˜ä¸çœŸæ­£åˆ‡æ¢
   )
 (defun myswitch_prev_buffer()
   (interactive)
   (decf myswitch-buffer-current)
   (if (< myswitch-buffer-current 0)
       (setq myswitch-buffer-current (1- (length myswitch-buffer-list))))
-  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; µÚ¶ş¸ö²ÎÊı±íÃ÷²»ÕæÕıÇĞ»»
+  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; ç¬¬äºŒä¸ªå‚æ•°è¡¨æ˜ä¸çœŸæ­£åˆ‡æ¢
   )
 (defun myswitch_next_buffer_start(&optional backward)
   (interactive)
@@ -185,7 +185,7 @@ _c_: hide comment        _q_uit
 		  (myswitch_next_buffer_start t))
 		)
 
-;;orgµÄC-tab»ù±¾ÉÏ²»ÓÃ
+;;orgçš„C-tabåŸºæœ¬ä¸Šä¸ç”¨
 (add-hook 'org-mode-hook (lambda()
 			   (define-key org-mode-map (kbd "<C-tab>") nil)))
 (setq EmacsPortable-global-tabbar 't)
@@ -193,31 +193,31 @@ _c_: hide comment        _q_uit
 (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
-;; highlight-symbolÏÂ¸ÚÀ²£¬»áÓ°ÏìÊäÈë¡£ÏÂÃæahsºÃÏñÖ»¶Ô¿É¼û·¶Î§¸ßÁÁËùÒÔ²»¿¨
+;; highlight-symbolä¸‹å²—å•¦ï¼Œä¼šå½±å“è¾“å…¥ã€‚ä¸‹é¢ahså¥½åƒåªå¯¹å¯è§èŒƒå›´é«˜äº®æ‰€ä»¥ä¸å¡
 ;; zenburn
 ;; (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
 ;; (global-set-key [(control f3)] 'highlight-symbol-at-point)
 ;;(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
-(global-set-key [f3] 'ahs-forward) ;; Õâ¸öÖ»ÄÜÔÚ¿É¼û·¶Î§Ìø°¡£¡»¹ÊÇÓÃC-sËÑË÷°É£¡
+(global-set-key [f3] 'ahs-forward) ;; è¿™ä¸ªåªèƒ½åœ¨å¯è§èŒƒå›´è·³å•Šï¼è¿˜æ˜¯ç”¨C-sæœç´¢å§ï¼
 (global-set-key [(shift f3)] 'ahs-backward)
-;; ¸ßÁÁÑ¡ÖĞÏî
+;; é«˜äº®é€‰ä¸­é¡¹
 (require 'auto-highlight-symbol)
 (setq ahs-suppress-log t)
-(setq ahs-idle-interval 0.3) ;; ÉèÖÃÎª0Ò²²»»áÓ°ÏìÊäÈëËÙ¶È
+(setq ahs-idle-interval 0.3) ;; è®¾ç½®ä¸º0ä¹Ÿä¸ä¼šå½±å“è¾“å…¥é€Ÿåº¦
 (global-auto-highlight-symbol-mode t)
 
 (require 'cursor-chg)
 (change-cursor-mode )
-(setq curchg-default-cursor-color "red3") ; ÎŞ·¨ÉèÖÃcursorµÄforeground
+(setq curchg-default-cursor-color "red3") ; æ— æ³•è®¾ç½®cursorçš„foreground
 
-;;crosshairs²»ºÃÓÃ£¬Ö»Òªvline¾ÍĞĞÁË		
+;;crosshairsä¸å¥½ç”¨ï¼Œåªè¦vlineå°±è¡Œäº†		
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
 ;; (global-hl-line-mode t)
 
 (if nil
-    ;; auto complete ºÜ¿ÉÏ§ÒÑÍ£Ö¹Î¬»¤ÁË£¬ÔİÊ±±£Áô°É
+    ;; auto complete å¾ˆå¯æƒœå·²åœæ­¢ç»´æŠ¤äº†ï¼Œæš‚æ—¶ä¿ç•™å§
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
       (require 'auto-complete-config)
@@ -234,7 +234,7 @@ _c_: hide comment        _q_uit
 				 ac-source-files-in-current-dir
 				 ac-source-filename))
       (setq
-       ac-use-fuzzy t ; Ã²ËÆ×Ô¶¯µ¯³öµÄmenuµÄÊÇÃ»ÓĞfuzzyµÄ£¬µ«ÊÖ¶¯²¹È«ÊÇ¿ÉÒÔµÄ
+       ac-use-fuzzy t ; è²Œä¼¼è‡ªåŠ¨å¼¹å‡ºçš„menuçš„æ˜¯æ²¡æœ‰fuzzyçš„ï¼Œä½†æ‰‹åŠ¨è¡¥å…¨æ˜¯å¯ä»¥çš„
        ;; ac-auto-show-menu 0.1
        ac-use-quick-help nil
        ;; ac-ignore-case t
@@ -250,7 +250,7 @@ _c_: hide comment        _q_uit
       (global-set-key (kbd "<M-return>") 'auto-complete)
       )
   (progn
-    ;; company mode£¬Õâ¸öÖ§³ÖcommentÖĞÎÄ£¬µ«²»Ö§³Ö²¹È«history
+    ;; company modeï¼Œè¿™ä¸ªæ”¯æŒcommentä¸­æ–‡ï¼Œä½†ä¸æ”¯æŒè¡¥å…¨history
     (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
     (require 'company)
     (add-hook 'after-init-hook 'global-company-mode)
@@ -258,18 +258,18 @@ _c_: hide comment        _q_uit
     (define-key company-active-map (kbd "C-p") 'company-select-previous)
     (define-key company-active-map (kbd "M-n") 'company-next-page)
     (define-key company-active-map (kbd "M-p") 'company-previous-page)
-    (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; ÀàËÆreturn
+    (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; ç±»ä¼¼return
     (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
-    (define-key company-active-map (kbd "C-h") nil) ; È¡Ïû°ó¶¨£¬°´f1´úÌæ¡£c-wÖ±½Ó¿´Ô´Âë
+    (define-key company-active-map (kbd "C-h") nil) ; å–æ¶ˆç»‘å®šï¼ŒæŒ‰f1ä»£æ›¿ã€‚c-wç›´æ¥çœ‹æºç 
     (dotimes (i 10)
       (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-    (setq ;company-idle-delay 0.5 ; Îª0µÄ»°Ì«¿¨ÁË£¬ÊäÈë¾Í»á¿¨×¡£¬Ä¬ÈÏ¾ÍĞĞÁË
+    (setq ;company-idle-delay 0.5 ; ä¸º0çš„è¯å¤ªå¡äº†ï¼Œè¾“å…¥å°±ä¼šå¡ä½ï¼Œé»˜è®¤å°±è¡Œäº†
      company-minimum-prefix-length 2
      company-require-match nil
      company-dabbrev-ignore-case nil
      company-dabbrev-downcase nil
      company-show-numbers t)
-    ;; ÏÂÔØTabNine.exe¿½±´µ½~\.TabNine\2.2.2\x86_64-pc-windows-gnu
+    ;; ä¸‹è½½TabNine.exeæ‹·è´åˆ°~\.TabNine\2.2.2\x86_64-pc-windows-gnu
     ;; (with-eval-after-load 'dash
     ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
     ;;   (require 'company-tabnine)
@@ -278,7 +278,7 @@ _c_: hide comment        _q_uit
     
     (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
     (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-    ;; (require 'company-posframe) ;; Í¦ºÃ£¬µ«¸Ğ¾õ¶ÔÆô¶¯ÓĞÓ°Ïì
+    ;; (require 'company-posframe) ;; æŒºå¥½ï¼Œä½†æ„Ÿè§‰å¯¹å¯åŠ¨æœ‰å½±å“
     ;; (company-posframe-mode 1)
     ;; (setq company-posframe-quickhelp-delay 0.1)
     (require 'company-ctags)
@@ -287,7 +287,7 @@ _c_: hide comment        _q_uit
   )
 
 
-;; Ò»À´¾Í¼ÓÔØmodeÈ·ÊµÍ¦²»Ë¬µÄ£¬»¹ÊÇÓÃÕâ¸öÁË
+;; ä¸€æ¥å°±åŠ è½½modeç¡®å®æŒºä¸çˆ½çš„ï¼Œè¿˜æ˜¯ç”¨è¿™ä¸ªäº†
 (require 'wcy-desktop)
 (wcy-desktop-init)
 (add-hook 'emacs-startup-hook
@@ -296,7 +296,7 @@ _c_: hide comment        _q_uit
               (wcy-desktop-open-last-opened-files))))
 (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
   (setq buffer-undo-list nil)
-  );; ½â¾öundo-tree³åÍ»
+  );; è§£å†³undo-treeå†²çª
 
 ;; clang-format
 (autoload 'clang-format-region "clang-format" "" t)
@@ -316,9 +316,9 @@ _c_: hide comment        _q_uit
   ;;(setq c-auto-newline 1)
   (c-set-style "stroustrup")
   ;;  (gtags-settings)
-  ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;ĞŞ¸´C-hÃ»ÓĞÕâ¸öĞ§¹û
+  ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;ä¿®å¤C-hæ²¡æœ‰è¿™ä¸ªæ•ˆæœ
   (local-set-key (kbd "C-c C-c") 'magit)
-  (setq clang-format-style "webkit") ; Ö»ÓĞÕâ¸öÄ¬ÈÏtabÊÇ4¸ö¿Õ¸ñ
+  (setq clang-format-style "webkit") ; åªæœ‰è¿™ä¸ªé»˜è®¤tabæ˜¯4ä¸ªç©ºæ ¼
   ;; (local-set-key [(meta f8)] 'clang-format-auto)
   )
 
@@ -359,7 +359,7 @@ _c_: hide comment        _q_uit
 (add-to-list 'jl-insert-marker-funcs "helm-occur")
 (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
 (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
-(global-set-key [(control ?\,)] 'my-save-pos) ; ÊÖ¶¯´¥·¢¼ÇÂ¼Î»ÖÃ
+(global-set-key [(control ?\,)] 'my-save-pos) ; æ‰‹åŠ¨è§¦å‘è®°å½•ä½ç½®
 (defun my-save-pos()
   (interactive)
   )
@@ -401,7 +401,7 @@ _c_: hide comment        _q_uit
     "[\]}\)\"]"
     "If this regexp matches the text after the cursor, do an \"electric\"
   return.")
-					; Õâ¹¦ÄÜ²»ÖªµÀ¸ÉÊ²Ã´ÓÃ£¬ÉÔÎ¢ĞŞ¸ÄÈÃ»»ĞĞÊ±×Ô¶¯indent
+					; è¿™åŠŸèƒ½ä¸çŸ¥é“å¹²ä»€ä¹ˆç”¨ï¼Œç¨å¾®ä¿®æ”¹è®©æ¢è¡Œæ—¶è‡ªåŠ¨indent
   (defun electrify-return-if-match (arg)
     "If the text after the cursor matches `electrify-return-match' then
   open and indent an empty line between the cursor and the text.  Move the
@@ -409,11 +409,11 @@ _c_: hide comment        _q_uit
     (interactive "P")
     (let ((case-fold-search nil))
       (if (looking-at electrify-return-match)
-	  (save-excursion  ;(newline-and-indent) ; Ö»ĞèÒªindent
+	  (save-excursion  ;(newline-and-indent) ; åªéœ€è¦indent
 	    (indent-according-to-mode)))
       (newline arg)
       (indent-according-to-mode)))
-  (find-function-setup-keys)  ;Ö±½Ó¶¨Î»º¯Êı±äÁ¿¶¨ÒåÎ»ÖÃµÄ¿ì½İ¼ü£¬C-x F/K/V£¬×¢ÒâÊÇ´óĞ´µÄ
+  (find-function-setup-keys)  ;ç›´æ¥å®šä½å‡½æ•°å˜é‡å®šä¹‰ä½ç½®çš„å¿«æ·é”®ï¼ŒC-x F/K/Vï¼Œæ³¨æ„æ˜¯å¤§å†™çš„
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
   ;;  (local-set-key (kbd "RET") 'electrify-return-if-match)
@@ -426,7 +426,7 @@ _c_: hide comment        _q_uit
 
 ;;; gtags
 (defun gtags-settings()
-  ;;; gtags ×Ô¶¯¸üĞÂµ±ÎÄ¼ş±£´æÊ±
+  ;;; gtags è‡ªåŠ¨æ›´æ–°å½“æ–‡ä»¶ä¿å­˜æ—¶
   (defun gtags-root-dir ()
     "Returns GTAGS root directory or nil if doesn't exist."
     (with-temp-buffer
@@ -437,7 +437,7 @@ _c_: hide comment        _q_uit
     "Make GTAGS incremental update"
     (call-process "global" nil nil nil "-u"))
   (defun gtags-update-hook ()
-    (when (gtags-root-dir)		;Ã»ÓĞ¶àÓàµÄ¸±×÷ÓÃ
+    (when (gtags-root-dir)		;æ²¡æœ‰å¤šä½™çš„å‰¯ä½œç”¨
       (gtags-update)))
   ;; (add-hook 'after-save-hook #'gtags-update-hook)
   (require 'ggtags)
@@ -446,13 +446,13 @@ _c_: hide comment        _q_uit
 				       (define-key ggtags-global-mode-map "n" 'next-line)
 				       (define-key ggtags-global-mode-map "p" 'previous-line)
 				       ))
-  (setq ggtags-global-abbreviate-filename nil) ; ²»ËõĞ´Â·¾¶
-  (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldocÃ»ÓĞ¿ª¹Ø£¬Ö»ÓĞÖØĞ´ËüµÄº¯ÊıÁË
-					;  (customize-set-variable 'ggtags-highlight-tag nil) ; ½ûÖ¹ÏÂ»®Ïß setq¶ÔdefcustomÎŞĞ§£¡ ²âÊÔÊÇeldocµ¼ÖÂÌáÊ¾process sentinelµÄ
+  (setq ggtags-global-abbreviate-filename nil) ; ä¸ç¼©å†™è·¯å¾„
+  (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldocæ²¡æœ‰å¼€å…³ï¼Œåªæœ‰é‡å†™å®ƒçš„å‡½æ•°äº†
+					;  (customize-set-variable 'ggtags-highlight-tag nil) ; ç¦æ­¢ä¸‹åˆ’çº¿ setqå¯¹defcustomæ— æ•ˆï¼ æµ‹è¯•æ˜¯eldocå¯¼è‡´æç¤ºprocess sentinelçš„
   ;; (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
   ;; (local-set-key (kbd "C-.") 'ggtags-find-tag-dwim)
-  ;; (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + Êó±êµã»÷£¬ºÜºÃÓÃ
-  ;;(turn-on-eldoc-mode) ; »á¿¨
+  ;; (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + é¼ æ ‡ç‚¹å‡»ï¼Œå¾ˆå¥½ç”¨
+  ;;(turn-on-eldoc-mode) ; ä¼šå¡
   )
 
 
@@ -478,11 +478,11 @@ _c_: hide comment        _q_uit
 					;(insert-string run-exe)
 					;(move-end-of-line nil)
 	))))
-;; (global-set-key (kbd "<f5>") 'smart-compile-run) ; ÓÃprojetileµÄf5 x s´úÌæ
+;; (global-set-key (kbd "<f5>") 'smart-compile-run) ; ç”¨projetileçš„f5 x sä»£æ›¿
 
-;;; TODO Èç¹û±àÒë¹ıÆäËûÄ¿Â¼ºó£¬ÁíÒ»¸öÄ¿Â¼C-F7Ê±µ±Ç°Ä¿Â¼Ã»ÓĞ±ä£¬±ØĞëC-u F7ÖØĞÂÅäÖÃ
-;; compile£¬¼ÓÈëÁËµ¥¶À±àÒëÄ³¸öÎÄ¼ş
-(setq compilation-auto-jump-to-first-error nil ; ×Ô¶¯Ìøµ½´íÎó£¬Õâ¸öÔÚÖ»ÓĞwarningÊ±Ïàµ±·³£¡
+;;; TODO å¦‚æœç¼–è¯‘è¿‡å…¶ä»–ç›®å½•åï¼Œå¦ä¸€ä¸ªç›®å½•C-F7æ—¶å½“å‰ç›®å½•æ²¡æœ‰å˜ï¼Œå¿…é¡»C-u F7é‡æ–°é…ç½®
+;; compileï¼ŒåŠ å…¥äº†å•ç‹¬ç¼–è¯‘æŸä¸ªæ–‡ä»¶
+(setq compilation-auto-jump-to-first-error nil ; è‡ªåŠ¨è·³åˆ°é”™è¯¯ï¼Œè¿™ä¸ªåœ¨åªæœ‰warningæ—¶ç›¸å½“çƒ¦ï¼
       compilation-scroll-output t)
 (autoload 'smart-compile "smart-compile" nil t)
 (autoload 'smart-compile-c-compile "smart-compile" nil t)
@@ -499,7 +499,7 @@ _c_: hide comment        _q_uit
          (buffer-live-p buffer)
          (string-match "compilation" (buffer-name buffer))
          (if (string-match "finished" string)
-	     ;; ÕÒ²»µ½ÈçºÎ»ñÈ¡´úÂëbufferµÄ·½·¨£¬Ö»ÓĞÔÚcompilationÀï±äÉ«ÁË
+	     ;; æ‰¾ä¸åˆ°å¦‚ä½•è·å–ä»£ç bufferçš„æ–¹æ³•ï¼Œåªæœ‰åœ¨compilationé‡Œå˜è‰²äº†
 	     (progn (face-remap-add-relative
 		     'mode-line-inactive '((:foreground "ivory" :background "SeaGreen") mode-line))
 		    (face-remap-add-relative
@@ -519,14 +519,14 @@ _c_: hide comment        _q_uit
     ;; 		    (lambda (buf)
     ;; 		      (bury-buffer buf)
     ;; 		      (switch-to-prev-buffer (get-buffer-window buf) 'kill))
-    ;; 		    buffer)  ;; Õâ¸ö×óÓÒÁ½¸ö´°¿Ú²¢²»»áÍË³ö´°¿Ú
+    ;; 		    buffer)  ;; è¿™ä¸ªå·¦å³ä¸¤ä¸ªçª—å£å¹¶ä¸ä¼šé€€å‡ºçª—å£
     (setq current-frame (car (car (cdr (current-frame-configuration)))))
-    (select-frame-set-input-focus current-frame) ; ×îºóÕâÁ½¾äºÃÏñÃ»×÷ÓÃ£¬±£Áô°É
+    (select-frame-set-input-focus current-frame) ; æœ€åè¿™ä¸¤å¥å¥½åƒæ²¡ä½œç”¨ï¼Œä¿ç•™å§
     ))
 (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
 					    'bury-compile-buffer-if-successful))
 
-;; expand-region±»easy-killµÄeasy-markÌæ»»ÁË£¬µ«Òª±£Áô»á±»µ÷ÓÃ
+;; expand-regionè¢«easy-killçš„easy-markæ›¿æ¢äº†ï¼Œä½†è¦ä¿ç•™ä¼šè¢«è°ƒç”¨
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 ;; (autoload 'er/expand-region "expand-region" nil t)
 ;; (autoload 'er/contract-region "expand-region" nil t)
@@ -539,7 +539,7 @@ _c_: hide comment        _q_uit
 				  (interactive "P")
 				  (setq transient-mark-mode t)
 				  (set-mark-command arg))))
-;;; ½â¾ö±»(setq show-paren-style 'expression)¸²¸ÇµÄÎÊÌâ
+;;; è§£å†³è¢«(setq show-paren-style 'expression)è¦†ç›–çš„é—®é¢˜
 (defadvice show-paren-function (around not-show-when-expand-region activate)
   (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
 	   (memq last-command '(er/expand-region er/contract-region easy-mark easy-kill-er-expand easy-kill-er-unexpand)))
@@ -554,7 +554,7 @@ _c_: hide comment        _q_uit
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
 (add-to-list 'auto-mode-alist '("\\.nse$" . lua-mode))
 (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
-(modify-coding-system-alist 'file "\\.lua\\'" 'utf-8) ; ²»Òª´øBOM£¬BOMÊÇmsÌØÓĞµÄ
+(modify-coding-system-alist 'file "\\.lua\\'" 'utf-8) ; ä¸è¦å¸¦BOMï¼ŒBOMæ˜¯msç‰¹æœ‰çš„
 
 ;; markdown
 (autoload 'markdown-mode "markdown-mode"
@@ -563,7 +563,7 @@ _c_: hide comment        _q_uit
 (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
-;;; ÀàËÆsublimeµÄ¶à¹â±ê¹¦ÄÜ(ÒÔM¼ü¸üÏñÊÇvisual code)
+;;; ç±»ä¼¼sublimeçš„å¤šå…‰æ ‡åŠŸèƒ½(ä»¥Mé”®æ›´åƒæ˜¯visual code)
 (setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el")
 (add-to-list 'load-path
 	     "~/.emacs.d/packages/multiple-cursors")
@@ -575,11 +575,11 @@ _c_: hide comment        _q_uit
 (autoload 'mc/edit-lines "multiple-cursors" nil t)
 (global-unset-key (kbd "<M-down-mouse-1>"))
 (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
-(global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; È¡Ïû¹â±êÒÔÏÂµÄmark
-(global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;È¡Ïû¹â±êÒÔÉÏµÄmark
+(global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; å–æ¶ˆå…‰æ ‡ä»¥ä¸‹çš„mark
+(global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;å–æ¶ˆå…‰æ ‡ä»¥ä¸Šçš„mark
 (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
 (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
-;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;¾ÓÈ»²»Ö§³ÖÍ¬ĞĞµÄrange
+;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;å±…ç„¶ä¸æ”¯æŒåŒè¡Œçš„range
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
@@ -588,7 +588,7 @@ _c_: hide comment        _q_uit
   (define-key mc/keymap (kbd "C-v") nil)
   (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode))
 
-;;; ÆÁÄ»ÄÚ¿ìËÙÌø¹ı£¬Ä¬ÈÏÊÇÌøµ½×ÖÄ¸¿ªÍ·µÄµ¥´ÊÎ»ÖÃ£¬C-u C-j¸ÄÎªÌø»ØÔ­À´µÄÎ»ÖÃ£¬C-u C-u C-jÊÇÌøµ½ĞĞ
+;;; å±å¹•å†…å¿«é€Ÿè·³è¿‡ï¼Œé»˜è®¤æ˜¯è·³åˆ°å­—æ¯å¼€å¤´çš„å•è¯ä½ç½®ï¼ŒC-u C-jæ”¹ä¸ºè·³å›åŸæ¥çš„ä½ç½®ï¼ŒC-u C-u C-jæ˜¯è·³åˆ°è¡Œ
 (autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
 (define-key global-map (kbd "C-o") 'ace-jump-mode)
 (with-eval-after-load 'ace-jump-mode (setq ace-jump-mode-submode-list
@@ -597,7 +597,7 @@ _c_: hide comment        _q_uit
 					     ace-jump-char-mode
 					     ace-jump-line-mode)))
 
-;;; autohotkeyÎÄ¼ş±à¼­
+;;; autohotkeyæ–‡ä»¶ç¼–è¾‘
 (autoload 'xahk-mode "xahk-mode"
   "Major mode for editing Markdown files" t)
 (add-to-list 'auto-mode-alist '("\\.ahk\\'" . xahk-mode))
@@ -605,23 +605,23 @@ _c_: hide comment        _q_uit
 ;;; rust mode
 (autoload 'rust-mode "rust-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
-(modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; ´øÖĞÎÄ±ØĞëÕâ¸ö±àÂë£¬¸É´à¾ÍÄ¬ÈÏ
+(modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; å¸¦ä¸­æ–‡å¿…é¡»è¿™ä¸ªç¼–ç ï¼Œå¹²è„†å°±é»˜è®¤
 (with-eval-after-load 'rust-mode
   (when (featurep 'auto-complete)
-    (make-local-variable 'ac-auto-start) ; ×Ô¶¯µ¯³ö»á¿¨
+    (make-local-variable 'ac-auto-start) ; è‡ªåŠ¨å¼¹å‡ºä¼šå¡
     (setq ac-auto-start nil)
     )
   (when (featurep 'company)
     ;; (make-local-variable 'company-idle-delay)
-    ;; (setq company-idle-delay nil) 	; ²»×Ô¶¯²¹È«
+    ;; (setq company-idle-delay nil) 	; ä¸è‡ªåŠ¨è¡¥å…¨
     ;; (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
     (setq company-tooltip-align-annotations t))
-  (setq-local eldoc-documentation-function #'ignore) ; eldocÑÏÖØÓ°ÏìÊäÈë£¡
+  (setq-local eldoc-documentation-function #'ignore) ; eldocä¸¥é‡å½±å“è¾“å…¥ï¼
   (when (featurep 'smartparens-rust)
-    ;; ±ØĞë¼ÓÔØÁËsmartparens-rust£¬²»È»Ã»Ğ§¹û¡£ÆäÊµ²»Òªsmartparens-rust¾ÍºÃÁË
+    ;; å¿…é¡»åŠ è½½äº†smartparens-rustï¼Œä¸ç„¶æ²¡æ•ˆæœã€‚å…¶å®ä¸è¦smartparens-rustå°±å¥½äº†
     (with-eval-after-load 'smartparens-rust
       (sp-local-pair 'rust-mode "'" nil :actions nil)
-      (sp-local-pair 'rust-mode "<" nil :actions nil) ;  µÚ4¸ö²ÎÊı²»Ğ´">"Ò²¿ÉÒÔ
+      (sp-local-pair 'rust-mode "<" nil :actions nil) ;  ç¬¬4ä¸ªå‚æ•°ä¸å†™">"ä¹Ÿå¯ä»¥
       ))
   )
 
@@ -638,7 +638,7 @@ _c_: hide comment        _q_uit
       neo-vc-integration nil)
 (with-eval-after-load 'neotree (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node))
 
-;; ÓĞµãÀàËÆ×Ô¶¯½Ø¶Î³¤ĞĞµÄĞ§¹û£¬Ä¬ÈÏ°ó¶¨µ½m-q£¬elisp-modeÎŞĞ§
+;; æœ‰ç‚¹ç±»ä¼¼è‡ªåŠ¨æˆªæ®µé•¿è¡Œçš„æ•ˆæœï¼Œé»˜è®¤ç»‘å®šåˆ°m-qï¼Œelisp-modeæ— æ•ˆ
 (autoload 'unfill-toggle "unfill" nil t)
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
@@ -653,27 +653,27 @@ _c_: hide comment        _q_uit
 (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
 (define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
 (define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
-;; ²¹³äpareditµÄM-(£¬ÆäËüÄ£Ê½ÓÉÓÚpair²»Ö¹(ËùÒÔ²»¿ÉÓÃ
-(sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; Õâ¸öÆäÊµÊÇ°ü×°³Ésp-wrapÁË
+;; è¡¥å……pareditçš„M-(ï¼Œå…¶å®ƒæ¨¡å¼ç”±äºpairä¸æ­¢(æ‰€ä»¥ä¸å¯ç”¨
+(sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; è¿™ä¸ªå…¶å®æ˜¯åŒ…è£…æˆsp-wrapäº†
 (set-default 'sp-autoskip-closing-pair 'always)
 ;; Don't kill the entire symbol on C-k
 (set-default 'sp-hybrid-kill-entire-symbol nil)
-;; ²Î¿¼doomÉèÖÃ
+;; å‚è€ƒdoomè®¾ç½®
 (setq sp-highlight-pair-overlay nil
       sp-highlight-wrap-overlay nil
       sp-highlight-wrap-tag-overlay nil)
 (setq sp-max-prefix-length 25)
 (setq sp-max-pair-length 4)
 (smartparens-global-strict-mode)
-;;(show-smartparens-global-mode) ;; Show parenthesis ºÃÏñÃ»Ê²Ã´×÷ÓÃÁË?
-;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; ÆÁ±Î Matches:ÏûÏ¢
+;;(show-smartparens-global-mode) ;; Show parenthesis å¥½åƒæ²¡ä»€ä¹ˆä½œç”¨äº†?
+;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; å±è”½ Matches:æ¶ˆæ¯
 
-;; Ê¹Ö§³Öhungry-delete
+;; ä½¿æ”¯æŒhungry-delete
 (with-eval-after-load 'smartparens
   (dolist (key '( [remap delete-char]
                   [remap delete-forward-char]))
     (define-key smartparens-strict-mode-map key
-      ;; menu-itemÊÇÒ»¸ösymbol£¬¶øÇÒºÜÓĞÈ¤µÄÊÇ£¬F1-KÄÜÊµÊ±ÖªµÀÊÇµ÷ÓÃÄÄ¸öº¯Êı
+      ;; menu-itemæ˜¯ä¸€ä¸ªsymbolï¼Œè€Œä¸”å¾ˆæœ‰è¶£çš„æ˜¯ï¼ŒF1-Kèƒ½å®æ—¶çŸ¥é“æ˜¯è°ƒç”¨å“ªä¸ªå‡½æ•°
       '(menu-item "maybe-sp-delete-char" nil
                   :filter (lambda (&optional _)
                             (unless (looking-at-p "[[:space:]\n]")
@@ -688,15 +688,15 @@ _c_: hide comment        _q_uit
                             (unless (looking-back "[[:space:]\n]" 1)
                               #'sp-backward-delete-char)))))
   
-  ;; C-WÖ§³Ö
+  ;; C-Wæ”¯æŒ
   (dolist (key '( [remap kill-region]))
     (define-key smartparens-strict-mode-map key
       '(menu-item "maybe-sp-kill-region" nil
                   :filter (lambda (&optional _)
-                            (when (use-region-p) ;; ÓĞÑ¡ÖĞÊ±²ÅÓÃspµÄ
+                            (when (use-region-p) ;; æœ‰é€‰ä¸­æ—¶æ‰ç”¨spçš„
                               #'sp-kill-region)))))
   )
-;; »»ĞĞ×Ô¶¯indent£¬from https://github.com/Fuco1/smartparens/issues/80
+;; æ¢è¡Œè‡ªåŠ¨indentï¼Œfrom https://github.com/Fuco1/smartparens/issues/80
 (sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
 (defun my-create-newline-and-enter-sexp (&rest _ignored)
   "Open a new brace or bracket expression, with relevant newlines and indent. "
@@ -705,13 +705,13 @@ _c_: hide comment        _q_uit
   (forward-line -1)
   (indent-according-to-mode))
 
-;; ÀàËÆvimµÄtagbar£¬±ÈÖ®Ç°ÄÇ¸ösr-speedbar²»ÖªµÀºÃÓÃ¶àÉÙ±¶!
-;; ²»¹ıÕâ¸öÃ»ÓĞneotreeºÃ£¬»á¶àµ¯³öÒ»¸öframe£¬¾Í²»Ä¬ÈÏ¿ªÆôÁË£¬¿´´úÂëÊ±ºÜÓĞÓÃ
+;; ç±»ä¼¼vimçš„tagbarï¼Œæ¯”ä¹‹å‰é‚£ä¸ªsr-speedbarä¸çŸ¥é“å¥½ç”¨å¤šå°‘å€!
+;; ä¸è¿‡è¿™ä¸ªæ²¡æœ‰neotreeå¥½ï¼Œä¼šå¤šå¼¹å‡ºä¸€ä¸ªframeï¼Œå°±ä¸é»˜è®¤å¼€å¯äº†ï¼Œçœ‹ä»£ç æ—¶å¾ˆæœ‰ç”¨
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
 
-;; emacsÄÚÖÃºÜ¶à¸Ä½øµÄminibufferÄ£Ê½ÁË£¬Èçicomplete[-vertical]-mode, fido[-vertical]-mode
-;; ÏÖÔÚ¶¼ÊÇ×éºÏÈ­ÁË£¡
+;; emacså†…ç½®å¾ˆå¤šæ”¹è¿›çš„minibufferæ¨¡å¼äº†ï¼Œå¦‚icomplete[-vertical]-mode, fido[-vertical]-mode
+;; ç°åœ¨éƒ½æ˜¯ç»„åˆæ‹³äº†ï¼
 (when nil
   (progn
     (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
@@ -725,27 +725,27 @@ _c_: hide comment        _q_uit
     (setq read-file-name-completion-ignore-case t
 	  read-buffer-completion-ignore-case t
 	  completion-ignore-case t)
-    (require 'marginalia) ;; ÃÀ»¯
+    (require 'marginalia) ;; ç¾åŒ–
     (marginalia-mode)
-    (require 'consult) ;; ºËĞÄ¹¦ÄÜ
-    (require 'orderless) ;; ÊµÏÖ¿Õ¸ñ·Ö´Ê£¬consult-line±ä³ÉC-sĞ§¹û£¡
+    (require 'consult) ;; æ ¸å¿ƒåŠŸèƒ½
+    (require 'orderless) ;; å®ç°ç©ºæ ¼åˆ†è¯ï¼Œconsult-lineå˜æˆC-sæ•ˆæœï¼
     (defun sanityinc/use-orderless-in-minibuffer ()
       (setq-local completion-styles '(substring orderless)))
     (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
-    ;; embarkÌá¹©minibuffer¶îÍâµÄ²Ëµ¥ÔİÊ±²»ĞèÒª
+    ;; embarkæä¾›minibufferé¢å¤–çš„èœå•æš‚æ—¶ä¸éœ€è¦
     ;; (with-eval-after-load 'vertico
     ;;   (require 'embark)
     ;;   (define-key vertico-map (kbd "C-o") 'embark-export)
     ;;   (define-key vertico-map (kbd "C-z") 'embark-act))
-    (global-set-key (kbd "C-s") 'consult-line) ;; ²»ÓÃhelm swoopÁË£¬Õâ¸öÖ§³ÖÔÚc-x c-bÀïÊ¹ÓÃ¡£¿ªÆôfollow mode
+    (global-set-key (kbd "C-s") 'consult-line) ;; ä¸ç”¨helm swoopäº†ï¼Œè¿™ä¸ªæ”¯æŒåœ¨c-x c-bé‡Œä½¿ç”¨ã€‚å¼€å¯follow mode
     (global-set-key [(control f2)] (lambda () (interactive)
 				     (require 'vc)
 				     (consult-ripgrep (or (vc-find-root "." ".git") (helm-current-directory)))))
     ))
 
 (if t
-    ;; ÓÃhelm¿ÉÒÔÅ×ÆúºÃ¶à°ü°¡£¬ÓĞimenu-anywhere£¬popup-kill-ring£¬ripgrep£¬minibuffer-complete-cycle£¬etags-selectÄÇÈı¸ö£¬everything(helm-locate)
-    ;; ²Î¿¼helm×÷ÕßµÄÅäÖÃhttps://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
+    ;; ç”¨helmå¯ä»¥æŠ›å¼ƒå¥½å¤šåŒ…å•Šï¼Œæœ‰imenu-anywhereï¼Œpopup-kill-ringï¼Œripgrepï¼Œminibuffer-complete-cycleï¼Œetags-selecté‚£ä¸‰ä¸ªï¼Œeverything(helm-locate)
+    ;; å‚è€ƒhelmä½œè€…çš„é…ç½®https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
       (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
       (require 'async-autoloads)
@@ -755,39 +755,39 @@ _c_: hide comment        _q_uit
       ;;(global-set-key (kbd "C-c h") 'helm-mini)
       (global-set-key (kbd "M-x") 'undefined)
       (global-set-key (kbd "M-x") 'helm-M-x)
-      (global-set-key (kbd "C-s") 'helm-occur) ;; ²»ÓÃhelm swoopÁË£¬Õâ¸öÖ§³ÖÔÚc-x c-bÀïÊ¹ÓÃ¡£¿ªÆôfollow mode
-      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; ±Èpopup-kill-ringºÃµÄÊÇ¶àÁËËÑË÷
+      (global-set-key (kbd "C-s") 'helm-occur) ;; ä¸ç”¨helm swoopäº†ï¼Œè¿™ä¸ªæ”¯æŒåœ¨c-x c-bé‡Œä½¿ç”¨ã€‚å¼€å¯follow mode
+      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; æ¯”popup-kill-ringå¥½çš„æ˜¯å¤šäº†æœç´¢
       (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-      (global-set-key [f2] 'helm-do-grep-ag) ; Ê¹ÓÃripgrep¼´rgËÑË÷£¬Õâ¸öÓĞ¿Ó°¡£¬¾ÓÈ»¶Ágitignore! ÎÄµµrg --help
-      (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2Ê±Òª±»helm-libÊ¹ÓÃ
+      (global-set-key [f2] 'helm-do-grep-ag) ; ä½¿ç”¨ripgrepå³rgæœç´¢ï¼Œè¿™ä¸ªæœ‰å‘å•Šï¼Œå±…ç„¶è¯»gitignore! æ–‡æ¡£rg --help
+      (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2æ—¶è¦è¢«helm-libä½¿ç”¨
 
-      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; Õâ¸ö²Ù×÷¶àÎÄ¼ş·Ç³£·½±ã£¡ C-c ?×ĞÏ¸Ñ§Ñ§£¡
-      (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; ±ÈÔ­À´ÄÇ¸öºÃ°¡
-      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;¼ÌĞø¸Õ²ÅµÄsession
+      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; è¿™ä¸ªæ“ä½œå¤šæ–‡ä»¶éå¸¸æ–¹ä¾¿ï¼ C-c ?ä»”ç»†å­¦å­¦ï¼
+      (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; æ¯”åŸæ¥é‚£ä¸ªå¥½å•Š
+      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;ç»§ç»­åˆšæ‰çš„session
       (global-set-key (kbd "<f6>") 'helm-resume)
 
       ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
-      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; ²»ÖªµÀÎªÊ²Ã´»áÆÁ±Îlocal key
+      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; ä¸çŸ¥é“ä¸ºä»€ä¹ˆä¼šå±è”½local key
       (global-set-key [(control f2)] (lambda () (interactive)
 				       (require 'vc)
-				       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; ÓÃfd²éÕÒÎÄ¼ş£¬ÓĞgitµÄ»°´Ógit¸ùÄ¿Â¼²éÕÒ
-      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2Ê±Òª±»helm-libÊ¹ÓÃ
+				       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; ç”¨fdæŸ¥æ‰¾æ–‡ä»¶ï¼Œæœ‰gitçš„è¯ä»gitæ ¹ç›®å½•æŸ¥æ‰¾
+      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2æ—¶è¦è¢«helm-libä½¿ç”¨
 
-      ;; helm-do-grep-ag Õâ¸öºÃÏñÓĞbug°¡£¬ÔÚhelm-swoop¾ÍËÑË÷²»µ½
+      ;; helm-do-grep-ag è¿™ä¸ªå¥½åƒæœ‰bugå•Šï¼Œåœ¨helm-swoopå°±æœç´¢ä¸åˆ°
       (setq
-       ;; smart case¸úemacsÀàËÆ£¬Ä¬ÈÏ¶ÁgitignoreÊµÔÚ²»Ï°¹ß
+       ;; smart caseè·Ÿemacsç±»ä¼¼ï¼Œé»˜è®¤è¯»gitignoreå®åœ¨ä¸ä¹ æƒ¯
        helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore %s %s %s"
-       ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; Ã²ËÆÃ»Ê²Ã´ÓÃ
-       helm-move-to-line-cycle-in-source t ; Ê¹µ½¶¥Î²Ê±¿ÉÒÔÑ­»·£¬È±µãÊÇÈç¹ûÓĞÁ½¸öÁĞ±í£¬ÏÂÃæÄÇ¸öÓÃC-o»òÕßM->ÇĞ»»¹ıÈ¥
-       helm-echo-input-in-header-line t ; Õâ¸öÍ¦awesomeµÄ£¬²»Ê¹ÓÃminibuffer£¬ÔÚÖĞ¼äÑÛ¾¦ÒÆ¶¯¸üĞ¡
-       helm-split-window-in-side-p t ; ²»È»µÄ»°£¬Èç¹ûÓĞÁ½¸ö´°¿Ú£¬Ëü¾Í»áÊ¹ÓÃÁíÒ»¸ö´°¿Ú¡£ÁíÒ»¸öÊÇºáµÄ»¹ºÃ£¬ÊúµÄ¾Í²»Ï°¹ßÁË
+       ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; è²Œä¼¼æ²¡ä»€ä¹ˆç”¨
+       helm-move-to-line-cycle-in-source t ; ä½¿åˆ°é¡¶å°¾æ—¶å¯ä»¥å¾ªç¯ï¼Œç¼ºç‚¹æ˜¯å¦‚æœæœ‰ä¸¤ä¸ªåˆ—è¡¨ï¼Œä¸‹é¢é‚£ä¸ªç”¨C-oæˆ–è€…M->åˆ‡æ¢è¿‡å»
+       helm-echo-input-in-header-line t ; è¿™ä¸ªæŒºawesomeçš„ï¼Œä¸ä½¿ç”¨minibufferï¼Œåœ¨ä¸­é—´çœ¼ç›ç§»åŠ¨æ›´å°
+       helm-split-window-in-side-p t ; ä¸ç„¶çš„è¯ï¼Œå¦‚æœæœ‰ä¸¤ä¸ªçª—å£ï¼Œå®ƒå°±ä¼šä½¿ç”¨å¦ä¸€ä¸ªçª—å£ã€‚å¦ä¸€ä¸ªæ˜¯æ¨ªçš„è¿˜å¥½ï¼Œç«–çš„å°±ä¸ä¹ æƒ¯äº†
        helm-ff-file-name-history-use-recentf t
        helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
        helm-buffers-fuzzy-matching t
        helm-recentf-fuzzy-match    t
        helm-follow-mode-persistent t
        helm-allow-mouse t
-       ;;helm-grep-input-idle-delay 0.02 	; Ä¬ÈÏ0.1£¬ÈÃËÑË÷ÓĞÑÓ³Ù
+       ;;helm-grep-input-idle-delay 0.02 	; é»˜è®¤0.1ï¼Œè®©æœç´¢æœ‰å»¶è¿Ÿ
        )
       
       (with-eval-after-load 'helm
@@ -796,13 +796,13 @@ _c_: hide comment        _q_uit
 	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
 	;;   (message (ad-get-arg 2)))
 	
-	;; ¹â±êÒÆ¶¯Ê±Ò²×Ô¶¯¶¨Î»µ½ËùÔÚÎ»ÖÃ
-	(push "Occur" helm-source-names-using-follow) ; ĞèÒªhelm-follow-mode-persistentÎªt
+	;; å…‰æ ‡ç§»åŠ¨æ—¶ä¹Ÿè‡ªåŠ¨å®šä½åˆ°æ‰€åœ¨ä½ç½®
+	(push "Occur" helm-source-names-using-follow) ; éœ€è¦helm-follow-mode-persistentä¸ºt
 	(push "RG" helm-source-names-using-follow)
 
-	;; ²Î¿¼swiperÉèÖÃÑÕÉ«£¬Õâ¸öÒ»¸ÄË²¼ä¸Ğ¾õ²»Ò»Ñù
+	;; å‚è€ƒswiperè®¾ç½®é¢œè‰²ï¼Œè¿™ä¸ªä¸€æ”¹ç¬é—´æ„Ÿè§‰ä¸ä¸€æ ·
 	(custom-set-faces
-	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underlineºÃ¿´£¬:background nilÈ¥²»µô±³¾°É«£¬¾Í¸Ä³ÉzenburnÍ¬É«ÁË
+	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underlineå¥½çœ‹ï¼Œ:background nilå»ä¸æ‰èƒŒæ™¯è‰²ï¼Œå°±æ”¹æˆzenburnåŒè‰²äº†
 	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
 	 ;;helm-match-item 
 	 )
@@ -810,12 +810,12 @@ _c_: hide comment        _q_uit
 	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
 
 	(define-key helm-map (kbd "C-h") 'nil)
-	(define-key helm-map (kbd "C-t") 'nil) ; c-tÊÇ·­×ªÑùÊ½
+	(define-key helm-map (kbd "C-t") 'nil) ; c-tæ˜¯ç¿»è½¬æ ·å¼
 	(define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
 	(define-key helm-map (kbd "C-v") 'nil)
 	(define-key helm-map (kbd "<f4>") 'helm-next-line)
 	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
-	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; Õâ¸ö»¹ÊÇÁô¸øhelm-occur»òÕßhelm-ff-run-grep
+	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; è¿™ä¸ªè¿˜æ˜¯ç•™ç»™helm-occuræˆ–è€…helm-ff-run-grep
 	(define-key helm-map (kbd "<tab>") (lambda ()(interactive)
 					     (let* ((src (helm-get-current-source))
 						    (name (assoc-default 'name src)))
@@ -824,7 +824,7 @@ _c_: hide comment        _q_uit
 						       (string= name "RG")) ;; TODO 
 						   (progn (call-interactively 'next-history-element)
 							  (move-end-of-line 1)())
-						 ;; ÆäËüÄ£Ê½»¹ÊÇhelm-execute-persistent-action£¬±ÈÈçÎÄ¼ş²¹È«
+						 ;; å…¶å®ƒæ¨¡å¼è¿˜æ˜¯helm-execute-persistent-actionï¼Œæ¯”å¦‚æ–‡ä»¶è¡¥å…¨
 						 (call-interactively 'helm-execute-persistent-action) 
 						 )
 					       )
@@ -834,14 +834,14 @@ _c_: hide comment        _q_uit
 	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
 	;; (define-key helm-map (kbd "TAB") 'helm-next-line)
 	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
-	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; ¾ÓÈ»²»Ä¬ÈÏ
+	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; å±…ç„¶ä¸é»˜è®¤
 
-	;; »¹ÊÇÕâÑùÊæ·ş£¬ÒªÊ¹ÓÃÔ­À´¹¦ÄÜÇëC-z¡£helm modeÌ«¶àÁË£¬ÓÃµ½ÄÄĞ©ÔÙÀ´¸Ä
-	(define-key helm-map (kbd "C-s") 'helm-next-line) ; Ô­À´µÄÊÇÔÚµ±Ç°ĞĞÀï²éÕÒ
-	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; Ô­À´µÄÊÇÔÚµ±Ç°ĞĞÀï²éÕÒ
-	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;Ô­occur
+	;; è¿˜æ˜¯è¿™æ ·èˆ’æœï¼Œè¦ä½¿ç”¨åŸæ¥åŠŸèƒ½è¯·C-zã€‚helm modeå¤ªå¤šäº†ï¼Œç”¨åˆ°å“ªäº›å†æ¥æ”¹
+	(define-key helm-map (kbd "C-s") 'helm-next-line) ; åŸæ¥çš„æ˜¯åœ¨å½“å‰è¡Œé‡ŒæŸ¥æ‰¾
+	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; åŸæ¥çš„æ˜¯åœ¨å½“å‰è¡Œé‡ŒæŸ¥æ‰¾
+	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;åŸoccur
 
-	;; helm-locate¼´everythingÀï´ò¿ªËùÔÚÎ»ÖÃ
+	;; helm-locateå³everythingé‡Œæ‰“å¼€æ‰€åœ¨ä½ç½®
 	(define-key helm-generic-files-map (kbd "C-x C-d")
 	  (lambda ()
 	    (interactive)
@@ -855,7 +855,7 @@ _c_: hide comment        _q_uit
 	  (add-hook 'helm-minibuffer-set-up-hook
 		    'helm-hide-minibuffer-maybe))        
 	)
-      ;; Õâ¹¦ÄÜ²»ºÃĞ´£¬½«¾ÍÓÃ×Ü±ÈÃ»ÓĞºÃ°É
+      ;; è¿™åŠŸèƒ½ä¸å¥½å†™ï¼Œå°†å°±ç”¨æ€»æ¯”æ²¡æœ‰å¥½å§
       (defun helm-grep-search-parent-directory ()
 	(interactive)
 	(helm-run-after-exit (lambda ()
@@ -868,23 +868,23 @@ _c_: hide comment        _q_uit
 	)
       
       (with-eval-after-load 'helm-grep
-	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-updateÓĞÑÓ³Ù
+	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-updateæœ‰å»¶è¿Ÿ
 	(define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
-	;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: ¿ÕÊäÈëµÄÊ±ºò£¬×Ô¶¯²¹È«¹â±êÏÂµÄµ¥´Ê
+	;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: ç©ºè¾“å…¥çš„æ—¶å€™ï¼Œè‡ªåŠ¨è¡¥å…¨å…‰æ ‡ä¸‹çš„å•è¯
 	)
       (with-eval-after-load 'helm-find
-	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-updateÓĞÑÓ³Ù
+	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-updateæœ‰å»¶è¿Ÿ
 	)
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
       (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
       )
   (progn
-    ;; ivyÆô¶¯ÉÔ¿ì£¬µ«Ê¹ÓÃÔ­ÉúminibufferÊ§È¥½¹µãÊ±Ç¿ÆÈÖ¢²»Êæ·ş£¬°´C-g»¹»á»Øµ½Æô¶¯minibufferµÄbuffer£¬ÓÃivy-posframe¿É±ÜÃâµ«²»Ì«Ï²»¶
-    ;; minibufferÒ²²»ÄÜÓÃÊó±ê
+    ;; ivyå¯åŠ¨ç¨å¿«ï¼Œä½†ä½¿ç”¨åŸç”Ÿminibufferå¤±å»ç„¦ç‚¹æ—¶å¼ºè¿«ç—‡ä¸èˆ’æœï¼ŒæŒ‰C-gè¿˜ä¼šå›åˆ°å¯åŠ¨minibufferçš„bufferï¼Œç”¨ivy-posframeå¯é¿å…ä½†ä¸å¤ªå–œæ¬¢
+    ;; minibufferä¹Ÿä¸èƒ½ç”¨é¼ æ ‡
     (add-to-list 'load-path "~/.emacs.d/packages/swiper")
     (autoload 'swiper "swiper" nil t)
-    (setq ivy-wrap t) ;; ¿ÉÒÔloopÑ¡Ôñ
+    (setq ivy-wrap t) ;; å¯ä»¥loopé€‰æ‹©
     (setq ivy-count-format "(%d/%d) ")
     (setq ivy-use-virtual-buffers t)
     (setq ivy-height 20)
@@ -896,9 +896,9 @@ _c_: hide comment        _q_uit
     (autoload 'ivy-mode "ivy" nil t)
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
     (global-set-key (kbd "<f6>") 'ivy-resume)
-    ;; ivyµÄrgÃ²ËÆÊÇ½â¾öÁËrg¿¨ËÀµÄÎÊÌâhttps://github.com/abo-abo/swiper/pull/2552
+    ;; ivyçš„rgè²Œä¼¼æ˜¯è§£å†³äº†rgå¡æ­»çš„é—®é¢˜https://github.com/abo-abo/swiper/pull/2552
     (global-set-key [f2] (lambda ()(interactive)
-			   (counsel-rg (thing-at-point 'symbol) default-directory)));; Ä¬ÈÏgit¸ùÄ¿Â¼£¬»¹ÊÇ¸ÄÎªµ±Ç°Ä¿Â¼¿ªÊ¼
+			   (counsel-rg (thing-at-point 'symbol) default-directory)));; é»˜è®¤gitæ ¹ç›®å½•ï¼Œè¿˜æ˜¯æ”¹ä¸ºå½“å‰ç›®å½•å¼€å§‹
     (autoload 'counsel-rg "counsel" nil t)
     (autoload 'counsel-M-x "counsel" nil t)
     (autoload 'counsel-find-file "counsel" nil t)
@@ -915,26 +915,26 @@ _c_: hide comment        _q_uit
       (ivy-mode 1)
       (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
       (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; ÕâÆäÊµÊÇM-nµÄ¹¦ÄÜ
+      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; è¿™å…¶å®æ˜¯M-nçš„åŠŸèƒ½
       (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-      (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; ¾ÓÈ»²»Ä¬ÈÏ
+      (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; å±…ç„¶ä¸é»˜è®¤
       (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
       (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
-      ;; ÉèÖÃfollow mode in swiper/rg£¬²»¹ı¸Ğ¾õivyµÄfollowÓĞĞÔÄÜÎÊÌâ
+      ;; è®¾ç½®follow mode in swiper/rgï¼Œä¸è¿‡æ„Ÿè§‰ivyçš„followæœ‰æ€§èƒ½é—®é¢˜
       (push (cons #'swiper (lambda () (setq ivy-calling t)))
             ivy-hooks-alist)
       (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
             ivy-hooks-alist)
       )
     ;; (with-eval-after-load 'counsel
-    ;;   (append counsel-rg-base-command "--no-ignore")) ; ºÃÏñ²»ÓÃ¼Ó£¬²»»áËÑË÷ignoreµÄ
+    ;;   (append counsel-rg-base-command "--no-ignore")) ; å¥½åƒä¸ç”¨åŠ ï¼Œä¸ä¼šæœç´¢ignoreçš„
     (defadvice completing-read (before my-completing-read activate)
       (ivy-mode 1))
-    (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K²»×ÔÈ»ÔÚminibufferÀï½ûÓÃsmartparens
+    (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-Kä¸è‡ªç„¶åœ¨minibufferé‡Œç¦ç”¨smartparens
     ))
 
 
-;; ×Ô¶¯indent
+;; è‡ªåŠ¨indent
 (require 'aggressive-indent)
 (global-aggressive-indent-mode 1)
 (with-eval-after-load 'aggressive-indent
@@ -1004,37 +1004,37 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;;; zig mode
 (autoload 'zig-mode "zig-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.zig\\'" . zig-mode))
-(modify-coding-system-alist 'file "\\.zig\\'" 'utf-8-with-signature) ; Ç¿ÖÆzigÎÄ¼şÊÓÎªutf8£¬·ñÔòÓĞÖĞÎÄÏÔÊ¾ÎÊÌâ
+(modify-coding-system-alist 'file "\\.zig\\'" 'utf-8-with-signature) ; å¼ºåˆ¶zigæ–‡ä»¶è§†ä¸ºutf8ï¼Œå¦åˆ™æœ‰ä¸­æ–‡æ˜¾ç¤ºé—®é¢˜
 (setq zig-format-on-save nil)
 (with-eval-after-load 'zig-mode (add-hook 'zig-mode-hook (lambda () (local-set-key [(meta f8)] 'zig-format-buffer))))
 
-;; dumb-jump£¬Ê¹ÓÃrg²éÕÒ¶¨Òå£¡ĞèÒª¶¨Òåproject root£¬Ìí¼ÓÈÎÒâÕâĞ©ÎÄ¼ş¶¼¿ÉÒÔ£º.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
+;; dumb-jumpï¼Œä½¿ç”¨rgæŸ¥æ‰¾å®šä¹‰ï¼éœ€è¦å®šä¹‰project rootï¼Œæ·»åŠ ä»»æ„è¿™äº›æ–‡ä»¶éƒ½å¯ä»¥ï¼š.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (autoload 'dumb-jump-xref-activate "dumb-jump" nil t)
-(setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; ²»ÓÃxref£¬ÓÃhelm£¬µ«Õâ¸öC-C C-FÇĞ»»follow modeÓĞÎÊÌâ£¬ÔİÊ±²»¹ÜÁË
+(setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; ä¸ç”¨xrefï¼Œç”¨helmï¼Œä½†è¿™ä¸ªC-C C-Fåˆ‡æ¢follow modeæœ‰é—®é¢˜ï¼Œæš‚æ—¶ä¸ç®¡äº†
 (global-set-key (kbd "<f12>") 'xref-find-definitions) 
-(global-set-key (kbd "C-.") 'xref-find-definitions) ; ³ıÁËggtagsÖ§³ÖµÄ¶¼ÓÃÕâ¸ö
+(global-set-key (kbd "C-.") 'xref-find-definitions) ; é™¤äº†ggtagsæ”¯æŒçš„éƒ½ç”¨è¿™ä¸ª
 (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
 (with-eval-after-load 'dumb-jump
   (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
-    ;; arountÉèÖÃÓĞÎÊÌâ
-    (setq dumb-jump-default-project default-directory) ; Ä¬ÈÏÉèÖÃÎªµ±Ç°Ä¿Â¼
+    ;; arountè®¾ç½®æœ‰é—®é¢˜
+    (setq dumb-jump-default-project default-directory) ; é»˜è®¤è®¾ç½®ä¸ºå½“å‰ç›®å½•
     )
   )
 
-;; easy-kill£¬Ìí¼ÓÀàËÆvimÀïyi/aµÄ¶«Î÷£¡
+;; easy-killï¼Œæ·»åŠ ç±»ä¼¼vimé‡Œyi/açš„ä¸œè¥¿ï¼
 (add-to-list 'load-path "~/.emacs.d/packages/easy-kill")
 (global-set-key [remap kill-ring-save] 'easy-kill)
 (autoload 'easy-kill "easy-kill" nil t)
 (autoload 'easy-mark "easy-kill" nil t)
-(global-set-key "\C-t" 'easy-mark) ; Ìæ»»expand-region
+(global-set-key "\C-t" 'easy-mark) ; æ›¿æ¢expand-region
 (with-eval-after-load 'easy-kill
   (require 'easy-kill-er)
   (require 'extra-things)
   (require 'easy-kill-extras)
-  (setq easy-kill-try-things '(line)) ; Ö»¸´ÖÆline
-  (setq easy-mark-try-things '(word sexp)) ; wordÓÅÏÈ£¬ÌØ±ğÊÇÓĞºá¸ÜÊ²Ã´¶¼Ê±ºò
-  ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; ²»ÒªÔÙ¶¨ÒåÁË£¬±ÜÃâmarkÊ±²»ÄÜ¸´ÖÆ
+  (setq easy-kill-try-things '(line)) ; åªå¤åˆ¶line
+  (setq easy-mark-try-things '(word sexp)) ; wordä¼˜å…ˆï¼Œç‰¹åˆ«æ˜¯æœ‰æ¨ªæ ä»€ä¹ˆéƒ½æ—¶å€™
+  ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; ä¸è¦å†å®šä¹‰äº†ï¼Œé¿å…markæ—¶ä¸èƒ½å¤åˆ¶
   (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
@@ -1045,7 +1045,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?a buffer ""))
-  ;; (add-to-list 'easy-kill-alist '(?< buffer-before-point "")) ;; ÄÃ¸øcopy<>¸Ğ¾õ¸ü³£ÓÃ
+  ;; (add-to-list 'easy-kill-alist '(?< buffer-before-point "")) ;; æ‹¿ç»™copy<>æ„Ÿè§‰æ›´å¸¸ç”¨
   ;; (add-to-list 'easy-kill-alist '(?> buffer-after-point ""))
   (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
@@ -1067,36 +1067,36 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
-;; projectileËÑË÷ÅäºÏrg
+;; projectileæœç´¢é…åˆrg
 (add-to-list 'load-path "~/.emacs.d/packages/projectile")
 (defun invoke_projectile ()
   (interactive)
   (require 'projectile)
   (projectile-mode +1)
-  (set-transient-map projectile-command-map) ; ¼ÌĞøºóÃæµÄkey£¬È±µãÊÇÊ×´ÎµÄ?²»ÄÜÓÃ
+  (set-transient-map projectile-command-map) ; ç»§ç»­åé¢çš„keyï¼Œç¼ºç‚¹æ˜¯é¦–æ¬¡çš„?ä¸èƒ½ç”¨
   )
 (global-set-key (kbd "C-;") 'invoke_projectile)
-(global-set-key (kbd "<f5>") 'invoke_projectile) ; Ô­¹¦ÄÜ¿ÉÒÔÓÃf5 x s
+(global-set-key (kbd "<f5>") 'invoke_projectile) ; åŸåŠŸèƒ½å¯ä»¥ç”¨f5 x s
 
 (with-eval-after-load 'projectile
   (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "<f5>") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "<f5> s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
-  (define-key projectile-mode-map (kbd "<f5> s") #'projectile-ripgrep) ; ¶ÔC-; sÍ¬ÑùÉúĞ§
+  (define-key projectile-mode-map (kbd "<f5> s") #'projectile-ripgrep) ; å¯¹C-; såŒæ ·ç”Ÿæ•ˆ
   )
 
-;; rg£¬Õâ¸ö»¹Í¦ºÃÓÃµÄ£¬´øĞŞ¸ÄËÑË÷µÄ¹¦ÄÜ(ĞèÒªbuffer¿ÉĞ´)£¬¸ü¶à¹¦ÄÜ¿´²Ëµ¥
+;; rgï¼Œè¿™ä¸ªè¿˜æŒºå¥½ç”¨çš„ï¼Œå¸¦ä¿®æ”¹æœç´¢çš„åŠŸèƒ½(éœ€è¦bufferå¯å†™)ï¼Œæ›´å¤šåŠŸèƒ½çœ‹èœå•
 (global-set-key (kbd "C-S-f") 'rg-dwim)
 (autoload 'rg-dwim "rg" nil t)
 
-;; which-keyÈ·ÊµºÃÓÃ
+;; which-keyç¡®å®å¥½ç”¨
 ;;(require 'which-key)
 ;;(which-key-mode)
 
-;; eglot£¬c++×°¸öllvm(°üº¬clangd)¾Í¿ÉÒÔÖ±½ÓÓÃÁË¡£lsp-modeÊÖ¶¯°²×°¿ÓÌ«¶à£¬»¹ÆÁ±ÎÎÒµÄtabbar£¡
-;; pythonĞèÒª pip install python-lsp-server(fork×Ôpython-language-serverµ«ºÃÏñ²»ÔõÃ´¸üĞÂÁË)
+;; eglotï¼Œc++è£…ä¸ªllvm(åŒ…å«clangd)å°±å¯ä»¥ç›´æ¥ç”¨äº†ã€‚lsp-modeæ‰‹åŠ¨å®‰è£…å‘å¤ªå¤šï¼Œè¿˜å±è”½æˆ‘çš„tabbarï¼
+;; pythonéœ€è¦ pip install python-lsp-server(forkè‡ªpython-language-serverä½†å¥½åƒä¸æ€ä¹ˆæ›´æ–°äº†)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(setq read-process-output-max (* 1024 1024)) ; lsp-mode docker»áÌáÊ¾Õâ¸ö
+(setq read-process-output-max (* 1024 1024)) ; lsp-mode dockerä¼šæç¤ºè¿™ä¸ª
 (if t
     ;; eglot
     (progn
@@ -1105,14 +1105,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (autoload 'eglot "eglot" nil t)
       (autoload 'eglot-rename "eglot" nil t)
       (with-eval-after-load 'eglot
-	(setq eglot-autoshutdown t) ;; ²»¹ØÍË³öemacs»á¿¨ËÀ
-	(push :documentHighlightProvider ;; ¹Ø±Õ¹â±êÏÂsybmol¼Ó´Ö¸ßÁÁ
+	(setq eglot-autoshutdown t) ;; ä¸å…³é€€å‡ºemacsä¼šå¡æ­»
+	(push :documentHighlightProvider ;; å…³é—­å…‰æ ‡ä¸‹sybmolåŠ ç²—é«˜äº®
               eglot-ignored-server-capabilities) 
 	;; (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode -1)))
-	;; (setq eldoc-echo-area-use-multiline-p nil) ²¿·ÖAPI²ÎÊıºÜ¶àÏÔÊ¾¶àĞĞ»¹ÊÇºÜÓÃµÄ
+	;; (setq eldoc-echo-area-use-multiline-p nil) éƒ¨åˆ†APIå‚æ•°å¾ˆå¤šæ˜¾ç¤ºå¤šè¡Œè¿˜æ˜¯å¾ˆç”¨çš„
         
 	)
-      ;; ÁÙÊ±½ûÖ¹view-mode
+      ;; ä¸´æ—¶ç¦æ­¢view-mode
       (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
 	(setq tmp-disable-view-mode-hook t)
 	ad-do-it
@@ -1120,8 +1120,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	)
       )
   
-  ;; noxÊÇeglotµÄ¼ò»¯°æ£¬Ã»ÓĞflymakeµÈ»¨ÉÚµÈÓ°ÏìËÙ¶ÈµÄ¶«Î÷
-  ;; µ«ÊÇeldocÌáÊ¾API²ÎÊı»¹ÊÇ·Ç³£ÓĞÓÃµÄ£¡
+  ;; noxæ˜¯eglotçš„ç®€åŒ–ç‰ˆï¼Œæ²¡æœ‰flymakeç­‰èŠ±å“¨ç­‰å½±å“é€Ÿåº¦çš„ä¸œè¥¿
+  ;; ä½†æ˜¯eldocæç¤ºAPIå‚æ•°è¿˜æ˜¯éå¸¸æœ‰ç”¨çš„ï¼
   (progn
     (defun lsp-ensure() (nox-ensure))
     (autoload 'nox-ensure "nox" nil t)
@@ -1144,5 +1144,5 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 				      )
 			      (lsp-ensure))))
 
-;; ÕâÊÇĞèÒª×îºó¼ÓÔØ
+;; è¿™æ˜¯éœ€è¦æœ€ååŠ è½½
 (load-theme 'zenburn t)

@@ -1,10 +1,10 @@
-;; Time-stamp: <2021-11-06 17:58:29 lynnux>
-;; ËµÃ÷£º
-;; ×Ô´øµÄlisp°üÉèÖÃµÈ
-;; ×Ô´øµÄ²»ÓÃ¼Órequire£¬ÒòÎªxxx-mode»ù±¾ÉÏ¶¼ÊÇautoload£¡
+;; Time-stamp: <2021-11-10 10:34:07 lynnux>
+;; è¯´æ˜ï¼š
+;; è‡ªå¸¦çš„lispåŒ…è®¾ç½®ç­‰
+;; è‡ªå¸¦çš„ä¸ç”¨åŠ requireï¼Œå› ä¸ºxxx-modeåŸºæœ¬ä¸Šéƒ½æ˜¯autoloadï¼
 ;; C-x f filecache everything recent-visit/changed find-file-at-point
 
-;; (recentf-mode 1) ÓÃsession´úÌæÁË
+;; (recentf-mode 1) ç”¨sessionä»£æ›¿äº†
 (setq history-length 200)
 (defun files-recent-type (src)
   (interactive)
@@ -18,11 +18,11 @@
   (files-recent-type file-name-history))
 (defun files-recent-changed () 
   (interactive) 
-  ; ĞèÒªÅäºÏsession.elÊ¹ÓÃ
+  ; éœ€è¦é…åˆsession.elä½¿ç”¨
   (files-recent-type (mapcar (lambda (x) (car x)) session-file-alist)))
 
-;;buffer¹ÜÀí£¬ÕæµÄÌ«ºÃÓÃÁË£¡
-(global-set-key (kbd "C-x b") 'bs-show) ;Õâ¸ö¸üºÃ
+;;bufferç®¡ç†ï¼ŒçœŸçš„å¤ªå¥½ç”¨äº†ï¼
+(global-set-key (kbd "C-x b") 'bs-show) ;è¿™ä¸ªæ›´å¥½
 (with-eval-after-load 'bs 
   (setq bs-default-configuration "files-and-scratch")
   (define-key bs-mode-map "s"       'bs-show-sorted)
@@ -31,51 +31,51 @@
   (define-key bs-mode-map ">"       'end-of-buffer))
 
 ;; org mode
-(setq org-hide-leading-stars t); Ö»¸ßÁÁÏÔÊ¾×îºóÒ»¸ö´ú±í²ã¼¶µÄ *
-(define-key global-map "\C-ca" 'org-agenda) ;C-c a ½øÈëÈÕ³Ì±í
-(setq org-log-done 'time) ;¸øÒÑÍê³ÉÊÂÏî´òÉÏÊ±¼ä´Á¡£¿ÉÑ¡ note£¬¸½¼Ó×¢ÊÍ
-(setq org-startup-folded nil) ; ´ò¿ªÊ±²»ÕÛµş
+(setq org-hide-leading-stars t); åªé«˜äº®æ˜¾ç¤ºæœ€åä¸€ä¸ªä»£è¡¨å±‚çº§çš„ *
+(define-key global-map "\C-ca" 'org-agenda) ;C-c a è¿›å…¥æ—¥ç¨‹è¡¨
+(setq org-log-done 'time) ;ç»™å·²å®Œæˆäº‹é¡¹æ‰“ä¸Šæ—¶é—´æˆ³ã€‚å¯é€‰ noteï¼Œé™„åŠ æ³¨é‡Š
+(setq org-startup-folded nil) ; æ‰“å¼€æ—¶ä¸æŠ˜å 
 (add-hook 'org-agenda-mode-hook 
 	  (lambda ()
 	    (setq org-agenda-follow-mode t))
 	  )
 (autoload 'org-remember-insinuate "org-remember" nil t)
-(with-eval-after-load 'remember (org-remember-insinuate)) ;±ØĞë¼Ó'£¬·ñÔòÖ±½ÓÖ´ĞĞ
-;; org-rememberÒÑ¾­±»remember´úÌæ(»¹ÊÇÒª½áºÏorgÊ¹ÓÃ)
+(with-eval-after-load 'remember (org-remember-insinuate)) ;å¿…é¡»åŠ 'ï¼Œå¦åˆ™ç›´æ¥æ‰§è¡Œ
+;; org-rememberå·²ç»è¢«rememberä»£æ›¿(è¿˜æ˜¯è¦ç»“åˆorgä½¿ç”¨)
 (define-key global-map "\C-cr" 'remember)
-;; tabbarÅäÖÃÄÇÀïÓĞ¶ÔorgµÄC-TABµÄÉèÖÃ
+;; tabbaré…ç½®é‚£é‡Œæœ‰å¯¹orgçš„C-TABçš„è®¾ç½®
 (defvar website-org-path nil)
 (defvar website-org-publish-path nil)
 (add-hook 'org-mode-hook
 	  (lambda()
 	    (setq truncate-lines nil)
 					;(define-key org-mode-map  [(control ?\,)] 'ska-point-to-register)
-	    ;; ½¨Õ¾×¨ÓÃ
+	    ;; å»ºç«™ä¸“ç”¨
 	    ;; (require 'org-publish)
 	    (when (and website-org-path website-org-publish-path)
 	      (setq org-publish-project-alist
-					;notes×é¼ş
+					;notesç»„ä»¶
 		    `((			;; note ` instead of '
 		       "org-notes"
-		       :base-directory ,(format "%s" website-org-path) ;ÉèÖÃ´æ·Å.orgÎÄ¼şÎ»ÖÃ 
-		       :base-extension "org" ;½ö´¦Àí .org ¸ñÊ½ÎÄ¼ş
-		       :publishing-directory ,(format "%s" website-org-publish-path) ;µ¼³öhtmlÎÄ¼şÎ»ÖÃ
+		       :base-directory ,(format "%s" website-org-path) ;è®¾ç½®å­˜æ”¾.orgæ–‡ä»¶ä½ç½® 
+		       :base-extension "org" ;ä»…å¤„ç† .org æ ¼å¼æ–‡ä»¶
+		       :publishing-directory ,(format "%s" website-org-publish-path) ;å¯¼å‡ºhtmlæ–‡ä»¶ä½ç½®
 		       :recursive t
 		       :publishing-function org-publish-org-to-html
 		       :headline-levels 4 ;Just the default for this project.
 		       :auto-preamble t
-		       :auto-sitemap t	;×Ô¶¯Éú³É sitemap.org
-		       :sitemap-filename "sitemap.org" ;Ä¬ÈÏÃû³Æ
+		       :auto-sitemap t	;è‡ªåŠ¨ç”Ÿæˆ sitemap.org
+		       :sitemap-filename "sitemap.org" ;é»˜è®¤åç§°
 		       :sitemap-title "SiteMap"
-		       :export-creator-info nil ;½ûÖ¹ÔÚ postamble ÏÔÊ¾"Created by Org"
-		       :export-author-info nil ;½ûÖ¹ÔÚ postamble ÏÔÊ¾ "Author: Your Name"
+		       :export-creator-info nil ;ç¦æ­¢åœ¨ postamble æ˜¾ç¤º"Created by Org"
+		       :export-author-info nil ;ç¦æ­¢åœ¨ postamble æ˜¾ç¤º "Author: Your Name"
 		       :auto-postamble nil         
-		       :table-of-contents nil ;½ûÖ¹Éú³ÉÎÄÕÂÄ¿Â¼£¬Èç¹ûÒªÉú³É£¬½« nil ¸ÄÎª t
-		       :section-numbers nil ;½ûÖ¹ÔÚ¶ÎÂä±êÌâÇ°Ê¹ÓÃÊı×Ö£¬Èç¹ûÊ¹ÓÃ£¬½« nil ¸ÄÎª t
-		       :html-postamble html-last-updated ;×Ô¶¨Òå postamble ÏÔÊ¾×ÖÑù
-		       :style-include-default nil ;½ûÓÃÄ¬ÈÏ css ÑùÊ½,Ê¹ÓÃ×Ô¶¨Òåcss
+		       :table-of-contents nil ;ç¦æ­¢ç”Ÿæˆæ–‡ç« ç›®å½•ï¼Œå¦‚æœè¦ç”Ÿæˆï¼Œå°† nil æ”¹ä¸º t
+		       :section-numbers nil ;ç¦æ­¢åœ¨æ®µè½æ ‡é¢˜å‰ä½¿ç”¨æ•°å­—ï¼Œå¦‚æœä½¿ç”¨ï¼Œå°† nil æ”¹ä¸º t
+		       :html-postamble html-last-updated ;è‡ªå®šä¹‰ postamble æ˜¾ç¤ºå­—æ ·
+		       :style-include-default nil ;ç¦ç”¨é»˜è®¤ css æ ·å¼,ä½¿ç”¨è‡ªå®šä¹‰css
 		       )
-		      ;;static ×é¼ş
+		      ;;static ç»„ä»¶
 		      ("org-static"
 		       :base-directory ,(format "%s" website-org-path)
 		       :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
@@ -83,7 +83,7 @@
 		       :recursive t
 		       :publishing-function org-publish-attachment
 		       )
-		      ;;publish ×é¼ş
+		      ;;publish ç»„ä»¶
 		      ("org" :components ("org-notes" "org-static"))
 		      ))
 	      (defun html-last-updated() 
@@ -93,7 +93,7 @@
 
 ;; cua mode line
 (defun my-cua-mode-setting ()
-  (setq cua-remap-control-z nil)	;Ô­À´ÊÇadd-hook£¬ËùÒÔÉèÖÃ²»³É¹¦£¬eval-after-load»áÔÚ¼ÓÔØcuaÎÄ¼şºóÁ¢¼´Ö´ĞĞ¡£elispÒª¼ÓÇ¿°¡£¡
+  (setq cua-remap-control-z nil)	;åŸæ¥æ˜¯add-hookï¼Œæ‰€ä»¥è®¾ç½®ä¸æˆåŠŸï¼Œeval-after-loadä¼šåœ¨åŠ è½½cuaæ–‡ä»¶åç«‹å³æ‰§è¡Œã€‚elispè¦åŠ å¼ºå•Šï¼
   (defface cua-mode-mode-line-face
     '((((type tty pc)) :bold t :foreground "blue" :background "white")
       (t (:background "blue" :foreground "white")))
@@ -107,15 +107,15 @@
   (put 'cua-mode-line-format 'risky-local-variable t)
   (setq minor-mode-alist
 	(append
-	 `((cua-mode " ") (cua-mode ,cua-mode-line-format)) ;Ç°ÃæÒ»¾ä(cua-mode " ")²»ÊÇ¶àÓàµÄ£¬·ñÔò¿Õ¸ñÒ²»áÓĞÀ¶É«µÄ±³¾°
+	 `((cua-mode " ") (cua-mode ,cua-mode-line-format)) ;å‰é¢ä¸€å¥(cua-mode " ")ä¸æ˜¯å¤šä½™çš„ï¼Œå¦åˆ™ç©ºæ ¼ä¹Ÿä¼šæœ‰è“è‰²çš„èƒŒæ™¯
 	 (delq (assq 'cua-mode minor-mode-alist) minor-mode-alist) ))
 
-  ;; shift + click select region£¬ÓÃshift+Êó±êÑ¡ÖĞ£¬ĞèÒª¿ªÆôCUA
+  ;; shift + click select regionï¼Œç”¨shift+é¼ æ ‡é€‰ä¸­ï¼Œéœ€è¦å¼€å¯CUA
   (define-key global-map (kbd "<S-down-mouse-1>") 'ignore) ; turn off font dialog
   (define-key global-map (kbd "<S-mouse-1>") 'mouse-set-point)
   (put 'mouse-set-point 'CUA 'move)
   (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
-  ;; (setq cua-keep-region-after-copy t) ;Ñ¡ÖĞ¸´ÖÆºó±£³ÖÑ¡ÖĞ×´Ì¬
+  ;; (setq cua-keep-region-after-copy t) ;é€‰ä¸­å¤åˆ¶åä¿æŒé€‰ä¸­çŠ¶æ€
   )
 ;; )
 (with-eval-after-load 'cua-base (my-cua-mode-setting))
@@ -163,15 +163,15 @@
     )
   )
 
-;; eval-after-loadÀïµÄview-mode-setting×ÜÊÇÖ´ĞĞ£¬ËùÒÔ¸ÄÎªadd-hook·½Ê½£¬¹À¼ÆÊÇÒòÎªemacsµÄÄ¬ÈÏÖ÷Ò³¾ÍÊÇview modeµÄ¹ØÏµ°É
+;; eval-after-loadé‡Œçš„view-mode-settingæ€»æ˜¯æ‰§è¡Œï¼Œæ‰€ä»¥æ”¹ä¸ºadd-hookæ–¹å¼ï¼Œä¼°è®¡æ˜¯å› ä¸ºemacsçš„é»˜è®¤ä¸»é¡µå°±æ˜¯view modeçš„å…³ç³»å§
 (add-hook 'view-mode-hook 'view-mode-settings)
 (defun view-exist-file ()
   (when (file-exists-p (buffer-file-name))
     (view-mode)))
 (add-hook 'find-file-hook 'view-exist-file)
-(keyboard-translate ?\C-i ?\H-i)	;°ÑC-I°ó¶¨Îª¿ª¹Ø£¬terminalÃ²ËÆ²»Æğ×÷ÓÃ
+(keyboard-translate ?\C-i ?\H-i)	;æŠŠC-Iç»‘å®šä¸ºå¼€å…³ï¼Œterminalè²Œä¼¼ä¸èµ·ä½œç”¨
 (global-set-key [?\H-i] 'view-mode)
-;; ÓĞĞ©²å¼şÈçeglot-renameĞèÒªÁÙÊ±½ûÓÃview-mode£¬Ò»°ãÓÃfind-file-noselect(fin-file-hookÄÇÀï×ö¶ÔÒÑ¾­´ò¿ªµÄÎÄ¼şÎŞĞ§)£¬ÒÔÏÂÊÇtrick
+;; æœ‰äº›æ’ä»¶å¦‚eglot-renameéœ€è¦ä¸´æ—¶ç¦ç”¨view-modeï¼Œä¸€èˆ¬ç”¨find-file-noselect(fin-file-hooké‚£é‡Œåšå¯¹å·²ç»æ‰“å¼€çš„æ–‡ä»¶æ— æ•ˆ)ï¼Œä»¥ä¸‹æ˜¯trick
 (defun run-with-local-idle-timer (secs repeat function &rest args)
   "Like `run-with-idle-timer', but always runs in the `current-buffer'.
 
@@ -186,20 +186,20 @@ Cancels itself, if this buffer was killed."
                     (apply (function ,function) args))))))
     (fset fns fn)
     fn))
-(defvar tmp-disable-view-mode-hook nil);; ÔÚĞèÒªµÄº¯ÊıdefadviceÀïÉèÖÃ
+(defvar tmp-disable-view-mode-hook nil);; åœ¨éœ€è¦çš„å‡½æ•°defadviceé‡Œè®¾ç½®
 (defun check-tmp-disable-view-mode-hook ()
   (when (and tmp-disable-view-mode-hook (bufferp ad-return-value))
     (with-current-buffer ad-return-value
       (when view-mode
-	(view-mode -1) ;; ÁÙÊ±½ûÓÃ
-	;; 2Ãëºó»Ö¸´Ö»¶Á£¬Êµ¼ÊÉÏidle¿ÉÄÜ³¬¹ı2Ãë
+	(view-mode -1) ;; ä¸´æ—¶ç¦ç”¨
+	;; 2ç§’åæ¢å¤åªè¯»ï¼Œå®é™…ä¸Šidleå¯èƒ½è¶…è¿‡2ç§’
 	(run-with-local-idle-timer 2 nil (lambda ()
 					   (view-mode 1)
 					   )) 
 	)
       ))
   )
-;; Èç¹ûÓĞÁíÍâµÄº¯Êı·Â´Ë¼Ó
+;; å¦‚æœæœ‰å¦å¤–çš„å‡½æ•°ä»¿æ­¤åŠ 
 (defadvice find-file-noselect (around my-find-file-noselect activate)
   ad-do-it
   (check-tmp-disable-view-mode-hook)
@@ -234,7 +234,7 @@ Run occur in all buffers whose names match this type for REXP."
                           (buffer-list))
                rexp))
 
-;;; ²Î¿¼multi-occurÊµÏÖ£¬Ğ´Õâ¸öº¯ÊıºÜ¿¼Ñélisp¹¦Á¦£¬µ÷ÊÔ·½·¨C-X C-E
+;;; å‚è€ƒmulti-occurå®ç°ï¼Œå†™è¿™ä¸ªå‡½æ•°å¾ˆè€ƒéªŒlispåŠŸåŠ›ï¼Œè°ƒè¯•æ–¹æ³•C-X C-E
 ;; (defun occur-select (more regx &optional nothing)
 ;;   "select what you wan't to see occur"
 ;;   (interactive 
@@ -243,11 +243,11 @@ Run occur in all buffers whose names match this type for REXP."
 ;; 	   (more  (list (cond ((eq choice ?a) nil)
 ;; 			      ((eq choice ?t) (read-string "Extension: "))
 ;; 			      ((eq choice ?m) (read-command "Mode:"))
-;; 			      (t ?o)))) ; ¼´occur
+;; 			      (t ?o)))) ; å³occur
 ;; 	   )
 ;;       (add-to-list 'more choice)
-;;       (nreverse more)) ; nreverseÊÇÅäºÏÇ°ÃæµÄcons
-;;     (occur-read-primary-args))) ;Ìî³äregx
+;;       (nreverse more)) ; nreverseæ˜¯é…åˆå‰é¢çš„cons
+;;     (occur-read-primary-args))) ;å¡«å……regx
 ;;   (let* ((choice (cadr more))
 ;; 	 (morearg (car more)))
 ;;     (cond ((eq choice ?a) (all-occur regx))
@@ -256,10 +256,10 @@ Run occur in all buffers whose names match this type for REXP."
 ;; 	  (t (occur regx))
 ;; 	  )))
 
-;; ctags/etags£¬¸ü¶àÉèÖÃÔÚplugin_basicÀï
+;; ctags/etagsï¼Œæ›´å¤šè®¾ç½®åœ¨plugin_basicé‡Œ
 ;; (global-set-key (kbd "C-;") 'complete-tag)
-;; (global-set-key (kbd "C-'") 'completion-at-point) ; 24.xÔöÇ¿ÁË
-(setq completion-cycle-threshold 3) 	; ²»³¬¹ı3¸ö²¹È«ÊıµÄ»°¾Í²»ÏÔÊ¾²¹È«´°¿Ú
+;; (global-set-key (kbd "C-'") 'completion-at-point) ; 24.xå¢å¼ºäº†
+(setq completion-cycle-threshold 3) 	; ä¸è¶…è¿‡3ä¸ªè¡¥å…¨æ•°çš„è¯å°±ä¸æ˜¾ç¤ºè¡¥å…¨çª—å£
 
 ;;; isearch
 (define-key isearch-mode-map (kbd "C-h") 'isearch-delete-char)
@@ -313,10 +313,10 @@ For later retrieval using `file-cache-read-cache-from-file'"
       (prin1 file-cache-alist (current-buffer)))))
 (defun lynnux-save-filecache ()
   (file-cache-save-cache-to-file "~/.filecache"))
-(file-cache-read-cache-from-file "~/.filecache") ; Ğë·ÅÔÚÏÂ¾äÉÏÃæ£¬²»È»»á¶à¸ö.filecache
-(add-hook 'kill-buffer-hook 'file-cache-add-this-file) ;°ÑÉ¾³ıµÄbuffer¼ÓÈëµ½filecache£¬ÎÒ¾õµÃÖ»ĞèÒªÕâ¸öÌØĞÔ¾Í¿ÉÒÔÁË
+(file-cache-read-cache-from-file "~/.filecache") ; é¡»æ”¾åœ¨ä¸‹å¥ä¸Šé¢ï¼Œä¸ç„¶ä¼šå¤šä¸ª.filecache
+(add-hook 'kill-buffer-hook 'file-cache-add-this-file) ;æŠŠåˆ é™¤çš„bufferåŠ å…¥åˆ°filecacheï¼Œæˆ‘è§‰å¾—åªéœ€è¦è¿™ä¸ªç‰¹æ€§å°±å¯ä»¥äº†
 (add-hook 'kill-emacs-hook 'lynnux-save-filecache)
-(setq completion-ignore-case t) 	; filecacheÖĞÊÇ²»Çø·Ö´óĞ¡Ğ´µÄ£¬¶ø²¹È«ĞèÒª
+(setq completion-ignore-case t) 	; filecacheä¸­æ˜¯ä¸åŒºåˆ†å¤§å°å†™çš„ï¼Œè€Œè¡¥å…¨éœ€è¦
 
 (global-set-key (kbd "C-'") 'hippie-expand)
 (defun try-zwz-expand-dabbrev-visible (old)
@@ -427,7 +427,7 @@ about what flexible matching means in this context."
 ;;       (cons 'try-expand-flexible-abbrev hippie-expand-try-functions-list))
 
 
-; ÀÏÊµËµgdbÒ»µã¶¼²»ºÃÓÃ£¬¾¡Á¿ÓÃ´òÓ¡Êä³öÀ´µ÷ÊÔ
+; è€å®è¯´gdbä¸€ç‚¹éƒ½ä¸å¥½ç”¨ï¼Œå°½é‡ç”¨æ‰“å°è¾“å‡ºæ¥è°ƒè¯•
 (add-hook 'gdb-mode-hook '(lambda ()
 			    (gdb-many-windows)
                             (define-key c-mode-base-map [(f5)] 'gud-go)
@@ -435,7 +435,7 @@ about what flexible matching means in this context."
                             (define-key c-mode-base-map [(f11)] 'gud-next)
 			    (define-key c-mode-base-map [(f9)] 'gud-break)))
 
-;; autosave Õâ¸ö»á¿¨
+;; autosave è¿™ä¸ªä¼šå¡
 (setq auto-save-default nil
       delete-auto-save-files nil)
 ;; bakup 
@@ -443,7 +443,7 @@ about what flexible matching means in this context."
 (setq auto-save-file-name-transforms (quote ((".*" "~/.emacs.d/autosave/" t)))
       backup-directory-alist (quote (("." . "~/.emacs.d/backups/"))))
 
-(setq create-lockfiles nil) ;; ½ûÖ¹´´½¨#.¿ªÍ·µÄÍ¬ÃûÎÄ¼ş
+(setq create-lockfiles nil) ;; ç¦æ­¢åˆ›å»º#.å¼€å¤´çš„åŒåæ–‡ä»¶
 
-;;; infÎÄ¼ş
+;;; infæ–‡ä»¶
 (add-to-list 'auto-mode-alist '("\\.inf\\'" . conf-windows-mode))
