@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-09 17:58:56 lynnux>
+;; Time-stamp: <2021-11-10 09:51:57 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -747,7 +747,6 @@ _c_: hide comment        _q_uit
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
     (progn
-      (icomplete-mode 1)		; 这个跟swiper冲突，helm没问题
       (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
       (require 'async-autoloads)
       (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
@@ -788,7 +787,7 @@ _c_: hide comment        _q_uit
        helm-recentf-fuzzy-match    t
        helm-follow-mode-persistent t
        helm-allow-mouse t
-       helm-grep-input-idle-delay 0.02 	; 后来加的默认0.6，让搜索有延迟
+       ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
        )
       
       (with-eval-after-load 'helm
@@ -823,7 +822,8 @@ _c_: hide comment        _q_uit
 					       (if (or (member name (list "RG" "Occur"))
 						       (string= name "Helm occur")
 						       (string= name "RG")) ;; TODO 
-						   (call-interactively 'next-history-element)
+						   (progn (call-interactively 'next-history-element)
+							  (move-end-of-line 1)())
 						 ;; 其它模式还是helm-execute-persistent-action，比如文件补全
 						 (call-interactively 'helm-execute-persistent-action) 
 						 )
@@ -1090,8 +1090,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'rg-dwim "rg" nil t)
 
 ;; which-key确实好用
-(require 'which-key)
-(which-key-mode)
+;;(require 'which-key)
+;;(which-key-mode)
 
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
