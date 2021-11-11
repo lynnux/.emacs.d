@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-10 10:33:47 lynnux>
+;; Time-stamp: <2021-11-11 14:54:57 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -486,8 +486,6 @@ _c_: hide comment        _q_uit
       compilation-scroll-output t)
 (autoload 'smart-compile "smart-compile" nil t)
 (autoload 'smart-compile-c-compile "smart-compile" nil t)
-(global-set-key [f7] 'smart-compile)
-(global-set-key [(shift f7)] 'smart-compile-regenerate)
 (global-set-key [(control f7)] 'smart-compile-c-compile)
 (defun smart-compile-regenerate()
   (interactive)
@@ -1084,6 +1082,29 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key projectile-mode-map (kbd "<f5> s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
   (define-key projectile-mode-map (kbd "<f5> s") #'projectile-ripgrep) ; 对C-; s同样生效
   )
+(autoload 'projectile-project-root "projectile" nil t)
+;; 没有project就用原来的smart compile
+(global-set-key [f7] (lambda ()(interactive)
+		       (if (projectile-project-root)
+			   (progn
+			     (call-interactively 'projectile-compile-project)
+			     (setq compilation-read-command nil) ;; 不再提示
+			     )
+			 (call-interactively 'smart-compile))
+		       ))
+(global-set-key [(shift f7)]
+		(lambda ()(interactive)
+		  (if (projectile-project-root)
+		      (progn
+			(setq compilation-read-command t)
+			(call-interactively 'projectile-compile-project)
+			(setq compilation-read-command nil) ;; 不再提示
+			)
+		    (progn
+		      (setq compilation-read-command t)
+		      (call-interactively 'smart-compile-regenerate))
+		    )
+		  ))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
@@ -1105,10 +1126,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (autoload 'eglot "eglot" nil t)
       (autoload 'eglot-rename "eglot" nil t)
       (with-eval-after-load 'eglot
+	(add-to-list 'eglot-stay-out-of 'flymake)
 	(setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
 	(push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
               eglot-ignored-server-capabilities) 
-	;; (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode -1)))
+	;;(add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode -1)))
 	;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
         
 	)

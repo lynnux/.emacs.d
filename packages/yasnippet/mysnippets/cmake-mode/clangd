@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: clangd
+# key: clangd
+# --
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
