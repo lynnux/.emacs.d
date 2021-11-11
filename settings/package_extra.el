@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-11 14:54:57 lynnux>
+;; Time-stamp: <2021-11-11 16:41:04 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1130,7 +1130,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	(setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
 	(push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
               eglot-ignored-server-capabilities) 
-	;;(add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode -1)))
 	;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
         
 	)
@@ -1159,12 +1158,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (setq tmp-disable-view-mode-hook nil)
       )
     ))
-(add-hook 'prog-mode-hook (lambda ()
-			    (unless  (or 
-				      (eq major-mode 'emacs-lisp-mode)
-				      (eq major-mode 'lisp-interaction-mode)
-				      )
-			      (lsp-ensure))))
+;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
+;; (add-hook 'prog-mode-hook (lambda ()
+;; 			    (unless  (or 
+;; 				      (eq major-mode 'emacs-lisp-mode)
+;; 				      (eq major-mode 'lisp-interaction-mode)
+;; 				      )
+;; 			      (lsp-ensure))))
+(add-hook 'c++-mode-hook 'lsp-ensure)
+(add-hook 'c-mode-hook 'lsp-ensure)
+(add-hook 'python-mode-hook 'lsp-ensure)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
