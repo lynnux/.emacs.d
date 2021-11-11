@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-11 16:41:04 lynnux>
+;; Time-stamp: <2021-11-11 17:45:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -105,8 +105,8 @@ _c_: hide comment        _q_uit
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
   (require 'yasnippet)
   (setq yas-snippet-dirs
-	'("~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
-	  "~/.emacs.d/packages/yasnippet/mysnippets" ;; personal snippets
+	'("~/.emacs.d/packages/yasnippet/mysnippets" ;; 自定义要在前，保存才会默认保存这里
+	  "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
 	  ))
   (yas-global-mode 1)
 
@@ -513,13 +513,14 @@ _c_: hide comment        _q_uit
             (goto-char (point-min))
             (search-forward "warning" nil t))))
     (delete-windows-on buffer)
-    ;; (run-with-timer 1 nil
-    ;; 		    (lambda (buf)
-    ;; 		      (bury-buffer buf)
-    ;; 		      (switch-to-prev-buffer (get-buffer-window buf) 'kill))
-    ;; 		    buffer)  ;; 这个左右两个窗口并不会退出窗口
-    (setq current-frame (car (car (cdr (current-frame-configuration)))))
-    (select-frame-set-input-focus current-frame) ; 最后这两句好像没作用，保留吧
+    (run-with-timer 1 nil
+		    (lambda (buf)
+		      (bury-buffer buf)
+		      ;;(switch-to-prev-buffer (get-buffer-window buf) 'kill)
+		      )
+		    buffer)  ;; 这个左右两个窗口并不会退出窗口
+    ;; (setq current-frame (car (car (cdr (current-frame-configuration)))))
+    ;; (select-frame-set-input-focus current-frame) ; 最后这两句好像没作用，保留吧
     ))
 (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
 					    'bury-compile-buffer-if-successful))
@@ -875,7 +876,7 @@ _c_: hide comment        _q_uit
 	)
       (defadvice completing-read (before my-completing-read activate)
 	(helm-mode 1))
-      (global-set-key (kbd "M-m") 'helm-imenu-in-all-buffers)
+      (global-set-key (kbd "M-m") 'helm-imenu)
       )
   (progn
     ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
