@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-11 17:45:42 lynnux>
+;; Time-stamp: <2021-11-12 16:58:38 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1110,6 +1110,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
 (autoload 'rg-dwim "rg" nil t)
+;;
+(defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
+  (setq tmp-disable-view-mode t)
+  ad-do-it
+  (setq tmp-disable-view-mode nil)
+  )
 
 ;; which-key确实好用
 ;;(require 'which-key)
@@ -1136,9 +1142,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	)
       ;; 临时禁止view-mode
       (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	(setq tmp-disable-view-mode-hook t)
+	(setq tmp-disable-view-mode t)
 	ad-do-it
-	(setq tmp-disable-view-mode-hook nil)
+	(setq tmp-disable-view-mode nil)
 	)
       )
   
@@ -1154,9 +1160,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (add-to-list 'nox-server-programs '((c++-mode c-mode) "clangd"))
       )
     (defadvice nox--apply-workspace-edit (around my-nox--apply-workspace-edit activate)
-      (setq tmp-disable-view-mode-hook t)
+      (setq tmp-disable-view-mode t)
       ad-do-it
-      (setq tmp-disable-view-mode-hook nil)
+      (setq tmp-disable-view-mode nil)
       )
     ))
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错

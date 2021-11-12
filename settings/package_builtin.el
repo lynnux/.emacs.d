@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-12 15:52:23 lynnux>
+;; Time-stamp: <2021-11-12 17:40:04 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -39,6 +39,11 @@
 	  (lambda ()
 	    (setq org-agenda-follow-mode t))
 	  )
+;; (setq org-capture-bookmark nil) ;; 不需要添加到
+(setq org-bookmark-names-plist '(:last-capture "org-capture-last-stored"
+					       ;;:last-refile "org-refile-last-stored"
+					       ;;:last-capture-marker "org-capture-last-stored-marker"
+					       ))
 (setq org-capture-templates
       `(("i" "Idea" entry (file+headline ,"idea.org" "Index")
 	 "* IDEA %?\n %i\n %a")
@@ -53,22 +58,13 @@
 (define-key global-map "\C-cc" 'org-capture)
 ;; 对org-capture涉及的文件去掉只读
 (with-eval-after-load 'org-capture
-  ;; 对新打开的去掉view mode
+  ;; 需要hook三个函数 find-file-noselect get-file-buffer find-buffer-visiting
   (defadvice org-capture-target-buffer (around my-org-capture-target-buffer activate)
+    (setq tmp-disable-view-mode 2);; 2不恢复只读
     ad-do-it
-    (with-current-buffer ad-return-value
-      (when view-mode
-	(view-mode -1)
-	)
-      )
+    (setq tmp-disable-view-mode nil)
     )
-  ;; 对已存在的（支持wcy）
-  (defadvice org-find-base-buffer-visiting (around my-org-find-base-buffer-visiting activate)
-    ad-do-it
-    (when ad-return-value
-      (setq ad-return-value nil) ;; 返回nil让它调用find-file-noselect然后wcy就支持了
-      )
-    ))
+  )
 
 ;; tabbar配置那里有对org的C-TAB的设置
 (defvar website-org-path nil)
@@ -213,23 +209,39 @@ Cancels itself, if this buffer was killed."
                     (apply (function ,function) args))))))
     (fset fns fn)
     fn))
-(defvar tmp-disable-view-mode-hook nil);; 在需要的函数defadvice里设置
-(defun check-tmp-disable-view-mode-hook ()
-  (when (and tmp-disable-view-mode-hook (bufferp ad-return-value))
+
+(defvar tmp-disable-view-mode nil);; 在需要的函数defadvice里设置，2不恢复只读
+(defun check-tmp-disable-view-mode ()
+  (when (and tmp-disable-view-mode (bufferp ad-return-value))
     (with-current-buffer ad-return-value
+      (when (and (featurep 'wcy-desktop) (eq major-mode 'not-loaded-yet))
+	(wcy-desktop-load-file)) ;; 不加载org-capture会出问题
       (when view-mode
 	(view-mode -1) ;; 临时禁用
-	;; 2秒后恢复只读，实际上idle可能超过2秒
-	(run-with-local-idle-timer 2 nil (lambda ()
-					   (view-mode 1)
-					   )) 
+	(cond
+	 ((eq tmp-disable-view-mode 2)())
+	 (t
+	  ;; 2秒后恢复只读，实际上idle可能超过2秒
+	  (run-with-local-idle-timer 2 nil (lambda ()
+					     (view-mode 1)
+					     ))))
+        
 	)
       ))
   )
-;; 如果有另外的函数仿此加
+
 (defadvice find-file-noselect (around my-find-file-noselect activate)
   ad-do-it
-  (check-tmp-disable-view-mode-hook)
+  (check-tmp-disable-view-mode)
+  )
+;; 参考org-capture-target-buffer和org-find-base-buffer-visiting，找到下面两个的hook点
+(defadvice get-file-buffer (around my-get-file-buffer activate)
+  ad-do-it
+  (check-tmp-disable-view-mode)
+  )
+(defadvice find-buffer-visiting (around my-find-buffer-visiting activate)
+  ad-do-it
+  (check-tmp-disable-view-mode)
   )
 
 ;;; occur
