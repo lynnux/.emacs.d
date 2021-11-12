@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-10 10:34:07 lynnux>
+;; Time-stamp: <2021-11-12 15:52:23 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -39,10 +39,37 @@
 	  (lambda ()
 	    (setq org-agenda-follow-mode t))
 	  )
-(autoload 'org-remember-insinuate "org-remember" nil t)
-(with-eval-after-load 'remember (org-remember-insinuate)) ;必须加'，否则直接执行
-;; org-remember已经被remember代替(还是要结合org使用)
-(define-key global-map "\C-cr" 'remember)
+(setq org-capture-templates
+      `(("i" "Idea" entry (file+headline ,"idea.org" "Index")
+	 "* IDEA %?\n %i\n %a")
+	("t" "Task" entry (file+headline ,"todo.org" "Task")
+	 "* TODO %i%?\n\n于: %U %a")
+	))
+;; (setq org-remember-templates
+;;       '(("Todo" ?t "* TODO %i%?\n\n于: %U %a" "F:/kp/org/remember/TODO.org" "Tasks")
+;;   	("IDEA" ?i "* IDEA %?\n %i\n %a" "F:/kp/org/remember/Idea.org" "Idea")
+;;   	))
+(define-key global-map "\C-cr" 'org-capture)
+(define-key global-map "\C-cc" 'org-capture)
+;; 对org-capture涉及的文件去掉只读
+(with-eval-after-load 'org-capture
+  ;; 对新打开的去掉view mode
+  (defadvice org-capture-target-buffer (around my-org-capture-target-buffer activate)
+    ad-do-it
+    (with-current-buffer ad-return-value
+      (when view-mode
+	(view-mode -1)
+	)
+      )
+    )
+  ;; 对已存在的（支持wcy）
+  (defadvice org-find-base-buffer-visiting (around my-org-find-base-buffer-visiting activate)
+    ad-do-it
+    (when ad-return-value
+      (setq ad-return-value nil) ;; 返回nil让它调用find-file-noselect然后wcy就支持了
+      )
+    ))
+
 ;; tabbar配置那里有对org的C-TAB的设置
 (defvar website-org-path nil)
 (defvar website-org-publish-path nil)
