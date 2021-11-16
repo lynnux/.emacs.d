@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-16 13:55:20 lynnux>
+;; Time-stamp: <2021-11-16 18:22:09 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -210,10 +210,16 @@ Cancels itself, if this buffer was killed."
     (fset fns fn)
     fn))
 
+(defvar disable-startup-load t)
+(when disable-startup-load
+  (run-with-idle-timer 1 nil (lambda ()
+			       (setq disable-startup-load nil))))
 (defvar tmp-disable-view-mode nil);; 在需要的函数defadvice里设置，2不恢复只读
 (defun check-tmp-disable-view-mode ()
-  (when (and (featurep 'wcy-desktop) (eq major-mode 'not-loaded-yet))
-    (wcy-desktop-load-file)) ;; 不加载org-capture会出问题
+  (when (and (bufferp ad-return-value) (featurep 'wcy-desktop) (not disable-startup-load))
+    (with-current-buffer ad-return-value
+      (when (eq major-mode 'not-loaded-yet)
+	(wcy-desktop-load-file)))) ;; 自动加载，但有个副作用是emacs启动会加载一个，通过上面的1秒timer解决
   (when (and tmp-disable-view-mode (bufferp ad-return-value))
     (with-current-buffer ad-return-value
       (when view-mode
