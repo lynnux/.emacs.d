@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-12 16:58:38 lynnux>
+;; Time-stamp: <2021-11-16 14:55:36 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1175,6 +1175,29 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook 'c++-mode-hook 'lsp-ensure)
 (add-hook 'c-mode-hook 'lsp-ensure)
 (add-hook 'python-mode-hook 'lsp-ensure)
+
+;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
+;; 请在init里设置tfs/tf-exe
+(defun tfs()
+  (interactive)
+  (require 'tfs)
+  (define-prefix-command 'tfs-map)
+  (define-key tfs-map "p" 'tfs/properties)
+  (define-key tfs-map "o" 'tfs/checkout)
+  (define-key tfs-map "i" 'tfs/checkin)
+  (define-key tfs-map "r" 'tfs/rename)
+  (define-key tfs-map "g" 'tfs/get)
+  (define-key tfs-map "h" 'tfs/history)
+  ;;  (define-key tfs-map "c" 'tfs/changeset) ;; 需要tfpt.exe没什么大用
+  (define-key tfs-map "u" 'tfs/undo)
+  (define-key tfs-map "-" 'tfs/delete)
+  (define-key tfs-map "d" 'tfs/delete)
+  (define-key tfs-map "+" 'tfs/add)
+  (define-key tfs-map "a" 'tfs/add)
+  ;;  (define-key tfs-map "a" 'tfs/annotate)
+  (define-key tfs-map "s" 'tfs/status)
+  (global-set-key  "\C-ct" 'tfs-map)
+  )
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

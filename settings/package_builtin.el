@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-12 17:40:04 lynnux>
+;; Time-stamp: <2021-11-16 13:55:20 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -212,10 +212,10 @@ Cancels itself, if this buffer was killed."
 
 (defvar tmp-disable-view-mode nil);; 在需要的函数defadvice里设置，2不恢复只读
 (defun check-tmp-disable-view-mode ()
+  (when (and (featurep 'wcy-desktop) (eq major-mode 'not-loaded-yet))
+    (wcy-desktop-load-file)) ;; 不加载org-capture会出问题
   (when (and tmp-disable-view-mode (bufferp ad-return-value))
     (with-current-buffer ad-return-value
-      (when (and (featurep 'wcy-desktop) (eq major-mode 'not-loaded-yet))
-	(wcy-desktop-load-file)) ;; 不加载org-capture会出问题
       (when view-mode
 	(view-mode -1) ;; 临时禁用
 	(cond
@@ -225,7 +225,6 @@ Cancels itself, if this buffer was killed."
 	  (run-with-local-idle-timer 2 nil (lambda ()
 					     (view-mode 1)
 					     ))))
-        
 	)
       ))
   )

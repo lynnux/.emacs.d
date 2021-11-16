@@ -28,6 +28,7 @@
    '(org-directory "D:/autosync/autosync/ts/org")
    '(org-agenda-files (list "D:/autosync/autosync/ts/org/idea.org" "D:/autosync/autosync/ts/org/todo.org")))
   (setq org-default-notes-file "D:/autosync/autosync/ts/org/default.org")
+  (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE\\TF.exe")
   )
 
  ;; 
