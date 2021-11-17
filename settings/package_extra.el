@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 10:24:32 lynnux>
+;; Time-stamp: <2021-11-17 10:43:12 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -999,6 +999,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-to-list 'load-path "~/.emacs.d/packages/magit")
 (autoload 'magit "magit" nil t)
 (global-set-key (kbd "C-c C-c") 'magit)
+(modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
 
 ;;; zig mode
 (autoload 'zig-mode "zig-mode" nil t)
