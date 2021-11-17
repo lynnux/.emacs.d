@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 11:26:06 lynnux>
+;; Time-stamp: <2021-11-17 12:05:47 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1217,3 +1217,6 @@ _q_uit
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
+;; region有点看不清，单独设置
+(set-face-attribute 'region nil :background "#666")
+;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")

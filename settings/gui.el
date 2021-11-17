@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-10 10:34:16 lynnux>
+;; Time-stamp: <2021-11-17 12:04:30 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -132,7 +132,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (add-hook 'emacs-lisp-mode-hook (lambda ()
 				  (make-local-variable 'show-paren-style)
 				  (setq show-paren-style 'expression)
-					;(face-remap-add-relative 'show-paren-match '((:background "black"))) ; elisp单独一个颜色
+				  (face-remap-add-relative 'show-paren-match '((:background "#2B2B2B"))) ; elisp单独一个颜色, 为zenburn-bg-1
 				  ))
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
