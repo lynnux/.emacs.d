@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 15:48:46 lynnux>
+;; Time-stamp: <2021-11-17 17:11:23 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -163,7 +163,12 @@ _c_: hide comment        _q_uit
      t ;; 继续keymap
      (lambda ()
        ;; 退出时真正切换
-       (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list)); 不带t，最终切换过去
+       ;; 不带t，最终切换过去
+       (let ((buf (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list))))
+	 (when (and (bufferp buf) (featurep 'wcy-desktop))
+	   (with-current-buffer buf
+	     (when (eq major-mode 'not-loaded-yet)
+	       (wcy-desktop-load-file)))))
        )
      )))
 (defun myswitch_next_buffer()
@@ -1228,11 +1233,22 @@ _q_uit
   :defer 1
   :config
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+  ;; zenburn的看不清楚
+  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#grey55")
+  (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
+  (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#ffaa77")
+  (set-face-attribute 'rainbow-delimiters-depth-4-face nil :foreground "#66bbff")
+  (set-face-attribute 'rainbow-delimiters-depth-5-face nil :foreground "#afafaf")
+  (set-face-attribute 'rainbow-delimiters-depth-6-face nil :foreground "#ffa500")
+  (set-face-attribute 'rainbow-delimiters-depth-7-face nil :foreground "#da6bda")
+  (set-face-attribute 'rainbow-delimiters-depth-8-face nil :foreground "#ff5e5e")
+  (set-face-attribute 'rainbow-delimiters-depth-9-face nil :foreground "#dddd77")
+  (set-face-attribute 'rainbow-delimiters-base-error-face nil :foreground "#ff2020")
   )
-
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
 ;; region有点看不清，单独设置
 (set-face-attribute 'region nil :background "#666")
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
+
