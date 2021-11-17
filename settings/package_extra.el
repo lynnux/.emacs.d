@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 17:11:23 lynnux>
+;; Time-stamp: <2021-11-17 22:48:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -83,14 +83,16 @@ _c_: hide comment        _q_uit
 	   (hs-hide-all)
 	 (hs-show-all)))
 
-;;; global-linum-mode居然会托慢屏显速度，我一直还以为是emacs的问题！
-(use-package nlinum
-  :defer 0.5
+;; display-line-numbers是C实现的，最快！
+(use-package display-line-numbers
+  :defer 0.9
   :init
-  (setq nlinum-format "%4d"); 有点太靠左，设置4字符刚合适
+  (setq display-line-numbers-width-start 3)
+  (fringe-mode 0) ;; 这个没用了，直接禁掉
   :config
-  (global-nlinum-mode)
+  (global-display-line-numbers-mode)  
   )
+
 
 ;;; better C-A C-E
 (autoload 'mwim-beginning-of-line-or-code "mwim" nil t)
