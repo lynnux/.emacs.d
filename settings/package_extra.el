@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 10:43:12 lynnux>
+;; Time-stamp: <2021-11-17 11:26:06 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -104,6 +104,13 @@ _c_: hide comment        _q_uit
   (interactive)
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
   (require 'yasnippet)
+  ;; copy from yasnippet-snippets.el，fix for eglot
+  (defun yasnippet-snippets--no-indent ()
+    "Set `yas-indent-line' to nil."
+    (set (make-local-variable 'yas-indent-line) nil)) 
+  (defun yasnippet-snippets--fixed-indent ()
+    "Set `yas-indent-line' to `fixed'."
+    (set (make-local-variable 'yas-indent-line) 'fixed))
   (setq yas-snippet-dirs
 	'("~/.emacs.d/packages/yasnippet/mysnippets" ;; 自定义要在前，保存才会默认保存这里
 	  "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
