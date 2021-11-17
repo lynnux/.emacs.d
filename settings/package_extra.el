@@ -1,6 +1,11 @@
-;; Time-stamp: <2021-11-17 12:05:47 lynnux>
+;; Time-stamp: <2021-11-17 15:17:08 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
+
+;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度 
+(eval-when-compile
+  (add-to-list 'load-path "~/.emacs.d/packages/use-package")
+  (require 'use-package))
 
 (add-to-list 'load-path
 	     "~/.emacs.d/packages")
@@ -79,9 +84,13 @@ _c_: hide comment        _q_uit
 	 (hs-show-all)))
 
 ;;; global-linum-mode居然会托慢屏显速度，我一直还以为是emacs的问题！
-(require 'nlinum)
-(setq nlinum-format "%4d") ; 有点太靠左，设置4字符刚合适
-(global-nlinum-mode)
+(use-package nlinum
+  :defer 0.5
+  :init
+  (setq nlinum-format "%4d"); 有点太靠左，设置4字符刚合适
+  :config
+  (global-nlinum-mode)
+  )
 
 ;;; better C-A C-E
 (autoload 'mwim-beginning-of-line-or-code "mwim" nil t)
@@ -100,10 +109,11 @@ _c_: hide comment        _q_uit
 (global-set-key (kbd "C-z") 'undo-tree-undo)
 (global-set-key (kbd "C-S-z") 'undo-tree-redo)
 
-(defun yas ()
-  (interactive)
+(use-package yasnippet
+  :defer 1
+  :init
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
-  (require 'yasnippet)
+  :config
   ;; copy from yasnippet-snippets.el，fix for eglot
   (defun yasnippet-snippets--no-indent ()
     "Set `yas-indent-line' to nil."
@@ -123,7 +133,6 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c y") #'aya-create)
   (global-set-key (kbd "C-c e") #'aya-expand)
   )
-(yas)
 
 (require 'session)
 (add-hook 'after-init-hook 'session-initialize)
@@ -546,15 +555,15 @@ _c_: hide comment        _q_uit
 				  (setq transient-mark-mode t)
 				  (set-mark-command arg))))
 ;;; 解决被(setq show-paren-style 'expression)覆盖的问题
-(defadvice show-paren-function (around not-show-when-expand-region activate)
-  (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
-	   (memq last-command '(er/expand-region er/contract-region easy-mark easy-kill-er-expand easy-kill-er-unexpand)))
-      (progn
-	(setq show-paren-style 'parenthesis)
-	ad-do-it
-	(setq show-paren-style 'expression)
-	)
-    ad-do-it))
+;; (defadvice show-paren-function (around not-show-when-expand-region activate)
+;;   (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
+;; 	   (memq last-command '(er/expand-region er/contract-region easy-mark easy-kill-er-expand easy-kill-er-unexpand)))
+;;       (progn
+;; 	(setq show-paren-style 'parenthesis)
+;; 	ad-do-it
+;; 	(setq show-paren-style 'expression)
+;; 	)
+;;     ad-do-it))
 
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
@@ -1002,11 +1011,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; (with-eval-after-load 'go-mode (add-hook 'before-save-hook 'gofmt-before-save))
 
 ;; magit
-(add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
-(add-to-list 'load-path "~/.emacs.d/packages/magit")
-(autoload 'magit "magit" nil t)
-(global-set-key (kbd "C-c C-c") 'magit)
-(modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
+(use-package magit
+  :init
+  (add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
+  (add-to-list 'load-path "~/.emacs.d/packages/magit")
+  (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
+  :commands (magit)
+  :bind(("C-c C-c". magit))
+  :config
+  )
 
 ;;; zig mode
 (autoload 'zig-mode "zig-mode" nil t)
@@ -1214,6 +1227,14 @@ _q_uit
   (funcall 'hydra-tfs-select/body)
   )
 (global-set-key  "\C-ct" 'hydra-tfs-select1)
+
+;; rainbow-delimiters
+(use-package rainbow-delimiters
+  :defer 1
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+  )
+
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)

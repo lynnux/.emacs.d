@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 12:04:30 lynnux>
+;; Time-stamp: <2021-11-17 14:21:50 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -129,11 +129,11 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 ;;(set-face-foreground 'show-paren-match-face "gray15")
 
 ;; 当光标位于括号上时，类似选中的效果
-(add-hook 'emacs-lisp-mode-hook (lambda ()
-				  (make-local-variable 'show-paren-style)
-				  (setq show-paren-style 'expression)
-				  (face-remap-add-relative 'show-paren-match '((:background "#2B2B2B"))) ; elisp单独一个颜色, 为zenburn-bg-1
-				  ))
+;; (add-hook 'emacs-lisp-mode-hook (lambda ()
+;; 				  (make-local-variable 'show-paren-style)
+;; 				  (setq show-paren-style 'expression)
+;; 				  ;(face-remap-add-relative 'show-paren-match '((:background "#2B2B2B"))) ; elisp单独一个颜色, 为zenburn-bg-1
+;; 				  ))
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
 
