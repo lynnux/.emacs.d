@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-16 14:55:36 lynnux>
+;; Time-stamp: <2021-11-17 10:24:32 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -845,10 +845,10 @@ _c_: hide comment        _q_uit
 	  (lambda ()
 	    (interactive)
 	    (with-helm-alive-p
-	      (helm-exit-and-execute-action (lambda (file)
-					      (require 'w32-browser)
-					      (w32explore file)
-					      )))))
+	     (helm-exit-and-execute-action (lambda (file)
+					     (require 'w32-browser)
+					     (w32explore file)
+					     )))))
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
@@ -1178,26 +1178,34 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
-(defun tfs()
+(defun hydra-tfs-select1 ()
   (interactive)
-  (require 'tfs)
-  (define-prefix-command 'tfs-map)
-  (define-key tfs-map "p" 'tfs/properties)
-  (define-key tfs-map "o" 'tfs/checkout)
-  (define-key tfs-map "i" 'tfs/checkin)
-  (define-key tfs-map "r" 'tfs/rename)
-  (define-key tfs-map "g" 'tfs/get)
-  (define-key tfs-map "h" 'tfs/history)
-  ;;  (define-key tfs-map "c" 'tfs/changeset) ;; 需要tfpt.exe没什么大用
-  (define-key tfs-map "u" 'tfs/undo)
-  (define-key tfs-map "-" 'tfs/delete)
-  (define-key tfs-map "d" 'tfs/delete)
-  (define-key tfs-map "+" 'tfs/add)
-  (define-key tfs-map "a" 'tfs/add)
-  ;;  (define-key tfs-map "a" 'tfs/annotate)
-  (define-key tfs-map "s" 'tfs/status)
-  (global-set-key  "\C-ct" 'tfs-map)
+  (unless (functionp 'hydra-tfs-select/body)
+    (require 'tfs)
+    (defhydra hydra-tfs-select ()
+      "
+_o_: checkout _i_: checkin
+_r_: rename   _g_: get
+_a_: add      _d_: delete
+_u_: undo     _p_: properties
+_h_: history  _s_: status
+_q_uit
+"
+      ("o" tfs/checkout nil :color blue)
+      ("i" tfs/checkin nil :color blue)
+      ("r" tfs/rename nil :color blue)
+      ("g" tfs/get nil :color blue)
+      ("a" tfs/add nil :color blue)
+      ("d" tfs/delete nil :color blue)
+      ("u" tfs/undo nil :color blue)
+      ("p" tfs/properties nil :color blue)
+      ("h" tfs/history nil :color blue)
+      ("s" tfs/status nil :color blue)
+      ("q" nil "nil" :color blue))
+    )
+  (funcall 'hydra-tfs-select/body)
   )
+(global-set-key  "\C-ct" 'hydra-tfs-select1)
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
