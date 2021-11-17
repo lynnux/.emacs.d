@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 14:21:50 lynnux>
+;; Time-stamp: <2021-11-17 16:17:21 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -10,6 +10,8 @@
  '(show-paren-mode t)			;()匹配提示
  '(tooltip-mode nil)			;windows会卡，不用
  '(tool-bar-mode nil)          		;不显示toolbar
+ '(warning-suppress-log-types '((comp) (comp)))
+ '(warning-suppress-types '((comp)))
  )
 
 ;; (setq-default line-spacing 1) ; 这个设置会导致F3到下一个时滚动出问题
