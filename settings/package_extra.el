@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 15:17:08 lynnux>
+;; Time-stamp: <2021-11-17 15:48:46 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -98,16 +98,19 @@ _c_: hide comment        _q_uit
 (global-set-key (kbd "C-a") 'mwim-beginning-of-line-or-code)
 (global-set-key (kbd "C-e") 'mwim-end-of-line-or-code)
 
-(require 'undo-tree)
-(global-undo-tree-mode)
-(setq undo-tree-visualizer-timestamps t)
-(setq undo-tree-visualizer-diff t)
-(define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
-(setq undo-tree-auto-save-history nil
-      undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
-;; 这个功能爽呆了
-(global-set-key (kbd "C-z") 'undo-tree-undo)
-(global-set-key (kbd "C-S-z") 'undo-tree-redo)
+(use-package undo-tree
+  :defer 0.5
+  :config
+  (global-undo-tree-mode)
+  (setq undo-tree-visualizer-timestamps t)
+  (setq undo-tree-visualizer-diff t)
+  (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
+  (setq undo-tree-auto-save-history nil
+	undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
+  ;; 这个功能爽呆了
+  (global-set-key (kbd "C-z") 'undo-tree-undo)
+  (global-set-key (kbd "C-S-z") 'undo-tree-redo)
+  )
 
 (use-package yasnippet
   :defer 1
@@ -210,21 +213,27 @@ _c_: hide comment        _q_uit
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
 ;; highlight-symbol下岗啦，会影响输入。下面ahs好像只对可见范围高亮所以不卡
-;; zenburn
-;; (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
-;; (global-set-key [(control f3)] 'highlight-symbol-at-point)
-;;(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
-(global-set-key [f3] 'ahs-forward) ;; 这个只能在可见范围跳啊！还是用C-s搜索吧！
-(global-set-key [(shift f3)] 'ahs-backward)
-;; 高亮选中项
-(require 'auto-highlight-symbol)
-(setq ahs-suppress-log t)
-(setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
-(global-auto-highlight-symbol-mode t)
+(use-package auto-highlight-symbol
+  :defer 1
+  :init
+  (setq ahs-suppress-log t)
+  (setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
+  :config
+  (global-auto-highlight-symbol-mode t)
+  ;; zenburn
+  ;; (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
+  ;; (global-set-key [(control f3)] 'highlight-symbol-at-point)
+  ;;(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
+  (global-set-key [f3] 'ahs-forward) ;; 这个只能在可见范围跳啊！还是用C-s搜索吧！
+  (global-set-key [(shift f3)] 'ahs-backward)
+  )
 
-(require 'cursor-chg)
-(change-cursor-mode )
-(setq curchg-default-cursor-color "red3") ; 无法设置cursor的foreground
+(use-package cursor-chg
+  :defer 1
+  :config
+  (change-cursor-mode)
+  (setq curchg-default-cursor-color "red3") ; 无法设置cursor的foreground
+  )
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
@@ -267,52 +276,58 @@ _c_: hide comment        _q_uit
       )
   (progn
     ;; company mode，这个支持comment中文，但不支持补全history
-    (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
-    (require 'company)
-    (add-hook 'after-init-hook 'global-company-mode)
-    (define-key company-active-map (kbd "C-n") 'company-select-next)
-    (define-key company-active-map (kbd "C-p") 'company-select-previous)
-    (define-key company-active-map (kbd "M-n") 'company-next-page)
-    (define-key company-active-map (kbd "M-p") 'company-previous-page)
-    (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
-    (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
-    (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-    (dotimes (i 10)
-      (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
-     company-minimum-prefix-length 2
-     company-require-match nil
-     company-dabbrev-ignore-case nil
-     company-dabbrev-downcase nil
-     company-show-numbers t)
-    ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
-    ;; (with-eval-after-load 'dash
-    ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
-    ;;   (require 'company-tabnine)
-    ;;   (add-to-list 'company-backends #'company-tabnine)
-    ;;   )
-    
-    (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
-    (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-    ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
-    ;; (company-posframe-mode 1)
-    ;; (setq company-posframe-quickhelp-delay 0.1)
-    (require 'company-ctags)
-    (company-ctags-auto-setup)
+    (use-package company
+      :defer 1
+      :init
+      (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+      :config
+      (global-company-mode)
+      (define-key company-active-map (kbd "C-n") 'company-select-next)
+      (define-key company-active-map (kbd "C-p") 'company-select-previous)
+      (define-key company-active-map (kbd "M-n") 'company-next-page)
+      (define-key company-active-map (kbd "M-p") 'company-previous-page)
+      (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
+      (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+      (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+      (dotimes (i 10)
+	(define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
+      (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
+       company-minimum-prefix-length 2
+       company-require-match nil
+       company-dabbrev-ignore-case nil
+       company-dabbrev-downcase nil
+       company-show-numbers t)
+      ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
+      ;; (with-eval-after-load 'dash
+      ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
+      ;;   (require 'company-tabnine)
+      ;;   (add-to-list 'company-backends #'company-tabnine)
+      ;;   )
+      
+      (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
+      (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+      ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
+      ;; (company-posframe-mode 1)
+      ;; (setq company-posframe-quickhelp-delay 0.1)
+      (require 'company-ctags)
+      (company-ctags-auto-setup)
+      )
     )
   )
 
-
 ;; 一来就加载mode确实挺不爽的，还是用这个了
-(require 'wcy-desktop)
-(wcy-desktop-init)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (ignore-errors
-              (wcy-desktop-open-last-opened-files))))
-(defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
-  (setq buffer-undo-list nil)
-  );; 解决undo-tree冲突
+(use-package wcy-desktop
+  :defer 0.8
+  :config
+  (wcy-desktop-init)
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (ignore-errors
+		(wcy-desktop-open-last-opened-files))))
+  (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
+    (setq buffer-undo-list nil)
+    );; 解决undo-tree冲突
+  )
 
 ;; clang-format
 (autoload 'clang-format-region "clang-format" "" t)
@@ -364,23 +379,25 @@ _c_: hide comment        _q_uit
 (setq auto-mode-alist (append '(("\\.proto\\'" .
 				 protobuf-mode)) auto-mode-alist))
 
-(require 'jumplist)
-(global-set-key (kbd "M-n") 'jl-jump-forward)
-(global-set-key (kbd "M-p") 'jl-jump-backward)
-(add-to-list 'jl-insert-marker-funcs "my-switch-buffer")
-(add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
-(add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
-(add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
-(add-to-list 'jl-insert-marker-funcs "swiper")
-(add-to-list 'jl-insert-marker-funcs "helm-occur")
-(add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
-(add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
-(global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
-(defun my-save-pos()
-  (interactive)
+(use-package jumplist
+  :defer 0.7
+  :config
+  (global-set-key (kbd "M-n") 'jl-jump-forward)
+  (global-set-key (kbd "M-p") 'jl-jump-backward)
+  (add-to-list 'jl-insert-marker-funcs "my-switch-buffer")
+  (add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
+  (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
+  (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
+  (add-to-list 'jl-insert-marker-funcs "swiper")
+  (add-to-list 'jl-insert-marker-funcs "helm-occur")
+  (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
+  (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
+  (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
+  (defun my-save-pos()
+    (interactive)
+    )
+  (add-to-list 'jl-insert-marker-funcs "my-save-pos")
   )
-(add-to-list 'jl-insert-marker-funcs "my-save-pos")
-
 
 (autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
 (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
@@ -657,106 +674,83 @@ _c_: hide comment        _q_uit
 (autoload 'unfill-toggle "unfill" nil t)
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
-(require 'hungry-delete)
-(global-hungry-delete-mode)
-(setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
-
-(add-to-list 'load-path "~/.emacs.d/packages/smartparens")
-(require 'smartparens-config)
-;; (sp-use-paredit-bindings)
-(sp-use-smartparens-bindings)
-(define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
-(define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
-(define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
-;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
-(sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
-(set-default 'sp-autoskip-closing-pair 'always)
-;; Don't kill the entire symbol on C-k
-(set-default 'sp-hybrid-kill-entire-symbol nil)
-;; 参考doom设置
-(setq sp-highlight-pair-overlay nil
-      sp-highlight-wrap-overlay nil
-      sp-highlight-wrap-tag-overlay nil)
-(setq sp-max-prefix-length 25)
-(setq sp-max-pair-length 4)
-(smartparens-global-strict-mode)
-;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
-;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
-
-;; 使支持hungry-delete
-(with-eval-after-load 'smartparens
-  (dolist (key '( [remap delete-char]
-                  [remap delete-forward-char]))
-    (define-key smartparens-strict-mode-map key
-      ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-      '(menu-item "maybe-sp-delete-char" nil
-                  :filter (lambda (&optional _)
-                            (unless (looking-at-p "[[:space:]\n]")
-                              #'sp-delete-char)))))
-
-  (dolist (key '([remap backward-delete-char-untabify]
-                 [remap backward-delete-char]
-                 [remap delete-backward-char]))
-    (define-key smartparens-strict-mode-map key
-      '(menu-item "maybe-sp-backward-delete-char" nil
-                  :filter (lambda (&optional _)
-                            (unless (looking-back "[[:space:]\n]" 1)
-                              #'sp-backward-delete-char)))))
-  
-  ;; C-W支持
-  (dolist (key '( [remap kill-region]))
-    (define-key smartparens-strict-mode-map key
-      '(menu-item "maybe-sp-kill-region" nil
-                  :filter (lambda (&optional _)
-                            (when (use-region-p) ;; 有选中时才用sp的
-                              #'sp-kill-region)))))
+(use-package hungry-delete
+  :defer 0.5
+  :config
+  (global-hungry-delete-mode)
+  (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
   )
-;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
-(sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
-(defun my-create-newline-and-enter-sexp (&rest _ignored)
-  "Open a new brace or bracket expression, with relevant newlines and indent. "
-  (newline)
-  (indent-according-to-mode)
-  (forward-line -1)
-  (indent-according-to-mode))
+
+(use-package smartparens-config
+  :defer 0.5
+  :init
+  (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
+  :config
+  (sp-use-smartparens-bindings)
+  ;; (sp-use-paredit-bindings)
+  (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
+  (define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
+  (define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
+  ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
+  (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
+  (set-default 'sp-autoskip-closing-pair 'always)
+  ;; Don't kill the entire symbol on C-k
+  (set-default 'sp-hybrid-kill-entire-symbol nil)
+  ;; 参考doom设置
+  (setq sp-highlight-pair-overlay nil
+	sp-highlight-wrap-overlay nil
+	sp-highlight-wrap-tag-overlay nil)
+  (setq sp-max-prefix-length 25)
+  (setq sp-max-pair-length 4)
+  (smartparens-global-strict-mode)
+  ;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
+  ;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
+  
+  ;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
+  (sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
+  (defun my-create-newline-and-enter-sexp (&rest _ignored)
+    "Open a new brace or bracket expression, with relevant newlines and indent. "
+    (newline)
+    (indent-according-to-mode)
+    (forward-line -1)
+    (indent-according-to-mode))
+
+  ;; 使支持hungry-delete
+  (with-eval-after-load 'smartparens
+    (dolist (key '( [remap delete-char]
+                    [remap delete-forward-char]))
+      (define-key smartparens-strict-mode-map key
+	;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+	'(menu-item "maybe-sp-delete-char" nil
+                    :filter (lambda (&optional _)
+                              (unless (looking-at-p "[[:space:]\n]")
+				#'sp-delete-char)))))
+
+    (dolist (key '([remap backward-delete-char-untabify]
+                   [remap backward-delete-char]
+                   [remap delete-backward-char]))
+      (define-key smartparens-strict-mode-map key
+	'(menu-item "maybe-sp-backward-delete-char" nil
+                    :filter (lambda (&optional _)
+                              (unless (looking-back "[[:space:]\n]" 1)
+				#'sp-backward-delete-char)))))
+    
+    ;; C-W支持
+    (dolist (key '( [remap kill-region]))
+      (define-key smartparens-strict-mode-map key
+	'(menu-item "maybe-sp-kill-region" nil
+                    :filter (lambda (&optional _)
+                              (when (use-region-p) ;; 有选中时才用sp的
+				#'sp-kill-region)))))
+    )
+  
+  )
 
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
 
-;; emacs内置很多改进的minibuffer模式了，如icomplete[-vertical]-mode, fido[-vertical]-mode
-;; 现在都是组合拳了！
-(when nil
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
-    (require 'vertico)
-    (vertico-mode 1)
-    ;;(require 'icomplete-vertical)
-    ;;(icomplete-mode)
-    ;;(icomplete-vertical-mode)
-    ;;(setq completion-styles '(partial-completion substring))
-    ;;(setq completion-category-overrides '((file (styles basic substring))))
-    (setq read-file-name-completion-ignore-case t
-	  read-buffer-completion-ignore-case t
-	  completion-ignore-case t)
-    (require 'marginalia) ;; 美化
-    (marginalia-mode)
-    (require 'consult) ;; 核心功能
-    (require 'orderless) ;; 实现空格分词，consult-line变成C-s效果！
-    (defun sanityinc/use-orderless-in-minibuffer ()
-      (setq-local completion-styles '(substring orderless)))
-    (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
-    ;; embark提供minibuffer额外的菜单暂时不需要
-    ;; (with-eval-after-load 'vertico
-    ;;   (require 'embark)
-    ;;   (define-key vertico-map (kbd "C-o") 'embark-export)
-    ;;   (define-key vertico-map (kbd "C-z") 'embark-act))
-    (global-set-key (kbd "C-s") 'consult-line) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
-    (global-set-key [(control f2)] (lambda () (interactive)
-				     (require 'vc)
-				     (consult-ripgrep (or (vc-find-root "." ".git") (helm-current-directory)))))
-    ))
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
@@ -950,16 +944,17 @@ _c_: hide comment        _q_uit
 
 
 ;; 自动indent
-(require 'aggressive-indent)
-(global-aggressive-indent-mode 1)
-(with-eval-after-load 'aggressive-indent
+(use-package aggressive-indent
+  :defer 1
+  :config
+  (global-aggressive-indent-mode 1)
   (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
   (add-to-list
    'aggressive-indent-dont-indent-if
    '(and (derived-mode-p 'c++-mode)
 	 (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-			     (thing-at-point 'line))))))
-
+			     (thing-at-point 'line)))))
+  )
 
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
