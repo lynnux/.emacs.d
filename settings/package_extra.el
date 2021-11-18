@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 09:56:44 lynnux>
+;; Time-stamp: <2021-11-18 15:07:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -806,8 +806,20 @@ _c_: hide comment        _q_uit
        helm-allow-mouse t
        ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
        )
-      (setq default-process-coding-system '(utf-8 . gbk)) ;; 解决使用rg时中文乱码
+
       (with-eval-after-load 'helm
+	;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+	;; describe-current-coding-system 查看当前系统编码
+	;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+	(defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	  ad-do-it
+	  (let ((fname (car-safe ad-return-value)))
+	    (when fname
+	      (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	      ))
+	  )
+	
 	(helm-mode 1)
 
 	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
@@ -863,10 +875,10 @@ _c_: hide comment        _q_uit
 	  (lambda ()
 	    (interactive)
 	    (with-helm-alive-p
-	     (helm-exit-and-execute-action (lambda (file)
-					     (require 'w32-browser)
-					     (w32explore file)
-					     )))))
+	      (helm-exit-and-execute-action (lambda (file)
+					      (require 'w32-browser)
+					      (w32explore file)
+					      )))))
 	
 	(when helm-echo-input-in-header-line
 	  (add-hook 'helm-minibuffer-set-up-hook
@@ -1134,6 +1146,55 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
 (autoload 'rg-dwim "rg" nil t)
+(with-eval-after-load 'rg-result
+  ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
+  ;; 但是显示有问题，文件定位没问题。。
+  (defadvice rg-filter (around my-rg-filter activate)
+    (save-excursion
+      (forward-line 0)
+      (let ((end (point)) beg)
+	(goto-char compilation-filter-start)
+	(forward-line 0)
+	(setq beg (point))
+	(when (zerop rg-hit-count)
+          (newline))
+	;; Only operate on whole lines so we don't get caught with part of an
+	;; escape sequence in one chunk and the rest in another.
+	(when (< (point) end)
+          (setq end (copy-marker end))
+          ;; Add File: in front of filename
+          (when rg-group-result
+            (while (re-search-forward "^\033\\[[0]*m\033\\[35m\\(.*?\\)\033\\[[0]*m$" end 1)
+	      (replace-match (concat (propertize "File:"
+						 'rg-file-message t
+						 'face nil
+						 'font-lock-face 'rg-file-tag-face)
+                                     " "
+                                     (propertize (encode-coding-string (match-string 1) locale-coding-system)
+						 'face nil
+						 'font-lock-face 'rg-filename-face))
+                             t t))
+            (goto-char beg))
+
+          ;; Highlight rg matches and delete marking sequences.
+          (while (re-search-forward "\033\\[[0]*m\033\\[[3]*1m\033\\[[3]*1m\\(.*?\\)\033\\[[0]*m" end 1)
+            (replace-match (propertize (match-string 1)
+				       'face nil 'font-lock-face 'rg-match-face)
+                           t t)
+            (cl-incf rg-hit-count))
+
+          (rg-format-line-and-column-numbers beg end)
+
+          ;; Delete all remaining escape sequences
+          (goto-char beg)
+          (while (re-search-forward "\033\\[[0-9;]*[0mK]" end 1)
+            (replace-match "" t t))
+
+          (goto-char beg)
+          (run-hooks 'rg-filter-hook))))
+    )
+  )
+
 ;;
 (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
   (setq tmp-disable-view-mode t)
