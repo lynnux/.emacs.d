@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 09:34:40 lynnux>
+;; Time-stamp: <2021-11-18 09:56:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -566,7 +566,7 @@ _c_: hide comment        _q_uit
 (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
 					    'bury-compile-buffer-if-successful))
 
-;; expand-region被easy-kill的easy-mark替换了，但要保留会被调用
+;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 ;; (autoload 'er/expand-region "expand-region" nil t)
 ;; (autoload 'er/contract-region "expand-region" nil t)
@@ -806,7 +806,7 @@ _c_: hide comment        _q_uit
        helm-allow-mouse t
        ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
        )
-      
+      (setq default-process-coding-system '(utf-8 . gbk)) ;; 解决使用rg时中文乱码
       (with-eval-after-load 'helm
 	(helm-mode 1)
 
