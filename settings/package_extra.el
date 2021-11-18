@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 15:07:35 lynnux>
+;; Time-stamp: <2021-11-18 16:16:56 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -759,6 +759,8 @@ _c_: hide comment        _q_uit
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
 
+(defvar cmdproxy-old-encoding nil)
+(setq cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist)))
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
@@ -811,14 +813,23 @@ _c_: hide comment        _q_uit
 	;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
 	;; describe-current-coding-system 查看当前系统编码
 	;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	
 	;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
-	(defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
-	  ad-do-it
-	  (let ((fname (car-safe ad-return-value)))
-	    (when fname
-	      (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
-	      ))
-	  )
+	;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
+	;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	;;   ad-do-it
+	;;   (let ((fname (car-safe ad-return-value)))
+	;;     (when fname
+	;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	;;       ))
+	;;   )
+	;; 临时设置cmdproxy编码
+	(with-eval-after-load 'helm-grep
+	  (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	    ad-do-it
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	    ))
 	
 	(helm-mode 1)
 
@@ -1148,50 +1159,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'rg-dwim "rg" nil t)
 (with-eval-after-load 'rg-result
   ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
-  ;; 但是显示有问题，文件定位没问题。。
-  (defadvice rg-filter (around my-rg-filter activate)
-    (save-excursion
-      (forward-line 0)
-      (let ((end (point)) beg)
-	(goto-char compilation-filter-start)
-	(forward-line 0)
-	(setq beg (point))
-	(when (zerop rg-hit-count)
-          (newline))
-	;; Only operate on whole lines so we don't get caught with part of an
-	;; escape sequence in one chunk and the rest in another.
-	(when (< (point) end)
-          (setq end (copy-marker end))
-          ;; Add File: in front of filename
-          (when rg-group-result
-            (while (re-search-forward "^\033\\[[0]*m\033\\[35m\\(.*?\\)\033\\[[0]*m$" end 1)
-	      (replace-match (concat (propertize "File:"
-						 'rg-file-message t
-						 'face nil
-						 'font-lock-face 'rg-file-tag-face)
-                                     " "
-                                     (propertize (encode-coding-string (match-string 1) locale-coding-system)
-						 'face nil
-						 'font-lock-face 'rg-filename-face))
-                             t t))
-            (goto-char beg))
-
-          ;; Highlight rg matches and delete marking sequences.
-          (while (re-search-forward "\033\\[[0]*m\033\\[[3]*1m\033\\[[3]*1m\\(.*?\\)\033\\[[0]*m" end 1)
-            (replace-match (propertize (match-string 1)
-				       'face nil 'font-lock-face 'rg-match-face)
-                           t t)
-            (cl-incf rg-hit-count))
-
-          (rg-format-line-and-column-numbers beg end)
-
-          ;; Delete all remaining escape sequences
-          (goto-char beg)
-          (while (re-search-forward "\033\\[[0-9;]*[0mK]" end 1)
-            (replace-match "" t t))
-
-          (goto-char beg)
-          (run-hooks 'rg-filter-hook))))
+  ;; 临时设置cmdproxy编码
+  (defadvice rg-run (around my-run activate)
+    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+    ad-do-it
+    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
     )
   )
 
