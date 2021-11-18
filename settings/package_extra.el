@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 16:16:56 lynnux>
+;; Time-stamp: <2021-11-18 20:07:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -89,9 +89,10 @@ _c_: hide comment        _q_uit
   :init
   (setq display-line-numbers-width-start 3)
   :config
-  (fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
-  ;;  (global-display-line-numbers-mode)
-  (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+  (add-hook 'find-file-hook (lambda ()
+			      (fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
+			      (display-line-numbers-mode))
+	    #'display-line-numbers-mode)
   )
 
 
