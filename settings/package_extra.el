@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 22:10:09 lynnux>
+;; Time-stamp: <2021-11-18 22:53:31 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1268,9 +1268,14 @@ _q_uit
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :defer 1
+  :hook
+  (prog-mode . (lambda ()
+		 (unless  (or 
+			   (eq major-mode 'emacs-lisp-mode)
+			   (eq major-mode 'lisp-interaction-mode)
+			   )
+		   (rainbow-delimiters-mode))))
   :config
-  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
-  ;; zenburn的看不清楚
   (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#grey55")
   (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
   (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#ffaa77")
@@ -1290,6 +1295,27 @@ _q_uit
   :config
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
+
+;; 对elisp代码非常有用，但是有bug经常部分不变色 https://github.com/istib/rainbow-blocks/issues/4
+(use-package rainbow-blocks
+  :defer 0.7
+  :hook
+  (emacs-lisp-mode . rainbow-blocks-mode)
+  :config
+  (setq rainbow-blocks-highlight-braces-p t)
+  (setq rainbow-blocks-highlight-brackets-p t)
+  (setq rainbow-blocks-highlight-parens-p t)
+  (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#grey55")
+  (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#80ee80")
+  (set-face-attribute 'rainbow-blocks-depth-3-face nil :foreground "#ffaa77")
+  (set-face-attribute 'rainbow-blocks-depth-4-face nil :foreground "#66bbff")
+  (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#afafaf")
+  (set-face-attribute 'rainbow-blocks-depth-6-face nil :foreground "#ffa500")
+  (set-face-attribute 'rainbow-blocks-depth-7-face nil :foreground "#da6bda")
+  (set-face-attribute 'rainbow-blocks-depth-8-face nil :foreground "#ff5e5e")
+  (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#dddd77")
+  (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
+  )
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
