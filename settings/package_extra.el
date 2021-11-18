@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 20:07:28 lynnux>
+;; Time-stamp: <2021-11-18 22:10:09 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1282,6 +1282,14 @@ _q_uit
   (set-face-attribute 'rainbow-delimiters-depth-9-face nil :foreground "#dddd77")
   (set-face-attribute 'rainbow-delimiters-base-error-face nil :foreground "#ff2020")
   )
+
+;; 自动转换文本中的RGB颜色
+(use-package rainbow-mode
+  :commands
+  (rainbow-mode)
+  :config
+  (setq rainbow-ansi-colors nil)
+  (setq rainbow-x-colors nil))
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
