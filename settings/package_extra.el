@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-18 22:53:31 lynnux>
+;; Time-stamp: <2021-11-19 11:09:53 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -85,14 +85,14 @@ _c_: hide comment        _q_uit
 
 ;; display-line-numbers是C实现的，最快！
 (use-package display-line-numbers
-  :defer 0.9
+  :commands
+  (display-line-numbers-mode)
   :init
   (setq display-line-numbers-width-start 3)
-  :config
-  (add-hook 'find-file-hook (lambda ()
-			      (fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
-			      (display-line-numbers-mode))
-	    #'display-line-numbers-mode)
+  :hook
+  (find-file . (lambda ()
+		 (fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
+		 (display-line-numbers-mode)))
   )
 
 
@@ -223,7 +223,7 @@ _c_: hide comment        _q_uit
 
 ;; highlight-symbol下岗啦，会影响输入。下面ahs好像只对可见范围高亮所以不卡
 (use-package auto-highlight-symbol
-  :defer 1
+  :defer 1.1
   :init
   (setq ahs-suppress-log t)
   (setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
@@ -326,7 +326,7 @@ _c_: hide comment        _q_uit
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (use-package wcy-desktop
-  :defer 0.8
+  :defer 0.5
   :config
   (wcy-desktop-init)
   (add-hook 'emacs-startup-hook
@@ -426,7 +426,7 @@ _c_: hide comment        _q_uit
     (define-key dired-mode-map [f4] 'dired-w32explore)
     (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
       '("Open Associated Application" . dired-w32-browser))
-    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
+    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
     ;;   '("Windows Explorer" . dired-w32explore))
     (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
     (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
@@ -684,14 +684,14 @@ _c_: hide comment        _q_uit
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
 (use-package hungry-delete
-  :defer 0.5
+  :defer 0.8
   :config
   (global-hungry-delete-mode)
   (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
   )
 
 (use-package smartparens-config
-  :defer 0.5
+  :defer 0.9
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
   :config
@@ -1267,7 +1267,8 @@ _q_uit
 
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
-  :defer 1
+  :commands
+  (rainbow-delimiters-mode)
   :hook
   (prog-mode . (lambda ()
 		 (unless  (or 
@@ -1296,24 +1297,24 @@ _q_uit
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
 
-;; 对elisp代码非常有用，但是有bug经常部分不变色 https://github.com/istib/rainbow-blocks/issues/4
+;; 对elisp代码非常有用，但是有bug经常部分不变色，将就用 https://github.com/istib/rainbow-blocks/issues/4
 (use-package rainbow-blocks
-  :defer 0.7
+  :defer 0.9
   :hook
   (emacs-lisp-mode . rainbow-blocks-mode)
   :config
   (setq rainbow-blocks-highlight-braces-p t)
   (setq rainbow-blocks-highlight-brackets-p t)
   (setq rainbow-blocks-highlight-parens-p t)
-  (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#grey55")
-  (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#80ee80")
+  (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#87CEEB")
+  (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#D2B48C")
   (set-face-attribute 'rainbow-blocks-depth-3-face nil :foreground "#ffaa77")
   (set-face-attribute 'rainbow-blocks-depth-4-face nil :foreground "#66bbff")
-  (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#afafaf")
+  (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#DA70D6")
   (set-face-attribute 'rainbow-blocks-depth-6-face nil :foreground "#ffa500")
   (set-face-attribute 'rainbow-blocks-depth-7-face nil :foreground "#da6bda")
   (set-face-attribute 'rainbow-blocks-depth-8-face nil :foreground "#ff5e5e")
-  (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#dddd77")
+  (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
   (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
   )
 
