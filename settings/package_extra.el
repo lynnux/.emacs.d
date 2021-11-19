@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 19:00:35 lynnux>
+;; Time-stamp: <2021-11-19 20:09:29 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -296,6 +296,10 @@ _c_: hide comment        _q_uit
       (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
       :config
       (global-company-mode)
+      (setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
+      (define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
+      (define-key company-mode-map [remap completion-at-point] 'company-complete)
+      (define-key company-active-map (kbd "M-/") 'company-other-backend)
       (define-key company-active-map (kbd "C-n") 'company-select-next)
       (define-key company-active-map (kbd "C-p") 'company-select-previous)
       (define-key company-active-map (kbd "M-n") 'company-next-page)
@@ -305,6 +309,8 @@ _c_: hide comment        _q_uit
       (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
       (dotimes (i 10)
 	(define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
+      (setq-default company-dabbrev-other-buffers 'all
+                    company-tooltip-align-annotations t)
       (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
        company-minimum-prefix-length 2
        company-require-match nil
