@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 17:25:14 lynnux>
+;; Time-stamp: <2021-11-19 18:53:03 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -28,6 +28,8 @@
 (put 'narrow-to-region 'disabled nil) ; C-x n n和C-x n w，只操作部分buffer
 
 (fset 'yes-or-no-p 'y-or-n-p) ; 将yes/no替换为y/n
+(setq use-short-answers t)
+
 ;; insert-date
 (defun insert-date () ;
   "Insert date at point." ;
@@ -142,11 +144,11 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
 (when (string-equal system-type "windows-nt")
   (global-set-key (kbd "C-x C-d")
-		(lambda () (interactive)
-		  ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
-		  (require 'w32-browser)
-		  (w32explore (buffer-file-name (current-buffer)))
-		  )))
+		  (lambda () (interactive)
+		    ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
+		    (require 'w32-browser)
+		    (w32explore (buffer-file-name (current-buffer)))
+		    )))
 
 ;; 时间戳用法：Time-stamp: <>或者Time-stamp: " "，只会更新第一个时间戳
 (add-hook 'before-save-hook 'time-stamp)

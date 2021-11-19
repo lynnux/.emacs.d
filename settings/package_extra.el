@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 17:54:42 lynnux>
+;; Time-stamp: <2021-11-19 19:00:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -248,7 +248,12 @@ _c_: hide comment        _q_uit
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
-;; (global-hl-line-mode t)
+(use-package hl-line
+  :defer 2
+  :config
+  (global-hl-line-mode t)
+  (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
+  )
 
 (if nil
     ;; auto complete 很可惜已停止维护了，暂时保留吧
