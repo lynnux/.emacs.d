@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-12 12:26:02 lynnux>
+;; Time-stamp: <2021-11-19 15:22:45 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -114,30 +114,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 ;; (global-set-key (kbd "M-k") 'qiang-copy-line)
 
-;; 拷贝代码后自动格式化
-;; (dolist (command '(yank yank-pop))
-;;   (eval
-;;    `(defadvice ,command (after indent-region activate)
-;;       (and (not current-prefix-arg)
-;; 	   (member major-mode
-;; 		   '(emacs-lisp-mode
-;; 		     erlang-mode
-;; 		     lisp-mode
-;; 		     clojure-mode
-;; 		     scheme-mode
-;; 		     haskell-mode
-;; 		     ruby-mode
-;; 		     rspec-mode
-;; 		     python-mode
-;; 		     c-mode
-;; 		     c++-mode
-;; 		     objc-mode
-;; 		     latex-mode
-;; 		     js-mode
-;; 		     plain-tex-mode))
-;; 	   (let ((mark-even-if-inactive transient-mark-mode))
-;; 	     (indent-region (region-beginning) (region-end) nil))))))
-
 (put 'downcase-region 'disabled nil);; 选中区域 C-X C-L 
 (put 'upcase-region 'disabled nil);; 选中区域 C-X C-U
 
@@ -245,3 +221,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; 禁止narrow功能
 (global-set-key (kbd "C-x n-") nil)
 (global-set-key (kbd "C-x n") 'next-line)
+
+(global-unset-key (kbd "C-x C-z"))

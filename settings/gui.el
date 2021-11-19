@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-17 16:17:21 lynnux>
+;; Time-stamp: <2021-11-19 15:32:19 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -145,3 +145,5 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 (setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
 (setq visible-bell t) ;; ** 关闭 beep
+
+(setq scroll-preserve-screen-position t) ;; 滚动时鼠标保持位置，聊胜于无吧，原来是直接到行首
