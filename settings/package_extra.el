@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 16:45:37 lynnux>
+;; Time-stamp: <2021-11-19 17:43:32 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1048,6 +1048,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :bind(("C-c C-c". magit))
   :config
   )
+(defun git-add-file ()
+  "Adds (with force) the file from the current buffer to the git repo"
+  (interactive)
+  (shell-command (concat "git add -f "
+			 (shell-quote-argument buffer-file-name))))
+(defun git-set-proxy ()
+  "Adds (with force) the file from the current buffer to the git repo"
+  (interactive)
+  (shell-command (read-string  "git config --global http.proxy 'socks5://127.0.0.1:10808'"))
+  (shell-command (read-string  "git config --global https.proxy 'socks5://127.0.0.1:10808'")))
+(defun git-unset-proxy ()
+  "Adds (with force) the file from the current buffer to the git repo"
+  (interactive)
+  (shell-command "git config --global --unset http.proxy")
+  (shell-command "git config --global --unset https.proxy"))
 
 ;;; zig mode
 (autoload 'zig-mode "zig-mode" nil t)
@@ -1318,6 +1333,8 @@ _q_uit
   (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
   (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
   )
+
+
 
 
 ;; 这是需要最后加载
