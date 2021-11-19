@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 17:43:32 lynnux>
+;; Time-stamp: <2021-11-19 17:54:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1056,8 +1056,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defun git-set-proxy ()
   "Adds (with force) the file from the current buffer to the git repo"
   (interactive)
-  (shell-command (read-string  "git config --global http.proxy 'socks5://127.0.0.1:10808'"))
-  (shell-command (read-string  "git config --global https.proxy 'socks5://127.0.0.1:10808'")))
+  (shell-command (read-string "http: " "git config --global http.proxy \"socks5://127.0.0.1:10808\""))
+  (shell-command (read-string "https: " "git config --global https.proxy \"socks5://127.0.0.1:10808\"")))
 (defun git-unset-proxy ()
   "Adds (with force) the file from the current buffer to the git repo"
   (interactive)
