@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 17:15:37 lynnux>
+;; Time-stamp: <2021-11-19 17:25:14 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -135,7 +135,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 ;; C-t 设置标记，原键用c-x t代替，用colemak后，t在食指太容易按到
 (global-set-key (kbd "C-q") 'set-mark-command)
-(global-set-key (kbd "\C-xt") 'transpose-chars)
+;;(global-set-key (kbd "\C-xt") 'transpose-chars)
 
 (put 'dired-find-alternate-file 'disabled nil)
 
