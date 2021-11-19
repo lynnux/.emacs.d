@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 15:22:45 lynnux>
+;; Time-stamp: <2021-11-19 17:15:37 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -86,22 +86,38 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 		 (just-one-space 0)
 		 (backward-char 1)))))
 
+;; 参考https://www.emacswiki.org/emacs/WholeLineOrRegion和whole-line-or-region.el改进(kill-new最新版本没有yank-handler参数了)
 (defadvice kill-ring-save (around slick-copy activate)
   "When called interactively with no active region, copy a single line instead."
   (if (or (use-region-p) (not (called-interactively-p 'any)))
       ad-do-it
-    (kill-new (buffer-substring (line-beginning-position)
-				(line-beginning-position 2))
-	      nil)
+    (let ((string (buffer-substring (line-beginning-position)
+				    (line-beginning-position 2))))
+      (when (> (length string) 0)
+	(put-text-property 0 (length string)
+                           'yank-handler '(yank-line) string))
+      (kill-new string nil)
+      )
     (message "Copied line")))
 
 (defadvice kill-region (around slick-copy activate)
   "When called interactively with no active region, kill a single line instead."
   (if (or (use-region-p) (not (called-interactively-p 'any)))
       ad-do-it
-    (kill-new (filter-buffer-substring (line-beginning-position)
-				       (line-beginning-position 2) t)
-	      nil)))
+    (let ((string (filter-buffer-substring (line-beginning-position)
+					   (line-beginning-position 2) t)))
+      (when (> (length string) 0)
+	(put-text-property 0 (length string)
+                           'yank-handler '(yank-line) string))
+      (kill-new string nil)
+      )))
+
+(defun yank-line (string)
+  "Insert STRING above the current line."
+  (beginning-of-line)
+  (unless (= (elt string (1- (length string))) ?\n)
+    (save-excursion (insert "\n")))
+  (insert string))
 
 ;; Copy line from point to the end, exclude the line break
 (defun qiang-copy-line (arg)
