@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 14:29:42 lynnux>
+;; Time-stamp: <2021-11-19 16:45:37 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1043,6 +1043,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
   (add-to-list 'load-path "~/.emacs.d/packages/magit")
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
+  (setq magit-version "3.3.0")
   :commands (magit)
   :bind(("C-c C-c". magit))
   :config
