@@ -53,3 +53,6 @@ transient/*
 /packages/use-package/*
 !/packages/use-package/use-package-master.zip
 /.cache/
+/.recentf
+/.savehist
+/.saveplace

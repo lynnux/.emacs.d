@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-16 18:22:09 lynnux>
+;; Time-stamp: <2021-11-19 23:28:52 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -271,96 +271,13 @@ Run occur in all buffers whose names match this type for REXP."
   "Search all buffers with major mode MODE for REXP."
   (interactive (list (read-command "Mode: ")
                      (read-string "Regexp: ")))
-  (message "haha")
   (multi-occur (remove-if (lambda (buf)
                             (set-buffer buf)
                             (not (eq major-mode mode)))
                           (buffer-list))
                rexp))
 
-;;; 参考multi-occur实现，写这个函数很考验lisp功力，调试方法C-X C-E
-;; (defun occur-select (more regx &optional nothing)
-;;   "select what you wan't to see occur"
-;;   (interactive 
-;;    (cons
-;;     (let* ((choice (read-char "Occur in: [a]ll, [t]ype, [m]ode, or just this buffer(any other key)?"))
-;; 	   (more  (list (cond ((eq choice ?a) nil)
-;; 			      ((eq choice ?t) (read-string "Extension: "))
-;; 			      ((eq choice ?m) (read-command "Mode:"))
-;; 			      (t ?o)))) ; 即occur
-;; 	   )
-;;       (add-to-list 'more choice)
-;;       (nreverse more)) ; nreverse是配合前面的cons
-;;     (occur-read-primary-args))) ;填充regx
-;;   (let* ((choice (cadr more))
-;; 	 (morearg (car more)))
-;;     (cond ((eq choice ?a) (all-occur regx))
-;; 	  ((eq choice ?t) (type-occur morearg regx))
-;; 	  ((eq choice ?m) (mode-occur morearg regx))
-;; 	  (t (occur regx))
-;; 	  )))
-
-;; ctags/etags，更多设置在plugin_basic里
-;; (global-set-key (kbd "C-;") 'complete-tag)
-;; (global-set-key (kbd "C-'") 'completion-at-point) ; 24.x增强了
-(setq completion-cycle-threshold 3) 	; 不超过3个补全数的话就不显示补全窗口
-
-;;; isearch
-(define-key isearch-mode-map (kbd "C-h") 'isearch-delete-char)
-
-;;; filecache, patched, because I my complition can cycle which ido can't
-(defun file-cache-add-this-file ()
-  (and buffer-file-name
-       (file-exists-p buffer-file-name)
-       (file-cache-add-file buffer-file-name)))
-(defun file-cache-switch-file ()
-  "Interactively open file from file cache'.
-First select a file, matched using against the contents
-in `file-cache-alist'. If the file exist in more than one
-directory, select directory. Lastly the file is opened."
-  (interactive)
-  (let* ((file (completing-read
-		"File: "
-					 (mapcar
-					  (lambda (x)
-					    (car x))
-					  file-cache-alist)))
-         (record (assoc file file-cache-alist)))
-    (find-file
-     (concat
-      (if (= (length record) 2)
-          (car (cdr record))
-        (completing-read
-         (format "Find %s in dir: " file) (cdr record))) file))))
-
-(defun file-cache-read-cache-from-file (file)
-  "Clear `file-cache-alist' and read cache from FILE.
-  The file cache can be saved to a file using
-  `file-cache-save-cache-to-file'."
-  (interactive "fFile: ")
-  (when (file-exists-p file)
-    (require 'filecache)
-    (file-cache-clear-cache)
-    (save-excursion
-      (set-buffer (find-file-noselect file))
-      (beginning-of-buffer)
-      (setq file-cache-alist (read (current-buffer)))
-      (kill-buffer (current-buffer))
-      )))
-(defun file-cache-save-cache-to-file (file)
-  "Save contents of `file-cache-alist' to FILE.
-For later retrieval using `file-cache-read-cache-from-file'"
-  (interactive "FFile: ")
-  (require 'filecache)
-  (when file-cache-alist
-    (with-temp-file (expand-file-name file)
-      (prin1 file-cache-alist (current-buffer)))))
-(defun lynnux-save-filecache ()
-  (file-cache-save-cache-to-file "~/.filecache"))
-(file-cache-read-cache-from-file "~/.filecache") ; 须放在下句上面，不然会多个.filecache
-(add-hook 'kill-buffer-hook 'file-cache-add-this-file) ;把删除的buffer加入到filecache，我觉得只需要这个特性就可以了
-(add-hook 'kill-emacs-hook 'lynnux-save-filecache)
-(setq completion-ignore-case t) 	; filecache中是不区分大小写的，而补全需要
+(setq completion-ignore-case t)
 
 (global-set-key (kbd "C-'") 'hippie-expand)
 (defun try-zwz-expand-dabbrev-visible (old)
@@ -377,101 +294,9 @@ For later retrieval using `file-cache-read-cache-from-file'"
 	try-expand-line
 	try-complete-lisp-symbol-partially
 	try-complete-lisp-symbol
-;	try-expand-tag
-;	try-expand-flexible-abbrev
 	))
 
-(defun he-tag-beg ()
-  (let ((p
-         (save-excursion 
-           (backward-word 1)
-           (point))))
-    p))
-
-(defun try-expand-tag (old)
-  (unless  old
-    (he-init-string (he-tag-beg) (point))
-    (setq he-expand-list (sort
-                          (all-completions he-search-string 'tags-complete-tag) 'string-lessp)))
-  (while (and he-expand-list
-              (he-string-member (car he-expand-list) he-tried-table))
-    (setq he-expand-list (cdr he-expand-list)))
-  (if (null he-expand-list)
-      (progn
-        (when old (he-reset-string))
-        ())
-    (he-substitute-string (car he-expand-list))
-    (setq he-expand-list (cdr he-expand-list))
-    t))
-(defun tags-complete-tag (string predicate what)
-  (save-excursion
-    (require 'etags)
-    (when (or tags-table-list
-	      tags-file-name
-	      )
-      ;; If we need to ask for the tag table, allow that.
-      (if (eq what t)
-	  (all-completions string (tags-completion-table) predicate)
-	(try-completion string (tags-completion-table) predicate)))))
-
-(defun try-expand-flexible-abbrev (old)
-  "Try to complete word using flexible matching.
-
-Flexible matching works by taking the search string and then
-interspersing it with a regexp for any character. So, if you try
-to do a flexible match for `foo' it will match the word
-`findOtherOtter' but also `fixTheBoringOrange' and
-`ifthisisboringstopreadingnow'.
-
-The argument OLD has to be nil the first call of this function, and t
-for subsequent calls (for further possible completions of the same
-string).  It returns t if a new completion is found, nil otherwise."
-  (if (not old)
-      (progn
-	(he-init-string (he-lisp-symbol-beg) (point))
-	(if (not (he-string-member he-search-string he-tried-table))
-	    (setq he-tried-table (cons he-search-string he-tried-table)))
-	(setq he-expand-list
-	      (and (not (equal he-search-string ""))
-		   (he-flexible-abbrev-collect he-search-string)))))
-  (while (and he-expand-list
-	      (he-string-member (car he-expand-list) he-tried-table))
-    (setq he-expand-list (cdr he-expand-list)))
-  (if (null he-expand-list)
-      (progn
-	(if old (he-reset-string))
-	())
-    (progn
-      (he-substitute-string (car he-expand-list))
-      (setq he-expand-list (cdr he-expand-list))
-      t)))
-
-(defun he-flexible-abbrev-collect (str)
-  "Find and collect all words that flex-matches STR.
-See docstring for `try-expand-flexible-abbrev' for information
-about what flexible matching means in this context."
-  (let ((collection nil)
-        (regexp (he-flexible-abbrev-create-regexp str)))
-    (save-excursion
-      (goto-char (point-min))
-      (while (search-forward-regexp regexp nil t)
-        ;; Is there a better or quicker way than using
-        ;; `thing-at-point' here?
-        (setq collection (cons (thing-at-point 'word) collection))))
-    collection))
-
-(defun he-flexible-abbrev-create-regexp (str)
-  "Generate regexp for flexible matching of STR.
-See docstring for `try-expand-flexible-abbrev' for information
-about what flexible matching means in this context."
-  (concat "\\b" (mapconcat (lambda (x) (concat "\\w*" (list x))) str "")
-          "\\w*" "\\b"))
-
-;; (setq hippie-expand-try-functions-list
-;;       (cons 'try-expand-flexible-abbrev hippie-expand-try-functions-list))
-
-
-; 老实说gdb一点都不好用，尽量用打印输出来调试
+;; 老实说gdb一点都不好用，尽量用打印输出来调试
 (add-hook 'gdb-mode-hook '(lambda ()
 			    (gdb-many-windows)
                             (define-key c-mode-base-map [(f5)] 'gud-go)
