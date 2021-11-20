@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 14:39:50 lynnux>
+;; Time-stamp: <2021-11-20 17:25:26 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1168,7 +1168,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (global-set-key [remap kill-ring-save] 'easy-kill)
 (autoload 'easy-kill "easy-kill" nil t)
 (autoload 'easy-mark "easy-kill" nil t)
-(global-set-key "\C-t" 'easy-mark) ; 替换expand-region
+(global-set-key "\C-t" (lambda ()
+			 (interactive)
+			 (when (featurep 'auto-highlight-symbol)
+			   (ahs-unhighlight t)
+			   ;; 立即消除当前高亮颜色
+			   )
+			 (call-interactively 'easy-mark))
+		) ; 替换expand-region
 (with-eval-after-load 'easy-kill
   (require 'easy-kill-er)
   (require 'extra-things)
