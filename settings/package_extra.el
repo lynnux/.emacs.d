@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 23:46:41 lynnux>
+;; Time-stamp: <2021-11-20 14:39:50 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -13,29 +13,6 @@
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
-;; session久不更新，用下面的组合试试吧
-;;(require 'session)
-;;(add-hook 'after-init-hook 'session-initialize)
-;; (setq session-globals-include '((kill-ring 50)
-;; 				(session-file-alist 100 t)
-;; 				(file-name-history 200)))
-
-;; Save minibuffer history. 不仅仅是minibuffer!
-(use-package savehist
-  :defer 0.4
-  :config
-  (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
-  ;; The maximum length of a minibuffer history list. Once reached, the oldest
-  ;; entries get deleted.
-  (setq history-length 10000)
-  ;; Keep duplicates in the history.
-  (setq history-delete-duplicates nil)
-  (setq savehist-autosave-interval nil); save on kill only
-  ;; Save search entries as well.
-  (setq savehist-additional-variables '(search-ring regexp-search-ring))
-  (setq savehist-save-minibuffer-history t)
-  (savehist-mode t))
-
 ;; Save point position in buffer.
 (use-package saveplace
   ;; 这里不加defer了，应该wcy加载时要run它的hook
@@ -44,32 +21,68 @@
   (setq save-place-forget-unreadable-files t)
   (save-place-mode t)
   )
+(if t
+    (progn
+      ;; session只保存了修改文件的point
+      ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
+      ;; C-x C-/可以跳到最近的修改处
+      (require 'session)
+      ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
+      ;;(setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\)")
+      (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
+      (setq session-save-file-coding-system 'utf-8)
+      (add-hook 'after-init-hook 'session-initialize)
+      (setq session-globals-include '((kill-ring 50)
+				      (session-file-alist 100 t)
+				      (file-name-history 200)))
+      ;; session把saveplace的hook给删除了。。 
+      (defadvice session-initialize (after my-session-initialize activate)
+	(save-place-mode t) ;; 恢复hook
+	)
+      )
+  (progn
+    ;; Save minibuffer history. 不仅仅是minibuffer!
+    (use-package savehist
+      :defer 0.4
+      :config
+      (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
+      ;; The maximum length of a minibuffer history list. Once reached, the oldest
+      ;; entries get deleted.
+      (setq history-length 10000)
+      ;; Keep duplicates in the history.
+      (setq history-delete-duplicates nil)
+      (setq savehist-autosave-interval nil); save on kill only
+      ;; Save search entries as well.
+      (setq savehist-additional-variables '(search-ring regexp-search-ring))
+      (setq savehist-save-minibuffer-history t)
+      (savehist-mode t))
 
-(use-package recentf
-  :init
-  (setq recentf-save-file (expand-file-name ".recentf" user-emacs-directory))
-  (setq recentf-max-saved-items 200)
-  ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
-  ;; remote files.
-  ;; recentf-auto-cleanup 'never
-  (setq recentf-exclude
-        '(".cache"
-          ".cask"
-          "bookmarks"
-          "cache"
-          "recentf"
-          "undo-tree-hist"
-          "url"
-          "COMMIT_EDITMSG\\'"
-          "/ssh:"
-          "/sudo:"
-          "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
-          "^/tmp/"
-          (lambda (file) (file-in-directory-p file package-user-dir))))
-  :config
-  :hook
-  (after-init . recentf-mode)
-  )
+    (use-package recentf
+      :init
+      (setq recentf-save-file (expand-file-name ".recentf" user-emacs-directory))
+      (setq recentf-max-saved-items 200)
+      ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
+      ;; remote files.
+      ;; recentf-auto-cleanup 'never
+      (setq recentf-exclude
+            '(".cache"
+              ".cask"
+              "bookmarks"
+              "cache"
+              "recentf"
+              "undo-tree-hist"
+              "url"
+              "COMMIT_EDITMSG\\'"
+              "/ssh:"
+              "/sudo:"
+              "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
+              "^/tmp/"
+              (lambda (file) (file-in-directory-p file package-user-dir))))
+      :config
+      :hook
+      (after-init . recentf-mode)
+      )
+    ))
 
 (autoload 'defhydra "hydra" nil t)
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
@@ -81,13 +94,13 @@
   (unless (functionp 'hydra-find-file/body)
     (defhydra hydra-find-file ()
       "
-_r_: file recent   _e_: helm locate
-_a_: file at point
+_c_: file changed  _v_: file visited
+_a_: file at point _e_: helm locate
 _q_uit
 "
       ("e" helm-locate nil :color blue)
-      ;;("c" files-recent-changed nil :color blue)
-      ("r" helm-recentf nil :color blue)
+      ("c" files-recent-changed nil :color blue) ;; 这个只有session才有的，recentf没有
+      ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
       ("q" nil "nil" :color blue))
     )
@@ -148,10 +161,9 @@ _c_: hide comment        _q_uit
   (setq display-line-numbers-width-start 3)
   :hook
   (find-file . (lambda ()
-		 (fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
+		 (run-with-timer 1 nil 'fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
 		 (display-line-numbers-mode)))
   )
-
 
 ;;; better C-A C-E
 (autoload 'mwim-beginning-of-line-or-code "mwim" nil t)
@@ -388,7 +400,7 @@ _c_: hide comment        _q_uit
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (use-package wcy-desktop
-  :defer 0.5
+  ;;:defer 0.5
   :config
   (wcy-desktop-init)
   (add-hook 'emacs-startup-hook
@@ -397,10 +409,12 @@ _c_: hide comment        _q_uit
 		(wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
+    ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
-    )
-  )
+    (when (featurep 'session)
+      (session-find-file-hook))
+    ))
 
 ;; clang-format
 (autoload 'clang-format-region "clang-format" "" t)
