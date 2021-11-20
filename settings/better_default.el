@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 18:53:03 lynnux>
+;; Time-stamp: <2021-11-20 21:35:09 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -148,7 +148,13 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 		    ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
 		    (require 'w32-browser)
 		    (w32explore (buffer-file-name (current-buffer)))
-		    )))
+		    ))
+  (eval-after-load "dired"
+    '(define-key dired-mode-map (kbd "C-x C-d")
+       (lambda ()
+         (interactive)
+         (w32explore (dired-replace-in-string "/" "\\" (dired-get-filename))))))
+  )
 
 ;; 时间戳用法：Time-stamp: <>或者Time-stamp: " "，只会更新第一个时间戳
 (add-hook 'before-save-hook 'time-stamp)
@@ -241,3 +247,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-x n") 'next-line)
 
 (global-unset-key (kbd "C-x C-z"))
+
+(setq delete-by-moving-to-trash t)     ; move files to trash instead of deleting

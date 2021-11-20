@@ -1,10 +1,11 @@
-;; Time-stamp: <2021-11-19 15:32:19 lynnux>
+;; Time-stamp: <2021-11-20 21:16:47 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
  '(blink-cursor-mode nil)		;光标是否闪烁
  '(column-number-mode t)		;状态栏里显示行号和列号
  '(line-number-mode t)
+ '(size-indication-mode t)          ; 显示文件大小
  '(display-time-mode t) 		;显示时间
  '(inhibit-startup-screen t)		;禁止显示启动画面
  '(show-paren-mode t)			;()匹配提示
@@ -13,6 +14,9 @@
  '(warning-suppress-log-types '((comp) (comp)))
  '(warning-suppress-types '((comp)))
  )
+
+(setq show-paren-when-point-inside-paren t)
+(setq show-paren-when-point-in-periphery t)
 
 ;; (setq-default line-spacing 1) ; 这个设置会导致F3到下一个时滚动出问题
 
@@ -144,6 +148,6 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
   (w32-send-sys-command 61488))
 
 (setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
-(setq visible-bell t) ;; ** 关闭 beep
+(setq visible-bell t) ;; ** 关闭 beep ; blink, don't bark
 
 (setq scroll-preserve-screen-position t) ;; 滚动时鼠标保持位置，聊胜于无吧，原来是直接到行首

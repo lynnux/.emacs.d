@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 19:25:15 lynnux>
+;; Time-stamp: <2021-11-20 21:42:48 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -174,19 +174,31 @@ _c_: hide comment        _q_uit
 (global-set-key (kbd "C-a") 'mwim-beginning-of-line-or-code)
 (global-set-key (kbd "C-e") 'mwim-end-of-line-or-code)
 
-(use-package undo-tree
-  :defer 0.5
-  :config
-  (global-undo-tree-mode)
-  (setq undo-tree-visualizer-timestamps t)
-  (setq undo-tree-visualizer-diff t)
-  (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
-  (setq undo-tree-auto-save-history nil
-	undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
-  ;; 这个功能爽呆了
-  (global-set-key (kbd "C-z") 'undo-tree-undo)
-  (global-set-key (kbd "C-S-z") 'undo-tree-redo)
+(if t
+    ;; undo-fu小巧才15K
+    (use-package undo-fu
+      :defer 0.5
+      :config
+      (global-unset-key (kbd "C-z"))
+      (global-set-key (kbd "C-z")   'undo-fu-only-undo)
+      (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
+      (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
+      )
+  (use-package undo-tree
+    :defer 0.5
+    :config
+    (global-undo-tree-mode)
+    (setq undo-tree-visualizer-timestamps t)
+    (setq undo-tree-visualizer-diff t)
+    (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
+    (setq undo-tree-auto-save-history nil
+	  undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
+    ;; 这个功能爽呆了
+    (global-set-key (kbd "C-z") 'undo-tree-undo)
+    (global-set-key (kbd "C-S-z") 'undo-tree-redo)
+    )
   )
+
 
 (use-package yasnippet
   :defer 1
@@ -362,8 +374,9 @@ _c_: hide comment        _q_uit
       (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
       :config
       (global-company-mode)
-      (setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
-      (define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
+      ;; 句尾TAB就很烦了。。
+      ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
+      ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
       (define-key company-mode-map [remap completion-at-point] 'company-complete)
       (define-key company-active-map (kbd "M-/") 'company-other-backend)
       (define-key company-active-map (kbd "C-n") 'company-select-next)
@@ -771,70 +784,77 @@ _c_: hide comment        _q_uit
   (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
   )
 
-(use-package smartparens-config
-  :defer 0.9
-  :init
-  (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
-  :config
-  (sp-use-smartparens-bindings)
-  ;; (sp-use-paredit-bindings)
-  (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
-  (define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
-  (define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
-  ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
-  (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
-  (set-default 'sp-autoskip-closing-pair 'always)
-  ;; Don't kill the entire symbol on C-k
-  (set-default 'sp-hybrid-kill-entire-symbol nil)
-  ;; 参考doom设置
-  (setq sp-highlight-pair-overlay nil
-	sp-highlight-wrap-overlay nil
-	sp-highlight-wrap-tag-overlay nil)
-  (setq sp-max-prefix-length 25)
-  (setq sp-max-pair-length 4)
-  (smartparens-global-strict-mode)
-  ;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
-  ;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
-  
-  ;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
-  (sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
-  (defun my-create-newline-and-enter-sexp (&rest _ignored)
-    "Open a new brace or bracket expression, with relevant newlines and indent. "
-    (newline)
-    (indent-according-to-mode)
-    (forward-line -1)
-    (indent-according-to-mode))
-
-  ;; 使支持hungry-delete
-  (with-eval-after-load 'smartparens
-    (dolist (key '( [remap delete-char]
-                    [remap delete-forward-char]))
-      (define-key smartparens-strict-mode-map key
-	;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-	'(menu-item "maybe-sp-delete-char" nil
-                    :filter (lambda (&optional _)
-                              (unless (looking-at-p "[[:space:]\n]")
-				#'sp-delete-char)))))
-
-    (dolist (key '([remap backward-delete-char-untabify]
-                   [remap backward-delete-char]
-                   [remap delete-backward-char]))
-      (define-key smartparens-strict-mode-map key
-	'(menu-item "maybe-sp-backward-delete-char" nil
-                    :filter (lambda (&optional _)
-                              (unless (looking-back "[[:space:]\n]" 1)
-				#'sp-backward-delete-char)))))
+(if t
+    (use-package elec-pair
+      :config
+      (electric-pair-mode 1)
+      )
+  (use-package smartparens-config
+    :defer 0.9
+    :init
+    (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
+    :config
+    (sp-use-smartparens-bindings)
+    ;; (sp-use-paredit-bindings)
+    (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
+    (define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
+    (define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
+    ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
+    (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
+    (set-default 'sp-autoskip-closing-pair 'always)
+    ;; Don't kill the entire symbol on C-k
+    (set-default 'sp-hybrid-kill-entire-symbol nil)
+    ;; 参考doom设置
+    (setq sp-highlight-pair-overlay nil
+	  sp-highlight-wrap-overlay nil
+	  sp-highlight-wrap-tag-overlay nil)
+    (setq sp-max-prefix-length 25)
+    (setq sp-max-pair-length 4)
+    (smartparens-global-strict-mode)
+    ;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
+    ;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
     
-    ;; C-W支持
-    (dolist (key '( [remap kill-region]))
-      (define-key smartparens-strict-mode-map key
-	'(menu-item "maybe-sp-kill-region" nil
-                    :filter (lambda (&optional _)
-                              (when (use-region-p) ;; 有选中时才用sp的
-				#'sp-kill-region)))))
-    )
-  
+    ;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
+    (sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
+    (defun my-create-newline-and-enter-sexp (&rest _ignored)
+      "Open a new brace or bracket expression, with relevant newlines and indent. "
+      (newline)
+      (indent-according-to-mode)
+      (forward-line -1)
+      (indent-according-to-mode))
+
+    ;; 使支持hungry-delete
+    (with-eval-after-load 'smartparens
+      (dolist (key '( [remap delete-char]
+                      [remap delete-forward-char]))
+	(define-key smartparens-strict-mode-map key
+	  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+	  '(menu-item "maybe-sp-delete-char" nil
+                      :filter (lambda (&optional _)
+				(unless (looking-at-p "[[:space:]\n]")
+				  #'sp-delete-char)))))
+
+      (dolist (key '([remap backward-delete-char-untabify]
+                     [remap backward-delete-char]
+                     [remap delete-backward-char]))
+	(define-key smartparens-strict-mode-map key
+	  '(menu-item "maybe-sp-backward-delete-char" nil
+                      :filter (lambda (&optional _)
+				(unless (looking-back "[[:space:]\n]" 1)
+				  #'sp-backward-delete-char)))))
+      
+      ;; C-W支持
+      (dolist (key '( [remap kill-region]))
+	(define-key smartparens-strict-mode-map key
+	  '(menu-item "maybe-sp-kill-region" nil
+                      :filter (lambda (&optional _)
+				(when (use-region-p) ;; 有选中时才用sp的
+				  #'sp-kill-region)))))
+      )
+    
+    )  
   )
+
 
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
@@ -1421,7 +1441,6 @@ _q_uit
   (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
   (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
   )
-
 
 
 
