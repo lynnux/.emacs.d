@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 22:04:50 lynnux>
+;; Time-stamp: <2021-11-21 00:35:36 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -788,6 +788,8 @@ _c_: hide comment        _q_uit
     (use-package elec-pair
       :config
       (electric-pair-mode 1)
+      (global-set-key (kbd "M-a") 'backward-sexp)
+      (global-set-key (kbd "M-e") 'forward-sexp)
       )
   ;; 不用smartparens感觉流畅了点？
   (use-package smartparens-config
@@ -1201,10 +1203,39 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			 (call-interactively 'easy-mark))
 		) ; 替换expand-region
 (with-eval-after-load 'easy-kill
+  (defadvice easy-kill (after my-easy-kill activate)
+    (unless (or (use-region-p) (not (called-interactively-p 'any)))
+      (let ((string (buffer-substring (line-beginning-position)
+				      (line-beginning-position 2))))
+	(when (> (length string) 0)
+	  (put-text-property 0 (length string)
+			     'yank-handler '(yank-line) string))
+	(kill-new string nil)
+	)
+      ))
+  
   (require 'easy-kill-er)
   (require 'extra-things)
   (require 'easy-kill-extras)
-  (setq easy-kill-try-things '(line)) ; 只复制line
+  (setq easy-kill-try-things '(my-line)) ; 只复制line
+  ;; 参考easy-kill-on-buffer-file-name
+  (defun easy-kill-on-my-line (n)
+    "copy line添加yank line功能"
+    (if (easy-kill-get mark)
+	(easy-kill-echo "Not supported in `easy-mark'")
+      ;; 不用判断是否有region，有的话根本不会进来
+      (let ((string (buffer-substring (line-beginning-position)
+				      (line-beginning-position 2))))
+	(when (> (length string) 0)
+	  (put-text-property 0 (length string)
+			     'yank-handler '(yank-line) string))
+	(easy-kill-adjust-candidate 'my-line string)
+	;; 下面可以高亮，但是没有yank line效果了。TODO:自己加个overlay就可以了
+	;; (setf (easy-kill-get bounds) (cons (line-beginning-position) (line-beginning-position 2)))
+	)
+      ))
+  (add-to-list 'easy-kill-alist '(?= my-line ""))
+
   (setq easy-mark-try-things '(word sexp)) ; word优先，特别是有横杠什么都时候
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
   (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
