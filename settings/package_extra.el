@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 17:25:26 lynnux>
+;; Time-stamp: <2021-11-20 19:25:15 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -20,7 +20,11 @@
   (setq save-place-file (expand-file-name ".saveplace" user-emacs-directory))
   (setq save-place-forget-unreadable-files t)
   (save-place-mode t)
-  )
+  (defadvice save-place-find-file-hook (after my-save-place-find-file-hook activate)
+    (with-current-buffer (window-buffer)
+      (recenter))
+    ;; 将位置居中，默认是goto-char可能是最下面
+  ))
 (if t
     (progn
       ;; session只保存了修改文件的point
@@ -28,7 +32,6 @@
       ;; C-x C-/可以跳到最近的修改处
       (require 'session)
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
-      ;;(setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\)")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       (setq session-save-file-coding-system 'utf-8)
       (add-hook 'after-init-hook 'session-initialize)
@@ -301,7 +304,7 @@ _c_: hide comment        _q_uit
   )
 
 (use-package cursor-chg
-  :defer 1
+  :defer 0.5
   :config
   (change-cursor-mode)
   (setq curchg-default-cursor-color "red3") ; 无法设置cursor的foreground
@@ -312,7 +315,7 @@ _c_: hide comment        _q_uit
 (global-set-key [(control ?|)] 'vline-mode)
 
 (use-package hl-line
-  :defer 2
+  :defer 0.6
   :config
   (global-hl-line-mode t)
   (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
@@ -409,11 +412,11 @@ _c_: hide comment        _q_uit
 		(wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
+    (when (featurep 'session)
+      (session-find-file-hook))
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
-    (when (featurep 'session)
-      (session-find-file-hook))
     ))
 
 ;; clang-format
