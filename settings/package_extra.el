@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 21:42:48 lynnux>
+;; Time-stamp: <2021-11-20 22:04:50 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -789,6 +789,7 @@ _c_: hide comment        _q_uit
       :config
       (electric-pair-mode 1)
       )
+  ;; 不用smartparens感觉流畅了点？
   (use-package smartparens-config
     :defer 0.9
     :init
