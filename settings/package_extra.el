@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 12:11:10 lynnux>
+;; Time-stamp: <2021-11-21 14:20:23 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -305,6 +305,7 @@ _c_: hide comment        _q_uit
   :init
   (setq ahs-suppress-log t)
   (setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
+  (setq ahs-overlay-priority 998) ;; 必须必easy kill的999低
   :config
   (global-auto-highlight-symbol-mode t)
   ;; zenburn
@@ -1194,14 +1195,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (global-set-key [remap kill-ring-save] 'easy-kill)
 (autoload 'easy-kill "easy-kill" nil t)
 (autoload 'easy-mark "easy-kill" nil t)
-(global-set-key "\C-t" (lambda ()
-			 (interactive)
-			 (when (featurep 'auto-highlight-symbol)
-			   (ahs-unhighlight t)
-			   ;; 立即消除当前高亮颜色
-			   )
-			 (call-interactively 'easy-mark))
-		) ; 替换expand-region
+(global-set-key "\C-t" 'easy-mark) ; 替换expand-region
 (with-eval-after-load 'easy-kill
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
@@ -1219,6 +1213,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (require 'easy-kill-extras)
   (setq easy-kill-try-things '(my-line)) ; 只复制line
   ;; 参考easy-kill-on-buffer-file-name
+  (defvar my-line-ov nil)
   (defun easy-kill-on-my-line (n)
     "copy line添加yank line功能"
     (if (easy-kill-get mark)
@@ -1226,31 +1221,52 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;; 不用判断是否有region，有的话根本不会进来
       (let ((string (buffer-substring (line-beginning-position)
 				      (line-beginning-position 2))))
+	;; 因为easy-kill-adjust-candidate传递的是string，就没有overlay效果了，需要自己加
+	(setq my-line-ov (make-overlay (line-beginning-position) (line-beginning-position 2)))
+	(overlay-put my-line-ov 'priority 999) ;; 在hl line之上
+	(overlay-put my-line-ov 'face 'easy-kill-selection)
 	(when (> (length string) 0)
 	  (put-text-property 0 (length string)
 			     'yank-handler '(yank-line) string))
-	(easy-kill-adjust-candidate 'my-line string)
-	;; 下面可以高亮，但是没有yank line效果了。TODO:自己加个overlay就可以了
-	;; (setf (easy-kill-get bounds) (cons (line-beginning-position) (line-beginning-position 2)))
+	(easy-kill-adjust-candidate 'my-line string) 
 	)
       ))
+  
+  (defun kill-my-line-ov()
+    (when my-line-ov
+      (delete-overlay my-line-ov)
+      (setq my-line-ov nil)))
+  ;; easy kill退出时也清除我们的overlay
+  (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
+    (kill-my-line-ov)
+    )
+  ;; 当overlay改变时，如按w也清除我们的overlay
+  (defun move-overlay-around (orig-fun n begin end &rest args)
+    (when (and (eq n easy-kill-candidate) (/= begin end)) ;; easy kill没有overlay的begin end都是(point)
+      (kill-my-line-ov))
+    (apply orig-fun n begin end args)
+    )
+  (advice-add 'move-overlay :around #'move-overlay-around)
+  
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
+  ;; 测试带汉字也会。。还是添加overlay表示复制了吧
   (defun easy-kill-echo-around (orig-fun format-string &rest args)
-    (apply orig-fun format-string
-	   (list (string-join (split-string (car args))))
-	   ))
+    ;; (apply orig-fun format-string
+    ;; 	   (let ((no-line (ignore-errors
+    ;; 			    (when (listp args)
+    ;; 			      (list (string-join (split-string (substring-no-properties (car args)) "[\n]+"))))
+    ;; 			    )))
+    ;; 	     (if no-line
+    ;; 		 no-line
+    ;; 	       args)))
+    )
   (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
+  ;;(advice-remove 'easy-kill-echo  #'easy-kill-echo-around)
   (add-to-list 'easy-kill-alist '(?= my-line ""))
 
   (setq easy-mark-try-things '(word sexp)) ; word优先，特别是有横杠什么都时候
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
-  (define-key easy-kill-base-map (kbd "C-t") (lambda ()
-					       (interactive)
-					       (when (featurep 'auto-highlight-symbol)
-						 (ahs-unhighlight t)
-						 ;; 立即消除当前高亮颜色
-						 )
-					       (call-interactively 'easy-kill-er-expand)))
+  (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
