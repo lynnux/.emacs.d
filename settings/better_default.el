@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-20 21:35:09 lynnux>
+;; Time-stamp: <2021-11-21 09:54:01 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -116,10 +116,11 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (defun yank-line (string)
   "Insert STRING above the current line."
-  (beginning-of-line)
-  (unless (= (elt string (1- (length string))) ?\n)
-    (save-excursion (insert "\n")))
-  (insert string))
+  (save-excursion
+    (beginning-of-line)
+    (unless (= (elt string (1- (length string))) ?\n)
+      (save-excursion (insert "\n")))
+    (insert string)))
 
 ;; Copy line from point to the end, exclude the line break
 (defun qiang-copy-line (arg)
