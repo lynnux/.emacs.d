@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 09:54:01 lynnux>
+;; Time-stamp: <2021-11-21 21:29:35 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -76,18 +76,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 	   (unless (equal (nth 0 kill-ring) clip-str)
 	     (kill-new clip-str))))))
 
-;; atl+w复制当前行, atl+k复制到行尾（原功能不常用吧）
-;; Smart copy, if no region active, it simply copy the current whole line
-(defadvice kill-line (before check-position activate)
-  (if (member major-mode
-	      '(emacs-lisp-mode scheme-mode lisp-mode
-				c-mode c++-mode objc-mode js-mode
-				latex-mode plain-tex-mode))
-      (if (and (eolp) (not (bolp)))
-	  (progn (forward-char 1)
-		 (just-one-space 0)
-		 (backward-char 1)))))
-
 ;; 参考https://www.emacswiki.org/emacs/WholeLineOrRegion和whole-line-or-region.el改进(kill-new最新版本没有yank-handler参数了)
 (defadvice kill-ring-save (around slick-copy activate)
   "When called interactively with no active region, copy a single line instead."
@@ -130,8 +118,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 		  (line-end-position))
   ;; (line-beginning-position (+ 1 arg)))
   (message "%d line%s copied" arg (if (= 1 arg) "" "s")))
-
-;; (global-set-key (kbd "M-k") 'qiang-copy-line)
+(global-set-key (kbd "M-k") 'qiang-copy-line)
 
 (put 'downcase-region 'disabled nil);; 选中区域 C-X C-L 
 (put 'upcase-region 'disabled nil);; 选中区域 C-X C-U

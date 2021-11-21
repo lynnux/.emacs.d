@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 15:28:05 lynnux>
+;; Time-stamp: <2021-11-21 21:46:21 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -785,14 +785,14 @@ _c_: hide comment        _q_uit
   (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
   )
 
-(if t
+(if nil
     (use-package elec-pair
       :config
       (electric-pair-mode 1)
       (global-set-key (kbd "M-a") 'backward-sexp)
       (global-set-key (kbd "M-e") 'forward-sexp)
       )
-  ;; 不用smartparens感觉流畅了点？
+  
   (use-package smartparens-config
     :defer 0.9
     :init
@@ -815,26 +815,29 @@ _c_: hide comment        _q_uit
     (setq sp-max-prefix-length 25)
     (setq sp-max-pair-length 4)
     (smartparens-global-strict-mode)
+    ;;(setq sp-show-pair-from-inside t)
     ;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
     ;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
     
     ;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
-    (sp-local-pair '(c++-mode rust-mode) "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
-    (defun my-create-newline-and-enter-sexp (&rest _ignored)
+    (defun ar/create-newline-and-enter-sexp (&rest _ignored)
       "Open a new brace or bracket expression, with relevant newlines and indent. "
       (newline)
       (indent-according-to-mode)
       (forward-line -1)
       (indent-according-to-mode))
+    (sp-local-pair 'prog-mode "{" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
+    (sp-local-pair 'prog-mode "[" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
+    (sp-local-pair 'prog-mode "(" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
 
     ;; 使支持hungry-delete
     (with-eval-after-load 'smartparens
       (dolist (key '( [remap delete-char]
-                      [remap delete-forward-char]))
+		      [remap delete-forward-char]))
 	(define-key smartparens-strict-mode-map key
 	  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
 	  '(menu-item "maybe-sp-delete-char" nil
-                      :filter (lambda (&optional _)
+		      :filter (lambda (&optional _)
 				(unless (looking-at-p "[[:space:]\n]")
 				  #'sp-delete-char)))))
 
@@ -843,7 +846,7 @@ _c_: hide comment        _q_uit
                      [remap delete-backward-char]))
 	(define-key smartparens-strict-mode-map key
 	  '(menu-item "maybe-sp-backward-delete-char" nil
-                      :filter (lambda (&optional _)
+		      :filter (lambda (&optional _)
 				(unless (looking-back "[[:space:]\n]" 1)
 				  #'sp-backward-delete-char)))))
       
@@ -851,7 +854,7 @@ _c_: hide comment        _q_uit
       (dolist (key '( [remap kill-region]))
 	(define-key smartparens-strict-mode-map key
 	  '(menu-item "maybe-sp-kill-region" nil
-                      :filter (lambda (&optional _)
+		      :filter (lambda (&optional _)
 				(when (use-region-p) ;; 有选中时才用sp的
 				  #'sp-kill-region)))))
       )
