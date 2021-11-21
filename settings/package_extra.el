@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 00:35:36 lynnux>
+;; Time-stamp: <2021-11-21 12:11:10 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1234,11 +1234,23 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	;; (setf (easy-kill-get bounds) (cons (line-beginning-position) (line-beginning-position 2)))
 	)
       ))
+  ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
+  (defun easy-kill-echo-around (orig-fun format-string &rest args)
+    (apply orig-fun format-string
+	   (list (string-join (split-string (car args))))
+	   ))
+  (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
   (add-to-list 'easy-kill-alist '(?= my-line ""))
 
   (setq easy-mark-try-things '(word sexp)) ; word优先，特别是有横杠什么都时候
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
-  (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
+  (define-key easy-kill-base-map (kbd "C-t") (lambda ()
+					       (interactive)
+					       (when (featurep 'auto-highlight-symbol)
+						 (ahs-unhighlight t)
+						 ;; 立即消除当前高亮颜色
+						 )
+					       (call-interactively 'easy-kill-er-expand)))
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
