@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 14:20:23 lynnux>
+;; Time-stamp: <2021-11-21 15:28:05 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1241,12 +1241,22 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (kill-my-line-ov)
     )
   ;; 当overlay改变时，如按w也清除我们的overlay
-  (defun move-overlay-around (orig-fun n begin end &rest args)
-    (when (and (eq n easy-kill-candidate) (/= begin end)) ;; easy kill没有overlay的begin end都是(point)
-      (kill-my-line-ov))
-    (apply orig-fun n begin end args)
-    )
-  (advice-add 'move-overlay :around #'move-overlay-around)
+  ;; (defun move-overlay-around (orig-fun n begin end &rest args)
+  ;;   (when (and (eq n easy-kill-candidate) (/= begin end)) ;; easy kill没有overlay的begin end都是(point)
+  ;;     (kill-my-line-ov))
+  ;;   (apply orig-fun n begin end args)
+  ;;   )
+  ;; (advice-add 'move-overlay :around #'move-overlay-around)
+  ;; (advice-remove 'move-overlay #'move-overlay-around)
+  ;; 担心move-overlay影响效率使用下面方法
+  (defadvice easy-kill-adjust-candidate (after my-easy-kill-adjust-candidate activate)
+    ;; 参考easy-kill-candidate
+    (with-current-buffer (easy-kill-get buffer)
+      (pcase (easy-kill-get bounds)
+        (`(,_x . ,_x) ();; 这就是字符串形式
+	 )
+        (`(,beg . ,end) (kill-my-line-ov)
+	 ))))
   
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
   ;; 测试带汉字也会。。还是添加overlay表示复制了吧
