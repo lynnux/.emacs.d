@@ -6,8 +6,14 @@
 ;; .emacs主要放针对不同机子要改变的数据！
 ;; 现在改进为根据登录用户名和系统版本来分别配置
 (defun add-path-to-execute-path (path)
-  (setenv "PATH" (concat (getenv "PATH") path))
-  (setq exec-path (append exec-path (list path))))
+  ;;  (setenv "PATH" (concat (getenv "PATH") path))
+  ;;  (setq exec-path (append exec-path (list path)))
+  (add-to-list 'exec-path path)
+  (setenv "PATH" (mapconcat #'identity exec-path path-separator))
+  )
+
+(add-path-to-execute-path (expand-file-name "bin" user-emacs-directory))
+
 (cond 
  ;; home
  ((and
@@ -33,8 +39,7 @@
 
   ;; ls，xargs都用git里的，但git有多个bin目录，没设置/usr/bin到全局PATH，因为exe太多怕影响vs等程序(如含有link.exe)
   ;; https://emacs.stackexchange.com/questions/27326/gui-emacs-sets-the-exec-path-only-from-windows-environment-variable-but-not-from
-  (add-to-list 'exec-path "F:/Git/usr/bin")
-  (setenv "PATH" (mapconcat #'identity exec-path path-separator))
+  (add-path-to-execute-path "F:/Git/usr/bin")
   )
 
  ;; 

@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-22 16:39:39 lynnux>
+;; Time-stamp: <2021-11-22 17:41:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -15,48 +15,27 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (use-package dired
+  :load-path "~/.emacs.d/packages/dired"
   :init
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
-  :commands(dired)
-  ;;  :hook (dired-mode . wdired-change-to-wdired-mode) ;; 转为普通buffer
+  :commands(dired dired-jump)
   :config
-  (add-to-list 'load-path "~/.emacs.d/packages/dired")
   
   (when (string-equal system-type "windows-nt")
     (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
-    ;; 还是gnu的ls兼容最好，lsd打开一些目录直接失败，exa列表目录dired识别不了
-    ;; 直接用git里的ls，网上找过一些版本4.x的都不行，git里的ls是8.32，但是默认输出为utf-8了
-    ;;(setq insert-directory-program "exa")
-
     ;; 真正实现是在files.el里的insert-directory
     (defadvice dired-insert-directory (around my-dired-insert-directory activate)
       (let ((old coding-system-for-read))
 	(setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
 	ad-do-it
 	(setq coding-system-for-read old)
-	)
-      )
-    ;; ls没通过cmdproxy启动，但是下面设置没效果，具体原因见files里的insert-directory
-    ;;(modify-coding-system-alist 'process "[lL][sS]" '(utf-8 . gbk-dos))
-
-    (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore
-      ;; (lambda ()
-      ;;   (interactive)
-      ;;   (w32explore (dired-replace-in-string "/" "\\" (dired-get-filename))))
-      )
-    
-    (define-key dired-mode-map [f3] 'dired-w32-browser)
+	))
+    (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore)
     (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser) ;; 使用explorer打开
-    (define-key dired-mode-map [f4] 'dired-w32explore)
-    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-      '("Open Associated Application" . dired-w32-browser))
-    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
-    ;;   '("Windows Explorer" . dired-w32explore))
-    (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
-    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-      '("Open Associated Applications" . dired-multiple-w32-browser)))
+    )
 
+  (setq dired-listing-switches "-alh --group-directories-first") ;; 除了name外其它排序都是目录排最前
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
   (setq dired-recursive-deletes (quote top)) ; “top” means ask once
@@ -74,6 +53,8 @@
   (dired-quick-sort-setup)
   (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
   )
+(use-package diredfl
+  :hook(dired-mode . diredfl-mode))
 
 ;; Save point position in buffer.
 (use-package saveplace
@@ -1563,6 +1544,10 @@ _q_uit
   (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
   (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
   )
+
+;; 以dired形式展示fd搜索的文件
+(use-package fd-dired
+  :commands(fd-dired))
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
