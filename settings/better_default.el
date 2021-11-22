@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-21 21:29:35 lynnux>
+;; Time-stamp: <2021-11-22 10:00:52 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -134,7 +134,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (global-set-key (kbd "C-x C-d")
 		  (lambda () (interactive)
 		    ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
-		    (require 'w32-browser)
 		    (w32explore (buffer-file-name (current-buffer)))
 		    ))
   (eval-after-load "dired"

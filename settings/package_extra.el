@@ -1,8 +1,9 @@
-;; Time-stamp: <2021-11-21 21:46:21 lynnux>
+;; Time-stamp: <2021-11-22 11:38:15 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
-;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度 
+;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度
+;; :load-path不是延迟设置
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/packages/use-package")
   (require 'use-package))
@@ -12,6 +13,32 @@
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+(use-package dired
+  :config
+  (add-to-list 'load-path "~/.emacs.d/packages/dired")
+  (when (string-equal system-type "windows-nt")
+    (setq ls-lisp-use-insert-directory-program t)
+    (setq insert-directory-program "exa") ;; rust版本ls，比lsd好，只有-atime不支持
+    
+    (define-key dired-mode-map [f3] 'dired-w32-browser)
+    (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser)
+    (define-key dired-mode-map [f4] 'dired-w32explore)
+    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
+      '("Open Associated Application" . dired-w32-browser))
+    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
+    ;;   '("Windows Explorer" . dired-w32explore))
+    (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
+    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
+      '("Open Associated Applications" . dired-multiple-w32-browser)))
+
+  ;; dired-quick-sort
+  ;;  (setq dired-quick-sort-suppress-setup-warning t)
+
+  (require 'dired-quick-sort)
+  (dired-quick-sort-setup)
+  (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
+  )
 
 ;; Save point position in buffer.
 (use-package saveplace
@@ -24,7 +51,7 @@
     (with-current-buffer (window-buffer)
       (recenter))
     ;; 将位置居中，默认是goto-char可能是最下面
-  ))
+    ))
 (if t
     (progn
       ;; session只保存了修改文件的point
@@ -512,20 +539,9 @@ _c_: hide comment        _q_uit
   (define-key iss-mode-map [f6] 'iss-compile)
   (define-key iss-mode-map [(meta f6)] 'iss-run-installer))
 
-;; (add-hook 'dired-mode-hook (lambda () (require 'w32-browser)))
-(with-eval-after-load 'dired
-  (unless (string-equal system-type "windows-nt")
-    (require 'w32-browser)
-    (define-key dired-mode-map [f3] 'dired-w32-browser)
-    (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser)
-    (define-key dired-mode-map [f4] 'dired-w32explore)
-    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-      '("Open Associated Application" . dired-w32-browser))
-    ;; (define-key diredp-menu-bar-immediate-menu [dired-w32explore]
-    ;;   '("Windows Explorer" . dired-w32explore))
-    (define-key dired-mode-map [mouse-2] 'dired-mouse-w32-browser)
-    (define-key dired-mode-map [menu-bar immediate dired-w32-browser]
-      '("Open Associated Applications" . dired-multiple-w32-browser))))
+(use-package w32-browser
+  :commands (w32explore dired-mouse-w32-browser dired-w32-browser dired-multiple-w32-browser)
+  )
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
 (setq auto-mode-alist
@@ -1382,19 +1398,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (setq read-process-output-max (* 1024 1024)) ; lsp-mode docker会提示这个
 (if t
     ;; eglot
-    (progn
+    (use-package eglot
+      :load-path "~/.emacs.d/packages/lsp"
+      :init
       (defun lsp-ensure() (eglot-ensure))
-      (autoload 'eglot-ensure "eglot" nil t)
-      (autoload 'eglot "eglot" nil t)
-      (autoload 'eglot-rename "eglot" nil t)
-      (with-eval-after-load 'eglot
-	(add-to-list 'eglot-stay-out-of 'flymake)
-	(setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
-	(push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-              eglot-ignored-server-capabilities) 
-	;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
-        
-	)
+      :commands (eglot eglot-ensure eglot-rename)
+      :config
+      (add-to-list 'eglot-stay-out-of 'flymake)
+      (setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
+      (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+            eglot-ignored-server-capabilities) 
+      ;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
       ;; 临时禁止view-mode
       (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
 	(setq tmp-disable-view-mode t)
@@ -1402,31 +1416,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	(setq tmp-disable-view-mode nil)
 	)
       )
-  
+
   ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
   ;; 但是eldoc提示API参数还是非常有用的！
-  (progn
+  (use-package nox
+    :load-path "~/.emacs.d/packages/lsp"
+    :init
     (defun lsp-ensure() (nox-ensure))
-    (autoload 'nox-ensure "nox" nil t)
-    (autoload 'nox "nox" nil t)
-    (autoload 'nox-rename "nox" nil t)
+    :commands(nox nox-ensure nox-rename)
+    :config
     (setq nox-autoshutdown t)
-    (with-eval-after-load 'nox
-      (add-to-list 'nox-server-programs '((c++-mode c-mode) "clangd"))
-      )
+    (add-to-list 'nox-server-programs '((c++-mode c-mode) "clangd"))
     (defadvice nox--apply-workspace-edit (around my-nox--apply-workspace-edit activate)
       (setq tmp-disable-view-mode t)
       ad-do-it
       (setq tmp-disable-view-mode nil)
       )
-    ))
+    )
+  )
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
-;; (add-hook 'prog-mode-hook (lambda ()
-;; 			    (unless  (or 
-;; 				      (eq major-mode 'emacs-lisp-mode)
-;; 				      (eq major-mode 'lisp-interaction-mode)
-;; 				      )
-;; 			      (lsp-ensure))))
 (add-hook 'c++-mode-hook 'lsp-ensure)
 (add-hook 'c-mode-hook 'lsp-ensure)
 (add-hook 'python-mode-hook 'lsp-ensure)
@@ -1514,8 +1522,6 @@ _q_uit
   (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
   (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
   )
-
-
 
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
