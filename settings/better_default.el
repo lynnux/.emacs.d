@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-22 10:00:52 lynnux>
+;; Time-stamp: <2021-11-22 14:58:27 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -127,22 +127,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-q") 'set-mark-command)
 ;;(global-set-key (kbd "\C-xt") 'transpose-chars)
 
-(put 'dired-find-alternate-file 'disabled nil)
-
-;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
-(when (string-equal system-type "windows-nt")
-  (global-set-key (kbd "C-x C-d")
-		  (lambda () (interactive)
-		    ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
-		    (w32explore (buffer-file-name (current-buffer)))
-		    ))
-  (eval-after-load "dired"
-    '(define-key dired-mode-map (kbd "C-x C-d")
-       (lambda ()
-         (interactive)
-         (w32explore (dired-replace-in-string "/" "\\" (dired-get-filename))))))
-  )
-
 ;; 时间戳用法：Time-stamp: <>或者Time-stamp: " "，只会更新第一个时间戳
 (add-hook 'before-save-hook 'time-stamp)
 
@@ -236,3 +220,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-unset-key (kbd "C-x C-z"))
 
 (setq delete-by-moving-to-trash t)     ; move files to trash instead of deleting
+
+(setq tab-width 4
+      indent-tabs-mode nil)

@@ -30,6 +30,11 @@
    )
   (setq org-default-notes-file "D:/autosync/autosync/ts/org/default.org")
   (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE\\TF.exe")
+
+  ;; ls，xargs都用git里的，但git有多个bin目录，没设置/usr/bin到全局PATH，因为exe太多怕影响vs等程序(如含有link.exe)
+  ;; https://emacs.stackexchange.com/questions/27326/gui-emacs-sets-the-exec-path-only-from-windows-environment-variable-but-not-from
+  (add-to-list 'exec-path "F:/Git/usr/bin")
+  (setenv "PATH" (mapconcat #'identity exec-path path-separator))
   )
 
  ;; 
