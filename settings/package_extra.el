@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-22 17:41:07 lynnux>
+;; Time-stamp: <2021-11-22 20:17:24 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -46,6 +46,8 @@
   (define-key dired-mode-map (kbd "l") (lambda () (interactive) (find-alternate-file ".."))) ;; l上级目录
   (define-key dired-mode-map [remap quit-window] 'volatile-kill-buffer)  ;; 关闭dired不然tab有问题
   (define-key dired-mode-map (kbd "C-o") 'ace-jump-mode)
+  ;; dired里面再次C-x d可以设置路径
+  (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
@@ -342,21 +344,17 @@ _c_: hide comment        _q_uit
 (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
 
-;; highlight-symbol下岗啦，会影响输入。下面ahs好像只对可见范围高亮所以不卡
-(use-package auto-highlight-symbol
+;; highlight-symbol下岗啦，font lock速度慢，现在都是overlay。ahs范围小，还跟输入
+(use-package symbol-overlay
   :defer 1.1
   :init
-  (setq ahs-suppress-log t)
-  (setq ahs-idle-interval 0.3) ;; 设置为0也不会影响输入速度
-  (setq ahs-overlay-priority 998) ;; 必须必easy kill的999低
+  :hook(find-file . symbol-overlay-mode)
   :config
-  (global-auto-highlight-symbol-mode t)
-  ;; zenburn
-  ;; (set-face-background 'highlight-symbol-face "SteelBlue4") ; SteelBlue4
-  ;; (global-set-key [(control f3)] 'highlight-symbol-at-point)
-  ;;(global-set-key [(meta f3)] 'highlight-symbol-query-replace)
-  (global-set-key [f3] 'ahs-forward) ;; 这个只能在可见范围跳啊！还是用C-s搜索吧！
-  (global-set-key [(shift f3)] 'ahs-backward)
+  (set-face-attribute 'symbol-overlay-default-face nil :background "CadetBlue" :foreground "moccasin")
+  (global-set-key [f3] 'symbol-overlay-jump-next)
+  (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
+  (global-set-key [(control f3)] 'symbol-overlay-put)
+  (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   )
 
 (use-package cursor-chg

@@ -23,6 +23,14 @@
    (equal (list 5 1 2600) (w32-version))	; xp
    )
   ) ;; end home
+
+ ((and 
+   (string-equal system-type "windows-nt")
+   (string-equal "lynnux-PC" (system-name))
+   (equal (list 6 1 7601) (w32-version)) ;; win7 64
+   )
+  (add-path-to-execute-path "D:/green/Git2/usr/bin")
+  )
  
  ;; work
  ((and 
