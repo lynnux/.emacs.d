@@ -326,7 +326,7 @@ This only affects symbols in the current displayed window if
                 (while (re-search-forward re nil t)
                   (symbol-overlay-put-one symbol)
                   (or p (setq p t))))
-              (when p
+              (when t
                 (symbol-overlay-put-one symbol)
                 (setq symbol-overlay-temp-symbol symbol)))))))))
 
