@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-23 16:18:43 lynnux>
+;; Time-stamp: <2021-11-23 16:31:21 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -64,7 +64,6 @@ _q_uit
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
   (define-key dired-mode-map " " 'View-scroll-page-forward)
   (define-key dired-mode-map [?\S-\ ] 'View-scroll-page-backward)
-  (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
@@ -413,7 +412,7 @@ _c_: hide comment        _q_uit
   :config
   (setq symbol-overlay-idle-time 0.5)
   (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
-  (global-set-key [f3] 'symbol-overlay-jump-next)
+  (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode symbol-overlay-mode)
@@ -1495,8 +1494,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq tmp-disable-view-mode nil)
   )
 
-;; which-key
+;; which-key，用于一些自带mode-map的比较好，用原生的帮助显示太乱了
 (use-package which-key
+  :init
+  (with-eval-after-load 'bookmark
+    (define-key bookmark-bmenu-mode-map "?" (lambda ()(interactive)(which-key-show-keymap 'bookmark-bmenu-mode-map))))
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map))))
   :commands(which-key-show-keymap))
 
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
