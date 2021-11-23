@@ -56,3 +56,4 @@ transient/*
 /.recentf
 /.savehist
 /.saveplace
+/packages/dired/dired-*.el

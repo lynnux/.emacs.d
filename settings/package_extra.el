@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-23 09:52:38 lynnux>
+;; Time-stamp: <2021-11-23 12:03:52 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -48,12 +48,58 @@
   (define-key dired-mode-map (kbd "C-o") 'ace-jump-mode)
   ;; dired里面再次C-x d可以设置路径
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
+  (define-key dired-mode-map " " 'View-scroll-page-forward)
+  (define-key dired-mode-map [?\S-\ ] 'View-scroll-page-backward)
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
   (require 'dired-quick-sort)
   (dired-quick-sort-setup)
   (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
+
+  ;; dired-hacks功能很多
+  (use-package dired-filter
+    :config
+    (defhydra dired-filter-map-select ()
+    "
+_._: by extension         _n_: by name
+_f_: by file              _d_: by directory
+_m_: by mode              _e_: by predicate
+_r_: by regexp            _s_: by symlink
+_g_: by garbage           _h_: by dot files
+_o_: by omit              _p_: pop
+_x_: by executable        _|_: or
+_TAB_: transpose          _!_: negate
+_*_: decompose            _S_: save filters
+_/_: pop all              _A_: add saved filters
+_D_: delete saved filters _L_: load saved filters
+_q_uit
+"
+    ("TAB" dired-filter-transpose nil :color blue)
+    ("!" dired-filter-negate nil :color blue) ;; 配合rename是真牛B啊！
+    ("*" dired-filter-decompose nil :color blue)
+    ("." dired-filter-by-extension nil :color blue)
+    ("/" dired-filter-pop-all nil :color blue)
+    ("A" dired-filter-add-saved-filters nil :color blue) ;; 显示不了？
+    ("D" dired-filter-delete-saved-filters nil :color blue)
+    ("L" dired-filter-load-saved-filters nil :color blue) ;; 不懂
+    ("S" dired-filter-save-filters nil :color blue)
+    ("d" dired-filter-by-directory nil :color blue)
+    ("e" dired-filter-by-predicate nil :color blue)
+    ("f" dired-filter-by-file nil :color blue)
+    ("g" dired-filter-by-garbage nil :color blue)
+    ("h" dired-filter-by-dot-files nil :color blue)
+    ("m" dired-filter-by-mode nil :color blue)
+    ("n" dired-filter-by-name nil :color blue)
+    ("o" dired-filter-by-omit nil :color blue)
+    ("p" dired-filter-pop nil :color blue)
+    ("r" dired-filter-by-regexp nil :color blue)
+    ("s" dired-filter-by-symlink nil :color blue)
+    ("x" dired-filter-by-executable nil :color blue)
+    ("|" dired-filter-or nil :color blue)
+    ("q" nil "nil" :color blue))
+    (define-key dired-mode-map "f" 'dired-filter-map-select/body)
+    )
   )
 (use-package diredfl
   :hook(dired-mode . diredfl-mode))
