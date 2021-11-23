@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-22 22:19:12 lynnux>
+;; Time-stamp: <2021-11-23 09:52:38 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -349,14 +349,37 @@ _c_: hide comment        _q_uit
   :defer 1.1
   :init
   :config
-  (setq symbol-overlay-idle-time 0.3)
-  (set-face-attribute 'symbol-overlay-default-face nil :background "#366060") ;; zenburn里取色(开启rainbow-mode)
+  (setq symbol-overlay-idle-time 0.5)
+  (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
   (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
-  (global-set-key [(control f3)] 'symbol-overlay-put)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode symbol-overlay-mode)
   (global-highlight-symbol-mode 1)
+  (defhydra symbol-overlay-select ()
+    "
+_p_: put      _t_: toggle
+_r_: rename   _s_: save name
+_h_: help     _c_: count
+_R_: remove all _m_: jump mark
+_f_: jump first _l_: jump last
+_d_: jump definition _%_: query-replace
+_q_uit
+"
+    ("p" symbol-overlay-put nil :color blue)
+    ("t" symbol-overlay-toggle-in-scope nil :color blue) ;; 配合rename是真牛B啊！
+    ("r" symbol-overlay-rename nil :color blue)
+    ("s" symbol-overlay-save-symbol nil :color blue)
+    ("h" symbol-overlay-map-help nil :color blue)
+    ("c" symbol-overlay-count nil :color blue) ;; 显示不了？
+    ("R" symbol-overlay-remove-all nil :color blue)
+    ("m" symbol-overlay-echo-mark nil :color blue) ;; 不懂
+    ("f" symbol-overlay-jump-first nil :color blue)
+    ("l" symbol-overlay-jump-last nil :color blue)
+    ("d" symbol-overlay-jump-to-definition nil :color blue)
+    ("%" symbol-overlay-query-replace nil :color blue)
+    ("q" nil "nil" :color blue))
+  (global-set-key [(control f3)] 'symbol-overlay-select/body)
   )
 
 (use-package cursor-chg
@@ -1552,7 +1575,7 @@ _q_uit
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
 ;; region有点看不清，单独设置
-(set-face-attribute 'region nil :background "#666")
+(set-face-attribute 'region nil :background "#4C7073")
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
 
 
