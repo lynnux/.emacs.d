@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-23 15:47:44 lynnux>
+;; Time-stamp: <2021-11-23 16:18:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -64,6 +64,7 @@ _q_uit
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
   (define-key dired-mode-map " " 'View-scroll-page-forward)
   (define-key dired-mode-map [?\S-\ ] 'View-scroll-page-backward)
+  (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
@@ -1494,9 +1495,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq tmp-disable-view-mode nil)
   )
 
-;; which-key确实好用
-;;(require 'which-key)
-;;(which-key-mode)
+;; which-key
+(use-package which-key
+  :commands(which-key-show-keymap))
 
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
