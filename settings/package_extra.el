@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 11:43:41 lynnux>
+;; Time-stamp: <2021-11-24 18:12:17 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -398,8 +398,9 @@ _c_: hide comment        _q_uit
 		)
 
 ;;org的C-tab基本上不用
-(add-hook 'org-mode-hook (lambda()
-			   (define-key org-mode-map (kbd "<C-tab>") nil)))
+(with-eval-after-load 'org-mode-hook
+  (define-key org-mode-map (kbd "<C-tab>") nil))
+
 (setq EmacsPortable-global-tabbar 't)
 (require 'tabbar-ruler)
 (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
@@ -569,6 +570,7 @@ _q_uit
       (call-interactively 'clang-format-region)
     (call-interactively 'clang-format-buffer)))
 
+;; c-mode-common包含objc-mode(h文件默认这个)
 (add-hook 'c-mode-common-hook 'lynnux-c-mode-hook)
 (add-hook 'c++-mode-hook 'lynnux-c++-mode-hook)
 
@@ -576,8 +578,6 @@ _q_uit
   (setq c-hungry-delete-key t)		; 
   ;;(setq c-auto-newline 1)
   (c-set-style "stroustrup")
-  ;;  (gtags-settings)
-  ;; (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace) ;修复C-h没有这个效果
   (local-set-key (kbd "C-c C-c") 'magit)
   (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
   ;; (local-set-key [(meta f8)] 'clang-format-auto)
@@ -629,14 +629,15 @@ _q_uit
   (add-to-list 'jl-insert-marker-funcs "my-save-pos")
   )
 
-(autoload 'iss-mode "iss-mode" "Innosetup Script Mode" t)
-(setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
-(setq iss-compiler-path "D:/Programme/Inno Setup 5/")
-(add-hook 'iss-mode-hook 'xsteve-iss-mode-init)
-(defun xsteve-iss-mode-init ()
-  (interactive)
+(use-package iss-mode
+  :init
+  (setq iss-compiler-path "D:/Programme/Inno Setup 5/")
+  (setq auto-mode-alist (append '(("\\.iss$"  . iss-mode)) auto-mode-alist))
+  :commands(iss-mode)
+  :config
   (define-key iss-mode-map [f6] 'iss-compile)
-  (define-key iss-mode-map [(meta f6)] 'iss-run-installer))
+  (define-key iss-mode-map [(meta f6)] 'iss-run-installer)
+  )
 
 (use-package w32-browser
   :commands (w32explore dired-mouse-w32-browser dired-w32-browser dired-multiple-w32-browser dired-w32explore)
@@ -657,35 +658,19 @@ _q_uit
 	      auto-mode-alist))
 
 (defun my-elisp-hook()
-  (defvar electrify-return-match
-    "[\]}\)\"]"
-    "If this regexp matches the text after the cursor, do an \"electric\"
-  return.")
-					; 这功能不知道干什么用，稍微修改让换行时自动indent
-  (defun electrify-return-if-match (arg)
-    "If the text after the cursor matches `electrify-return-match' then
-  open and indent an empty line between the cursor and the text.  Move the
-  cursor to the new line."
-    (interactive "P")
-    (let ((case-fold-search nil))
-      (if (looking-at electrify-return-match)
-	  (save-excursion  ;(newline-and-indent) ; 只需要indent
-	    (indent-according-to-mode)))
-      (newline arg)
-      (indent-according-to-mode)))
-  (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
+  (make-local-variable 'eldoc-idle-delay)
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
-  ;;  (local-set-key (kbd "RET") 'electrify-return-if-match)
-  (eldoc-add-command 'electrify-return-if-match)
   (show-paren-mode t)
   )
+(find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
-(add-hook 'ielm-mode-hook 'my-elisp-hook)
 
-;;; gtags
-(defun gtags-settings()
+;;; 当lsp不能用时，用ggtag
+(use-package ggtags
+  :commands(ggtags-mode)
+  :config
   ;;; gtags 自动更新当文件保存时
   (defun gtags-root-dir ()
     "Returns GTAGS root directory or nil if doesn't exist."
@@ -693,28 +678,46 @@ _q_uit
       (if (zerop (call-process "global" nil t nil "-pr"))
 	  (buffer-substring (point-min) (1- (point-max)))
 	nil)))
-  (defun gtags-update ()
+  (defun gtags-update1 ()
     "Make GTAGS incremental update"
     (call-process "global" nil nil nil "-u"))
-  (defun gtags-update-hook ()
+  (defun gtags-update ()
+    (interactive)
     (when (gtags-root-dir)		;没有多余的副作用
-      (gtags-update)))
-  ;; (add-hook 'after-save-hook #'gtags-update-hook)
-  (require 'ggtags)
-  (ggtags-mode 1)
-  (add-hook 'ggtags-global-mode-hook (lambda()
-				       (define-key ggtags-global-mode-map "n" 'next-line)
-				       (define-key ggtags-global-mode-map "p" 'previous-line)
-				       ))
+      (gtags-update1)))
+  (define-key ggtags-global-mode-map "n" 'next-line)
+  (define-key ggtags-global-mode-map "p" 'previous-line)
+  
+  ;; ggtags给xref添加了backend的，但是提示找不到global
+  (define-key ggtags-mode-map [remap xref-find-definitions] 'ggtags-find-tag-dwim)
   (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
-  (defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
-					;  (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  ;; (local-set-key (kbd "<f12>") 'ggtags-find-tag-dwim)
-  ;; (local-set-key (kbd "C-.") 'ggtags-find-tag-dwim)
-  ;; (local-set-key (kbd "<C-down-mouse-1>") 'ggtags-find-tag-dwim) ; CTRL + 鼠标点击，很好用
+  ;;(defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
+  ;; (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
   ;;(turn-on-eldoc-mode) ; 会卡
   )
-
+(defvar global-ggtags nil)
+(defun ggtag-all-buffer (enable)
+  (cl-dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (when (or (eq major-mode 'c++-mode)
+		(eq major-mode 'c-mode)
+		(eq major-mode 'objc-mode))
+	(ggtags-mode enable)))))
+(defun ggtag-toggle()
+  (interactive)
+  (if global-ggtags
+      (progn
+	(ggtag-all-buffer -1)
+	(remove-hook 'c-mode-common-hook 'ggtags-mode)
+	(remove-hook 'c++-mode-hook 'ggtags-mode)
+	(setq global-ggtags nil)
+	)
+    (progn
+      (ggtag-all-buffer 1)
+      (add-hook 'c-mode-common-hook 'ggtags-mode)
+      (add-hook 'c++-mode-hook 'ggtags-mode)
+      (setq global-ggtags t)
+      )))
 
 ;;; shell, main goal is for compile test
 (defvar smart-compile-run-last-buffer nil)
@@ -1286,7 +1289,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; go lang
 (autoload 'go-mode "go-mode" nil t)
 (add-to-list 'auto-mode-alist (cons "\\.go\\'" 'go-mode))
-;; (with-eval-after-load 'go-mode (add-hook 'before-save-hook 'gofmt-before-save))
 
 ;; magit
 (use-package magit
@@ -1327,7 +1329,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'dumb-jump-xref-activate "dumb-jump" nil t)
 (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
 (global-set-key (kbd "<f12>") 'xref-find-definitions) 
-(global-set-key (kbd "C-.") 'xref-find-definitions) ; 除了ggtags支持的都用这个
+(global-set-key (kbd "C-.") 'xref-find-definitions)
 (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
 (with-eval-after-load 'dumb-jump
   (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
@@ -1568,8 +1570,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
+(add-hook 'c-mode-common-hook 'lsp-ensure)
 (add-hook 'c++-mode-hook 'lsp-ensure)
-(add-hook 'c-mode-hook 'lsp-ensure)
 (add-hook 'python-mode-hook 'lsp-ensure)
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
