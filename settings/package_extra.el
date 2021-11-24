@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 11:16:07 lynnux>
+;; Time-stamp: <2021-11-24 11:43:41 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1197,14 +1197,16 @@ _q_uit
     (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
     ))
 
-;; 有空多尝试新包，都挺好的
+;; defer加载要比smartparens早
 (if t
     (use-package smart-hungry-delete
       :defer 0.8
       :config
       (smart-hungry-delete-add-default-hooks)
       (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
+      (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
       (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
+      (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
       )
   (use-package hungry-delete
     :defer 0.8
