@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 21:16:48 lynnux>
+;; Time-stamp: <2021-11-24 22:14:01 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -13,6 +13,10 @@
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+;; 消除mode line上的minor提示字符
+(use-package diminish
+  :commands(diminish))
 
 (autoload 'defhydra "hydra" nil t)
 
@@ -414,6 +418,7 @@ _c_: hide comment        _q_uit
 (use-package symbol-overlay
   :defer 1.1
   :init
+  :diminish
   :config
   (setq symbol-overlay-idle-time 0.5)
   (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
@@ -505,6 +510,7 @@ _q_uit
       :defer 1
       :init
       (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+      :diminish
       :config
       (global-company-mode)
       ;; 句尾TAB就很烦了。。
@@ -666,7 +672,6 @@ _q_uit
   (make-local-variable 'eldoc-idle-delay)
   (setq eldoc-idle-delay 0)
   (turn-on-eldoc-mode)
-  (show-paren-mode t)
   )
 (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
@@ -1645,6 +1650,7 @@ _q_uit
 ;; 对elisp代码非常有用，但是有bug经常部分不变色，将就用 https://github.com/istib/rainbow-blocks/issues/4
 (use-package rainbow-blocks
   :defer 0.9
+  :diminish
   :hook
   (emacs-lisp-mode . rainbow-blocks-mode)
   :config

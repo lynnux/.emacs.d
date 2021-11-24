@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 21:03:06 lynnux>
+;; Time-stamp: <2021-11-24 22:01:22 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -229,3 +229,11 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (setq tab-width 4
       indent-tabs-mode nil)
+
+(global-set-key (kbd "RET") 'newline-and-indent)
+(defun sanityinc/newline-at-end-of-line ()
+  "Move to end of line, enter a newline, and reindent."
+  (interactive)
+  (move-end-of-line 1)
+  (newline-and-indent))
+(global-set-key (kbd "S-<return>") 'sanityinc/newline-at-end-of-line) ;; shift RET直接新开一行！
