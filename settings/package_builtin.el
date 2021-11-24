@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-19 23:28:52 lynnux>
+;; Time-stamp: <2021-11-24 20:45:51 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -143,51 +143,46 @@
 ;; )
 (with-eval-after-load 'cua-base (my-cua-mode-setting))
 
-(defvar view-mode-setted nil)
-(defun view-mode-settings ()
-  (unless view-mode-setted
-    (setq view-mode-setted t)
-    (define-key view-mode-map "a" 'move-beginning-of-line)
-    (define-key view-mode-map "e" 'move-end-of-line)
-    (define-key view-mode-map "m" 'back-to-indentation)
-    (define-key view-mode-map "n" 'next-line)
-    (define-key view-mode-map "p" 'previous-line)
-    (define-key view-mode-map "g" 'lgrep)
-    (define-key view-mode-map "1" 'delete-other-windows)
-    (define-key view-mode-map "2" 'split-window-vertically)
-    (define-key view-mode-map "3" 'split-window-horizontally)
-    (define-key view-mode-map "f" 'forward-word)
-    (define-key view-mode-map "b" 'backward-word)
-    (define-key view-mode-map "v" 'set-mark-command)
-    (define-key view-mode-map "t" 'set-mark-command)
-    (define-key view-mode-map "o" 'other-window)
-    (define-key view-mode-map "G" 'end-of-buffer)
-    (define-key view-mode-map "i" 'view-mode)
-    (define-key view-mode-map "r" 'move-to-window-line-top-bottom)
-    (define-key view-mode-map "c" 'kill-ring-save)
-    (define-key view-mode-map "l" 'View-scroll-line-forward)
-    (defface view-mode-mode-line-face
-      '((((type tty pc)) :bold t :background "red" :foreground "white") (t (:background "red" :foreground "white")))
-      "Face used highlight `view-mode-line-format'.")
+(with-eval-after-load 'view
+  (define-key view-mode-map "a" 'move-beginning-of-line)
+  (define-key view-mode-map "e" 'move-end-of-line)
+  (define-key view-mode-map "m" 'back-to-indentation)
+  (define-key view-mode-map "n" 'next-line)
+  (define-key view-mode-map "p" 'previous-line)
+  (define-key view-mode-map "g" 'lgrep)
+  (define-key view-mode-map "1" 'delete-other-windows)
+  (define-key view-mode-map "2" 'split-window-vertically)
+  (define-key view-mode-map "3" 'split-window-horizontally)
+  (define-key view-mode-map "f" 'forward-word)
+  (define-key view-mode-map "b" 'backward-word)
+  (define-key view-mode-map "v" 'set-mark-command)
+  (define-key view-mode-map "t" 'set-mark-command)
+  (define-key view-mode-map "o" 'other-window)
+  (define-key view-mode-map "G" 'end-of-buffer)
+  (define-key view-mode-map "i" 'view-mode)
+  (define-key view-mode-map "r" 'move-to-window-line-top-bottom)
+  (define-key view-mode-map "c" 'kill-ring-save)
+  (define-key view-mode-map "l" 'View-scroll-line-forward)
+  (define-key view-mode-map "q" 'quit-window)
+  (defface view-mode-mode-line-face
+    '((((type tty pc)) :bold t :background "red" :foreground "white") (t (:background "red" :foreground "white")))
+    "Face used highlight `view-mode-line-format'.")
 
-    (defvar view-mode-line-format
-      (propertize "View"
-		  ;; 'local-map mode-line-minor-mode-keymap
-		  ;; 'help-echo "mouse-3: minor mode menu"
-		  'face 'view-mode-mode-line-face)
-      "*Mode line format of `view-mode'.")
+  (defvar view-mode-line-format
+    (propertize "View"
+		;; 'local-map mode-line-minor-mode-keymap
+		;; 'help-echo "mouse-3: minor mode menu"
+		'face 'view-mode-mode-line-face)
+    "*Mode line format of `view-mode'.")
 
-    (put 'view-mode-line-format 'risky-local-variable t)
+  (put 'view-mode-line-format 'risky-local-variable t)
 
-    (setq minor-mode-alist
-	  (append
-	   `((view-mode " ") (view-mode ,view-mode-line-format))
-	   (delq (assq 'view-mode minor-mode-alist) minor-mode-alist) ))
-    )
+  (setq minor-mode-alist
+	(append
+	 `((view-mode " ") (view-mode ,view-mode-line-format))
+	 (delq (assq 'view-mode minor-mode-alist) minor-mode-alist) ))
   )
 
-;; eval-after-load里的view-mode-setting总是执行，所以改为add-hook方式，估计是因为emacs的默认主页就是view mode的关系吧
-(add-hook 'view-mode-hook 'view-mode-settings)
 (defun view-exist-file ()
   (when (file-exists-p (buffer-file-name))
     (view-mode)))

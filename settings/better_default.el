@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 12:04:21 lynnux>
+;; Time-stamp: <2021-11-24 21:03:06 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -220,6 +220,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; 禁止narrow功能
 (global-set-key (kbd "C-x n-") nil)
 (global-set-key (kbd "C-x n") 'next-line)
+
+(global-set-key (kbd "C-x C-o") 'other-window)
 
 (global-unset-key (kbd "C-x C-z"))
 

@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 18:12:17 lynnux>
+;; Time-stamp: <2021-11-24 21:16:48 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -64,6 +64,9 @@ _q_uit
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
   (define-key dired-mode-map " " 'View-scroll-page-forward)
   (define-key dired-mode-map [?\S-\ ] 'View-scroll-page-backward)
+  (define-key dired-mode-map "w" 'View-scroll-page-backward)
+  (define-key dired-mode-map "W" 'dired-copy-filename-as-kill)
+  (define-key dired-mode-map "1" 'delete-other-windows)
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
@@ -288,6 +291,7 @@ _c_: hide comment        _q_uit
       (global-unset-key (kbd "C-z"))
       (global-set-key (kbd "C-z")   'undo-fu-only-undo)
       (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
+      (global-set-key (kbd "M-/") 'undo-fu-only-redo)
       (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
       )
   (use-package undo-tree
@@ -512,8 +516,9 @@ _q_uit
       (define-key company-active-map (kbd "C-p") 'company-select-previous)
       (define-key company-active-map (kbd "M-n") 'company-next-page)
       (define-key company-active-map (kbd "M-p") 'company-previous-page)
-      (define-key company-active-map (kbd "TAB") 'company-complete-selection) ; 类似return
-      (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
+      ;; 这就是我想要的啊！跟bash里的tab类似
+      (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
+      (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
       (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
       (dotimes (i 10)
 	(define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
