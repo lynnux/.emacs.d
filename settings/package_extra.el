@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-23 16:31:21 lynnux>
+;; Time-stamp: <2021-11-24 11:16:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -901,12 +901,6 @@ _q_uit
 (autoload 'unfill-toggle "unfill" nil t)
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
-(use-package hungry-delete
-  :defer 0.8
-  :config
-  (global-hungry-delete-mode)
-  (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
-  )
 
 (if nil
     (use-package elec-pair
@@ -1203,19 +1197,45 @@ _q_uit
     (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
     ))
 
+;; 有空多尝试新包，都挺好的
+(if t
+    (use-package smart-hungry-delete
+      :defer 0.8
+      :config
+      (smart-hungry-delete-add-default-hooks)
+      (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
+      (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
+      )
+  (use-package hungry-delete
+    :defer 0.8
+    :config
+    (global-hungry-delete-mode)
+    (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
+    )  
+  )
 
 ;; 自动indent
-(use-package aggressive-indent
-  :defer 1
-  :config
-  (global-aggressive-indent-mode 1)
-  (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
-  (add-to-list
-   'aggressive-indent-dont-indent-if
-   '(and (derived-mode-p 'c++-mode)
-	 (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-			     (thing-at-point 'line)))))
-  )
+(if t
+    (use-package indentinator
+      :defer 1
+      :config
+      (defun check-mode()
+	(unless (eq major-mode 'python-mode)
+	  (indentinator-mode)))
+      (define-globalized-minor-mode global-indentinator-mode indentinator-mode indentinator-mode)
+      (global-indentinator-mode 1)
+      )
+  (use-package aggressive-indent
+    :defer 1
+    :config
+    (global-aggressive-indent-mode 1)
+    (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
+    (add-to-list
+     'aggressive-indent-dont-indent-if
+     '(and (derived-mode-p 'c++-mode)
+	   (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+			       (thing-at-point 'line)))))
+    ))
 
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
