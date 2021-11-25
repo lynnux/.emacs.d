@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 10:45:42 lynnux>
+;; Time-stamp: <2021-11-25 17:40:30 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -15,9 +15,14 @@
  '(warning-suppress-types '((comp)))
  )
 
+(setq confirm-nonexistent-file-or-buffer nil)
+(setq blink-matching-paren nil)
 (setq show-paren-when-point-inside-paren t)
 (setq show-paren-when-point-in-periphery t)
-
+(setq indicate-buffer-boundaries nil
+      indicate-empty-lines nil)
+(setq frame-resize-pixelwise t)
+(setq window-resize-pixelwise nil)
 ;; (setq-default line-spacing 1) ; 这个设置会导致F3到下一个时滚动出问题
 
 ;; (global-visual-line-mode 1); 折行但是不显示两边难看的小符号
@@ -28,9 +33,16 @@
 
 (set-scroll-bar-mode 'right); 滚动条在右侧(ubuntu)
 
-(setq scroll-step 1
-      ;scroll-margin 3 ; 这个有点小影响highlight-symbol-scroll-out
-      scroll-conservatively 10000) ; 滚动页面时比较舒服，不要整页的滚动
+;; 抄doom的，感觉没多大作用
+(setq hscroll-margin 2
+      hscroll-step 1
+      scroll-conservatively 101
+      scroll-margin 0
+      scroll-preserve-screen-position t
+      auto-window-vscroll nil
+      mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
+      mouse-wheel-scroll-amount-horizontal 2)
+
 ;; 鼠标滚轮，默认的滚动太快，这里改为3行
 (defun up-slightly () (interactive) (scroll-up 3))
 (defun down-slightly () (interactive) (scroll-down 3))
@@ -149,6 +161,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
   (w32-send-sys-command 61488))
 
 (setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
-(setq visible-bell t) ;; ** 关闭 beep ; blink, don't bark
+(setq ring-bell-function #'ignore
+      visible-bell t) ;; ** 关闭 beep ; blink, don't bark
 
 (setq scroll-preserve-screen-position t) ;; 滚动时鼠标保持位置，聊胜于无吧，原来是直接到行首
