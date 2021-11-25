@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 20:45:51 lynnux>
+;; Time-stamp: <2021-11-25 09:42:55 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -182,7 +182,7 @@
 	 `((view-mode " ") (view-mode ,view-mode-line-format))
 	 (delq (assq 'view-mode minor-mode-alist) minor-mode-alist) ))
   )
-
+(global-unset-key (kbd "C-x C-q")) ;; 偶尔遇到C-i也不能修改就是这个导致的
 (defun view-exist-file ()
   (when (file-exists-p (buffer-file-name))
     (view-mode)))

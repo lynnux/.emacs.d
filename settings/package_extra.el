@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 22:14:01 lynnux>
+;; Time-stamp: <2021-11-25 09:28:12 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -202,6 +202,7 @@ _q_uit
     ))
 
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
+(global-set-key (kbd "C-x C-r") 'files-recent-visited)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
 (global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
 
@@ -212,12 +213,14 @@ _q_uit
       "
 _c_: file changed  _v_: file visited
 _a_: file at point _e_: helm locate
+_r_: file visited
 _q_uit
 "
       ("e" helm-locate nil :color blue)
       ("c" files-recent-changed nil :color blue) ;; 这个只有session才有的，recentf没有
       ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
+      ("r" files-recent-visited nil :color blue)
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
