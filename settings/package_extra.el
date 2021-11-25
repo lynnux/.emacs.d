@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 09:28:12 lynnux>
+;; Time-stamp: <2021-11-25 15:42:40 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -51,6 +51,7 @@ _q_uit
 	))
     (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore)
     (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser) ;; 使用explorer打开
+    (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
     )
 
   (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
@@ -1000,6 +1001,10 @@ _q_uit
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (autoload 'imenu-list-smart-toggle "imenu-list" nil t)
 (global-set-key [(control f4)] 'imenu-list-smart-toggle)
+(add-hook 'imenu-list-major-mode-hook (lambda ()
+					;; 指示当前是在哪个函数里
+					(face-remap-add-relative 'hl-line '(:background "#666"))
+					))
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
