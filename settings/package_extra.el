@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 15:42:40 lynnux>
+;; Time-stamp: <2021-11-25 17:11:38 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1548,7 +1548,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(setq read-process-output-max (* 1024 1024)) ; lsp-mode docker会提示这个
 (if t
     ;; eglot
     (use-package eglot

@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-24 22:01:22 lynnux>
+;; Time-stamp: <2021-11-25 17:19:26 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -237,3 +237,33 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (move-end-of-line 1)
   (newline-and-indent))
 (global-set-key (kbd "S-<return>") 'sanityinc/newline-at-end-of-line) ;; shift RET直接新开一行！
+
+;; 各种尝试优化emacs速度，好像有点效果^_^
+;; https://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
+;; 下面抄自doom，略有修改(spacemacs和purcell都没有)
+(setq auto-mode-case-fold nil)
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right)
+(setq-default bidi-inhibit-bpa t)
+(setq-default cursor-in-non-selected-windows nil)
+(setq highlight-nonselected-windows nil)
+(setq fast-but-imprecise-scrolling t)
+(setq ffap-machine-p-known 'reject)
+(setq frame-inhibit-implied-resize t)
+(setq gcmh-idle-delay 'auto
+      gcmh-auto-idle-delay-factor 10
+      gcmh-high-cons-threshold (* 16 1024 1024)  ; 16mb
+      )
+(setq idle-update-delay 2)
+(setq inhibit-compacting-font-caches t)
+(setq read-process-output-max (* 64 1024))
+(setq redisplay-skip-fontification-on-input t)
+(setq command-line-ns-option-alist nil)
+
+(setq w32-get-true-file-attributes nil   ; decrease file IO workload
+      w32-pipe-read-delay 0              ; faster ipc
+      w32-pipe-buffer-size (* 64 1024))
+(setq
+ inhibit-default-init t
+ initial-major-mode 'fundamental-mode
+ initial-scratch-message nil)
