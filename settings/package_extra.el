@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 17:11:38 lynnux>
+;; Time-stamp: <2021-11-26 17:50:36 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -426,7 +426,7 @@ _c_: hide comment        _q_uit
   :config
   (setq symbol-overlay-idle-time 0.5)
   (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
-  (global-set-key [f3] 'symbol-overlay-jump-next)
+  (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode symbol-overlay-mode)
