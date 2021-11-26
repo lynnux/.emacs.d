@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-26 17:50:36 lynnux>
+;; Time-stamp: <2021-11-26 17:52:55 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -999,12 +999,15 @@ _q_uit
 
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
-(autoload 'imenu-list-smart-toggle "imenu-list" nil t)
-(global-set-key [(control f4)] 'imenu-list-smart-toggle)
-(add-hook 'imenu-list-major-mode-hook (lambda ()
-					;; 指示当前是在哪个函数里
-					(face-remap-add-relative 'hl-line '(:background "#666"))
-					))
+(use-package imenu-list 
+  :commands(imenu-list-smart-toggle)
+  :init
+  (setq imenu-list-idle-update-delay 0.5)
+  (global-set-key [(control f4)] 'imenu-list-smart-toggle)
+  :hook(imenu-list-major-mode . (lambda ()
+				  ;; 指示当前是在哪个函数里
+				  (face-remap-add-relative 'hl-line '(:background "#666"))
+				  )))
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
