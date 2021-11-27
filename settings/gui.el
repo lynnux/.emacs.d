@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 17:40:30 lynnux>
+;; Time-stamp: <2021-11-27 17:35:24 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -81,51 +81,54 @@
 ; toobar-ruler因为24.3是bug对修改的是buffer不加粗显示了
 (setq frame-title-format '("%f" (:eval (if (buffer-modified-p) " *" ""))))
 
-;; 字体设置，下载Consolas字体，很好看，据说是ms专门给vs studio用的
-(defun qiang-font-existsp (font)
-  (if (null (x-list-fonts font))
-      nil t))
-(defun qiang-make-font-string (font-name font-size)
-  (if (and (stringp font-size) 
-	   (equal ":" (string (elt font-size 0))))
-      (format "%s%s" font-name font-size)
-    (format "%s %s" font-name font-size)))
-(defun qiang-set-font (english-fonts
-		       english-font-size
-		       chinese-fonts
-		       &optional chinese-font-size)
-  "english-font-size could be set to \":pixelsize=18\" or a integer.
+
+(when (display-graphic-p)
+  ;; 字体设置，下载Consolas字体，很好看，据说是ms专门给vs studio用的
+  (defun qiang-font-existsp (font)
+    (find-font (font-spec :name font)))
+  (defun qiang-make-font-string (font-name font-size)
+    (if (and (stringp font-size) 
+	     (equal ":" (string (elt font-size 0))))
+	(format "%s%s" font-name font-size)
+      (format "%s %s" font-name font-size)))
+  (defun qiang-set-font (english-fonts
+			 english-font-size
+			 chinese-fonts
+			 &optional chinese-font-size)
+    "english-font-size could be set to \":pixelsize=18\" or a integer.
 If set/leave chinese-font-size to nil, it will follow english-font-size"
-  (require 'cl) ; for find if
-  (let ((en-font (qiang-make-font-string
-		  (find-if #'qiang-font-existsp english-fonts)
-		  english-font-size))
-	(zh-font (font-spec :family (find-if #'qiang-font-existsp chinese-fonts)
-			    :size chinese-font-size)))
+    (require 'cl) ; for find if
+    (let ((en-font (qiang-make-font-string
+		    (find-if #'qiang-font-existsp english-fonts)
+		    english-font-size))
+	  (zh-font (font-spec :family (find-if #'qiang-font-existsp chinese-fonts)
+			      :size chinese-font-size)))
 
-    ;; Set the default English font
-    ;; 
-    ;; The following 2 method cannot make the font settig work in new frames.
-    ;; (set-default-font "Consolas:pixelsize=18")
-    ;; (add-to-list 'default-frame-alist '(font . "Consolas:pixelsize=18"))
-    ;; We have to use set-face-attribute
-    (message "Set English Font to %s" en-font)
-    (set-face-attribute
-     'default nil :font en-font)
+      ;; Set the default English font
+      ;; 
+      ;; The following 2 method cannot make the font settig work in new frames.
+      ;; (set-default-font "Consolas:pixelsize=18")
+      ;; (add-to-list 'default-frame-alist '(font . "Consolas:pixelsize=18"))
+      ;; We have to use set-face-attribute
+      (message "Set English Font to %s" en-font)
+      (set-face-attribute
+       'default nil :font en-font)
 
-    ;; Set Chinese font 
-    ;; Do not use 'unicode charset, it will cause the english font setting invalid
-    (message "Set Chinese Font to %s" zh-font)
-    (dolist (charset '(kana han symbol cjk-misc bopomofo))
-      (set-fontset-font (frame-parameter nil 'font)
-			charset
-			zh-font))))
+      ;; Set Chinese font 
+      ;; Do not use 'unicode charset, it will cause the english font setting invalid
+      (message "Set Chinese Font to %s" zh-font)
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+	(set-fontset-font (frame-parameter nil 'font)
+			  charset
+			  zh-font))))
 
-;; 设置字体,Fixedsys要用修正过的，为了保证org的table显示正常，字体大小应该设置成一样大，不过这样感觉汉字大多了，大也好，慢慢适应吧
+  ;; 设置字体,Fixedsys要用修正过的，为了保证org的table显示正常，字体大小应该设置成一样大，不过这样感觉汉字大多了，大也好，慢慢适应吧
 ;;; 25上用Fixedsys Excelsior 3.01-L会卡死，可以用Fixedsys(24不能用)，但发现字体有发虚。最后发现是因为字体名带-，用Hxd替换-为_就行了(同时替换unicode)
-(qiang-set-font
- '("Fixedsys" "Fixedsys Excelsior 3.01_L" "Source Code Pro" "Consolas" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=16"
- '("宋体" "新宋体" "Microsoft Yahei" "思源黑体 CN Normal" "黑体" "WenQuanYi Bitmap Song" "文泉驿等宽微米黑") 16)
+  (qiang-set-font
+   '("Fixedsys" "Fixedsys Excelsior 3.01_L" "Source Code Pro" "Consolas" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=16"
+   '("宋体" "新宋体" "Microsoft Yahei" "思源黑体 CN Normal" "黑体" "WenQuanYi Bitmap Song" "文泉驿等宽微米黑") 16)
+  )
+
 ;; "Fixedsys Excelsior 3.01_L"好像有点暗
 
 ;; 下面这两个看特殊字符时不卡，按上面的说法`set-default-font'不支持new frames，这个我暂时会用到
@@ -157,8 +160,9 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
 
 ;;; 窗口最大化 24.5没效果？
-(when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
-  (w32-send-sys-command 61488))
+(when (display-graphic-p)
+  (when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
+    (w32-send-sys-command 61488)))
 
 (setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
 (setq ring-bell-function #'ignore

@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 15:38:20 lynnux>
+;; Time-stamp: <2021-11-27 18:01:24 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -429,7 +429,10 @@ _c_: hide comment        _q_uit
   :diminish
   :config
   (setq symbol-overlay-idle-time 0.5)
-  (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
+  (if (display-graphic-p)
+      (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
+    (set-face-attribute 'symbol-overlay-default-face nil :background "#666" :foreground "Black")
+    )
   (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
@@ -472,12 +475,17 @@ _q_uit
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
-(use-package hl-line
-  :defer 0.6
-  :config
-  (global-hl-line-mode t)
-  (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
-  )
+(when (display-graphic-p)
+  (use-package hl-line
+    :defer 0.6
+    :config
+    (global-hl-line-mode t)
+    (if (display-graphic-p)
+	(set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
+      ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
+      ))  
+)
+
 
 (if nil
     ;; auto complete 很可惜已停止维护了，暂时保留吧
@@ -569,7 +577,7 @@ _q_uit
   (wcy-desktop-init)
   (add-hook 'emacs-startup-hook
             (lambda ()
-              (ignore-errors
+	      (ignore-errors
 		(wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
@@ -1077,12 +1085,14 @@ _q_uit
 	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	(push "RG" helm-source-names-using-follow)
 
-	;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-	(custom-set-faces
-	 '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
-	 '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
-	 ;;helm-match-item 
-	 )
+	(when (display-graphic-p)
+	  ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+	  (custom-set-faces
+	   '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
+	   '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
+	   ;;helm-match-item 
+	   ))
+
 	(define-key helm-map (kbd "<f1>") 'nil)
 	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
 
@@ -1812,8 +1822,14 @@ _q_uit
 				#'grammatical-edit-backward-delete)))))
     ))
 
-;; 这是需要最后加载
-(load-theme 'zenburn t)
-;; region有点看不清，单独设置
-(set-face-attribute 'region nil :background "#4C7073")
+(if (display-graphic-p)
+    (progn
+  ;; 这是需要最后加载
+      (load-theme 'zenburn t)
+      
+      ;; region有点看不清，单独设置
+      (set-face-attribute 'region nil :background "#4C7073"))
+  (progn
+    (set-face-attribute 'region nil :background "#4C7073" :foreground "Black"))
+  )
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
