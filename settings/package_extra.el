@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 11:00:05 lynnux>
+;; Time-stamp: <2021-11-27 14:55:25 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -16,6 +16,9 @@
 
 ;; 消除mode line上的minor提示字符
 (use-package diminish
+  :init
+  (with-eval-after-load 'eldoc
+    (diminish 'eldoc-mode))
   :commands(diminish))
 
 (autoload 'defhydra "hydra" nil t)
@@ -322,6 +325,7 @@ _c_: hide comment        _q_uit
   :defer 1
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
+  :diminish(yas-minor-mode)
   :config
   ;; copy from yasnippet-snippets.el，fix for eglot
   (defun yasnippet-snippets--no-indent ()
@@ -585,34 +589,15 @@ _q_uit
       (call-interactively 'clang-format-region)
     (call-interactively 'clang-format-buffer)))
 
-;; c-mode-common包含objc-mode(h文件默认这个)
-(add-hook 'c-mode-common-hook 'lynnux-c-mode-hook)
-(add-hook 'c++-mode-hook 'lynnux-c++-mode-hook)
-
-(defun lynnux-c-mode-hook ()
-  (setq c-hungry-delete-key t)		; 
-  ;;(setq c-auto-newline 1)
-  (c-set-style "stroustrup")
-  (local-set-key (kbd "C-c C-c") 'magit)
-  (setq clang-format-style "webkit") ; 只有这个默认tab是4个空格
-  ;; (local-set-key [(meta f8)] 'clang-format-auto)
-  )
-
-(defun lynnux-c++-mode-hook()
-  ;;c++ types
-  (font-lock-add-keywords 'c++-mode '(("\\<\\(static_assert\\|assert\\|ensure\\)\\>"
-				       . font-lock-warning-face)))
-  (font-lock-add-keywords 'c++-mode '(("\\pure\\>"
-				       . font-lock-keyword-face)))
-  (font-lock-add-keywords 'c++-mode '(("\\<u?\\(byte\\|short\\|int\\|long\\)\\>"	
-				       . font-lock-type-face)))
-  (font-lock-add-keywords 'c++-mode '(("\\<c?\\(float\\|double\\)\\>"	
-				       . font-lock-type-face)))
-  (font-lock-add-keywords 'c++-mode '(("\\<u?int\\(8\\|16\\|32\\)\\(_t\\)?\\>"
-				       . font-lock-type-face)))
-  (font-lock-add-keywords 'c++-mode '(("\\<s?size_t\\>"
-				       . 'font-lock-type-face)))
-  )
+(add-hook 'c-mode-common-hook 
+	  (lambda ()
+	    (abbrev-mode -1) ;; 有yas就够了
+	    (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
+	    (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
+	    (define-key c-mode-base-map "\177" nil) ;; backspack
+	    (setq clang-format-style "Google")
+	    (define-key c-mode-base-map [(meta f8)] 'clang-format-auto)
+	    ))
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist (append '(("\\.\\([Nn][Ss][Ii]\\)$" .
@@ -723,13 +708,11 @@ _q_uit
       (progn
 	(ggtag-all-buffer -1)
 	(remove-hook 'c-mode-common-hook 'ggtags-mode)
-	(remove-hook 'c++-mode-hook 'ggtags-mode)
 	(setq global-ggtags nil)
 	)
     (progn
       (ggtag-all-buffer 1)
       (add-hook 'c-mode-common-hook 'ggtags-mode)
-      (add-hook 'c++-mode-hook 'ggtags-mode)
       (setq global-ggtags t)
       )))
 
@@ -1083,6 +1066,9 @@ _q_uit
 	    ))
 	
 	(helm-mode 1)
+	(when (fboundp 'diminish)
+	  (add-hook 'helm-mode-hook (diminish 'helm-mode))
+	  )
 
 	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
 	;;   (message (ad-get-arg 2)))
@@ -1246,6 +1232,7 @@ _q_uit
 (if t
     (use-package indentinator
       :defer 1
+      :diminish
       :config
       (defun check-mode()
 	(unless (eq major-mode 'python-mode)
@@ -1599,7 +1586,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (add-hook 'c-mode-common-hook 'lsp-ensure)
-(add-hook 'c++-mode-hook 'lsp-ensure)
 (add-hook 'python-mode-hook 'lsp-ensure)
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
@@ -1638,12 +1624,14 @@ _q_uit
   :commands
   (rainbow-delimiters-mode)
   :hook
-  (prog-mode . (lambda ()
-		 (unless  (or 
-			   (eq major-mode 'emacs-lisp-mode)
-			   (eq major-mode 'lisp-interaction-mode)
-			   )
-		   (rainbow-delimiters-mode))))
+  (prog-mode . rainbow-delimiters-mode
+	     ;; (lambda ()
+	     ;; 	 (unless  (or 
+	     ;; 		   (eq major-mode 'emacs-lisp-mode)
+	     ;; 		   (eq major-mode 'lisp-interaction-mode)
+	     ;; 		   )
+	     ;; 	   (rainbow-delimiters-mode)))
+	     )
   :config
   (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#grey55")
   (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
@@ -1669,8 +1657,8 @@ _q_uit
 (use-package rainbow-blocks
   :defer 0.9
   :diminish
-  :hook
-  (emacs-lisp-mode . rainbow-blocks-mode)
+  ;;:hook
+  ;;(emacs-lisp-mode . rainbow-blocks-mode);; 这个看多了也烦
   :config
   (setq rainbow-blocks-highlight-braces-p t)
   (setq rainbow-blocks-highlight-brackets-p t)
@@ -1745,7 +1733,7 @@ _q_uit
 		   'c++-mode-hook
 		   'java-mode-hook
 		   'haskell-mode-hook
-		   'emacs-lisp-mode-hook  ;; 这个没装elisp dll也有效果
+		   'emacs-lisp-mode-hook ;; 这个没装elisp dll也有效果
 		   'lisp-interaction-mode-hook
 		   'lisp-mode-hook
 		   'maxima-mode-hook
@@ -1782,11 +1770,14 @@ _q_uit
 
     (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
     (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
-
-    (define-key grammatical-edit-mode-map (kbd "C-h") 'grammatical-edit-backward-delete)
-    (define-key grammatical-edit-mode-map (kbd "C-d") 'grammatical-edit-forward-delete)
+    
+    (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
+    (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
+    (define-key grammatical-edit-mode-map [remap delete-forward-char] 'grammatical-edit-forward-delete)
+    (define-key grammatical-edit-mode-map [remap delete-char] 'grammatical-edit-forward-delete)
     (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
 
+    ;; 也可以C-q 选中在直接(，[等
     (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
     (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
     (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
@@ -1796,6 +1787,25 @@ _q_uit
     ;; (define-key grammatical-edit-mode-map (kbd "M-p") 'grammatical-edit-jump-right)
     ;; (define-key grammatical-edit-mode-map (kbd "M-n") 'grammatical-edit-jump-left)
     (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+    
+    ;; 支持hungry delete
+    (dolist (key '( [remap delete-char]
+		    [remap delete-forward-char]))
+      (define-key grammatical-edit-mode-map key
+	;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+	'(menu-item "maybe-grammatical-edit-forward-delete" nil
+		    :filter (lambda (&optional _)
+			      (unless (looking-at-p "[[:space:]\n]")
+				#'grammatical-edit-forward-delete)))))
+
+    (dolist (key '([remap backward-delete-char-untabify]
+                   [remap backward-delete-char]
+                   [remap delete-backward-char]))
+      (define-key grammatical-edit-mode-map key
+	'(menu-item "maybe-grammatical-edit-backward-delete" nil
+		    :filter (lambda (&optional _)
+			      (unless (looking-back "[[:space:]\n]" 1)
+				#'grammatical-edit-backward-delete)))))
     ))
 
 ;; 这是需要最后加载
