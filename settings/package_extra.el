@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 18:01:24 lynnux>
+;; Time-stamp: <2021-11-27 18:59:38 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -347,10 +347,13 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c e") #'aya-expand)
   )
 
-;; tabbar, use tabbar-ruler
-(add-to-list 'load-path "~/.emacs.d/packages/tabbar") 
-(global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
-(global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
+(when (display-graphic-p)
+  (progn 
+    ;; tabbar, use tabbar-ruler
+    (add-to-list 'load-path "~/.emacs.d/packages/tabbar") 
+    (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
+    (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
+    ))
 
 ;; 参考easy-kill重写了C-TAB
 (defvar myswitch-buffer-list nil)
@@ -402,25 +405,36 @@ _c_: hide comment        _q_uit
     (myswitch_next_buffer))
   (myswitch-activate-keymap)
   )
-(global-set-key (kbd "<C-tab>")
-		'myswitch_next_buffer_start
-		)
-(global-set-key (if (string-equal system-type "windows-nt")
-		    (kbd "<C-S-tab>")
-		  (kbd "<C-S-iso-lefttab>"))
-		(lambda () 
-		  (interactive)
-		  (myswitch_next_buffer_start t))
-		)
+(if (display-graphic-p)
+    (progn
+  
+      (global-set-key (kbd "<C-tab>")
+		      'myswitch_next_buffer_start
+		      )
+      (global-set-key (if (string-equal system-type "windows-nt")
+			  (kbd "<C-S-tab>")
+			(kbd "<C-S-iso-lefttab>"))
+		      (lambda () 
+			(interactive)
+			(myswitch_next_buffer_start t))
+		      )
 
-;;org的C-tab基本上不用
-(with-eval-after-load 'org-mode-hook
-  (define-key org-mode-map (kbd "<C-tab>") nil))
+      ;;org的C-tab基本上不用
+      (with-eval-after-load 'org-mode-hook
+	(define-key org-mode-map (kbd "<C-tab>") nil))
 
-(setq EmacsPortable-global-tabbar 't)
-(require 'tabbar-ruler)
-(setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
-(setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
+      (setq EmacsPortable-global-tabbar 't)
+      (require 'tabbar-ruler)
+      (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
+      (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
+      )
+  (progn
+    (progn
+      (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
+      (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
+      )
+    )
+  )
 
 ;; highlight-symbol下岗啦，font lock速度慢，现在都是overlay。ahs范围小，还跟输入
 (use-package symbol-overlay
@@ -998,9 +1012,9 @@ _q_uit
   (setq imenu-list-idle-update-delay 0.5)
   (global-set-key [(control f4)] 'imenu-list-smart-toggle)
   :hook(imenu-list-major-mode . (lambda ()
-				  ;; 指示当前是在哪个函数里
-				  (face-remap-add-relative 'hl-line '(:background "#666"))
-				  )))
+				  (wen (display-graphic-p)
+				       ;; 指示当前是在哪个函数里     
+				       (face-remap-add-relative 'hl-line '(:background "#666"))))))
 
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
@@ -1116,108 +1130,108 @@ _q_uit
 						 )
 					       )
 					     ))
-	
-	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
-	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-	;; (define-key helm-map (kbd "TAB") 'helm-next-line)
-	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
-	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+	  
+	  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	  (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+	  ;; (define-key helm-map (kbd "TAB") 'helm-next-line)
+	  ;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
+	  ;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
 
-	;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
+	  ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	  (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	  (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	  (define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
 
-	;; helm-locate即everything里打开所在位置
-	(define-key helm-generic-files-map (kbd "C-x C-d")
-	  (lambda ()
-	    (interactive)
-	    (with-helm-alive-p
-	      (helm-exit-and-execute-action (lambda (file)
-					      (w32explore file)
-					      )))))
+	  ;; helm-locate即everything里打开所在位置
+	  (define-key helm-generic-files-map (kbd "C-x C-d")
+	    (lambda ()
+	      (interactive)
+	      (with-helm-alive-p
+		(helm-exit-and-execute-action (lambda (file)
+						(w32explore file)
+						)))))
+	  
+	  (when helm-echo-input-in-header-line
+	    (add-hook 'helm-minibuffer-set-up-hook
+		      'helm-hide-minibuffer-maybe))        
+	  )
+	;; 这功能不好写，将就用总比没有好吧
+	(defun helm-grep-search-parent-directory ()
+	  (interactive)
+	  (helm-run-after-exit (lambda ()
+				 (let* ((parent (file-name-directory (directory-file-name default-directory)))
+					(default-directory parent))
+				   (helm-grep-ag (expand-file-name parent) nil)))))
+	(defun helm-show-search()
+	  (interactive)
+	  (yank)
+	  )
 	
-	(when helm-echo-input-in-header-line
-	  (add-hook 'helm-minibuffer-set-up-hook
-		    'helm-hide-minibuffer-maybe))        
+	(with-eval-after-load 'helm-grep
+	  (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	  (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+	  ;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
+	  )
+	(with-eval-after-load 'helm-find
+	  (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	  )
+	(defadvice completing-read (before my-completing-read activate)
+	  (helm-mode 1))
+	(global-set-key (kbd "M-m") 'helm-imenu)
 	)
-      ;; 这功能不好写，将就用总比没有好吧
-      (defun helm-grep-search-parent-directory ()
-	(interactive)
-	(helm-run-after-exit (lambda ()
-			       (let* ((parent (file-name-directory (directory-file-name default-directory)))
-				      (default-directory parent))
-				 (helm-grep-ag (expand-file-name parent) nil)))))
-      (defun helm-show-search()
-	(interactive)
-	(yank)
+    (progn
+      ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
+      ;; minibuffer也不能用鼠标
+      (add-to-list 'load-path "~/.emacs.d/packages/swiper")
+      (autoload 'swiper "swiper" nil t)
+      (setq ivy-wrap t) ;; 可以loop选择
+      (setq ivy-count-format "(%d/%d) ")
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-height 20)
+      (setq enable-recursive-minibuffers t)
+      (global-set-key "\C-s" (lambda ()(interactive)
+			       (swiper (thing-at-point 'symbol))))
+      (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
+      (autoload 'ivy-resume "ivy" nil t)
+      (autoload 'ivy-mode "ivy" nil t)
+      (global-set-key (kbd "C-c C-r") 'ivy-resume)
+      (global-set-key (kbd "<f6>") 'ivy-resume)
+      ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
+      (global-set-key [f2] (lambda ()(interactive)
+			     (counsel-rg (thing-at-point 'symbol) default-directory)));; 默认git根目录，还是改为当前目录开始
+      (autoload 'counsel-rg "counsel" nil t)
+      (autoload 'counsel-M-x "counsel" nil t)
+      (autoload 'counsel-find-file "counsel" nil t)
+      (autoload 'counsel-describe-function "counsel" nil t)
+      (autoload 'counsel-describe-variable "counsel" nil t)
+      (autoload 'counsel-find-library "counsel" nil t)
+      (global-set-key (kbd "M-x") 'counsel-M-x)
+      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+      (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+      (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+      (global-set-key (kbd "<f1> l") 'counsel-find-library)
+      (global-set-key (kbd "M-m") 'counsel-imenu)
+      (with-eval-after-load 'ivy
+	(ivy-mode 1)
+	(define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+	(define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
+	(define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
+	(define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+	(define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+	(define-key ivy-minibuffer-map (kbd "C-v") 'nil)
+	(setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
+	;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
+	(push (cons #'swiper (lambda () (setq ivy-calling t)))
+              ivy-hooks-alist)
+	(push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
+              ivy-hooks-alist)
 	)
-      
-      (with-eval-after-load 'helm-grep
-	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	(define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
-	;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
-	)
-      (with-eval-after-load 'helm-find
-	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	)
+      ;; (with-eval-after-load 'counsel
+      ;;   (append counsel-rg-base-command "--no-ignore")) ; 好像不用加，不会搜索ignore的
       (defadvice completing-read (before my-completing-read activate)
-	(helm-mode 1))
-      (global-set-key (kbd "M-m") 'helm-imenu)
-      )
-  (progn
-    ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
-    ;; minibuffer也不能用鼠标
-    (add-to-list 'load-path "~/.emacs.d/packages/swiper")
-    (autoload 'swiper "swiper" nil t)
-    (setq ivy-wrap t) ;; 可以loop选择
-    (setq ivy-count-format "(%d/%d) ")
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-height 20)
-    (setq enable-recursive-minibuffers t)
-    (global-set-key "\C-s" (lambda ()(interactive)
-			     (swiper (thing-at-point 'symbol))))
-    (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
-    (autoload 'ivy-resume "ivy" nil t)
-    (autoload 'ivy-mode "ivy" nil t)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "<f6>") 'ivy-resume)
-    ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
-    (global-set-key [f2] (lambda ()(interactive)
-			   (counsel-rg (thing-at-point 'symbol) default-directory)));; 默认git根目录，还是改为当前目录开始
-    (autoload 'counsel-rg "counsel" nil t)
-    (autoload 'counsel-M-x "counsel" nil t)
-    (autoload 'counsel-find-file "counsel" nil t)
-    (autoload 'counsel-describe-function "counsel" nil t)
-    (autoload 'counsel-describe-variable "counsel" nil t)
-    (autoload 'counsel-find-library "counsel" nil t)
-    (global-set-key (kbd "M-x") 'counsel-M-x)
-    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-    (global-set-key (kbd "<f1> l") 'counsel-find-library)
-    (global-set-key (kbd "M-m") 'counsel-imenu)
-    (with-eval-after-load 'ivy
-      (ivy-mode 1)
-      (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-      (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
-      (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-      (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-      (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
-      (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
-      ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
-      (push (cons #'swiper (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-      (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-      )
-    ;; (with-eval-after-load 'counsel
-    ;;   (append counsel-rg-base-command "--no-ignore")) ; 好像不用加，不会搜索ignore的
-    (defadvice completing-read (before my-completing-read activate)
-      (ivy-mode 1))
-    (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
-    ))
+	(ivy-mode 1))
+      (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
+      ))
 
 ;; defer加载要比smartparens早
 (if t
