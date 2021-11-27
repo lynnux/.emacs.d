@@ -1,2 +1,8 @@
 https://github.com/emacs-tree-sitter/elisp-tree-sitter 下载编译好的tsc-dyn.dll，tsc-dyn.dll放到core目录里，创建一个DYN-VERSION文件，内容是版本如0.15.2
 https://github.com/emacs-tree-sitter/tree-sitter-langs 下载编译好的windows langs包解压放到langs/bin目录，确保langs/bin下面有BUNDLE-VERSION文件（下载里已包含）
+
+elisp需要自己编译
+https://github.com/Wilfred/tree-sitter-elisp
+打开vs2013命令行
+cl -c parser.c -I .
+link -DLL -out:elisp.dll parser.obj

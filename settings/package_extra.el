@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 14:55:25 lynnux>
+;; Time-stamp: <2021-11-27 15:38:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1067,7 +1067,7 @@ _q_uit
 	
 	(helm-mode 1)
 	(when (fboundp 'diminish)
-	  (add-hook 'helm-mode-hook (diminish 'helm-mode))
+	  (add-hook 'helm-mode-hook (lambda ()(diminish 'helm-mode)))
 	  )
 
 	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
@@ -1695,6 +1695,7 @@ _q_uit
 	  c++-mode 
 	  css-mode 
 	  elm-mode 
+	  ;;emacs-lisp-mode ;; 测试elisp好像毛用都没有
 	  go-mode 
 	  hcl-mode
 	  html-mode 
@@ -1720,9 +1721,12 @@ _q_uit
 	  tuareg-mode
 	  typescript-mode) . tree-sitter-hl-mode)
   :config
+  ;; 测试elisp好像毛用都没有
+  ;;(add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
   (use-package tree-sitter-langs)
   )
 
+;; 没有elisp也照样工作，奇怪了
 (when t
   (use-package grammatical-edit
     :commands(grammatical-edit-mode)
