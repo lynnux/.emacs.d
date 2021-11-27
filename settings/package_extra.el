@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-26 17:52:55 lynnux>
+;; Time-stamp: <2021-11-27 11:00:05 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -804,6 +804,8 @@ _q_uit
 
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
+(use-package expand-region
+  :commands(er/expand-region))
 ;; (autoload 'er/expand-region "expand-region" nil t)
 ;; (autoload 'er/contract-region "expand-region" nil t)
 ;; (global-set-key "\C-t" 'er/expand-region)
@@ -919,13 +921,13 @@ _q_uit
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
 
-(if nil
-    (use-package elec-pair
-      :config
-      (electric-pair-mode 1)
-      (global-set-key (kbd "M-a") 'backward-sexp)
-      (global-set-key (kbd "M-e") 'forward-sexp)
-      )
+(when nil
+  (use-package elec-pair
+    :config
+    (electric-pair-mode 1)
+    (global-set-key (kbd "M-a") 'backward-sexp)
+    (global-set-key (kbd "M-e") 'forward-sexp)
+    )
   
   (use-package smartparens-config
     :defer 0.9
@@ -1223,15 +1225,15 @@ _q_uit
 
 ;; defer加载要比smartparens早
 (if t
-    (use-package smart-hungry-delete
-      :defer 0.8
-      :config
-      (smart-hungry-delete-add-default-hooks)
-      (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
-      (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
-      (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
-      (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
-      )
+  (use-package smart-hungry-delete
+    :defer 0.8
+    :config
+    (smart-hungry-delete-add-default-hooks)
+    (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
+    (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
+    (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
+    (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
+    )
   (use-package hungry-delete
     :defer 0.8
     :config
@@ -1240,7 +1242,7 @@ _q_uit
     )  
   )
 
-;; 自动indent
+;; 自动indent，indentinator有肉眼可见的闪动，但执行良好，aggressive-indent经常不起作用
 (if t
     (use-package indentinator
       :defer 1
@@ -1364,7 +1366,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (global-set-key [remap kill-ring-save] 'easy-kill)
 (autoload 'easy-kill "easy-kill" nil t)
 (autoload 'easy-mark "easy-kill" nil t)
-(global-set-key "\C-t" 'easy-mark) ; 替换expand-region
+;; 有选中或者mark时用expand-region，否则用easy-mark
+(global-set-key "\C-t" (lambda ()(interactive)
+			 (if (region-active-p)
+			     (call-interactively 'er/expand-region)
+			   (call-interactively 'easy-mark)
+			  ))) ; 替换expand-region
+
 (with-eval-after-load 'easy-kill
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
@@ -1683,12 +1691,115 @@ _q_uit
 (use-package fd-dired
   :commands(fd-dired))
 
+;; tree sitter
+(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
+(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
+(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
+(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
+(setq tree-sitter-langs--testing t) ;; 静止联网check bin
+;; tsc里的(require 'dired-aux) 导致dired被加载了
+(use-package tree-sitter-hl
+  :init
+  ;; 来自tree-sitter-major-mode-language-alist
+  :hook ((sh-mode
+	  c-mode
+	  csharp-mode
+	  c++-mode 
+	  css-mode 
+	  elm-mode 
+	  go-mode 
+	  hcl-mode
+	  html-mode 
+	  mhtml-mode
+	  java-mode 
+	  javascript-mode
+	  js-mode 
+	  js2-mode
+	  js3-mode
+	  json-mode
+	  jsonc-mode
+	  julia-mode 
+	  ocaml-mode 
+	  php-mode 
+	  python-mode
+	  pygn-mode 
+	  rjsx-mode 
+	  ruby-mode 
+	  rust-mode
+	  rustic-mode
+	  scala-mode
+	  swift-mode
+	  tuareg-mode
+	  typescript-mode) . tree-sitter-hl-mode)
+  :config
+  (use-package tree-sitter-langs)
+  )
+
+(when t
+  (use-package grammatical-edit
+    :commands(grammatical-edit-mode)
+    :init
+    (dolist (hook (list
+		   'c-mode-common-hook
+		   'c-mode-hook
+		   'c++-mode-hook
+		   'java-mode-hook
+		   'haskell-mode-hook
+		   'emacs-lisp-mode-hook  ;; 这个没装elisp dll也有效果
+		   'lisp-interaction-mode-hook
+		   'lisp-mode-hook
+		   'maxima-mode-hook
+		   'ielm-mode-hook
+		   'sh-mode-hook
+		   'makefile-gmake-mode-hook
+		   'php-mode-hook
+		   'python-mode-hook
+		   'js-mode-hook
+		   'go-mode-hook
+		   'qml-mode-hook
+		   'jade-mode-hook
+		   'css-mode-hook
+		   'ruby-mode-hook
+		   'coffee-mode-hook
+		   'rust-mode-hook
+		   'qmake-mode-hook
+		   'lua-mode-hook
+		   'swift-mode-hook
+		   'minibuffer-inactive-mode-hook
+		   ))
+      (add-hook hook '(lambda () (grammatical-edit-mode 1))))
+    :config
+    (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
+    (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
+    (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
+    (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
+    (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
+    (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
+    (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
+
+    (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
+    (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
+
+    (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
+    (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
+
+    (define-key grammatical-edit-mode-map (kbd "C-h") 'grammatical-edit-backward-delete)
+    (define-key grammatical-edit-mode-map (kbd "C-d") 'grammatical-edit-forward-delete)
+    (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
+
+    (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
+    (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
+    (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
+    (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
+    (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
+
+    ;; (define-key grammatical-edit-mode-map (kbd "M-p") 'grammatical-edit-jump-right)
+    ;; (define-key grammatical-edit-mode-map (kbd "M-n") 'grammatical-edit-jump-left)
+    (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+    ))
+
 ;; 这是需要最后加载
 (load-theme 'zenburn t)
 ;; region有点看不清，单独设置
 (set-face-attribute 'region nil :background "#4C7073")
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
-
-
-;; 可参考的配置
-;; https://github.com/jur0/dotemacs 说是基于https://protesilaos.com/emacs/dotemacs，但后者有点乱~~
