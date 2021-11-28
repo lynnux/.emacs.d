@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 18:59:38 lynnux>
+;; Time-stamp: <2021-11-28 20:19:33 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -38,6 +38,8 @@ _q_uit
 (use-package dired
   :load-path "~/.emacs.d/packages/dired"
   :init
+  (use-package diredfl
+    :hook(dired-mode . diredfl-mode))
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   :commands(dired dired-jump)
@@ -126,9 +128,38 @@ _q_uit
     
     (define-key dired-mode-map "f" 'dired-filter-map-select/body)
     )
+  ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
+  ;; 但粘贴时也要一个一个粘贴
+  (use-package dired-ranger
+    :config
+    (define-key dired-mode-map "z" 'dired-do-compress-to)
+    (define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
+    (define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
+    (define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
+    (defun dired-ranger-clear()
+      (interactive)
+      (let ((count (ring-size dired-ranger-copy-ring))
+	    (s 0))
+	(while (< s count )
+	  (ring-remove dired-ranger-copy-ring 0)
+	  (setq s (1+ s)))))
+    ;; 显示ring里的文件，可惜没有去重复啊
+    (defun dired-ranger-show-ring()
+      (let ((l (ring-elements dired-ranger-copy-ring))
+	    (s ""))
+	(dolist (ll l)
+	  (dolist (path (cdr ll))
+	    (setq s (concat s (file-name-nondirectory path) "\n"))
+	    )
+	  )
+	(message s)
+	))
+    (defadvice dired-ranger-paste (after my-dired-ranger-paste activate)
+      (dired-ranger-show-ring))
+    (defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
+      (dired-ranger-show-ring))
+    )
   )
-(use-package diredfl
-  :hook(dired-mode . diredfl-mode))
 
 
 ;; Save point position in buffer.
