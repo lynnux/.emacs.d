@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-28 20:19:33 lynnux>
+;; Time-stamp: <2021-11-28 21:59:23 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -35,16 +35,25 @@ _q_uit
       ("q" nil "nil" :color blue))
 (global-set-key (kbd "C-c b") 'hydra-bookmark/body)
 
+;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
+  ;;:disabled
   :load-path "~/.emacs.d/packages/dired"
   :init
-  (use-package diredfl
-    :hook(dired-mode . diredfl-mode))
+  ;; 用dired+自带的
+  ;; (use-package diredfl
+  ;;   :hook(dired-mode . diredfl-mode)) ;; 对自定义time处理有bug
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   :commands(dired dired-jump)
   :config
-  
+
+  ;; 这个还是很强大的，特别是鼠标右键
+  (use-package dired+
+    :init
+    (setq diredp-hide-details-initially-flag nil) ;; 默认detail
+    )
+
   (when (string-equal system-type "windows-nt")
     (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
     ;; 真正实现是在files.el里的insert-directory
@@ -77,7 +86,7 @@ _q_uit
   (define-key dired-mode-map "w" 'View-scroll-page-backward)
   (define-key dired-mode-map "W" 'dired-copy-filename-as-kill)
   (define-key dired-mode-map "1" 'delete-other-windows)
-  
+
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
   (require 'dired-quick-sort)
@@ -89,77 +98,77 @@ _q_uit
     :config
     (defhydra dired-filter-map-select ()
       "
-_._: by extension         _n_: by name
-_f_: by file              _d_: by directory
-_m_: by mode              _e_: by predicate
-_r_: by regexp            _s_: by symlink
-_g_: by garbage           _h_: by dot files
-_o_: by omit              _p_: pop
-_x_: by executable        _|_: or
-_TAB_: transpose          _!_: negate
-_*_: decompose            _S_: save filters
-_/_: pop all              _A_: add saved filters
-_D_: delete saved filters _L_: load saved filters
-_q_uit
-"
-      ("TAB" dired-filter-transpose nil :color blue)
-      ("!" dired-filter-negate nil :color blue) ;; 配合rename是真牛B啊！
-      ("*" dired-filter-decompose nil :color blue)
-      ("." dired-filter-by-extension nil :color blue)
-      ("/" dired-filter-pop-all nil :color blue)
-      ("A" dired-filter-add-saved-filters nil :color blue) ;; 显示不了？
-      ("D" dired-filter-delete-saved-filters nil :color blue)
-      ("L" dired-filter-load-saved-filters nil :color blue) ;; 不懂
-      ("S" dired-filter-save-filters nil :color blue)
-      ("d" dired-filter-by-directory nil :color blue)
-      ("e" dired-filter-by-predicate nil :color blue)
-      ("f" dired-filter-by-file nil :color blue)
-      ("g" dired-filter-by-garbage nil :color blue)
-      ("h" dired-filter-by-dot-files nil :color blue)
-      ("m" dired-filter-by-mode nil :color blue)
-      ("n" dired-filter-by-name nil :color blue)
-      ("o" dired-filter-by-omit nil :color blue)
-      ("p" dired-filter-pop nil :color blue)
-      ("r" dired-filter-by-regexp nil :color blue)
-      ("s" dired-filter-by-symlink nil :color blue)
-      ("x" dired-filter-by-executable nil :color blue)
-      ("|" dired-filter-or nil :color blue)
-      ("q" nil "nil" :color blue))
-    
-    (define-key dired-mode-map "f" 'dired-filter-map-select/body)
-    )
-  ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
-  ;; 但粘贴时也要一个一个粘贴
-  (use-package dired-ranger
-    :config
-    (define-key dired-mode-map "z" 'dired-do-compress-to)
-    (define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
-    (define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
-    (define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
-    (defun dired-ranger-clear()
-      (interactive)
-      (let ((count (ring-size dired-ranger-copy-ring))
-	    (s 0))
-	(while (< s count )
-	  (ring-remove dired-ranger-copy-ring 0)
-	  (setq s (1+ s)))))
-    ;; 显示ring里的文件，可惜没有去重复啊
-    (defun dired-ranger-show-ring()
-      (let ((l (ring-elements dired-ranger-copy-ring))
-	    (s ""))
-	(dolist (ll l)
-	  (dolist (path (cdr ll))
-	    (setq s (concat s (file-name-nondirectory path) "\n"))
-	    )
-	  )
-	(message s)
-	))
-    (defadvice dired-ranger-paste (after my-dired-ranger-paste activate)
-      (dired-ranger-show-ring))
-    (defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
-      (dired-ranger-show-ring))
-    )
-  )
+  _._: by extension         _n_: by name
+  _f_: by file              _d_: by directory
+  _m_: by mode              _e_: by predicate
+  _r_: by regexp            _s_: by symlink
+  _g_: by garbage           _h_: by dot files
+  _o_: by omit              _p_: pop
+  _x_: by executable        _|_: or
+  _TAB_: transpose          _!_: negate
+  _*_: decompose            _S_: save filters
+  _/_: pop all              _A_: add saved filters
+  _D_: delete saved filters _L_: load saved filters
+  _q_uit
+  "
+        ("TAB" dired-filter-transpose nil :color blue)
+        ("!" dired-filter-negate nil :color blue) ;; 配合rename是真牛B啊！
+        ("*" dired-filter-decompose nil :color blue)
+        ("." dired-filter-by-extension nil :color blue)
+        ("/" dired-filter-pop-all nil :color blue)
+        ("A" dired-filter-add-saved-filters nil :color blue) ;; 显示不了？
+        ("D" dired-filter-delete-saved-filters nil :color blue)
+        ("L" dired-filter-load-saved-filters nil :color blue) ;; 不懂
+        ("S" dired-filter-save-filters nil :color blue)
+        ("d" dired-filter-by-directory nil :color blue)
+	("e" dired-filter-by-predicate nil :color blue)
+	("f" dired-filter-by-file nil :color blue)
+	("g" dired-filter-by-garbage nil :color blue)
+	("h" dired-filter-by-dot-files nil :color blue)
+	("m" dired-filter-by-mode nil :color blue)
+	("n" dired-filter-by-name nil :color blue)
+	("o" dired-filter-by-omit nil :color blue)
+	("p" dired-filter-pop nil :color blue)
+	("r" dired-filter-by-regexp nil :color blue)
+	("s" dired-filter-by-symlink nil :color blue)
+	("x" dired-filter-by-executable nil :color blue)
+	("|" dired-filter-or nil :color blue)
+	("q" nil "nil" :color blue))
+	
+	(define-key dired-mode-map "f" 'dired-filter-map-select/body)
+	)
+      ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
+      ;; 但粘贴时也要一个一个粘贴
+      (use-package dired-ranger
+	:config
+	(define-key dired-mode-map "z" 'dired-do-compress-to)
+	(define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
+	(define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
+	(define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
+	(defun dired-ranger-clear()
+	  (interactive)
+	  (let ((count (ring-size dired-ranger-copy-ring))
+		(s 0))
+	    (while (< s count )
+	      (ring-remove dired-ranger-copy-ring 0)
+	      (setq s (1+ s)))))
+	;; 显示ring里的文件，可惜没有去重复啊
+	(defun dired-ranger-show-ring()
+	  (let ((l (ring-elements dired-ranger-copy-ring))
+		(s ""))
+	    (dolist (ll l)
+	      (dolist (path (cdr ll))
+		(setq s (concat s (file-name-nondirectory path) "\n"))
+		)
+	      )
+	    (message s)
+	    ))
+	(defadvice dired-ranger-paste (after my-dired-ranger-paste activate)
+	  (dired-ranger-show-ring))
+	(defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
+	  (dired-ranger-show-ring))
+	)
+      )
 
 
 ;; Save point position in buffer.
@@ -1595,7 +1604,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (with-eval-after-load 'bookmark
     (define-key bookmark-bmenu-mode-map "?" (lambda ()(interactive)(which-key-show-keymap 'bookmark-bmenu-mode-map))))
   (with-eval-after-load 'dired
-    (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map))))
+    (unless (featurep 'dired+) ;; dired+ has `diredp-dired-plus-help`
+      (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))))
   :commands(which-key-show-keymap))
 
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
