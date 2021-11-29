@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-28 21:59:23 lynnux>
+;; Time-stamp: <2021-11-29 14:48:58 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -642,23 +642,18 @@ _q_uit
       (save-place-find-file-hook))
     ))
 
-;; clang-format
-(autoload 'clang-format-region "clang-format" "" t)
-(autoload 'clang-format-buffer "clang-format" "" t)
-(defun clang-format-auto ()
-  (interactive)
-  (if (or (not transient-mark-mode) (region-active-p))
-      (call-interactively 'clang-format-region)
-    (call-interactively 'clang-format-buffer)))
+(use-package google-c-style
+  :commands(google-set-c-style))
+
 
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
+	    (google-set-c-style)
+	    (setq c-basic-offset 4) ;; tab4个空格习惯了
 	    (abbrev-mode -1) ;; 有yas就够了
 	    (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
 	    (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
 	    (define-key c-mode-base-map "\177" nil) ;; backspack
-	    (setq clang-format-style "Google")
-	    (define-key c-mode-base-map [(meta f8)] 'clang-format-auto)
 	    ))
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
@@ -1620,7 +1615,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       :commands (eglot eglot-ensure eglot-rename)
       :config
       (add-to-list 'eglot-stay-out-of 'flymake)
-      (setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
+      (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
       (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
             eglot-ignored-server-capabilities) 
       ;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
@@ -1630,6 +1625,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	ad-do-it
 	(setq tmp-disable-view-mode nil)
 	)
+      ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
       )
 
   ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
@@ -1720,8 +1717,8 @@ _q_uit
 
 ;; 对elisp代码非常有用，但是有bug经常部分不变色，将就用 https://github.com/istib/rainbow-blocks/issues/4
 (use-package rainbow-blocks
-  :defer 0.9
   :diminish
+  :commands(rainbow-blocks-mode)
   ;;:hook
   ;;(emacs-lisp-mode . rainbow-blocks-mode);; 这个看多了也烦
   :config

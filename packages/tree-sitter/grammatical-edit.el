@@ -318,15 +318,19 @@ When in comment, kill to the beginning of the line."
   ;; Indent wrap area.
   (grammatical-edit-indent-parent-area)
 
-  ;; Jump to wrap start position.
-  (when (grammatical-edit-outside-of-list-p)
+  ;; Backward char if cursor in nested roud, such as `( ... )|)`
+  (when (grammatical-edit-nested-round-p)
     (backward-char 1))
+  ;; Jump to start position of parent node.
   (goto-char (tsc-node-start-position (tsc-get-parent (tree-sitter-node-at-point)))))
 
-(defun grammatical-edit-outside-of-list-p ()
+(defun grammatical-edit-nested-round-p ()
   (save-excursion
     (backward-char 1)
-    (eq (tsc-node-type (tsc-get-parent (tree-sitter-node-at-point))) 'list)))
+    (let ((node-type (tsc-node-type (tree-sitter-node-at-point))))
+      (or (string-equal node-type ")")
+          (string-equal node-type "]")
+          (string-equal node-type "}")))))
 
 (defun grammatical-edit-wrap-round-pair ()
   (interactive)
