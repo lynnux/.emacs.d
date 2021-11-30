@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-29 14:48:58 lynnux>
+;; Time-stamp: <2021-11-30 11:17:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1757,7 +1757,7 @@ _q_uit
 	  c++-mode 
 	  css-mode 
 	  elm-mode 
-	  ;;emacs-lisp-mode ;; 测试elisp好像毛用都没有
+	  emacs-lisp-mode ;; 测试elisp好像毛用都没有
 	  go-mode 
 	  hcl-mode
 	  html-mode 
@@ -1784,7 +1784,7 @@ _q_uit
 	  typescript-mode) . tree-sitter-hl-mode)
   :config
   ;; 测试elisp好像毛用都没有
-  ;;(add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
+  (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
   (use-package tree-sitter-langs)
   )
 

@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 17:19:26 lynnux>
+;; Time-stamp: <2021-11-30 10:38:18 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -246,7 +246,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
               bidi-paragraph-direction 'left-to-right)
 (setq-default bidi-inhibit-bpa t)
 (setq-default cursor-in-non-selected-windows nil)
-(setq highlight-nonselected-windows nil)
+;; (setq highlight-nonselected-windows nil) 有些不自然，比如diff的时候
 (setq fast-but-imprecise-scrolling t)
 (setq ffap-machine-p-known 'reject)
 (setq frame-inhibit-implied-resize t)

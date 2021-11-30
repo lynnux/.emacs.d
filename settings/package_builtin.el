@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-25 09:42:55 lynnux>
+;; Time-stamp: <2021-11-30 11:22:03 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -311,3 +311,22 @@ Run occur in all buffers whose names match this type for REXP."
 
 ;;; inf文件
 (add-to-list 'auto-mode-alist '("\\.inf\\'" . conf-windows-mode))
+
+(with-eval-after-load 'ediff
+  (setq ediff-diff-options "-w" ; turn off whitespace checking
+	ediff-split-window-function #'split-window-horizontally ;; 总是左右两个窗口
+	ediff-window-setup-function #'ediff-setup-windows-plain) ;; 禁止ediff小窗新开frame
+  (defvar doom--ediff-saved-wconf nil)  
+  ;; Restore window config after quitting ediff
+  
+  (defun doom-ediff-save-wconf-h ()
+    (setq doom--ediff-saved-wconf (current-window-configuration)))
+  (defun doom-ediff-restore-wconf-h ()
+    (when (window-configuration-p doom--ediff-saved-wconf)
+      (set-window-configuration doom--ediff-saved-wconf)))
+  (add-hook 'ediff-before-setup-hook 'doom-ediff-save-wconf-h)
+  (add-hook 'ediff-quit-hook 'doom-ediff-restore-wconf-h)
+  (add-hook 'ediff-suspend-hook 'doom-ediff-restore-wconf-h)
+  )
+
+
