@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 16:51:22 lynnux>
+;; Time-stamp: <2021-12-03 21:19:29 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1754,7 +1754,7 @@ _q_uit
 (setq tree-sitter-langs--testing t) ;; 静止联网check bin
 ;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
-  :init
+  :commands(tree-sitter-hl-mode)
   ;; 来自tree-sitter-major-mode-language-alist
   :hook ((sh-mode
 	  c-mode
@@ -1762,7 +1762,7 @@ _q_uit
 	  c++-mode 
 	  css-mode 
 	  elm-mode 
-	  emacs-lisp-mode ;; 测试elisp好像毛用都没有
+	  emacs-lisp-mode ;; 需要自己编译
 	  go-mode 
 	  hcl-mode
 	  html-mode 
@@ -1786,98 +1786,67 @@ _q_uit
 	  scala-mode
 	  swift-mode
 	  tuareg-mode
-	  typescript-mode) . tree-sitter-hl-mode)
+	  typescript-mode) . (lambda ()
+			       (tree-sitter-hl-mode)
+			       (grammatical-edit-mode 1)
+			       ))
   :config
-  ;; 测试elisp好像毛用都没有
+  ;; elisp没有高亮
   (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
   (use-package tree-sitter-langs)
   )
 
-;; 没有elisp也照样工作，奇怪了
-(when t
-  (use-package grammatical-edit
-    :commands(grammatical-edit-mode)
-    :init
-    (dolist (hook (list
-		   'c-mode-common-hook
-		   'c-mode-hook
-		   'c++-mode-hook
-		   'java-mode-hook
-		   'haskell-mode-hook
-		   'emacs-lisp-mode-hook ;; 这个没装elisp dll也有效果
-		   'lisp-interaction-mode-hook
-		   'lisp-mode-hook
-		   'maxima-mode-hook
-		   'ielm-mode-hook
-		   'sh-mode-hook
-		   'makefile-gmake-mode-hook
-		   'php-mode-hook
-		   'python-mode-hook
-		   'js-mode-hook
-		   'go-mode-hook
-		   'qml-mode-hook
-		   'jade-mode-hook
-		   'css-mode-hook
-		   'ruby-mode-hook
-		   'coffee-mode-hook
-		   'rust-mode-hook
-		   'qmake-mode-hook
-		   ;; 'lua-mode-hook
-		   'swift-mode-hook
-		   'minibuffer-inactive-mode-hook
-		   ))
-      (add-hook hook '(lambda () (grammatical-edit-mode 1))))
-    :config
-    (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
-    (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
-    (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
-    (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
-    (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
-    (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
-    (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
+(use-package grammatical-edit
+  :commands(grammatical-edit-mode)
+  :config
+  (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
+  (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
+  (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
+  (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
+  (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
+  (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
+  (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
 
-    (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
-    (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
+  (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
+  (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
 
-    (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
-    (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
-    
-    (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
-    (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
-    (define-key grammatical-edit-mode-map [remap delete-forward-char] 'grammatical-edit-forward-delete)
-    (define-key grammatical-edit-mode-map [remap delete-char] 'grammatical-edit-forward-delete)
-    (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
+  (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
+  (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
+  
+  (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
+  (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
+  (define-key grammatical-edit-mode-map [remap delete-forward-char] 'grammatical-edit-forward-delete)
+  (define-key grammatical-edit-mode-map [remap delete-char] 'grammatical-edit-forward-delete)
+  (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
 
-    ;; 也可以C-q 选中在直接(，[等
-    (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
-    (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
-    (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
-    (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
-    (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
+  ;; 也可以C-q 选中在直接(，[等
+  (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
+  (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
+  (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
+  (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
+  (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
 
-    ;; (define-key grammatical-edit-mode-map (kbd "M-p") 'grammatical-edit-jump-right)
-    ;; (define-key grammatical-edit-mode-map (kbd "M-n") 'grammatical-edit-jump-left)
-    (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
-    
-    ;; 支持hungry delete
-    (dolist (key '( [remap delete-char]
-		    [remap delete-forward-char]))
-      (define-key grammatical-edit-mode-map key
-	;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-	'(menu-item "maybe-grammatical-edit-forward-delete" nil
-		    :filter (lambda (&optional _)
-			      (unless (looking-at-p "[[:space:]\n]")
-				#'grammatical-edit-forward-delete)))))
+  (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
 
-    (dolist (key '([remap backward-delete-char-untabify]
-                   [remap backward-delete-char]
-                   [remap delete-backward-char]))
-      (define-key grammatical-edit-mode-map key
-	'(menu-item "maybe-grammatical-edit-backward-delete" nil
-		    :filter (lambda (&optional _)
-			      (unless (looking-back "[[:space:]\n]" 1)
-				#'grammatical-edit-backward-delete)))))
-    ))
+  ;; 支持hungry delete
+  (dolist (key '( [remap delete-char]
+		  [remap delete-forward-char]))
+    (define-key grammatical-edit-mode-map key
+      ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+      '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		  :filter (lambda (&optional _)
+			    (unless (looking-at-p "[[:space:]\n]")
+			      #'grammatical-edit-forward-delete)))))
+
+  (dolist (key '([remap backward-delete-char-untabify]
+		 [remap backward-delete-char]
+		 [remap delete-backward-char]))
+    (define-key grammatical-edit-mode-map key
+      '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		  :filter (lambda (&optional _)
+			    (unless (looking-back "[[:space:]\n]" 1)
+			      #'grammatical-edit-backward-delete)))))
+  )
 
 (with-eval-after-load 'python
   (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
@@ -1885,7 +1854,7 @@ _q_uit
 
 (if (display-graphic-p)
     (progn
-  ;; 这是需要最后加载
+      ;; 这是需要最后加载
       (load-theme 'zenburn t)
       
       ;; region有点看不清，单独设置

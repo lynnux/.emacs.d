@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-30 10:38:18 lynnux>
+;; Time-stamp: <2021-12-03 21:20:53 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -237,6 +237,10 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (move-end-of-line 1)
   (newline-and-indent))
 (global-set-key (kbd "S-<return>") 'sanityinc/newline-at-end-of-line) ;; shift RET直接新开一行！
+
+;; C-m-f C-m-b不好按，用下面代替
+(global-set-key (kbd "M-e") 'forward-sexp)
+(global-set-key (kbd "M-a") 'backward-sexp)
 
 ;; 各种尝试优化emacs速度，好像有点效果^_^
 ;; https://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
