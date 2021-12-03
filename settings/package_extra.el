@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 10:17:10 lynnux>
+;; Time-stamp: <2021-12-03 13:26:22 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1653,7 +1653,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 				(when (derived-mode-p 'c-mode 'c++-mode)
 				  (lsp-ensure)
 				  )))
-;; (add-hook 'python-mode-hook 'lsp-ensure)
+(add-hook 'python-mode-hook 'lsp-ensure)
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
@@ -1878,6 +1878,10 @@ _q_uit
 			      (unless (looking-back "[[:space:]\n]" 1)
 				#'grammatical-edit-backward-delete)))))
     ))
+
+(with-eval-after-load 'python
+  (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
+  )
 
 (if (display-graphic-p)
     (progn
