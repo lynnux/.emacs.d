@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 13:26:22 lynnux>
+;; Time-stamp: <2021-12-03 16:51:22 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1049,7 +1049,7 @@ _q_uit
   (setq imenu-list-idle-update-delay 0.5)
   (global-set-key [(control f4)] 'imenu-list-smart-toggle)
   :hook(imenu-list-major-mode . (lambda ()
-				  (wen (display-graphic-p)
+				  (when (display-graphic-p)
 				       ;; 指示当前是在哪个函数里     
 				       (face-remap-add-relative 'hl-line '(:background "#666"))))))
 
