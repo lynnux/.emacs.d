@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 21:19:29 lynnux>
+;; Time-stamp: <2021-12-03 21:36:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1799,19 +1799,20 @@ _q_uit
 (use-package grammatical-edit
   :commands(grammatical-edit-mode)
   :config
-  (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
-  (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
-  (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
-  (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
-  (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
-  (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
-  (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
+  (electric-pair-mode 1) ;; grammatical-edit bug太多了，pair用这个就够了
+  ;; (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
+  ;; (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
+  ;; (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
+  ;; (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
+  ;; (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
+  ;; (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
+  ;; (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
 
-  (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
-  (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
+  ;; (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
+  ;; (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
 
-  (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
-  (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
+  ;; (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
+  ;; (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
   
   (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
   (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
