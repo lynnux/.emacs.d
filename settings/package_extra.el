@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-30 11:17:28 lynnux>
+;; Time-stamp: <2021-12-03 10:17:10 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -645,15 +645,17 @@ _q_uit
 (use-package google-c-style
   :commands(google-set-c-style))
 
-
+;; cc-mode包含java等
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
-	    (google-set-c-style)
-	    (setq c-basic-offset 4) ;; tab4个空格习惯了
-	    (abbrev-mode -1) ;; 有yas就够了
-	    (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
-	    (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
-	    (define-key c-mode-base-map "\177" nil) ;; backspack
+	    (when (derived-mode-p 'c-mode 'c++-mode)
+	      (google-set-c-style)
+	      (setq c-basic-offset 4) ;; tab4个空格习惯了
+	      (abbrev-mode -1) ;; 有yas就够了
+	      (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
+	      (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
+	      (define-key c-mode-base-map "\177" nil) ;; backspack
+	      )
 	    ))
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
@@ -1647,8 +1649,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
-(add-hook 'c-mode-common-hook 'lsp-ensure)
-(add-hook 'python-mode-hook 'lsp-ensure)
+(add-hook 'c-mode-common-hook (lambda ()
+				(when (derived-mode-p 'c-mode 'c++-mode)
+				  (lsp-ensure)
+				  )))
+;; (add-hook 'python-mode-hook 'lsp-ensure)
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
@@ -1817,7 +1822,7 @@ _q_uit
 		   'coffee-mode-hook
 		   'rust-mode-hook
 		   'qmake-mode-hook
-		   'lua-mode-hook
+		   ;; 'lua-mode-hook
 		   'swift-mode-hook
 		   'minibuffer-inactive-mode-hook
 		   ))
