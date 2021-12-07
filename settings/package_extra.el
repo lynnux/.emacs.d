@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 21:36:20 lynnux>
+;; Time-stamp: <2021-12-07 10:00:25 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -649,6 +649,11 @@ _q_uit
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
 	    (when (derived-mode-p 'c-mode 'c++-mode)
+	      ;; 保存时自动format，同时禁用自动indent，因为下面的google style跟clang-format的google有点不一致
+	      (add-hook 'before-save-hook (lambda()
+					    (when (featurep 'eglot)
+					      (eglot-format))
+					    ) nil 'local)
 	      (google-set-c-style)
 	      (setq c-basic-offset 4) ;; tab4个空格习惯了
 	      (abbrev-mode -1) ;; 有yas就够了
@@ -964,13 +969,6 @@ _q_uit
 
 
 (when nil
-  (use-package elec-pair
-    :config
-    (electric-pair-mode 1)
-    (global-set-key (kbd "M-a") 'backward-sexp)
-    (global-set-key (kbd "M-e") 'forward-sexp)
-    )
-  
   (use-package smartparens-config
     :defer 0.9
     :init
@@ -1296,9 +1294,10 @@ _q_uit
       :diminish
       :config
       (defun check-mode()
-	(unless (eq major-mode 'python-mode)
+	(unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
+		    (eq major-mode 'python-mode))
 	  (indentinator-mode)))
-      (define-globalized-minor-mode global-indentinator-mode indentinator-mode indentinator-mode)
+      (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
       (global-indentinator-mode 1)
       )
   (use-package aggressive-indent
@@ -1796,10 +1795,15 @@ _q_uit
   (use-package tree-sitter-langs)
   )
 
+;; grammatical-edit bug太多了，pair用这个就够了
+(use-package elec-pair
+  :config
+  (electric-pair-mode 1)
+  )
+
 (use-package grammatical-edit
   :commands(grammatical-edit-mode)
   :config
-  (electric-pair-mode 1) ;; grammatical-edit bug太多了，pair用这个就够了
   ;; (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
   ;; (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
   ;; (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
