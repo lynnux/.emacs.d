@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-07 10:00:25 lynnux>
+;; Time-stamp: <2021-12-08 11:44:59 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -846,8 +846,8 @@ _q_uit
     ;; (setq current-frame (car (car (cdr (current-frame-configuration)))))
     ;; (select-frame-set-input-focus current-frame) ; 最后这两句好像没作用，保留吧
     ))
-(with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
-					    'bury-compile-buffer-if-successful))
+;; (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
+;; 					    'bury-compile-buffer-if-successful))
 
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
@@ -1295,7 +1295,7 @@ _q_uit
       :config
       (defun check-mode()
 	(unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
-		    (eq major-mode 'python-mode))
+		    nil) ;;(eq major-mode 'python-mode)
 	  (indentinator-mode)))
       (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
       (global-indentinator-mode 1)
@@ -1653,6 +1653,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 				  (lsp-ensure)
 				  )))
 (add-hook 'python-mode-hook 'lsp-ensure)
+(add-hook 'rust-mode-hook 'lsp-ensure)
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
@@ -1857,6 +1858,9 @@ _q_uit
   (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
   )
 
+
+
+;; zenburn
 (if (display-graphic-p)
     (progn
       ;; 这是需要最后加载
