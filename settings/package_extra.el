@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-08 11:44:59 lynnux>
+;; Time-stamp: <2021-12-10 17:09:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -196,6 +196,15 @@ _q_uit
       (setq session-globals-include '((kill-ring 50)
 				      (session-file-alist 100 t)
 				      (file-name-history 200)))
+      ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
+      (add-to-list 'session-globals-exclude 'rg-history)
+      (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
+      (add-to-list 'session-globals-exclude 'helm-grep-history)
+      (add-to-list 'session-globals-exclude 'helm-occur-history)
+      (add-to-list 'session-globals-exclude 'ggtags-global-search-history)
+      (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
+      (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
+      (add-to-list 'session-globals-exclude 'kmacro-ring)
       ;; session把saveplace的hook给删除了。。 
       (defadvice session-initialize (after my-session-initialize activate)
 	(save-place-mode t) ;; 恢复hook
@@ -245,7 +254,7 @@ _q_uit
       )
     ))
 
-(global-set-key (kbd "C-x f") 'hydra-find-file-select)
+(global-set-key (kbd "C-x C-f") 'hydra-find-file-select)
 (global-set-key (kbd "C-x C-r") 'files-recent-visited)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
 (global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
@@ -1069,7 +1078,7 @@ _q_uit
       (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，这个有坑啊，居然读gitignore! 文档rg --help
       (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+      (global-set-key (kbd "C-x f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
       (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
       (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
       (global-set-key (kbd "<f6>") 'helm-resume)
@@ -1295,7 +1304,7 @@ _q_uit
       :config
       (defun check-mode()
 	(unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
-		    nil) ;;(eq major-mode 'python-mode)
+		    (eq major-mode 'rust-mode)) ;;(eq major-mode 'python-mode)
 	  (indentinator-mode)))
       (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
       (global-indentinator-mode 1)
@@ -1653,7 +1662,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 				  (lsp-ensure)
 				  )))
 (add-hook 'python-mode-hook 'lsp-ensure)
-(add-hook 'rust-mode-hook 'lsp-ensure)
+(add-hook 'rust-mode-hook (lambda ()
+			    (add-hook 'before-save-hook (lambda()
+							  (when (featurep 'eglot)
+							    (eglot-format))
+							  ) nil 'local)
+			    (lsp-ensure)
+			    ))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
@@ -1858,7 +1873,44 @@ _q_uit
   (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
   )
 
-
+;; 由emacs module实现ctrl tab切换窗口
+;; (setq vec_name [])                      ;
+(ignore-errors (module-load "pop_select"))
+(when (fboundp 'pop-select/select)
+  (defun my-pop-select(&optional backward)
+    (interactive)
+    (let* ((myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
+						                            (ep-tabbar-buffer-list)
+					                              (buffer-list))
+					                            )
+                                 )  (vec_name [])
+                                    sel
+                                    )
+      (cl-dolist (buf myswitch-buffer-list)
+        (setq vec_name (vconcat vec_name (list (buffer-name buf)))))
+      ;; 返回序号
+      (setq sel (pop-select/select vec_name (if backward
+                                                (1- (length vec_name))
+                                              1
+                                              )))
+      (let ((buf (switch-to-buffer (nth sel myswitch-buffer-list))))
+        (when (and (bufferp buf) (featurep 'wcy-desktop))
+	      (with-current-buffer buf
+	        (when (eq major-mode 'not-loaded-yet)
+	          (wcy-desktop-load-file))))
+        )
+      )
+    )
+  (global-set-key (kbd "<C-tab>") 'my-pop-select)
+  (global-set-key (if (string-equal system-type "windows-nt")
+		              (kbd "<C-S-tab>")
+	                (kbd "<C-S-iso-lefttab>"))
+                  (lambda ()(interactive)
+                    (my-pop-select t)))
+  
+  (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
+  
+  )
 
 ;; zenburn
 (if (display-graphic-p)

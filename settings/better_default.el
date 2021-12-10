@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-03 21:20:53 lynnux>
+;; Time-stamp: <2021-12-10 11:58:07 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -227,8 +227,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (setq delete-by-moving-to-trash t)     ; move files to trash instead of deleting
 
-(setq tab-width 4
-      indent-tabs-mode nil)
+(setq-default tab-width 4
+	      indent-tabs-mode nil)
 
 (global-set-key (kbd "RET") 'newline-and-indent)
 (defun sanityinc/newline-at-end-of-line ()
