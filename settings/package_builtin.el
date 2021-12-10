@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-30 11:22:03 lynnux>
+;; Time-stamp: <2021-12-10 10:42:52 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -8,8 +8,10 @@
 (setq history-length 200)
 (defun files-recent-type (src)
   (interactive)
-  (let* ((tocpl (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
-			src))
+  (let* ((tocpl src ;; 全路径好些，可以通过项目名搜索
+		;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
+		;; 	src)
+		)
 	 (fname (completing-read "File name: " tocpl nil nil)))
     (when fname
       (find-file (cdr (assoc-string fname tocpl))))))
@@ -329,4 +331,4 @@ Run occur in all buffers whose names match this type for REXP."
   (add-hook 'ediff-suspend-hook 'doom-ediff-restore-wconf-h)
   )
 
-
+(global-auto-revert-mode)
