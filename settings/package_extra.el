@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-10 17:09:42 lynnux>
+;; Time-stamp: <2021-12-10 22:26:23 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -654,23 +654,14 @@ _q_uit
 (use-package google-c-style
   :commands(google-set-c-style))
 
-;; cc-mode包含java等
-(add-hook 'c-mode-common-hook 
-	  (lambda ()
-	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      ;; 保存时自动format，同时禁用自动indent，因为下面的google style跟clang-format的google有点不一致
-	      (add-hook 'before-save-hook (lambda()
-					    (when (featurep 'eglot)
-					      (eglot-format))
-					    ) nil 'local)
-	      (google-set-c-style)
-	      (setq c-basic-offset 4) ;; tab4个空格习惯了
-	      (abbrev-mode -1) ;; 有yas就够了
-	      (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
-	      (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
-	      (define-key c-mode-base-map "\177" nil) ;; backspack
-	      )
-	    ))
+(defun my-c-mode-hook-set()
+  (google-set-c-style)
+  (setq c-basic-offset 4) ;; tab4个空格习惯了
+  (abbrev-mode -1) ;; 有yas就够了
+  (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
+  (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
+  (define-key c-mode-base-map "\177" nil) ;; backspack
+  )
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist (append '(("\\.\\([Nn][Ss][Ii]\\)$" .
@@ -1616,28 +1607,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(if t
-    ;; eglot
-    (use-package eglot
-      :load-path "~/.emacs.d/packages/lsp"
-      :init
-      (defun lsp-ensure() (eglot-ensure))
-      :commands (eglot eglot-ensure eglot-rename)
-      :config
-      (add-to-list 'eglot-stay-out-of 'flymake)
-      (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-      (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-            eglot-ignored-server-capabilities) 
-      ;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
-      ;; 临时禁止view-mode
-      (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	(setq tmp-disable-view-mode t)
-	ad-do-it
-	(setq tmp-disable-view-mode nil)
-	)
-      ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-      )
+(when nil
+  ;; eglot
+  (use-package eglot
+    :load-path "~/.emacs.d/packages/lsp"
+    :init
+    (defun lsp-ensure() (eglot-ensure))
+    :commands (eglot eglot-ensure eglot-rename)
+    :config
+    (add-to-list 'eglot-stay-out-of 'flymake)
+    (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+    (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+          eglot-ignored-server-capabilities) 
+    ;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
+    ;; 临时禁止view-mode
+    (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	  (setq tmp-disable-view-mode t)
+	  ad-do-it
+	  (setq tmp-disable-view-mode nil)
+	  )
+    ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+    (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+    )
 
   ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
   ;; 但是eldoc提示API参数还是非常有用的！
@@ -1656,19 +1647,61 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       )
     )
   )
+
+;; eglot有时候有bug，比如rename，c++ include补全
+(when t
+  (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
+  (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
+  (use-package lsp-mode
+    :init
+    ;; lens和modeline没效果？好像要配合lsp ui用
+    (setq lsp-lens-enable nil
+          lsp-modeline-code-actions-enable nil
+          lsp-modeline-diagnostics-enable nil
+          lsp-modeline-workspace-status-enable nil
+          lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
+          lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
+          lsp-enable-folding nil
+          lsp-semantic-tokens-enable nil
+          lsp-enable-links nil
+          lsp-enable-text-document-color nil
+          )
+    
+    :commands (lsp lsp-deferred)
+    :config
+    ;; (require 'lsp-lens) ;; 它自己居然不require
+    ;; (require 'lsp-modeline)
+    (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
+                                           (if (use-region-p)
+                                               (call-interactively 'lsp-format-region)
+                                             (call-interactively 'lsp-format-buffer))
+			                               )))
+  (defun lsp-ensure() (lsp-deferred)))
+
+
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
-(add-hook 'c-mode-common-hook (lambda ()
-				(when (derived-mode-p 'c-mode 'c++-mode)
-				  (lsp-ensure)
-				  )))
 (add-hook 'python-mode-hook 'lsp-ensure)
+(defun enable-format-on-save()
+  (add-hook 'before-save-hook (lambda()
+					            (when (featurep 'eglot)
+					              (eglot-format))
+                                (when (featurep 'lsp-mode)
+                                  (lsp-format-buffer))
+					            ) nil 'local)
+  )
+;; cc-mode包含java等
+(add-hook 'c-mode-common-hook 
+	      (lambda ()
+	        (when (derived-mode-p 'c-mode 'c++-mode)
+	          ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
+              (enable-format-on-save)
+              (my-c-mode-hook-set)
+              (lsp-ensure)
+	          )))
 (add-hook 'rust-mode-hook (lambda ()
-			    (add-hook 'before-save-hook (lambda()
-							  (when (featurep 'eglot)
-							    (eglot-format))
-							  ) nil 'local)
-			    (lsp-ensure)
-			    ))
+			                (enable-format-on-save)
+			                (lsp-ensure)
+			                ))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
@@ -1874,7 +1907,6 @@ _q_uit
   )
 
 ;; 由emacs module实现ctrl tab切换窗口
-;; (setq vec_name [])                      ;
 (ignore-errors (module-load "pop_select"))
 (when (fboundp 'pop-select/select)
   (defun my-pop-select(&optional backward)
@@ -1907,9 +1939,6 @@ _q_uit
 	                (kbd "<C-S-iso-lefttab>"))
                   (lambda ()(interactive)
                     (my-pop-select t)))
-  
-  (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
-  
   )
 
 ;; zenburn

@@ -62,3 +62,4 @@ packages/tree-sitter/core/*
 packages/tree-sitter/langs/*
 !packages/tree-sitter/langs/tree-sitter-langs-master.zip
 packages/tree-sitter/lisp/*
+/.lsp-session*
