@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-10 22:26:23 lynnux>
+;; Time-stamp: <2021-12-15 16:44:21 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1604,31 +1604,31 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))))
   :commands(which-key-show-keymap))
 
-;; eglot，c++装个llvm(包含clangd)就可以直接用了。lsp-mode手动安装坑太多，还屏蔽我的tabbar！
+;; eglot，c++装个llvm(包含clangd)就可以直接用了
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(when nil
-  ;; eglot
-  (use-package eglot
-    :load-path "~/.emacs.d/packages/lsp"
-    :init
-    (defun lsp-ensure() (eglot-ensure))
-    :commands (eglot eglot-ensure eglot-rename)
-    :config
-    (add-to-list 'eglot-stay-out-of 'flymake)
-    (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-    (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-          eglot-ignored-server-capabilities) 
-    ;; (setq eldoc-echo-area-use-multiline-p nil) 部分API参数很多显示多行还是很用的
-    ;; 临时禁止view-mode
-    (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	  (setq tmp-disable-view-mode t)
-	  ad-do-it
-	  (setq tmp-disable-view-mode nil)
-	  )
-    ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-    (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-    )
+(if t
+    ;; eglot
+    (use-package eglot
+      :load-path "~/.emacs.d/packages/lsp"
+      :init
+      (defun lsp-ensure() (eglot-ensure))
+      :commands (eglot eglot-ensure eglot-rename)
+      :config
+      ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+      ;; (add-to-list 'eglot-stay-out-of 'flymake)
+      (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+      (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+            eglot-ignored-server-capabilities) 
+      ;; 临时禁止view-mode
+      (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	    (setq tmp-disable-view-mode t)
+	    ad-do-it
+	    (setq tmp-disable-view-mode nil)
+	    )
+      ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+      )
 
   ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
   ;; 但是eldoc提示API参数还是非常有用的！
@@ -1648,8 +1648,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 
-;; eglot有时候有bug，比如rename，c++ include补全
-(when t
+;; 实测eglot有的问题，lsp-mode一样也有。lsp-mode开启flymake有问题
+(when nil
   (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
   (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
   (use-package lsp-mode
@@ -1669,8 +1669,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     
     :commands (lsp lsp-deferred)
     :config
-    ;; (require 'lsp-lens) ;; 它自己居然不require
-    ;; (require 'lsp-modeline)
+    ;; ccls补全遇到中文注释会出错，因为文件没有存为utf-8
+    ;; (add-to-list 'load-path "~/.emacs.d/packages/lsp/emacs-ccls-master")
+    ;; (require 'ccls)
     (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
                                            (if (use-region-p)
                                                (call-interactively 'lsp-format-region)
