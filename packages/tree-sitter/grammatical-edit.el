@@ -171,10 +171,32 @@
         (t
          (grammatical-edit-fix-unbalanced-parentheses))))
 
+(defun grammatical-edit-single-quote ()
+  (interactive)
+  (cond ((grammatical-edit-is-lisp-mode-p)
+         (insert "'"))
+        ((region-active-p)
+         (grammatical-edit-wrap-single-quote))
+        ((grammatical-edit-in-string-p)
+         (cond
+          ((and (derived-mode-p 'python-mode)
+                (and (eq (char-before) ?\') (eq (char-after) ?\')))
+           (insert "''")
+           (backward-char))
+          (t
+           (insert "'"))))
+        ((grammatical-edit-in-comment-p)
+         (insert "'"))
+        (t
+         (insert "''")
+         (backward-char))))
+
 (defun grammatical-edit-double-quote ()
   (interactive)
   (cond ((region-active-p)
          (grammatical-edit-wrap-double-quote))
+        ((grammatical-edit-in-single-quote-string-p)
+         (insert "\""))
         ((grammatical-edit-in-string-p)
          (cond
           ((and (derived-mode-p 'python-mode)
@@ -292,6 +314,37 @@ When in comment, kill to the beginning of the line."
         (t
          (grammatical-edit-common-mode-backward-kill))))
 
+(defun grammatical-edit-wrap-double-quote ()
+  (interactive)
+  (cond ((and (region-active-p)
+              (grammatical-edit-in-string-p))
+         (cond ((and (derived-mode-p 'go-mode)
+                     (equal (save-excursion (nth 3 (grammatical-edit-current-parse-state))) 96))
+                (grammatical-edit-wrap-region "\"" "\""))
+               (t
+                (grammatical-edit-wrap-region "\\\"" "\\\""))))
+        ((region-active-p)
+         (grammatical-edit-wrap-region "\"" "\""))
+        ((grammatical-edit-in-string-p)
+         (goto-char (cdr (grammatical-edit-current-node-range))))
+        ((grammatical-edit-in-comment-p)
+         (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) "\"" "\""))
+        ((grammatical-edit-is-lisp-mode-p)
+         (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp) "\"" "\""))
+        (t
+         (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) "\"" "\""))))
+
+(defun grammatical-edit-wrap-single-quote ()
+  (interactive)
+  (cond ((region-active-p)
+         (grammatical-edit-wrap-region "'" "'"))
+        ((grammatical-edit-in-comment-p)
+         (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) "'" "'"))
+        ((grammatical-edit-is-lisp-mode-p)
+         (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp) "'" "'"))
+        (t
+         (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) "'" "'"))))
+
 (defun grammatical-edit-wrap-round ()
   (interactive)
   (cond
@@ -299,38 +352,45 @@ When in comment, kill to the beginning of the line."
    ;; In template area, call `grammatical-edit-web-mode-element-wrap'
    ;; Otherwise, call `grammatical-edit-wrap-round-pair'
    ((and (buffer-file-name) (string-equal (file-name-extension (buffer-file-name)) "vue"))
-    (if (grammatical-edit-vue-in-template-area)
+    (if (grammatical-edit-vue-in-template-area-p)
         (grammatical-edit-web-mode-element-wrap)
       (grammatical-edit-wrap-round-pair)))
    ;; If is `web-mode' but not in *.Vue file, call `grammatical-edit-web-mode-element-wrap'
    ((derived-mode-p 'web-mode)
-    (if (grammatical-edit-in-script-area)
+    (if (grammatical-edit-in-script-area-p)
         (grammatical-edit-wrap-round-pair)
       (grammatical-edit-web-mode-element-wrap)))
    ;; Otherwise call `grammatical-edit-wrap-round-pair'
    (t
-    (grammatical-edit-wrap-round-pair))
-   ))
+    (grammatical-edit-wrap-round-pair))))
 
 (defun grammatical-edit-wrap-round-object (object-start object-end)
   (cond ((region-active-p)
          (grammatical-edit-wrap-region object-start object-end))
-        ((grammatical-edit-in-string-p)
-         (let ((string-bound (grammatical-edit-current-node-range)))
-           (grammatical-edit-wrap (car string-bound) (cdr string-bound) object-start object-end)))
         ((grammatical-edit-in-comment-p)
          (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) object-start object-end))
+        ((grammatical-edit-is-lisp-mode-p)
+         (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp) object-start object-end))
         (t
-         (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp) object-start object-end)))
+         (when (grammatical-edit-before-string-open-quote-p)
+           (grammatical-edit-forward-movein-string))
+         (let ((string-bound (grammatical-edit-current-node-range)))
+           (grammatical-edit-wrap (car string-bound) (cdr string-bound) object-start object-end))))
 
-  ;; Indent wrap area.
-  (grammatical-edit-indent-parent-area)
+  (unless (or (grammatical-edit-in-string-p)
+              (grammatical-edit-in-comment-p))
+    ;; Indent wrap area.
+    (grammatical-edit-indent-parent-area)
 
-  ;; Backward char if cursor in nested roud, such as `( ... )|)`
-  (when (grammatical-edit-nested-round-p)
-    (backward-char 1))
-  ;; Jump to start position of parent node.
-  (goto-char (tsc-node-start-position (tsc-get-parent (tree-sitter-node-at-point)))))
+    ;; Backward char if cursor in nested roud, such as `( ... )|)`
+    (when (grammatical-edit-nested-round-p)
+      (backward-char 1))
+    ;; Jump to start position of parent node.
+    (goto-char (tsc-node-start-position (tsc-get-parent (tree-sitter-node-at-point))))))
+
+(defun grammatical-edit-is-lisp-mode-p ()
+  (or (derived-mode-p 'lisp-mode)
+      (derived-mode-p 'emacs-lisp-mode)))
 
 (defun grammatical-edit-nested-round-p ()
   (save-excursion
@@ -352,28 +412,6 @@ When in comment, kill to the beginning of the line."
   (interactive)
   (grammatical-edit-wrap-round-object "{" "}"))
 
-(defun grammatical-edit-wrap-double-quote ()
-  (interactive)
-  (cond ((and (region-active-p)
-              (grammatical-edit-in-string-p))
-         (cond ((and (derived-mode-p 'go-mode)
-                     (equal (save-excursion (nth 3 (grammatical-edit-current-parse-state))) 96))
-                (grammatical-edit-wrap-region "\"" "\""))
-               (t
-                (grammatical-edit-wrap-region "\\\"" "\\\""))))
-        ((region-active-p)
-         (grammatical-edit-wrap-region "\"" "\""))
-        ((grammatical-edit-in-string-p)
-         (goto-char (cdr (grammatical-edit-current-node-range))))
-        ((grammatical-edit-in-comment-p)
-         (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol)
-                                "\"" "\""))
-        (t
-         (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp)
-                                "\"" "\"")))
-  ;; Forward to jump in parenthesis.
-  (forward-char))
-
 (defun grammatical-edit-unwrap (&optional argument)
   (interactive "P")
   (cond ((derived-mode-p 'web-mode)
@@ -390,9 +428,7 @@ When in comment, kill to the beginning of the line."
            (delete-char 1)
            ;; Try to indent parent expression after unwrap pair.
            ;; This feature just enable in lisp-like language.
-           (when (or
-                  (derived-mode-p 'lisp-mode)
-                  (derived-mode-p 'emacs-lisp-mode))
+           (when (grammatical-edit-is-lisp-mode-p)
              (ignore-errors
                (backward-up-list)
                (indent-sexp)))))))
@@ -415,9 +451,7 @@ When in comment, kill to the beginning of the line."
                  (newline-and-indent)
                  ;; Try to clean unnecessary whitespace before close parenthesis.
                  ;; This feature just enable in lisp-like language.
-                 (when (or
-                        (derived-mode-p 'lisp-mode)
-                        (derived-mode-p 'emacs-lisp-mode))
+                 (when (grammatical-edit-is-lisp-mode-p)
                    (save-excursion
                      (goto-char up-list-point)
                      (backward-char)
@@ -528,16 +562,24 @@ When in comment, kill to the beginning of the line."
          (eq (char-after) ?`)
          )))
 
-(defun grammatical-edit-in-empty-string-p ()
+(defun grammatical-edit-get-parent-bound-info ()
   (let* ((current-node (tree-sitter-node-at-point))
          (parent-node (tsc-get-parent current-node))
-         (string-bound-start (tsc-node-text (save-excursion
+         (parent-bound-start (tsc-node-text (save-excursion
                                               (goto-char (tsc-node-start-position parent-node))
                                               (tree-sitter-node-at-point))))
-         (string-bound-end (tsc-node-text (save-excursion
+         (parent-bound-end (tsc-node-text (save-excursion
                                             (goto-char (tsc-node-end-position parent-node))
                                             (backward-char 1)
                                             (tree-sitter-node-at-point)))))
+    (list current-node parent-node parent-bound-start parent-bound-end)))
+
+(defun grammatical-edit-in-empty-string-p ()
+  (let* ((parent-bound-info (grammatical-edit-get-parent-bound-info))
+         (current-node (nth 0 parent-bound-info))
+         (parent-node (nth 1 parent-bound-info))
+         (string-bound-start (nth 2 parent-bound-info))
+         (string-bound-end (nth 3 parent-bound-info)))
     (and (grammatical-edit-is-string-node-p current-node)
          (= (length (tsc-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
          )))
@@ -698,10 +740,12 @@ When in comment, kill to the beginning of the line."
              ))))
 
 (defun grammatical-edit-kill-after-in-string ()
-  (let ((current-node (tree-sitter-node-at-point)))
+  (let* ((parent-bound-info (grammatical-edit-get-parent-bound-info))
+         (current-node (nth 0 parent-bound-info))
+         (string-bound-end (nth 3 parent-bound-info)))
     (if (grammatical-edit-at-raw-string-begin-p)
         (kill-region (tsc-node-start-position current-node) (tsc-node-end-position current-node))
-      (kill-region (point) (1- (tsc-node-end-position current-node))))))
+      (kill-region (point) (- (tsc-node-end-position current-node) (length string-bound-end))))))
 
 (defun grammatical-edit-kill-before-in-string ()
   (kill-region (point) (1+ (tsc-node-start-position (tree-sitter-node-at-point)))))
@@ -908,31 +952,12 @@ When in comment, kill to the beginning of the line."
              (kill-line))))
 
      ;; JavaScript string not identify by tree-sitter.
-     ((and (eq (grammatical-edit-node-type-at-point) 'raw_text)
-           (grammatical-edit-in-string-state-p))
+     ((eq (grammatical-edit-node-type-at-point) 'raw_text)
       (grammatical-edit-js-mode-kill-rest-string))
 
      ;; Use common kill at last.
      (t
       (grammatical-edit-common-mode-kill)))))
-
-(defun grammatical-edit-in-string-state-p (&optional state)
-  (ignore-errors
-    (unless (or (bobp) (eobp))
-      (save-excursion
-        (or
-         ;; In most situation, point inside a string when 4rd state `parse-partial-sexp' is non-nil.
-         ;; but at this time, if the string delimiter is the last character of the line, the point is not in the string.
-         ;; So we need exclude this situation when check state of `parse-partial-sexp'.
-         (and
-          (nth 3 (or state (grammatical-edit-current-parse-state)))
-          (not (equal (point) (line-end-position))))
-         (and
-          (eq (get-text-property (point) 'face) 'font-lock-string-face)
-          (eq (get-text-property (- (point) 1) 'face) 'font-lock-string-face))
-         (and
-          (eq (get-text-property (point) 'face) 'font-lock-doc-face)
-          (eq (get-text-property (- (point) 1) 'face) 'font-lock-doc-face)))))))
 
 (defun grammatical-edit-web-mode-backward-kill ()
   (message "Backward kill in web-mode is currently not implemented."))
@@ -949,31 +974,30 @@ When in comment, kill to the beginning of the line."
   (interactive)
   (cond
    ((derived-mode-p 'web-mode)
-    (cond ((or (grammatical-edit-in-string-p)
-               (grammatical-edit-in-curly-p))
+    (cond ((or (eq (grammatical-edit-node-type-at-point) 'attribute_value)
+               (eq (grammatical-edit-node-type-at-point) 'raw_text)
+               (eq (grammatical-edit-node-type-at-point) 'text))
            (insert "="))
-          ;; When edit *.vue file, just insert double quote after equal when point in template area.
-          ((string-equal (file-name-extension (buffer-file-name)) "vue")
-           (if (grammatical-edit-vue-in-template-area)
-               (progn
-                 (insert "=\"\"")
-                 (backward-char 1))
-             (insert "=")))
-          ((grammatical-edit-in-script-area)
-           (insert "="))
-          (t
+          ;; Insert equal and double quotes if in tag attribute area.
+          ((and (string-equal (file-name-extension (buffer-file-name)) "vue")
+                (grammatical-edit-vue-in-template-area-p)
+                (or (eq (grammatical-edit-node-type-at-point) 'directive_name)
+                    (eq (grammatical-edit-node-type-at-point) 'attribute_name)
+                    (eq (grammatical-edit-node-type-at-point) 'start_tag)))
            (insert "=\"\"")
-           (backward-char 1))))
+           (backward-char 1))
+          (t
+           (insert "="))))
    (t
     (insert "="))))
 
-(defun grammatical-edit-in-script-area ()
+(defun grammatical-edit-in-script-area-p ()
   (and (save-excursion
          (search-backward-regexp "<script" nil t))
        (save-excursion
          (search-forward-regexp "</script>" nil t))))
 
-(defun grammatical-edit-vue-in-template-area ()
+(defun grammatical-edit-vue-in-template-area-p ()
   (and (save-excursion
          (search-backward-regexp "<template>" nil t))
        (save-excursion
@@ -1065,11 +1089,10 @@ Just like `paredit-splice-sexp+' style."
   "Insert A at position BEG, and B after END. Save previous point position.
 
 A and B are strings."
-  (save-excursion
-    (goto-char beg)
-    (insert a)
-    (goto-char (1+ end))
-    (insert b)))
+  (goto-char end)
+  (insert b)
+  (goto-char beg)
+  (insert a))
 
 (defun grammatical-edit-wrap-region (a b)
   "When a region is active, insert A and B around it, and jump after A.
@@ -1079,11 +1102,10 @@ A and B are strings."
     (let ((start (region-beginning))
           (end (region-end)))
       (setq mark-active nil)
-      (goto-char start)
-      (insert a)
-      (goto-char (1+ end))
+      (goto-char end)
       (insert b)
-      (goto-char (+ (length a) start)))))
+      (goto-char start)
+      (insert a))))
 
 (defun grammatical-edit-current-parse-state ()
   (let ((point (point)))
@@ -1144,12 +1166,20 @@ A and B are strings."
   (ignore-errors (tsc-node-type (tree-sitter-node-at-point))))
 
 (defun grammatical-edit-in-string-p ()
-  (or
-   ;; If node type is 'string, point must at right of string open quote.
-   (let ((current-node (tree-sitter-node-at-point)))
-     (and (grammatical-edit-is-string-node-p current-node)
-          (> (point) (tsc-node-start-position current-node))))
-   (grammatical-edit-before-string-close-quote-p)))
+  (ignore-errors
+    (or
+     ;; If node type is 'string, point must at right of string open quote.
+     (let ((current-node (tree-sitter-node-at-point)))
+       (and (grammatical-edit-is-string-node-p current-node)
+            (> (point) (tsc-node-start-position current-node))))
+     (grammatical-edit-before-string-close-quote-p))))
+
+(defun grammatical-edit-in-single-quote-string-p ()
+  (ignore-errors
+    (let ((parent-node-text (tsc-node-text (tsc-get-parent (tree-sitter-node-at-point)))))
+      (and (grammatical-edit-in-string-p)
+           (> (length parent-node-text) 1)
+           (string-equal (substring parent-node-text 0 1) "'")))))
 
 (defun grammatical-edit-before-string-close-quote-p ()
   (let ((current-node (tree-sitter-node-at-point)))
@@ -1181,14 +1211,6 @@ A and B are strings."
                (backward-char 1)
                (eq (grammatical-edit-node-type-at-point) 'comment))))))
 
-(defun grammatical-edit-in-string-escape-p ()
-  (let ((oddp nil))
-    (save-excursion
-      (while (eq (char-before) ?\\ )
-        (setq oddp (not oddp))
-        (backward-char)))
-    oddp))
-
 (defun grammatical-edit-in-char-p (&optional argument)
   (let ((argument (or argument (point))))
     (and (eq (char-before argument) ?\\ )
@@ -1207,27 +1229,6 @@ A and B are strings."
             (point))
           (point))))
     (equal (length (string-trim string-before-cursor)) 0)))
-
-(defun grammatical-edit-in-curly-p ()
-  (ignore-errors
-    (save-excursion
-      (let* ((left-parent-pos
-              (progn
-                (backward-up-list)
-                (point)))
-             (right-parent-pos
-              (progn
-                (forward-list)
-                (point)))
-             (left-parent-char
-              (progn
-                (goto-char left-parent-pos)
-                (char-after)))
-             (right-parent-char
-              (progn
-                (goto-char right-parent-pos)
-                (char-before))))
-        (and (eq left-parent-char ?\{) (eq right-parent-char ?\}))))))
 
 (defun grammatical-edit-newline (arg)
   (interactive "p")
