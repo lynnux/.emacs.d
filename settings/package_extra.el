@@ -1734,6 +1734,12 @@ _q_uit
   (funcall 'hydra-tfs-select/body)
   )
 (global-set-key  "\C-ct" 'hydra-tfs-select1)
+;; 解决checkout后revert buffer光标位置不对的问题
+(with-eval-after-load 'tfs
+  (when (featurep 'saveplace)
+    (defadvice tfs/checkout (before my-tfs/checkout activate)
+      (save-place-to-alist))
+    ))
 
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
