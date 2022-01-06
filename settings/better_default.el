@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-14 10:35:28 lynnux>
+;; Time-stamp: <2022-01-06 09:48:10 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -271,3 +271,10 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
  inhibit-default-init t
  initial-major-mode 'fundamental-mode
  initial-scratch-message nil)
+
+;; 恢复gc-cons-threshold
+(defconst dotspacemacs-gc-cons '(100000000 0.1))
+(add-hook 'emacs-startup-hook
+          (lambda ()
+	        (setq gc-cons-threshold (car dotspacemacs-gc-cons)
+                  gc-cons-percentage (cadr dotspacemacs-gc-cons))))
