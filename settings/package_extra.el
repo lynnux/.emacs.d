@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-15 16:44:21 lynnux>
+;; Time-stamp: <2022-01-06 17:11:31 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -686,6 +686,7 @@ _q_uit
   (add-to-list 'jl-insert-marker-funcs "helm-occur")
   (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
   (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
+  (add-to-list 'jl-insert-marker-funcs "session-jump-to-last-change")
   (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
   (defun my-save-pos()
     (interactive)
@@ -1607,28 +1608,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; eglot，c++装个llvm(包含clangd)就可以直接用了
 ;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(if t
-    ;; eglot
-    (use-package eglot
-      :load-path "~/.emacs.d/packages/lsp"
-      :init
-      (defun lsp-ensure() (eglot-ensure))
-      :commands (eglot eglot-ensure eglot-rename)
-      :config
-      ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-      ;; (add-to-list 'eglot-stay-out-of 'flymake)
-      (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-      (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-            eglot-ignored-server-capabilities) 
-      ;; 临时禁止view-mode
-      (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	    (setq tmp-disable-view-mode t)
-	    ad-do-it
-	    (setq tmp-disable-view-mode nil)
-	    )
-      ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-      )
+(when nil
+  ;; eglot
+  (use-package eglot
+    :load-path "~/.emacs.d/packages/lsp"
+    :init
+    (defun lsp-ensure() (eglot-ensure))
+    :commands (eglot eglot-ensure eglot-rename)
+    :config
+    ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+    ;; (add-to-list 'eglot-stay-out-of 'flymake)
+    (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+    (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+          eglot-ignored-server-capabilities) 
+    ;; 临时禁止view-mode
+    (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	  (setq tmp-disable-view-mode t)
+	  ad-do-it
+	  (setq tmp-disable-view-mode nil)
+	  )
+    ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+    (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+    )
 
   ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
   ;; 但是eldoc提示API参数还是非常有用的！
@@ -1649,7 +1650,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 
 ;; 实测eglot有的问题，lsp-mode一样也有。lsp-mode开启flymake有问题
-(when nil
+(when t
   (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
   (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
   (use-package lsp-mode
@@ -1672,6 +1673,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; ccls补全遇到中文注释会出错，因为文件没有存为utf-8
     ;; (add-to-list 'load-path "~/.emacs.d/packages/lsp/emacs-ccls-master")
     ;; (require 'ccls)
+    
+    ;; (use-package flycheck
+    ;;   :commands(flycheck-mode)
+    ;;   )
+    (require 'lsp-diagnostics)
     (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
                                            (if (use-region-p)
                                                (call-interactively 'lsp-format-region)
@@ -1873,11 +1879,12 @@ _q_uit
 
   ;; (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
   ;; (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
-  
-  (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
-  (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
-  (define-key grammatical-edit-mode-map [remap delete-forward-char] 'grammatical-edit-forward-delete)
-  (define-key grammatical-edit-mode-map [remap delete-char] 'grammatical-edit-forward-delete)
+
+  ;; 会影响kill-ring，作者还不改，暂时不用了
+  ;; (define-key grammatical-edit-mode-map [remap delete-backward-char] 'grammatical-edit-backward-delete)
+  ;; (define-key grammatical-edit-mode-map [remap backward-delete-char-untabify] 'grammatical-edit-backward-delete)
+  ;; (define-key grammatical-edit-mode-map [remap delete-forward-char] 'grammatical-edit-forward-delete)
+  ;; (define-key grammatical-edit-mode-map [remap delete-char] 'grammatical-edit-forward-delete)
   (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
 
   ;; 也可以C-q 选中在直接(，[等
@@ -1889,24 +1896,26 @@ _q_uit
 
   (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
 
-  ;; 支持hungry delete
-  (dolist (key '( [remap delete-char]
-		  [remap delete-forward-char]))
-    (define-key grammatical-edit-mode-map key
-      ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-      '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		  :filter (lambda (&optional _)
-			    (unless (looking-at-p "[[:space:]\n]")
-			      #'grammatical-edit-forward-delete)))))
+  (when nil
+    ;; 支持hungry delete
+    (dolist (key '( [remap delete-char]
+		            [remap delete-forward-char]))
+      (define-key grammatical-edit-mode-map key
+        ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+        '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		            :filter (lambda (&optional _)
+			                  (unless (looking-at-p "[[:space:]\n]")
+			                    #'grammatical-edit-forward-delete)))))
 
-  (dolist (key '([remap backward-delete-char-untabify]
-		 [remap backward-delete-char]
-		 [remap delete-backward-char]))
-    (define-key grammatical-edit-mode-map key
-      '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		  :filter (lambda (&optional _)
-			    (unless (looking-back "[[:space:]\n]" 1)
-			      #'grammatical-edit-backward-delete)))))
+    (dolist (key '([remap backward-delete-char-untabify]
+		           [remap backward-delete-char]
+		           [remap delete-backward-char]))
+      (define-key grammatical-edit-mode-map key
+        '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		            :filter (lambda (&optional _)
+			                  (unless (looking-back "[[:space:]\n]" 1)
+			                    #'grammatical-edit-backward-delete)))))
+    )
   )
 
 (with-eval-after-load 'python
