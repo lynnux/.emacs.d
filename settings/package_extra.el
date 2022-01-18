@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-06 17:11:31 lynnux>
+;; Time-stamp: <2022-01-18 10:12:29 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -592,6 +592,7 @@ _q_uit
       :diminish
       :config
       (global-company-mode)
+      (set-face-attribute 'company-tooltip-selection nil :background "#666")
       ;; 句尾TAB就很烦了。。
       ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
       ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
