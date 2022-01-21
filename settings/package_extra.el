@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-18 10:12:29 lynnux>
+;; Time-stamp: <2022-01-21 14:25:01 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1068,7 +1068,6 @@ _q_uit
       (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
       (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
       (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，这个有坑啊，居然读gitignore! 文档rg --help
       (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
 
       (global-set-key (kbd "C-x f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
@@ -1083,9 +1082,14 @@ _q_uit
 				       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
       (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
 
-      ;; helm-do-grep-ag 这个好像有bug啊，在helm-swoop就搜索不到
+      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
+      (global-set-key [S-f2] (lambda() (interactive)
+                                        ; 只搜索当前目录，加入-g/*
+                               (let ((helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                                 (call-interactively 'helm-do-grep-ag))
+                               ))
       (setq
-       ;; smart case跟emacs类似，默认读gitignore实在不习惯
+       ;; smart case跟emacs类似，不读gitignore
        helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore %s %s %s"
        ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; 貌似没什么用
        helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
