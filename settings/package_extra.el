@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-25 14:07:02 lynnux>
+;; Time-stamp: <2022-01-25 17:16:51 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -725,7 +725,7 @@ _q_uit
 
 (defun my-elisp-hook()
   (make-local-variable 'eldoc-idle-delay)
-  (setq eldoc-idle-delay 0)
+  (setq eldoc-idle-delay 0.1) ;; 设置为0会导致鼠标点击时不显示
   (turn-on-eldoc-mode)
   )
 (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
