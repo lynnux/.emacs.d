@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-21 14:25:01 lynnux>
+;; Time-stamp: <2022-01-25 14:07:02 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1276,15 +1276,15 @@ _q_uit
 
 ;; defer加载要比smartparens早
 (if t
-  (use-package smart-hungry-delete
-    :defer 0.8
-    :config
-    (smart-hungry-delete-add-default-hooks)
-    (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
-    (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
-    (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
-    (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
-    )
+    (use-package smart-hungry-delete
+      :defer 0.8
+      :config
+      (smart-hungry-delete-add-default-hooks)
+      (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
+      (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
+      (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
+      (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
+      )
   (use-package hungry-delete
     :defer 0.8
     :config
@@ -1510,8 +1510,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
-  (define-key easy-kill-base-map (kbd "C-d") 'easy-kill-region)
-  (define-key easy-kill-base-map (kbd "C-h") 'easy-kill-region)
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
