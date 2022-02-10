@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-02-10 15:22:45 lynnux>
+;; Time-stamp: <2022-02-10 16:17:24 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1577,6 +1577,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
+(setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
 (autoload 'rg-dwim "rg" nil t)
 (with-eval-after-load 'rg-result
   ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
