@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-25 17:16:51 lynnux>
+;; Time-stamp: <2022-02-10 15:22:45 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1040,7 +1040,6 @@ _q_uit
     )  
   )
 
-
 ;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
 ;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (use-package imenu-list 
@@ -1125,8 +1124,7 @@ _q_uit
 	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
 	      ad-do-it
 	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	      )
-	    ))
+	      )))
 	
 	(helm-mode 1)
 	(when (fboundp 'diminish)
@@ -1585,10 +1583,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; 临时设置cmdproxy编码
   (defadvice rg-run (around my-run activate)
     (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-      ad-do-it
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-      ))
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	  ad-do-it
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	  ))
+  (defadvice rg-recompile (around my-rg-recompile activate)
+    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	  ad-do-it
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	  ))
   )
 
 ;;

@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-01-06 09:48:10 lynnux>
+;; Time-stamp: <2022-02-10 14:58:22 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -222,6 +222,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-x n") 'next-line)
 
 (global-set-key (kbd "C-x C-o") 'other-window)
+(global-set-key (kbd "M-i") 'other-window) ; m-o还是给h/cpp切换吧
 
 (global-unset-key (kbd "C-x C-z"))
 
