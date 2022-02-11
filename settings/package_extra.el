@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-02-10 16:17:24 lynnux>
+;; Time-stamp: <2022-02-11 14:35:40 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -182,7 +182,8 @@ _q_uit
     (with-current-buffer (window-buffer)
       (recenter))
     ;; 将位置居中，默认是goto-char可能是最下面
-    ))
+    )
+  )
 (if t
     (progn
       ;; session只保存了修改文件的point
@@ -1964,6 +1965,24 @@ _q_uit
                   (lambda ()(interactive)
                     (my-pop-select t)))
   )
+
+;; jump后自动把屏幕居中
+(use-package scroll-on-jump
+  :config
+  (setq scroll-on-jump-duration 0.0)
+  (setq scroll-on-jump-smooth nil)
+  (with-eval-after-load 'session
+    (scroll-on-jump-advice-add session-jump-to-last-change) ; 有效
+    )
+  (scroll-on-jump-advice-add jl-jump-backward) ; 有效
+  (scroll-on-jump-advice-add jl-jump-forward) ; 有效
+  
+  ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
+  )
+
+;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
+(use-package centered-cursor-mode
+  :commands(centered-cursor-mode))
 
 ;; zenburn
 (if (display-graphic-p)

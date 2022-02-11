@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: local
+# key: lc
+# --
+local $0
