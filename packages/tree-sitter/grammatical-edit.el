@@ -380,6 +380,11 @@ When in comment, kill to the beginning of the line."
          (grammatical-edit-wrap (beginning-of-thing 'symbol) (end-of-thing 'symbol) object-start object-end))
         ((grammatical-edit-is-lisp-mode-p)
          (grammatical-edit-wrap (beginning-of-thing 'sexp) (end-of-thing 'sexp) object-start object-end))
+        ((member (grammatical-edit-node-type-at-point) (list "{" "(" "["))
+         (let ((match-paren-pos (save-excursion
+                                  (grammatical-edit-match-paren 1)
+                                  (point))))
+           (grammatical-edit-wrap (point) match-paren-pos object-start object-end)))
         (t
          (when (grammatical-edit-before-string-open-quote-p)
            (grammatical-edit-forward-movein-string))
@@ -585,14 +590,15 @@ When in comment, kill to the beginning of the line."
     (list current-node parent-node parent-bound-start parent-bound-end)))
 
 (defun grammatical-edit-in-empty-string-p ()
-  (let* ((parent-bound-info (grammatical-edit-get-parent-bound-info))
-         (current-node (nth 0 parent-bound-info))
-         (parent-node (nth 1 parent-bound-info))
-         (string-bound-start (nth 2 parent-bound-info))
-         (string-bound-end (nth 3 parent-bound-info)))
-    (and (grammatical-edit-is-string-node-p current-node)
-         (= (length (tsc-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
-         )))
+  (or (let* ((parent-bound-info (grammatical-edit-get-parent-bound-info))
+             (current-node (nth 0 parent-bound-info))
+             (parent-node (nth 1 parent-bound-info))
+             (string-bound-start (nth 2 parent-bound-info))
+             (string-bound-end (nth 3 parent-bound-info)))
+        (and (grammatical-edit-is-string-node-p current-node)
+             (= (length (tsc-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
+             ))
+      (string-equal (tsc-node-text (tree-sitter-node-at-point)) "\"\"")))
 
 (defun grammatical-edit-backward-delete-in-string ()
   (cond
@@ -611,11 +617,14 @@ When in comment, kill to the beginning of the line."
     (backward-delete-char 1))))
 
 (defun grammatical-edit-delete-empty-string ()
-  (let* ((current-node (tree-sitter-node-at-point))
-         (node-bound-length (save-excursion
-                              (goto-char (tsc-node-start-position current-node))
-                              (length (tsc-node-text (tree-sitter-node-at-point))))))
-    (grammatical-edit-delete-region (- (point) node-bound-length) (+ (point) node-bound-length))))
+  (cond ((string-equal (tsc-node-text (tree-sitter-node-at-point)) "\"\"")
+         (grammatical-edit-delete-region (- (point) 1) (+ (point) 1)))
+        (t
+         (let* ((current-node (tree-sitter-node-at-point))
+                (node-bound-length (save-excursion
+                                     (goto-char (tsc-node-start-position current-node))
+                                     (length (tsc-node-text (tree-sitter-node-at-point))))))
+           (grammatical-edit-delete-region (- (point) node-bound-length) (+ (point) node-bound-length))))))
 
 (defun grammatical-edit-delete-empty-backquote-string ()
   (grammatical-edit-delete-region (save-excursion
@@ -1124,7 +1133,8 @@ A and B are strings."
     (beginning-of-defun)
     (when (equal point (point))
       (beginning-of-line))
-    (parse-partial-sexp (point) point)))
+    (parse-partial-sexp (min (point) point)
+                        (max (point) point))))
 
 (defun grammatical-edit-current-node-range ()
   (tsc-node-position-range (tree-sitter-node-at-point)))
@@ -1254,14 +1264,16 @@ A and B are strings."
    ;; Newline and indent region if cursor in parentheses and character is not blank after cursor.
    ((and (looking-back "(\s*\\|{\s*\\|\\[\s*")
          (looking-at-p "\s*)\\|\s*}\\|\s*\\]"))
+    ;; Insert blank below at parentheses.
     (newline arg)
     (open-line 1)
+    ;; Indent close parentheses line.
     (save-excursion
-      (let* ((inhibit-message t)
-             (range (grammatical-edit-current-node-range))
-             (start (car range))
-             (end (cdr range)))
-        (indent-region start end)))
+      (let* ((inhibit-message t))
+        (goto-char (cdr (grammatical-edit-current-node-range)))
+        (indent-according-to-mode)
+        ))
+    ;; Indent blank line.
     (indent-according-to-mode))
    ;; Newline and indent.
    (t
