@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-02-11 14:35:40 lynnux>
+;; Time-stamp: <2022-03-02 16:32:03 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -916,14 +916,17 @@ _q_uit
   (define-key mc/keymap (kbd "C-v") nil)
   (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode))
 
-;;; 屏幕内快速跳过，默认是跳到字母开头的单词位置，C-u C-j改为跳回原来的位置，C-u C-u C-j是跳到行
-(autoload  'ace-jump-mode  "ace-jump-mode"  "Emacs quick move minor mode"  t)
-(define-key global-map (kbd "C-o") 'ace-jump-mode)
-(with-eval-after-load 'ace-jump-mode (setq ace-jump-mode-submode-list
-					   '(ace-jump-word-mode
-					     ace-jump-mode-pop-mark
-					     ace-jump-char-mode
-					     ace-jump-line-mode)))
+;; avy可以配得跟ace jump完全一样，就没必要保留ace jump了
+(use-package avy
+  :commands(avy-goto-char-timer avy-goto-word-1 avy-goto-line avy-resume)
+  :init
+  (define-key global-map (kbd "C-o") 'avy-goto-word-1)
+  (global-set-key [remap goto-line] 'avy-goto-line)
+  (setq avy-background t) ;; 开启跟ace一样了
+  (setq-default avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
+  :config
+  (set-face-attribute 'avy-goto-char-timer-face nil :foreground "red")
+  )
 
 ;;; autohotkey文件编辑
 (autoload 'xahk-mode "xahk-mode"
@@ -943,7 +946,7 @@ _q_uit
     ;; (make-local-variable 'company-idle-delay)
     ;; (setq company-idle-delay nil) 	; 不自动补全
     ;; (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-    (setq company-tooltip-align-annotations t))
+    (setq company-tooltip-align-0annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   (when (featurep 'smartparens-rust)
     ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
