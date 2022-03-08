@@ -1,0 +1,2 @@
+在本目录执行
+(let ((generated-autoload-file (expand-file-name "treemacs-autoloads.el" ".")) (backup-inhibited t)) (update-directory-autoloads "src/elisp" "src/extra"))
