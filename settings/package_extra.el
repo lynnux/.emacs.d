@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-08 15:47:02 lynnux>
+;; Time-stamp: <2022-03-08 17:43:27 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1828,6 +1828,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (use-package dap-python
     :after (dap-mode python))
 
+  ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
+  (use-package dap-cpptools
+    :after (dap-mode cc-mode))
+  
   (use-package dap-hydra
     :commands(dap-hydra)
     :init

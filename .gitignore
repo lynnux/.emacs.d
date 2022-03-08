@@ -70,3 +70,4 @@ packages/tree-sitter/lisp/*
 /packages/lsp/eglot.el
 /packages/lsp/bui.el-master/*
 /packages/lsp/lsp-treemacs-master/*
+/.extension/
