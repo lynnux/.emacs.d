@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-02 16:32:03 lynnux>
+;; Time-stamp: <2022-03-08 14:20:52 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -78,7 +78,7 @@ _q_uit
   (define-key dired-mode-map (kbd "C-l") (lambda () (interactive) (find-alternate-file ".."))) ;; C-l上级目录
   (define-key dired-mode-map (kbd "l") (lambda () (interactive) (find-alternate-file ".."))) ;; l上级目录
   (define-key dired-mode-map [remap quit-window] 'volatile-kill-buffer)  ;; 关闭dired不然tab有问题
-  (define-key dired-mode-map (kbd "C-o") 'ace-jump-mode)
+  (define-key dired-mode-map (kbd "C-o") 'avy-goto-word-1)
   ;; dired里面再次C-x d可以设置路径
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
   (define-key dired-mode-map " " 'View-scroll-page-forward)
@@ -333,9 +333,7 @@ _c_: hide comment        _q_uit
   :init
   (setq display-line-numbers-width-start 3)
   :hook
-  (find-file . (lambda ()
-		 (run-with-timer 1 nil 'fringe-mode 0) ;; 这个要放后面执行，不然emacs窗口初始化不会放大。很多依赖fringe的如flymake等感觉都会造成emacs卡顿，故屏蔽掉。
-		 (display-line-numbers-mode)))
+  (find-file . display-line-numbers-mode)
   )
 
 ;;; better C-A C-E
@@ -492,7 +490,7 @@ _c_: hide comment        _q_uit
   :init
   :diminish
   :config
-  (setq symbol-overlay-idle-time 0.5)
+  (setq symbol-overlay-idle-time 0.1)
   (if (display-graphic-p)
       (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
     (set-face-attribute 'symbol-overlay-default-face nil :background "#666" :foreground "Black")
@@ -805,7 +803,6 @@ _q_uit
 					;(insert-string run-exe)
 					;(move-end-of-line nil)
 	))))
-;; (global-set-key (kbd "<f5>") 'smart-compile-run) ; 用projetile的f5 x s代替
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
 ;; compile，加入了单独编译某个文件
@@ -956,18 +953,92 @@ _q_uit
       ))
   )
 
-(add-to-list 'load-path "~/.emacs.d/packages/neotree")
-(autoload 'neotree-toggle "neotree" nil t)
-(global-set-key (kbd "<C-f1>") 'neotree-toggle)
-(setq neo-window-width 32
-      neo-create-file-auto-open t
-      neo-show-updir-line t
-      neo-mode-line-type 'neotree
-      neo-smart-open t
-      neo-show-hidden-files t
-      neo-auto-indent-point t
-      neo-vc-integration nil)
-(with-eval-after-load 'neotree (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node))
+(if t
+    (progn
+      (use-package treemacs
+        :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
+        :init
+        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/")
+        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/elisp")
+        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/extra")
+        (require 'treemacs-autoloads)
+        ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
+        (global-set-key (kbd "<C-f1>") 
+                        (lambda ()(interactive)
+                          (let ((buf (current-buffer)))
+                            (pcase (treemacs-current-visibility)
+                              ('visible (treemacs)) ;; 已展示就隐藏
+                              ('exists  (call-interactively 'treemacs-add-and-display-current-project))
+                              ('none    (call-interactively 'treemacs-add-and-display-current-project)))
+                            (switch-to-buffer buf) ;; focus切换回buffer里
+                            )))
+        :config
+        
+        (with-eval-after-load 'treemacs-mode
+          (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
+          (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
+          
+          (define-key treemacs-mode-map (kbd "C-x C-d")
+            ;; 抄自treemacs-visit-node-in-external-application
+            (lambda () (interactive
+                        (-if-let (path (treemacs--prop-at-point :path))
+                            (w32explore path)
+                          (treemacs-pulse-on-failure "Nothing to open here."))
+                        )))
+          
+          (when (display-graphic-p)
+            ;; 改变高亮行背景色
+            (add-hook 'treemacs-mode-hook
+                      (lambda ()
+                        (face-remap-add-relative 'hl-line '(:background "#666")))))
+          )
+        
+        ;; 避免treemacs persistence文件变成只读
+        (with-eval-after-load 'treemacs-persistence
+          (defadvice treemacs--persist (around my-treemacs--persist activate)
+            (setq tmp-disable-view-mode 2);; 2不恢复只读
+            ad-do-it
+            (setq tmp-disable-view-mode nil)
+            )
+          )
+        (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
+        (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
+        (treemacs-filewatch-mode t)          ; 监视系统文件变化
+        (setq treemacs-recenter-after-file-follow t ;好像没效果啊
+              treemacs-recenter-after-tag-follow t
+              treemacs-recenter-distance 0.5
+              ;; treemacs-no-png-images t
+              )
+        )
+      (use-package treemacs-projectile
+        :after (treemacs projectile)
+        )
+      ;; 这个给dired添加图标，不错
+      (use-package treemacs-icons-dired
+        :hook (dired-mode . treemacs-icons-dired-enable-once)
+        )
+      ;; magit更新时也刷新treemacs
+      (use-package treemacs-magit
+        :after (treemacs magit)
+        )
+      (use-package cfrs
+        :commands(cfrs-read))
+      )
+  (progn
+    (add-to-list 'load-path "~/.emacs.d/packages/neotree")
+    (autoload 'neotree-toggle "neotree" nil t)
+    (global-set-key (kbd "<C-f1>") 'neotree-toggle)
+    (setq neo-window-width 32
+          neo-create-file-auto-open t
+          neo-show-updir-line t
+          neo-mode-line-type 'neotree
+          neo-smart-open t
+          neo-show-hidden-files t
+          neo-auto-indent-point t
+          neo-vc-integration nil)
+    (with-eval-after-load 'neotree (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node))
+    )
+  )
 
 ;; 有点类似自动截段长行的效果，默认绑定到m-q，elisp-mode无效
 (autoload 'unfill-toggle "unfill" nil t)
@@ -992,8 +1063,8 @@ _q_uit
     (set-default 'sp-hybrid-kill-entire-symbol nil)
     ;; 参考doom设置
     (setq sp-highlight-pair-overlay nil
-	  sp-highlight-wrap-overlay nil
-	  sp-highlight-wrap-tag-overlay nil)
+	      sp-highlight-wrap-overlay nil
+	      sp-highlight-wrap-tag-overlay nil)
     (setq sp-max-prefix-length 25)
     (setq sp-max-pair-length 4)
     (smartparens-global-strict-mode)
@@ -1044,8 +1115,6 @@ _q_uit
     )  
   )
 
-;; 类似vim的tagbar，比之前那个sr-speedbar不知道好用多少倍!
-;; 不过这个没有neotree好，会多弹出一个frame，就不默认开启了，看代码时很有用
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
   :init
@@ -1547,13 +1616,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
   )
 (global-set-key (kbd "C-;") 'invoke_projectile)
-(global-set-key (kbd "<f5>") 'invoke_projectile) ; 原功能可以用f5 x s
 
 (with-eval-after-load 'projectile
   (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "<f5>") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "<f5> s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
-  (define-key projectile-mode-map (kbd "<f5> s") #'projectile-ripgrep) ; 对C-; s同样生效
+  (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
+  (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
   )
 (autoload 'projectile-project-root "projectile" nil t)
 ;; 没有project就用原来的smart compile
@@ -1722,6 +1789,49 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			                (lsp-ensure)
 			                ))
 
+;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
+(use-package dap-mode
+  :load-path "~/.emacs.d/packages/lsp/dap-mode-master"
+  :init
+  (use-package bui
+    :load-path "~/.emacs.d/packages/lsp/bui.el-master"
+    :defer t
+    )
+  (use-package lsp-treemacs
+    :load-path "~/.emacs.d/packages/lsp/lsp-treemacs-master"
+    :defer t)
+  (require 'dap-autoloads) ;; 通过dap-autoloads.txt里的命令自己生成的，没有包管理器不好办啊。注册了命令lsp会自动显示breakpoint(需要fringe)
+
+  ;; server log窗口太大了，减小它 https://github.com/emacs-lsp/dap-mode/issues/428
+  (add-to-list 'display-buffer-alist '(" server log\\*\\'" display-buffer-at-bottom (window-height . 0.2)))
+  
+  :config
+  ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
+  (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
+                                          (let ((cs (dap--cur-session)))
+                                            (if cs
+                                                (if (dap--session-running cs)
+                                                    (call-interactively 'dap-continue)
+                                                  (call-interactively 'dap-debug-restart))
+                                              (call-interactively 'dap-debug))
+                                            )))
+  (define-key dap-mode-map (kbd "<f8>") 'dap-hydra)
+  (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
+  (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
+  (define-key dap-mode-map (kbd "<f10>") 'dap-next)
+  
+  (require 'dap-python)
+  (use-package dap-hydra
+    :commands(dap-hydra)
+    :init
+    (add-hook 'dap-stopped-hook
+              (lambda (arg) (call-interactively #'dap-hydra)))
+    )  
+  )
+(use-package dap-ui
+  :commands(dap-ui-mode)
+  )
+
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
 (defun hydra-tfs-select1 ()
@@ -1773,7 +1883,7 @@ _q_uit
 	     ;; 	   (rainbow-delimiters-mode)))
 	     )
   :config
-  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#grey55")
+  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#B3B3B3")
   (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
   (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#ffaa77")
   (set-face-attribute 'rainbow-delimiters-depth-4-face nil :foreground "#66bbff")

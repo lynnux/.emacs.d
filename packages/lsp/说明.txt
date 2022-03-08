@@ -1,3 +1,10 @@
 cpp    安装llvm就包含clangd了
 python  pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
 rust是rls ra好像不支持没试 rustup component add rls rust-analysis rust-src
+
+
+dap-mode依赖的包很多：
+treemacs
+bui
+lsp-treemacs
+posframe

@@ -48,7 +48,6 @@ transient/*
 /projectile-bookmarks.eld
 /packages/projectile/*.el
 /TAGS
-/packages/lsp/*
 /bookmarks
 /packages/use-package/*
 !/packages/use-package/use-package-master.zip
@@ -63,3 +62,11 @@ packages/tree-sitter/langs/*
 !packages/tree-sitter/langs/tree-sitter-langs-master.zip
 packages/tree-sitter/lisp/*
 /.lsp-session*
+/packages/treemacs/icons/*
+/packages/treemacs/src/*
+/.dap-breakpoints
+/packages/lsp/dap-mode-master/*
+/packages/lsp/lsp-mode-master/*
+/packages/lsp/eglot.el
+/packages/lsp/bui.el-master/*
+/packages/lsp/lsp-treemacs-master/*
