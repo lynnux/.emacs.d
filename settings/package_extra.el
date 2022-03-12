@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-08 17:43:27 lynnux>
+;; Time-stamp: <2022-03-12 21:18:28 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1125,6 +1125,15 @@ _q_uit
 				                    ;; 指示当前是在哪个函数里     
 				                    (face-remap-add-relative 'hl-line '(:background "#666"))))))
 
+(defun chinese-char-p (char)
+  (if (string-match "\\cC\\{1\\}" (string char))
+      t
+    nil))
+(defun chinese-word-chinese-string-p (string)
+  "Return t if STRING is a Chinese string."
+  (cl-find-if 'chinese-char-p (string-to-list string))
+  )
+
 (if t
     ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
     ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
@@ -1175,7 +1184,15 @@ _q_uit
        helm-allow-mouse t
        ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
        )
-
+      
+      ;; 对于 中文 启用--pre rgpre
+      (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
+        (if (chinese-word-chinese-string-p (ad-get-arg 0))
+            (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
+              ad-do-it)
+          ad-do-it)
+        )
+      
       (with-eval-after-load 'helm
 	    ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
 	    ;; describe-current-coding-system 查看当前系统编码
@@ -1665,6 +1682,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	  ad-do-it
 	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
 	  ))
+  ;; 中文
+  (defadvice rg-build-command (around my-rg-build-command activate)
+    (if (chinese-word-chinese-string-p (ad-get-arg 0))
+        (let ((rg-command-line-flags (list "--pre rgpre")))
+          ad-do-it
+          )
+      ad-do-it))
   )
 
 ;;
@@ -2106,6 +2130,13 @@ _q_uit
 ;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
 (use-package centered-cursor-mode
   :commands(centered-cursor-mode))
+
+(use-package yaml-mode
+  :commands(yaml-mode)
+  :init
+  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))  
+  )
+
 
 ;; zenburn
 (if (display-graphic-p)
