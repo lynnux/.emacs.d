@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-02-10 14:58:22 lynnux>
+;; Time-stamp: <2022-03-13 10:20:57 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -247,7 +247,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; https://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
 ;; 下面抄自doom，略有修改(spacemacs和purcell都没有)
 (setq auto-mode-case-fold nil)
-(setq-default bidi-display-reordering 'left-to-right)
+(setq-default bidi-display-reordering 'left-to-right) 
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq-default bidi-inhibit-bpa t)
 (setq-default cursor-in-non-selected-windows nil)
@@ -259,7 +259,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
       gcmh-auto-idle-delay-factor 10
       gcmh-high-cons-threshold (* 16 1024 1024)  ; 16mb
       )
-(setq idle-update-delay 2)
+(setq idle-update-delay 1.0)
 (setq inhibit-compacting-font-caches t)
 (setq read-process-output-max (* 64 1024))
 (setq redisplay-skip-fontification-on-input t)

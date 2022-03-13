@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-12 21:18:28 lynnux>
+;; Time-stamp: <2022-03-13 10:24:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -977,7 +977,8 @@ _q_uit
         (with-eval-after-load 'treemacs-mode
           (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
           (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
-          
+          (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
+
           (define-key treemacs-mode-map (kbd "C-x C-d")
             ;; 抄自treemacs-visit-node-in-external-application
             (lambda () (interactive
