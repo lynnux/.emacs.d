@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-13 18:08:20 lynnux>
+;; Time-stamp: <2022-03-13 18:16:26 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2155,13 +2155,17 @@ _q_uit
 ;; 好的theme特点，treemacs里git非源码里区别明显
 (if (display-graphic-p)
     (progn
+      (add-to-list 'load-path "~/.emacs.d/themes")
+      ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
+      (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
+      (doom-themes-visual-bell-config)
+      
       (if t
           ;; 这是需要最后加载
           (progn
             ;; (load-theme 'zenburn t) 现在感觉背景有点太白了，用了prisma一天下来眼睛痛？
 
             ;; 背景色合适，但颜色绿色太多了，部分颜色要改
-            (add-to-list 'load-path "~/.emacs.d/themes")
             ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
             (custom-set-variables '(spacemacs-theme-custom-colors
                                     '(
@@ -2183,9 +2187,6 @@ _q_uit
 
             (load-theme 'doom-one t)
 
-            ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
-            (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
-            (doom-themes-visual-bell-config)
             (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org" "" nil nil)
             (doom-themes-org-config)
             
