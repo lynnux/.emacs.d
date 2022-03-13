@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-13 10:24:43 lynnux>
+;; Time-stamp: <2022-03-13 18:08:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -13,6 +13,8 @@
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+(defvar use-my-face nil)
 
 ;; 消除mode line上的minor提示字符
 (use-package diminish
@@ -491,10 +493,12 @@ _c_: hide comment        _q_uit
   :diminish
   :config
   (setq symbol-overlay-idle-time 0.1)
-  (if (display-graphic-p)
-      (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
-    (set-face-attribute 'symbol-overlay-default-face nil :background "#666" :foreground "Black")
-    )
+  (when use-my-face
+    (if (display-graphic-p)
+        (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
+      (set-face-attribute 'symbol-overlay-default-face nil :background "#666" :foreground "Black")
+      ))
+  
   (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
@@ -542,10 +546,12 @@ _q_uit
     :defer 0.6
     :config
     (global-hl-line-mode t)
-    (if (display-graphic-p)
-	    (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
-      ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
-      ))  
+    (when use-my-face
+      (if (display-graphic-p)
+	      (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
+        ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
+        ))
+    )  
   )
 
 
@@ -591,7 +597,9 @@ _q_uit
       :diminish
       :config
       (global-company-mode)
-      (set-face-attribute 'company-tooltip-selection nil :background "#666")
+      (when use-my-face
+        (set-face-attribute 'company-tooltip-selection nil :background "#666"))
+      
       ;; 句尾TAB就很烦了。。
       ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
       ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
@@ -922,7 +930,8 @@ _q_uit
   (setq avy-background t) ;; 开启跟ace一样了
   (setq-default avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
   :config
-  (set-face-attribute 'avy-goto-char-timer-face nil :foreground "red")
+  (when use-my-face
+    (set-face-attribute 'avy-goto-char-timer-face nil :foreground "red"))
   )
 
 ;;; autohotkey文件编辑
@@ -1229,13 +1238,14 @@ _q_uit
 	    (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	    (push "RG" helm-source-names-using-follow)
 
-	    (when (display-graphic-p)
-	      ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-	      (custom-set-faces
-	       '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
-	       '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
-	       ;;helm-match-item 
-	       ))
+        (when use-my-face
+          (when (display-graphic-p)
+	        ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+	        (custom-set-faces
+	         '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
+	         '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
+	         ;;helm-match-item 
+	         )))
 
 	    (define-key helm-map (kbd "<f1>") 'nil)
 	    (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
@@ -1918,16 +1928,18 @@ _q_uit
 	         ;; 	   (rainbow-delimiters-mode)))
 	         )
   :config
-  (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#B3B3B3")
-  (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
-  (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#ffaa77")
-  (set-face-attribute 'rainbow-delimiters-depth-4-face nil :foreground "#66bbff")
-  (set-face-attribute 'rainbow-delimiters-depth-5-face nil :foreground "#afafaf")
-  (set-face-attribute 'rainbow-delimiters-depth-6-face nil :foreground "#ffa500")
-  (set-face-attribute 'rainbow-delimiters-depth-7-face nil :foreground "#da6bda")
-  (set-face-attribute 'rainbow-delimiters-depth-8-face nil :foreground "#ff5e5e")
-  (set-face-attribute 'rainbow-delimiters-depth-9-face nil :foreground "#dddd77")
-  (set-face-attribute 'rainbow-delimiters-base-error-face nil :foreground "#ff2020")
+  (when use-my-face
+    (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#B3B3B3")
+    (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#80ee80")
+    (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#ffaa77")
+    (set-face-attribute 'rainbow-delimiters-depth-4-face nil :foreground "#66bbff")
+    (set-face-attribute 'rainbow-delimiters-depth-5-face nil :foreground "#afafaf")
+    (set-face-attribute 'rainbow-delimiters-depth-6-face nil :foreground "#ffa500")
+    (set-face-attribute 'rainbow-delimiters-depth-7-face nil :foreground "#da6bda")
+    (set-face-attribute 'rainbow-delimiters-depth-8-face nil :foreground "#ff5e5e")
+    (set-face-attribute 'rainbow-delimiters-depth-9-face nil :foreground "#dddd77")
+    (set-face-attribute 'rainbow-delimiters-base-error-face nil :foreground "#ff2020")
+    )
   )
 
 ;; 自动转换文本中的RGB颜色
@@ -1948,16 +1960,17 @@ _q_uit
   (setq rainbow-blocks-highlight-braces-p t)
   (setq rainbow-blocks-highlight-brackets-p t)
   (setq rainbow-blocks-highlight-parens-p t)
-  (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#87CEEB")
-  (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#D2B48C")
-  (set-face-attribute 'rainbow-blocks-depth-3-face nil :foreground "#ffaa77")
-  (set-face-attribute 'rainbow-blocks-depth-4-face nil :foreground "#66bbff")
-  (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#DA70D6")
-  (set-face-attribute 'rainbow-blocks-depth-6-face nil :foreground "#ffa500")
-  (set-face-attribute 'rainbow-blocks-depth-7-face nil :foreground "#da6bda")
-  (set-face-attribute 'rainbow-blocks-depth-8-face nil :foreground "#ff5e5e")
-  (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
-  (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020")
+  (when use-my-face
+    (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#87CEEB")
+    (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#D2B48C")
+    (set-face-attribute 'rainbow-blocks-depth-3-face nil :foreground "#ffaa77")
+    (set-face-attribute 'rainbow-blocks-depth-4-face nil :foreground "#66bbff")
+    (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#DA70D6")
+    (set-face-attribute 'rainbow-blocks-depth-6-face nil :foreground "#ffa500")
+    (set-face-attribute 'rainbow-blocks-depth-7-face nil :foreground "#da6bda")
+    (set-face-attribute 'rainbow-blocks-depth-8-face nil :foreground "#ff5e5e")
+    (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
+    (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020"))
   )
 
 ;; 以dired形式展示fd搜索的文件
@@ -2139,15 +2152,53 @@ _q_uit
   )
 
 
-;; zenburn
+;; 好的theme特点，treemacs里git非源码里区别明显
 (if (display-graphic-p)
     (progn
-      ;; 这是需要最后加载
-      (load-theme 'zenburn t)
-      
-      ;; region有点看不清，单独设置
-      (set-face-attribute 'region nil :background "#4C7073"))
+      (if t
+          ;; 这是需要最后加载
+          (progn
+            ;; (load-theme 'zenburn t) 现在感觉背景有点太白了，用了prisma一天下来眼睛痛？
+
+            ;; 背景色合适，但颜色绿色太多了，部分颜色要改
+            (add-to-list 'load-path "~/.emacs.d/themes")
+            ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
+            (custom-set-variables '(spacemacs-theme-custom-colors
+                                    '(
+                                      (base . "#eeeeec") ;文本 tangotango
+                                      (comment . "#888a85") ; 注释 tangotango
+                                      )))
+            (load-theme 'spacemacs-dark t)
+            ;; (load-theme 'tangotango t) 用深红色太多
+            ;; modus不太推荐，有些颜色被prisma过滤掉了，而且背景色太深了
+            )
+        (progn
+          ;; doom搜集themes系列
+          ;; https://github.com/doomemacs/themes
+          (use-package doom-themes
+            :load-path "~/.emacs.d/themes/themes-master"
+            :config
+            (setq doom-themes-enable-bold nil
+                  doom-themes-enable-italic nil)
+
+            (load-theme 'doom-one t)
+
+            ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
+            (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
+            (doom-themes-visual-bell-config)
+            (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org" "" nil nil)
+            (doom-themes-org-config)
+            
+            )
+          )
+        )
+
+      (when use-my-face
+        ;; region有点看不清，单独设置
+        (set-face-attribute 'region nil :background "#4C7073"))
+      )
   (progn
     (set-face-attribute 'region nil :background "#4C7073" :foreground "Black"))
   )
+
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")

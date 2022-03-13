@@ -71,3 +71,4 @@ packages/tree-sitter/lisp/*
 /packages/lsp/bui.el-master/*
 /packages/lsp/lsp-treemacs-master/*
 /.extension/
+/themes/themes-master/*
