@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-14 11:58:11 lynnux>
+;; Time-stamp: <2022-03-14 15:47:34 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2126,7 +2126,11 @@ _q_uit
   )
 
 
-;; 好的theme特点，treemacs里git非源码里区别明显(doom-one)，eldoc参数当前哪个参数很明显，tabbar被修改的*文件有明显显示(spacemacs)
+;;好的theme特点:
+;; treemacs里git非源码里区别明显(doom-one)，
+;; eldoc参数当前哪个参数很明显
+;; tabbar被修改的*文件有明显显示(spacemacs)
+;; 当前buffer modeline背景色(doom-dark+)
 (if (display-graphic-p)
     (progn
       (add-to-list 'load-path "~/.emacs.d/themes")
@@ -2134,7 +2138,7 @@ _q_uit
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
       (doom-themes-visual-bell-config)
       
-      (if t
+      (if nil
           ;; 这是需要最后加载
           (progn
             ;; (load-theme 'zenburn t) 现在感觉背景有点太白了，用了prisma一天下来眼睛痛？
@@ -2145,8 +2149,13 @@ _q_uit
                                     '(
                                       (base . "gray") ;文本 tangotango
                                       (comment . "#888a85") ; 注释 tangotango
+                                      (border . "#292b2e")  ; border太丑了
                                       )))
             (load-theme 'spacemacs-dark t)
+
+            ;; (set-face-attribute 'mode-line nil :foreground (face-attribute 'default :foreground))
+            (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
+            
             ;; (load-theme 'tangotango t) 用深红色太多
             ;; modus不太推荐，有些颜色被prisma过滤掉了，而且背景色太深了
             )
@@ -2159,11 +2168,24 @@ _q_uit
             (setq doom-themes-enable-bold nil
                   doom-themes-enable-italic nil)
 
-            (load-theme 'doom-one t)
-
+            (defun get-theme(x)
+              (intern (replace-regexp-in-string ".*/" "" (string-replace "-theme.el" "" x)))
+              )
+            ;; 随机加载theme，不对的话建议重启emacs，不然上次的theme可能会干扰本次theme
+            (defun random-load-doom-theme()
+              (interactive)
+              (let* ((tl (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
+                     (th (nth (mod (random t) (length tl)) tl))
+                     )
+                (message "load-doom-theme: %s" (symbol-name th))
+                (load-theme th t)
+                
+                (doom-themes-org-config)
+                ;; 参考的spacemacs
+                (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
+                ))
             (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org" "" nil nil)
-            (doom-themes-org-config)
-            
+            (random-load-doom-theme)
             )
           )
         )
