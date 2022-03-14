@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-11-27 17:35:24 lynnux>
+;; Time-stamp: <2022-03-14 11:18:07 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -122,14 +122,12 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 			  charset
 			  zh-font))))
 
-  ;; 设置字体,Fixedsys要用修正过的，为了保证org的table显示正常，字体大小应该设置成一样大，不过这样感觉汉字大多了，大也好，慢慢适应吧
-;;; 25上用Fixedsys Excelsior 3.01-L会卡死，可以用Fixedsys(24不能用)，但发现字体有发虚。最后发现是因为字体名带-，用Hxd替换-为_就行了(同时替换unicode)
+  ;; https://www.programmingfonts.org在线看字体效果
   (qiang-set-font
-   '("Fixedsys" "Fixedsys Excelsior 3.01_L" "Source Code Pro" "Consolas" "Monaco" "DejaVu Sans Mono" "Monospace" "Courier New") ":pixelsize=16"
-   '("宋体" "新宋体" "Microsoft Yahei" "思源黑体 CN Normal" "黑体" "WenQuanYi Bitmap Song" "文泉驿等宽微米黑") 16)
+   '("Bitstream Vera Sans Mono" "Office Code Pro" "JetBrains Mono" "Fira Code" "Hack Regular" "Fixedsys") ":pixelsize=14"
+   '("微软雅黑" "宋体" "新宋体" "Microsoft Yahei" "黑体" "WenQuanYi Bitmap Song" "文泉驿等宽微米黑") 14)
   )
-
-;; "Fixedsys Excelsior 3.01_L"好像有点暗
+;; 要能区分0O和1lI(光l1就能排除很多了)，单看单词时要好看，--__能区分出来，粗体要好看，()要好看(感觉小点好看)
 
 ;; 下面这两个看特殊字符时不卡，按上面的说法`set-default-font'不支持new frames，这个我暂时会用到
 ;;(set-default-font "Consolas 11") ;; for 英文     

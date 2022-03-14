@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-13 18:16:26 lynnux>
+;; Time-stamp: <2022-03-13 18:30:40 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2152,7 +2152,7 @@ _q_uit
   )
 
 
-;; 好的theme特点，treemacs里git非源码里区别明显
+;; 好的theme特点，treemacs里git非源码里区别明显(doom-one)，eldoc参数当前哪个参数很明显，tabbar被修改的*文件有明显显示(spacemacs)
 (if (display-graphic-p)
     (progn
       (add-to-list 'load-path "~/.emacs.d/themes")
