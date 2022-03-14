@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-13 18:30:40 lynnux>
+;; Time-stamp: <2022-03-14 11:52:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -929,9 +929,6 @@ _q_uit
   (global-set-key [remap goto-line] 'avy-goto-line)
   (setq avy-background t) ;; 开启跟ace一样了
   (setq-default avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
-  :config
-  (when use-my-face
-    (set-face-attribute 'avy-goto-char-timer-face nil :foreground "red"))
   )
 
 ;;; autohotkey文件编辑
@@ -1238,14 +1235,14 @@ _q_uit
 	    (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
 	    (push "RG" helm-source-names-using-follow)
 
-        (when use-my-face
-          (when (display-graphic-p)
-	        ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-	        (custom-set-faces
-	         '(helm-selection ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F")))) ; underline好看，:background nil去不掉背景色，就改成zenburn同色了
-	         '(helm-selection-line ((t (:inherit isearch-lazy-highlight-face :underline t :background "#3F3F3F"))))
-	         ;;helm-match-item 
-	         )))
+        (when (display-graphic-p)
+	      ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+          ;; 当前主题背景色(face-attribute 'default :background)
+	      (custom-set-faces
+	       '(helm-selection ((t (:underline t :background nil)))) ; underline好看，去掉背景色
+	       '(helm-selection-line ((t (:underline t :background nil))))
+	       ;;helm-match-item 
+	       ))
 
 	    (define-key helm-map (kbd "<f1>") 'nil)
 	    (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
@@ -1950,29 +1947,6 @@ _q_uit
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
 
-;; 对elisp代码非常有用，但是有bug经常部分不变色，将就用 https://github.com/istib/rainbow-blocks/issues/4
-(use-package rainbow-blocks
-  :diminish
-  :commands(rainbow-blocks-mode)
-  ;;:hook
-  ;;(emacs-lisp-mode . rainbow-blocks-mode);; 这个看多了也烦
-  :config
-  (setq rainbow-blocks-highlight-braces-p t)
-  (setq rainbow-blocks-highlight-brackets-p t)
-  (setq rainbow-blocks-highlight-parens-p t)
-  (when use-my-face
-    (set-face-attribute 'rainbow-blocks-depth-1-face nil :foreground "#87CEEB")
-    (set-face-attribute 'rainbow-blocks-depth-2-face nil :foreground "#D2B48C")
-    (set-face-attribute 'rainbow-blocks-depth-3-face nil :foreground "#ffaa77")
-    (set-face-attribute 'rainbow-blocks-depth-4-face nil :foreground "#66bbff")
-    (set-face-attribute 'rainbow-blocks-depth-5-face nil :foreground "#DA70D6")
-    (set-face-attribute 'rainbow-blocks-depth-6-face nil :foreground "#ffa500")
-    (set-face-attribute 'rainbow-blocks-depth-7-face nil :foreground "#da6bda")
-    (set-face-attribute 'rainbow-blocks-depth-8-face nil :foreground "#ff5e5e")
-    (set-face-attribute 'rainbow-blocks-depth-9-face nil :foreground "#D8BFD8")
-    (set-face-attribute 'rainbow-blocks-unmatched-face nil :foreground "#ff2020"))
-  )
-
 ;; 以dired形式展示fd搜索的文件
 (use-package fd-dired
   :commands(fd-dired))
@@ -2194,7 +2168,7 @@ _q_uit
           )
         )
 
-      (when use-my-face
+      (when t
         ;; region有点看不清，单独设置
         (set-face-attribute 'region nil :background "#4C7073"))
       )
