@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-14 11:52:35 lynnux>
+;; Time-stamp: <2022-03-14 11:58:11 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2143,7 +2143,7 @@ _q_uit
             ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
             (custom-set-variables '(spacemacs-theme-custom-colors
                                     '(
-                                      (base . "#eeeeec") ;文本 tangotango
+                                      (base . "gray") ;文本 tangotango
                                       (comment . "#888a85") ; 注释 tangotango
                                       )))
             (load-theme 'spacemacs-dark t)
