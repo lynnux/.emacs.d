@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-14 16:23:53 lynnux>
+;; Time-stamp: <2022-03-14 22:55:24 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1173,13 +1173,13 @@ _q_uit
       (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
       (global-set-key [S-f2] (lambda() (interactive)
                                         ; 只搜索当前目录，加入-g/*
-                               (let ((helm-grep-ag-command "rg --color=never --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                               (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
                                  (call-interactively 'helm-do-grep-ag))
                                ))
       (setq
-       ;; smart case跟emacs类似，不读gitignore
-       helm-grep-ag-command "rg --color=never --smart-case --no-heading --line-number --no-ignore %s %s %s"
-       ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; 貌似没什么用
+       ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
+       helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
+       helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
        helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
        helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
        helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
@@ -1239,7 +1239,8 @@ _q_uit
 	      ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
           ;; 当前主题背景色(face-attribute 'default :background)
 	      (custom-set-faces
-	       '(helm-selection ((t (:underline t :background nil)))) ; underline好看，去掉背景色
+           ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
+	       '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
 	       '(helm-selection-line ((t (:underline t :background nil))))
 	       ;;helm-match-item 
 	       ))
