@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-14 15:47:34 lynnux>
+;; Time-stamp: <2022-03-14 16:23:53 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1173,12 +1173,12 @@ _q_uit
       (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
       (global-set-key [S-f2] (lambda() (interactive)
                                         ; 只搜索当前目录，加入-g/*
-                               (let ((helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                               (let ((helm-grep-ag-command "rg --color=never --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
                                  (call-interactively 'helm-do-grep-ag))
                                ))
       (setq
        ;; smart case跟emacs类似，不读gitignore
-       helm-grep-ag-command "rg --color=always --smart-case --no-heading --line-number --no-ignore %s %s %s"
+       helm-grep-ag-command "rg --color=never --smart-case --no-heading --line-number --no-ignore %s %s %s"
        ;; helm-grep-ag-pipe-cmd-switches '("--colors 'match:fg:black'" "--colors 'match:bg:yellow'") ;; 貌似没什么用
        helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
        helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
