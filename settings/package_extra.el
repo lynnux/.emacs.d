@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-14 22:55:24 lynnux>
+;; Time-stamp: <2022-03-15 11:21:23 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2127,11 +2127,12 @@ _q_uit
   )
 
 
-;;好的theme特点:
+;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
 ;; tabbar被修改的*文件有明显显示(spacemacs)
 ;; 当前buffer modeline背景色(doom-dark+)
+;; helm occur关键字高亮明显，不明显就换了吧那个暂时还不知道如何定制
 (if (display-graphic-p)
     (progn
       (add-to-list 'load-path "~/.emacs.d/themes")
@@ -2139,61 +2140,67 @@ _q_uit
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
       (doom-themes-visual-bell-config)
       
-      (if nil
-          ;; 这是需要最后加载
-          (progn
-            ;; (load-theme 'zenburn t) 现在感觉背景有点太白了，用了prisma一天下来眼睛痛？
+      ;; 这是需要最后加载
+      ;; doom搜集themes系列
+      ;; https://github.com/doomemacs/themes
+      (use-package doom-themes
+        :load-path "~/.emacs.d/themes/themes-master"
+        :config
+        (setq doom-themes-enable-bold nil
+              doom-themes-enable-italic nil)
+        (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org" "" nil nil)
 
-            ;; 背景色合适，但颜色绿色太多了，部分颜色要改
-            ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
-            (custom-set-variables '(spacemacs-theme-custom-colors
-                                    '(
-                                      (base . "gray") ;文本 tangotango
-                                      (comment . "#888a85") ; 注释 tangotango
-                                      (border . "#292b2e")  ; border太丑了
-                                      )))
-            (load-theme 'spacemacs-dark t)
-
-            ;; (set-face-attribute 'mode-line nil :foreground (face-attribute 'default :foreground))
-            (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
-            
-            ;; (load-theme 'tangotango t) 用深红色太多
-            ;; modus不太推荐，有些颜色被prisma过滤掉了，而且背景色太深了
-            )
-        (progn
-          ;; doom搜集themes系列
-          ;; https://github.com/doomemacs/themes
-          (use-package doom-themes
-            :load-path "~/.emacs.d/themes/themes-master"
-            :config
-            (setq doom-themes-enable-bold nil
-                  doom-themes-enable-italic nil)
-
-            (defun get-theme(x)
-              (intern (replace-regexp-in-string ".*/" "" (string-replace "-theme.el" "" x)))
-              )
-            ;; 随机加载theme，不对的话建议重启emacs，不然上次的theme可能会干扰本次theme
-            (defun random-load-doom-theme()
-              (interactive)
-              (let* ((tl (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
-                     (th (nth (mod (random t) (length tl)) tl))
-                     )
-                (message "load-doom-theme: %s" (symbol-name th))
-                (load-theme th t)
-                
-                (doom-themes-org-config)
-                ;; 参考的spacemacs
-                (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
-                ))
-            (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org" "" nil nil)
-            (random-load-doom-theme)
-            )
+        (defun get-theme(x)
+          (intern (replace-regexp-in-string ".*/" "" (string-replace "-theme.el" "" x)))
           )
-        )
+        ;; 随机加载theme，不对的话建议重启emacs，不然上次的theme可能会干扰本次theme
+        (defun random-load-doom-theme(tl)
+          (interactive)
+          (let* ((th (nth (mod (random t) (length tl)) tl))
+                 )
+            (message "load-doom-theme: %s" (symbol-name th))
 
-      (when t
+            ;; before load
+            (cond ((eq th 'spacemacs-dark)
+                   ;; 背景色合适，但颜色绿色太多了，部分颜色要改
+                   ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
+                   (custom-set-variables '(spacemacs-theme-custom-colors
+                                           '(
+                                             (base . "#bbc2cf") ;文本 tangotango
+                                             (comment . "#888a85") ; 注释 tangotango
+                                             (border . "#292b2e")  ; border太丑了
+                                             ))))
+                  ((eq th 'doom-one)
+                   ;; (setq doom-one-brighter-comments t)
+                   )
+                  )
+            
+            (load-theme th t)
+
+            ;; after load
+            (doom-themes-org-config)
+            (cond ((eq th 'spacemacs-dark)
+                   (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
+                   )
+                  ((not (string-prefix-p "doom" (symbol-name th)))
+                   (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b"))
+                  (t
+                   ;; 参考的spacemacs
+                   (set-face-attribute 'show-paren-match nil :underline t :weight 'bold))
+                  ))
+          )
+        ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
+        (random-load-doom-theme (list
+                                 'doom-one
+                                 ;; 'spacemacs-dark
+                                 ;; 'modus-vivendi
+                                 ))
+        )
+      
+      (when nil
         ;; region有点看不清，单独设置
-        (set-face-attribute 'region nil :background "#4C7073"))
+        (set-face-attribute 'region nil :background "#4C7073")
+        )
       )
   (progn
     (set-face-attribute 'region nil :background "#4C7073" :foreground "Black"))
