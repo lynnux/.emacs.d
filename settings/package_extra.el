@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-15 11:21:23 lynnux>
+;; Time-stamp: <2022-03-16 20:02:21 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2126,6 +2126,11 @@ _q_uit
   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))  
   )
 
+(use-package beacon
+  :defer 1.5
+  :config
+  (setq beacon-blink-when-focused t)
+  (beacon-mode 1))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
