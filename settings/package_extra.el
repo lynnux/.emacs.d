@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 11:12:06 lynnux>
+;; Time-stamp: <2022-03-17 14:07:15 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -900,29 +900,34 @@ _q_uit
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
-(setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el")
-(add-to-list 'load-path
-	         "~/.emacs.d/packages/multiple-cursors")
-(autoload 'mc/add-cursor-on-click "multiple-cursors" nil t)
-(autoload 'mc/unmark-next-like-this "multiple-cursors" nil t)
-(autoload 'mc/unmark-previous-like-this "multiple-cursors" nil t)
-(autoload 'mc/mark-previous-like-this "multiple-cursors" nil t)
-(autoload 'mc/mark-next-like-this "multiple-cursors" nil t)
-(autoload 'mc/edit-lines "multiple-cursors" nil t)
-(global-unset-key (kbd "<M-down-mouse-1>"))
-(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
-(global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
-(global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
-(global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
-(global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
-;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-(with-eval-after-load 'multiple-cursors
+(use-package multiple-cursors
+  :load-path "~/.emacs.d/packages/multiple-cursors"
+  :init
+  ;; mc询问你的命令都保存在这里面了
+  (setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el")
+  (global-unset-key (kbd "<M-down-mouse-1>"))
+  (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
+  (global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
+  (global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
+  (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
+  ;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  :commands(multiple-cursors-mode
+            mc/add-cursor-on-click
+            mc/unmark-next-like-this
+            mc/unmark-previous-like-this
+            mc/mark-previous-like-this
+            mc/mark-next-like-this
+            mc/edit-lines
+            )
+  :config
   (define-key mc/keymap (kbd "C-v") nil)
-  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode))
+  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode)
+  )
 
 ;; avy可以配得跟ace jump完全一样，就没必要保留ace jump了
 (use-package avy
