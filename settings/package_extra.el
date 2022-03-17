@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-16 20:02:21 lynnux>
+;; Time-stamp: <2022-03-17 10:23:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -10,6 +10,16 @@
 
 (add-to-list 'load-path
 	         "~/.emacs.d/packages")
+
+;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了
+;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
+(use-package init-benchmarking
+  :config
+  (add-hook 'after-init-hook (lambda ()
+                               ;; 启动后就再需要了，会把helm等算进去
+                               (advice-remove 'require 'sanityinc/require-times-wrapper)
+                               ))
+  )
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
@@ -1825,6 +1835,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
 (use-package dap-mode
   :load-path "~/.emacs.d/packages/lsp/dap-mode-master"
+  :after(lsp-mode)
   :init
   (use-package bui
     :load-path "~/.emacs.d/packages/lsp/bui.el-master"
