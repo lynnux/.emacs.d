@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 14:07:15 lynnux>
+;; Time-stamp: <2022-03-17 18:24:56 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2140,6 +2140,32 @@ _q_uit
   :config
   (setq beacon-blink-when-focused t)
   (beacon-mode 1))
+
+;; eaf awesome! 安装可以用国内镜像，不过仍然要半天(--depth=1参数也有)奇怪了
+;; https://gitee.com/emacs-eaf/emacs-application-framework
+;; 不用能virtualenv，install-eaf.py --install-all-apps --use-mirror
+(let ((eaf-path (cond ((file-exists-p "~/emacs-application-framework-master") "~/emacs-application-framework-master")
+                      ;; ((file-exists-p "~/xxx") "~/xxx") 不用路径写这里
+                      (t nil))
+                ))
+  (when eaf-path
+    (use-package eaf
+      :init
+      (add-to-list 'load-path eaf-path)
+      :custom
+      (eaf-browser-continue-where-left-off t)
+      (eaf-browser-enable-adblocker t)
+      (browse-url-browser-function 'eaf-open-browser)
+      ;; :commands()
+      :config
+      (defalias 'browse-web #'eaf-open-browser)
+      ;; (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
+      ;; (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
+      (require 'eaf-browser)
+      (require 'eaf-pdf-viewer)
+      ;; (eaf-bind-key nil "M-q" eaf-browser-keybinding)
+      )
+    ))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
