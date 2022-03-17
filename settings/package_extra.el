@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 18:24:56 lynnux>
+;; Time-stamp: <2022-03-17 22:30:42 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2141,31 +2141,69 @@ _q_uit
   (setq beacon-blink-when-focused t)
   (beacon-mode 1))
 
-;; eaf awesome! 安装可以用国内镜像，不过仍然要半天(--depth=1参数也有)奇怪了
+;; eaf 
 ;; https://gitee.com/emacs-eaf/emacs-application-framework
-;; 不用能virtualenv，install-eaf.py --install-all-apps --use-mirror
-(let ((eaf-path (cond ((file-exists-p "~/emacs-application-framework-master") "~/emacs-application-framework-master")
-                      ;; ((file-exists-p "~/xxx") "~/xxx") 不用路径写这里
-                      (t nil))
-                ))
-  (when eaf-path
-    (use-package eaf
+;; 不用能virtualenv，install-eaf.py --use-mirror
+;; 很遗憾，有些是npm或者vue安装，npm装半天一堆东西如file-manager就算了，选择性安装--install app
+;; 安装快速的app: browser video-player pdf-viewer mindmap jupyter
+(defvar eaf-path (cond ((file-exists-p "~/emacs-application-framework-master") "~/emacs-application-framework-master")
+                       ((file-exists-p "~/emacs-application-framework") "~/emacs-application-framework")
+                       (t nil)))
+(when eaf-path
+  (use-package eaf
+    :init
+    (add-to-list 'load-path eaf-path)
+    :commands(eaf-open
+              eaf-get-theme-foreground-color ;; brower
+              ;; eaf-app-binding-alist ;; mindmap
+              ) 
+    :custom
+    (eaf-browser-continue-where-left-off t)
+    (eaf-browser-enable-adblocker t)
+    (browse-url-browser-function 'eaf-open-browser)
+    :config
+    (defalias 'browse-web #'eaf-open-browser)
+
+    ;; 补充eaf-open
+    (when (file-exists-p (concat eaf-path "/app/video-player"))
+      (use-package eaf-video-player))
+
+    ;; 补充eaf-open
+    (when (file-exists-p (concat eaf-path "/app/pdf-viewer"))
+      (use-package eaf-pdf-viewer
+        :config
+        (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
+        (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
+        ))
+
+    ;; TODO: 这两个需要eaf-app-binding-alist，但是个变量不支持autoload
+    (when (file-exists-p (concat eaf-path "/app/mindmap"))
+      (use-package eaf-mindmap
+        :init
+        (add-to-list 'load-path (concat eaf-path "/app/mindmap"))
+        :commands(eaf-create-mindmap eaf-open-mindmap)
+        ))
+    (when (file-exists-p (concat eaf-path "/app/jupyter"))
+      (use-package eaf-jupyter
+        :init
+        (add-to-list 'load-path (concat eaf-path "/app/jupyter"))
+        :commands(eaf-open-jupyter)
+        ))
+    
+    )
+  (when (file-exists-p (concat eaf-path "/app/browser"))
+    (use-package eaf-browser
       :init
-      (add-to-list 'load-path eaf-path)
-      :custom
-      (eaf-browser-continue-where-left-off t)
-      (eaf-browser-enable-adblocker t)
-      (browse-url-browser-function 'eaf-open-browser)
-      ;; :commands()
-      :config
-      (defalias 'browse-web #'eaf-open-browser)
-      ;; (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
-      ;; (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
-      (require 'eaf-browser)
-      (require 'eaf-pdf-viewer)
+      (add-to-list 'load-path (concat eaf-path "/app/browser"))
+      ;; TODO: 浏览器搜索殷勤，proxy设置
       ;; (eaf-bind-key nil "M-q" eaf-browser-keybinding)
-      )
-    ))
+      :commands(eaf-open-browser
+                eaf-open-browser-with-history
+                eaf-open-browser-other-window
+                eaf-search-it ;; 打开浏览器搜索
+                )))
+  )
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
