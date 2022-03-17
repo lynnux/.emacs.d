@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 10:23:44 lynnux>
+;; Time-stamp: <2022-03-17 11:12:06 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -11,12 +11,13 @@
 (add-to-list 'load-path
 	         "~/.emacs.d/packages")
 
-;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了
+;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前15个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
+  :disabled
   :config
   (add-hook 'after-init-hook (lambda ()
-                               ;; 启动后就再需要了，会把helm等算进去
+                               ;; 启动后就不再需要了，会把helm等算进去
                                (advice-remove 'require 'sanityinc/require-times-wrapper)
                                ))
   )
@@ -407,94 +408,86 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c e") #'aya-expand)
   )
 
-(when (display-graphic-p)
-  (progn 
-    ;; tabbar, use tabbar-ruler
-    (add-to-list 'load-path "~/.emacs.d/packages/tabbar") 
-    (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
-    (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
-    ))
-
-;; 参考easy-kill重写了C-TAB
-(defvar myswitch-buffer-list nil)
-(defvar myswitch-buffer-current nil)
-(defun myswitch-activate-keymap ()
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<C-tab>") 'myswitch_next_buffer)
-    (define-key map (if (string-equal system-type "windows-nt")
-			            (kbd "<C-S-tab>")
-		              (kbd "<C-S-iso-lefttab>"))
-      'myswitch_prev_buffer)
-    (set-transient-map ;; 关键函数！
-     map
-     t ;; 继续keymap
-     (lambda ()
-       ;; 退出时真正切换
-       ;; 不带t，最终切换过去
-       (let ((buf (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list))))
-	     (when (and (bufferp buf) (featurep 'wcy-desktop))
-	       (with-current-buffer buf
-	         (when (eq major-mode 'not-loaded-yet)
-	           (wcy-desktop-load-file)))))
-       )
-     )))
-(defun myswitch_next_buffer()
-  (interactive)
-  (incf myswitch-buffer-current)
-  (if (>= myswitch-buffer-current (length myswitch-buffer-list))
-      (setq myswitch-buffer-current 0))
-  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
-  )
-(defun myswitch_prev_buffer()
-  (interactive)
-  (decf myswitch-buffer-current)
-  (if (< myswitch-buffer-current 0)
-      (setq myswitch-buffer-current (1- (length myswitch-buffer-list))))
-  (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
-  )
-(defun myswitch_next_buffer_start(&optional backward)
-  (interactive)
-  (setq myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
-						                        (ep-tabbar-buffer-list)
-					                          (buffer-list))
-					                        ))
-  (message "C-tab to cycle forward, C-S-tab backward...")
-  (setq myswitch-buffer-current 0)
-  (if backward
-      (myswitch_prev_buffer)
-    (myswitch_next_buffer))
-  (myswitch-activate-keymap)
-  )
 (if (display-graphic-p)
-    (progn
-      
-      (global-set-key (kbd "<C-tab>")
-		              'myswitch_next_buffer_start
-		              )
-      (global-set-key (if (string-equal system-type "windows-nt")
-			              (kbd "<C-S-tab>")
-			            (kbd "<C-S-iso-lefttab>"))
-		              (lambda () 
-			            (interactive)
-			            (myswitch_next_buffer_start t))
-		              )
-
+    (use-package tabbar-ruler
+      :load-path "~/.emacs.d/packages/tabbar"
+      :defer 0.5 
+      :init
       ;;org的C-tab基本上不用
       (with-eval-after-load 'org-mode-hook
 	    (define-key org-mode-map (kbd "<C-tab>") nil))
-
       (setq EmacsPortable-global-tabbar 't)
-      (require 'tabbar-ruler)
       (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
       (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
+      :config
+      (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
+      (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
+      ;; pop-slecet替代了
+      ;; (global-set-key (kbd "<C-tab>")
+	  ;;                 'myswitch_next_buffer_start
+	  ;;                 )
+      ;; (global-set-key (if (string-equal system-type "windows-nt")
+	  ;;   	              (kbd "<C-S-tab>")
+	  ;;   	            (kbd "<C-S-iso-lefttab>"))
+	  ;;                 (lambda () 
+	  ;;   	            (interactive)
+	  ;;   	            (myswitch_next_buffer_start t))
+	  ;;                 )
+      ;; 参考easy-kill重写了C-TAB
+      (defvar myswitch-buffer-list nil)
+      (defvar myswitch-buffer-current nil)
+      (defun myswitch-activate-keymap ()
+        (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "<C-tab>") 'myswitch_next_buffer)
+          (define-key map (if (string-equal system-type "windows-nt")
+			                  (kbd "<C-S-tab>")
+		                    (kbd "<C-S-iso-lefttab>"))
+            'myswitch_prev_buffer)
+          (set-transient-map ;; 关键函数！
+           map
+           t ;; 继续keymap
+           (lambda ()
+             ;; 退出时真正切换
+             ;; 不带t，最终切换过去
+             (let ((buf (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list))))
+	           (when (and (bufferp buf) (featurep 'wcy-desktop))
+	             (with-current-buffer buf
+	               (when (eq major-mode 'not-loaded-yet)
+	                 (wcy-desktop-load-file)))))
+             )
+           )))
+      (defun myswitch_next_buffer()
+        (interactive)
+        (incf myswitch-buffer-current)
+        (if (>= myswitch-buffer-current (length myswitch-buffer-list))
+            (setq myswitch-buffer-current 0))
+        (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
+        )
+      (defun myswitch_prev_buffer()
+        (interactive)
+        (decf myswitch-buffer-current)
+        (if (< myswitch-buffer-current 0)
+            (setq myswitch-buffer-current (1- (length myswitch-buffer-list))))
+        (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
+        )
+      (defun myswitch_next_buffer_start(&optional backward)
+        (interactive)
+        (setq myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
+						                              (ep-tabbar-buffer-list)
+					                                (buffer-list))
+					                              ))
+        (message "C-tab to cycle forward, C-S-tab backward...")
+        (setq myswitch-buffer-current 0)
+        (if backward
+            (myswitch_prev_buffer)
+          (myswitch_next_buffer))
+        (myswitch-activate-keymap)
+        )
       )
   (progn
-    (progn
-      (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
-      (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
-      )
-    )
-  )
+    (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
+    (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
+    ))
 
 ;; highlight-symbol下岗啦，font lock速度慢，现在都是overlay。ahs范围小，还跟输入
 (use-package symbol-overlay
@@ -2161,6 +2154,7 @@ _q_uit
       ;; https://github.com/doomemacs/themes
       (use-package doom-themes
         :load-path "~/.emacs.d/themes/themes-master"
+        :after(tabbar-ruler)
         :config
         (setq doom-themes-enable-bold nil
               doom-themes-enable-italic nil)
