@@ -1,4 +1,4 @@
-;; Time-stamp: <2021-12-10 10:47:45 lynnux>
+;; Time-stamp: <2022-03-17 11:41:12 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -190,7 +190,10 @@
 (defun view-exist-file ()
   (when (file-exists-p (buffer-file-name))
     (view-mode)))
-(add-hook 'find-file-hook 'view-exist-file)
+;; 避免wcy提示失败
+(add-hook 'after-init-hook (lambda ()
+                             (add-hook 'find-file-hook 'view-exist-file)
+                             ))
 (keyboard-translate ?\C-i ?\H-i)	;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
 ;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
