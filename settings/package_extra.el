@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-18 16:45:54 lynnux>
+;; Time-stamp: <2022-03-18 20:54:32 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1806,7 +1806,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
-(add-hook 'python-mode-hook 'lsp-ensure)
+;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
+(use-package lsp-pyright
+  :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
+  :defer t
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp-ensure)
+                         )))
+
 (defun enable-format-on-save()
   (add-hook 'before-save-hook (lambda()
 					            (when (featurep 'eglot)

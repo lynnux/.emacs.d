@@ -76,3 +76,4 @@ packages/tree-sitter/lisp/*
 /themes/all-the-icons.el-master/*
 /image-dired/.image-dired_db
 /themes/doom-modeline-master/
+/packages/lsp/lsp-pyright-master/
