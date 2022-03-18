@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 22:30:42 lynnux>
+;; Time-stamp: <2022-03-18 11:09:58 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -60,12 +60,6 @@ _q_uit
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   :commands(dired dired-jump)
   :config
-
-  ;; 这个还是很强大的，特别是鼠标右键
-  (use-package dired+
-    :init
-    (setq diredp-hide-details-initially-flag nil) ;; 默认detail
-    )
 
   (when (string-equal system-type "windows-nt")
     (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
@@ -1717,6 +1711,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; which-key，用于一些自带mode-map的比较好，用原生的帮助显示太乱了
 (use-package which-key
+  :disabled
   :init
   (with-eval-after-load 'bookmark
     (define-key bookmark-bmenu-mode-map "?" (lambda ()(interactive)(which-key-show-keymap 'bookmark-bmenu-mode-map))))
@@ -2141,11 +2136,10 @@ _q_uit
   (setq beacon-blink-when-focused t)
   (beacon-mode 1))
 
-;; eaf 
+;; eaf，依赖node的npm，python需要epc，不用能virtualenv，
 ;; https://gitee.com/emacs-eaf/emacs-application-framework
-;; 不用能virtualenv，install-eaf.py --use-mirror
-;; 很遗憾，有些是npm或者vue安装，npm装半天一堆东西如file-manager就算了，选择性安装--install app
-;; 安装快速的app: browser video-player pdf-viewer mindmap jupyter
+;; install-eaf.py --use-mirror --install app
+;; browser video-player pdf-viewer mindmap jupyter
 (defvar eaf-path (cond ((file-exists-p "~/emacs-application-framework-master") "~/emacs-application-framework-master")
                        ((file-exists-p "~/emacs-application-framework") "~/emacs-application-framework")
                        (t nil)))
@@ -2163,11 +2157,10 @@ _q_uit
     (browse-url-browser-function 'eaf-open-browser)
     :config
     (defalias 'browse-web #'eaf-open-browser)
-
     ;; 补充eaf-open
-    (when (file-exists-p (concat eaf-path "/app/video-player"))
-      (use-package eaf-video-player))
-
+    ;; 测试就成功显示了一次，*eaf*啥也不显示
+    (when (file-exists-p (concat eaf-path "/app/markdown-previewer"))
+      (use-package eaf-markdown-previewer))
     ;; 补充eaf-open
     (when (file-exists-p (concat eaf-path "/app/pdf-viewer"))
       (use-package eaf-pdf-viewer
@@ -2175,21 +2168,6 @@ _q_uit
         (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
         (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
         ))
-
-    ;; TODO: 这两个需要eaf-app-binding-alist，但是个变量不支持autoload
-    (when (file-exists-p (concat eaf-path "/app/mindmap"))
-      (use-package eaf-mindmap
-        :init
-        (add-to-list 'load-path (concat eaf-path "/app/mindmap"))
-        :commands(eaf-create-mindmap eaf-open-mindmap)
-        ))
-    (when (file-exists-p (concat eaf-path "/app/jupyter"))
-      (use-package eaf-jupyter
-        :init
-        (add-to-list 'load-path (concat eaf-path "/app/jupyter"))
-        :commands(eaf-open-jupyter)
-        ))
-    
     )
   (when (file-exists-p (concat eaf-path "/app/browser"))
     (use-package eaf-browser

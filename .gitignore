@@ -72,3 +72,4 @@ packages/tree-sitter/lisp/*
 /packages/lsp/lsp-treemacs-master/*
 /.extension/
 /themes/themes-master/*
+/eaf/
