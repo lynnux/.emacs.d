@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-18 16:00:40 lynnux>
+;; Time-stamp: <2022-03-18 16:45:54 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2211,7 +2211,7 @@ _q_uit
       ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
       (use-package all-the-icons
         :load-path "~/.emacs.d/themes/all-the-icons.el-master"
-        :commands(all-the-icons-icon-for-dir)
+        :defer t
         )
       ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
       (use-package all-the-icons-dired
