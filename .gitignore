@@ -73,3 +73,6 @@ packages/tree-sitter/lisp/*
 /.extension/
 /themes/themes-master/*
 /eaf/
+/themes/all-the-icons.el-master/*
+/image-dired/.image-dired_db
+/themes/doom-modeline-master/

@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-18 11:09:58 lynnux>
+;; Time-stamp: <2022-03-18 16:00:40 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -11,7 +11,7 @@
 (add-to-list 'load-path
 	         "~/.emacs.d/packages")
 
-;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前15个包
+;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
   :disabled
@@ -1022,10 +1022,14 @@ _q_uit
       (use-package treemacs-projectile
         :after (treemacs projectile)
         )
-      ;; 这个给dired添加图标，不错
+      
+      ;; 这个给dired添加图标，不错。
+      ;; 不过当doom theme设置treemacs为doom-colors时有时不显示，故而用all-the-icons-dired
       (use-package treemacs-icons-dired
+        :disabled
         :hook (dired-mode . treemacs-icons-dired-enable-once)
         )
+      
       ;; magit更新时也刷新treemacs
       (use-package treemacs-magit
         :after (treemacs magit)
@@ -2191,7 +2195,28 @@ _q_uit
 ;; helm occur关键字高亮明显，不明显就换了吧那个暂时还不知道如何定制
 (if (display-graphic-p)
     (progn
+
       (add-to-list 'load-path "~/.emacs.d/themes")
+
+      ;; 国人写的啊，挺好用的
+      (use-package doom-modeline
+        :load-path "~/.emacs.d/themes/doom-modeline-master"
+        :defer 1.5
+        :init
+        ;; 默认配置就可以了，一堆定制在 https://github.com/seagle0128/doom-modeline
+        :config
+        (doom-modeline-mode 1)
+        )
+      
+      ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
+      (use-package all-the-icons
+        :load-path "~/.emacs.d/themes/all-the-icons.el-master"
+        :commands(all-the-icons-icon-for-dir)
+        )
+      ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
+      (use-package all-the-icons-dired
+        :hook(dired-mode . all-the-icons-dired-mode))
+      
       ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
       (doom-themes-visual-bell-config)
@@ -2240,11 +2265,24 @@ _q_uit
                    (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
                    )
                   ((not (string-prefix-p "doom" (symbol-name th)))
-                   (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b"))
+                   (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b")
+                   
+                   )
                   (t
                    ;; 参考的spacemacs
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold))
-                  ))
+                  )
+
+            (when t
+              (setq doom-themes-treemacs-enable-variable-pitch t) 
+              ;; treemacs的字体会变小，但风格跟doom的统一了
+              ;; doom-clors在打开dired时可能没有图标
+              (setq doom-themes-treemacs-theme "doom-colors") ; "doom-colors" doom-atom，
+              (autoload 'doom-themes-treemacs-config "extensions/doom-themes-ext-treemacs" "" nil nil)
+              (with-eval-after-load 'treemacs
+                (doom-themes-treemacs-config))
+              )
+            )
           )
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
         (random-load-doom-theme (list
