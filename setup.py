@@ -116,9 +116,25 @@ def unzip(zf):
                 
     zip_file.close()
 
-bin_list = [("https://ghproxy.com/https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep-13.0.0-x86_64-pc-windows-msvc.zip", "ripgrep-13.0.0-x86_64-pc-windows-msvc/rg.exe", "bin/rg.exe"),
-            
-            ]
+bin_list = [
+    ("http://adoxa.altervista.org/global/glo668wb.zip",[("bin/global.exe", "bin/global.exe"),
+                                                        ("bin/gozilla.exe","bin/gozilla.exe"),
+                                                        ("bin/gtags-cscope.exe","bin/gtags-cscope.exe"),
+                                                        ("bin/gtags.exe","bin/gtags.exe"),
+                                                        ("bin/htags.exe","bin/htags.exe"),
+                                                        ]),
+    ("https://ghproxy.com/https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep-13.0.0-x86_64-pc-windows-msvc.zip", [("ripgrep-13.0.0-x86_64-pc-windows-msvc/rg.exe", "bin/rg.exe")]),
+    ("https://ghproxy.com/https://github.com/universal-ctags/ctags-win32/releases/download/2022-03-16%2Fp5.9.20220306.0-11-g4492555f/ctags-2022-03-16_p5.9.20220306.0-11-g4492555f-x64.zip", [
+        ("ctags.exe", "bin/ctags.exe"),
+        ("readtags.exe", "bin/readtags.exe")]),
+    
+    ("https://ghproxy.com/https://github.com/sharkdp/fd/releases/download/v8.3.2/fd-v8.3.2-x86_64-pc-windows-msvc.zip", [
+        ("fd-v8.3.2-x86_64-pc-windows-msvc/fd.exe", "bin/fd.exe")
+    ]),
+    ("https://ghproxy.com/https://github.com/lynnux/.emacs.d/releases/download/20220319/my-emacs-bin_x64_msvc.zip",
+     [("emacs-win32-launcher.exe", "bin/emacs-win32-launcher.exe"),
+      ("pop_select.dll", "bin/pop_select.dll")])
+]
 
 def download_zip(url):
     print("downloading..." + url)
@@ -131,18 +147,20 @@ def download_zip(url):
 
 def download_bin():
     for bin in bin_list:
-        (url, src, dest) = bin
+        (url, filelist) = bin
 
-        if os.path.exists(dest):
-            os.unlink(dest)
-            
         dz = download_zip(url)
-        
         zip_file = ZipTar(dz)
-        zip_file.extract(src, ".cache")
-        shutil.move(".cache/"+src, dest)
-        zip_file.close()
         
+        for (src, dest) in filelist:
+            if os.path.exists(dest):
+                os.unlink(dest)
+                
+            zip_file.extract(src, ".cache")
+            shutil.move(".cache/"+src, dest)
+            
+        zip_file.close()
+    
 def unzip_el():
     print("el解压覆盖中...")
     if not os.path.exists("packages") or not os.path.exists("themes"):
@@ -153,14 +171,13 @@ def unzip_el():
         break
     
 def main():
-    # download_bin()
+    download_bin()              # 先下载，网络失败的概率大
     unzip_el()
     print('''
     操作完成，还有以下工作:
-    1.安装字体：themes/all-the-icons.el-master/fonts\n
-    2.bin/list.txt下载相关exe
-    3.按packages/tree-sitter/说明.txt下载tree-sitter的langs对应的bin
-    4.elisp的tree-sitter
+    1.安装字体：themes/all-the-icons.el-master/fonts
+    2.编译elc，打开init.el执行C-u 0 M-x byte-recompile-directory，
+       完成后删除packages\tabbar\tabbar.elc，删除packages\easy-kill下除easy-kill.elc外的elc文件
     ''')
     os.system("pause")
 
