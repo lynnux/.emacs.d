@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-18 20:54:32 lynnux>
+;; Time-stamp: <2022-03-19 13:46:00 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1507,7 +1507,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 (autoload 'dumb-jump-xref-activate "dumb-jump" nil t)
 (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
-(global-set-key (kbd "<f12>") 'xref-find-definitions) 
 (global-set-key (kbd "C-.") 'xref-find-definitions)
 (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
 (with-eval-after-load 'dumb-jump
@@ -1864,7 +1863,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                                   (call-interactively 'dap-debug-restart))
                                               (call-interactively 'dap-debug))
                                             )))
-  (define-key dap-mode-map (kbd "<f8>") 'dap-hydra)
+  (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
   (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
   (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
   (define-key dap-mode-map (kbd "<f10>") 'dap-next)
