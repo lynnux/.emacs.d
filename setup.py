@@ -7,9 +7,14 @@ import os
 import sys
 import zipfile
 import shutil
+import urllib.request
+import tarfile
 
-# 第三个表示是否需要子目录，第四个表示解压前删除的目录
+# 第三个表示是否不要zip里的根目录，第四个表示解压前删除的目录
 zip_list = [
+    # http开头的排前面如果有问题就终止了
+    ("https://ghproxy.com/https://github.com/emacs-tree-sitter/tree-sitter-langs/releases/download/0.11.3/tree-sitter-grammars.x86_64-pc-windows-msvc.v0.11.3.tar.gz", "packages/tree-sitter/langs/bin"),
+    
     ("packages/auto-complete/auto-complete-master.zip", "packages/auto-complete", True),
     ("packages/company-mode/company-mode-master.zip", "packages/company-mode", True),
     ("packages/dired/dired-hacks-master.zip", "packages/dired", True),
@@ -39,7 +44,34 @@ zip_list = [
     ("themes/doom-modeline-master.zip", "themes"),
     ("themes/themes-master.zip", "themes"),
 ] 
+class ZipTar():
+    def __init__(self, path):
+        self.zip = None
+        self.tar = None
+        ext = path.split('.')[-1]
+        if ext == 'zip':
+            self.zip = zipfile.ZipFile(path)
+        elif ext == 'tar':
+            self.tar = tarfile.TarFile(path)
+        elif ext == 'gz':
+            self.tar = tarfile.open(path, mode="r:gz")
 
+    def namelist(self):
+        if self.zip is not None:
+            return self.zip.namelist()
+        elif self.tar is not None:
+            return self.tar.getnames()
+    def extract(self, member, path):
+        if self.zip is not None:
+            return self.zip.extract(member, path)
+        elif self.tar is not None:
+            return self.tar.extract(member, path)
+    def close(self):
+        if self.zip is not None:
+            return self.zip.close()
+        elif self.tar is not None:
+            return self.tar.close()
+        
 def unzip(zf):
     path = ""
     out_dir = ""
@@ -52,44 +84,63 @@ def unzip(zf):
     elif len(zf) == 3:
         (path, out_dir, is_no_zip_root_dir, dir_del_before_unzip) = zf
 
+    # 如果是网址就先下载
+    if path.startswith("https://") or path.startswith("http://"):
+        path = download_zip(path)
+        
     if dir_del_before_unzip is not None:
         shutil.rmtree(dir_del_before_unzip, ignore_errors = True)
         
-    zip_file = zipfile.ZipFile(path)
+    zip_file = ZipTar(path)
     zip_list = zip_file.namelist()
+    print(zip_list)
     for f in zip_list:
         zip_file.extract(f, out_dir) # 自己会覆盖的，这样后面更新包也没问题了
         
         if is_no_zip_root_dir:
-            path1 = out_dir + "/" + f
-            if os.path.isfile(path1): # 目录暂时不管了
+            src = out_dir + "/" + f
+            if os.path.isfile(src): # 目录暂时不管了
                 dest = out_dir + "/" + "/".join(f.split('/')[1:])
 
+                print(src, dest)
+                
+                # 因为shutil.move不能覆盖，故而要先删除
                 if os.path.exists(dest):
                     os.unlink(dest)
 
-                # print(path1, dest)
+                # 没有目录就创建目录
                 if not os.path.exists(os.path.dirname(dest)):
                     os.makedirs(os.path.dirname(dest))
                     
-                shutil.move(path1, dest) # 这个不能覆盖
+                shutil.move(src, dest)
                 
     zip_file.close()
 
-bin_list = [("https://ghproxy.com/https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep-13.0.0-x86_64-pc-windows-msvc.zip", "ripgrep-13.0.0-x86_64-pc-windows-msvc/rg.exe", "bin/rg.exe")]
+bin_list = [("https://ghproxy.com/https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep-13.0.0-x86_64-pc-windows-msvc.zip", "ripgrep-13.0.0-x86_64-pc-windows-msvc/rg.exe", "bin/rg.exe"),
+            
+            ]
 
-import urllib.request
+def download_zip(url):
+    print("downloading..." + url)
+    # 下载到临时目录.cache里
+    if not os.path.exists(".cache"):
+        os.makedirs(".cache")
+    dz = ".cache/" + url.split('/')[-1]
+    urllib.request.urlretrieve(url, dz)
+    return dz
+
 def download_bin():
     for bin in bin_list:
         (url, src, dest) = bin
+
         if os.path.exists(dest):
-            continue
-        print(url)
-        dz = "bin/" + url.split('/')[-1]
-        urllib.request.urlretrieve(url, dz)
-        zip_file = zipfile.ZipFile(dz)
-        zip_file.extract(src, dest)
-        shutil.move(dest+"/"+src, dest)
+            os.unlink(dest)
+            
+        dz = download_zip(url)
+        
+        zip_file = ZipTar(dz)
+        zip_file.extract(src, ".cache")
+        shutil.move(".cache/"+src, dest)
         zip_file.close()
         
 def unzip_el():
@@ -99,7 +150,8 @@ def unzip_el():
         return
     for f in zip_list:
         unzip(f)
-        
+        break
+    
 def main():
     # download_bin()
     unzip_el()
