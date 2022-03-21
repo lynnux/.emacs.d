@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-19 13:46:00 lynnux>
+;; Time-stamp: <2022-03-21 11:39:55 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2142,10 +2142,10 @@ _q_uit
   )
 
 (use-package beacon
-  :defer 1.5
+  :commands(beacon-mode)
   :config
   (setq beacon-blink-when-focused t)
-  (beacon-mode 1))
+  )
 
 ;; eaf，依赖node的npm，python需要epc，不用能virtualenv，
 ;; https://gitee.com/emacs-eaf/emacs-application-framework
