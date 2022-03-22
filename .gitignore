@@ -77,3 +77,4 @@ packages/tree-sitter/lisp/*
 /image-dired/.image-dired_db
 /themes/doom-modeline-master/
 /packages/lsp/lsp-pyright-master/
+/themes/nyan-mode-master/

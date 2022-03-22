@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-22 11:50:15 lynnux>
+;; Time-stamp: <2022-03-22 15:37:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -2178,6 +2178,12 @@ _q_uit
                 )))
   )
 
+(use-package nyan-mode
+  :load-path "~/.emacs.d/themes/nyan-mode-master"
+  :defer 1.5
+  :config
+  (nyan-mode)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
