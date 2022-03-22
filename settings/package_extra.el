@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-21 11:39:55 lynnux>
+;; Time-stamp: <2022-03-22 11:50:15 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1723,96 +1723,135 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))))
   :commands(which-key-show-keymap))
 
-;; eglot，c++装个llvm(包含clangd)就可以直接用了
-;; python需要 pip install python-lsp-server(fork自python-language-server但好像不怎么更新了)
+;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(when nil
-  ;; eglot
-  (use-package eglot
-    :load-path "~/.emacs.d/packages/lsp"
-    :init
-    (defun lsp-ensure() (eglot-ensure))
-    :commands (eglot eglot-ensure eglot-rename)
-    :config
-    ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-    ;; (add-to-list 'eglot-stay-out-of 'flymake)
-    (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-    (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-          eglot-ignored-server-capabilities) 
-    ;; 临时禁止view-mode
-    (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	  (setq tmp-disable-view-mode t)
-	  ad-do-it
-	  (setq tmp-disable-view-mode nil)
-	  )
-    ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-    (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-    )
+(if t
+    ;; eglot
+    (use-package eglot
+      :load-path "~/.emacs.d/packages/lsp"
+      :init
+      (defun lsp-ensure() (eglot-ensure))
+      :commands (eglot eglot-ensure eglot-rename)
+      :config
+      ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+      ;; (add-to-list 'eglot-stay-out-of 'flymake)
+      (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+      (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+            eglot-ignored-server-capabilities) 
+      ;; 临时禁止view-mode
+      (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	    (setq tmp-disable-view-mode t)
+	    ad-do-it
+	    (setq tmp-disable-view-mode nil)
+	    )
+      ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+      )
 
-  ;; nox是eglot的简化版，没有flymake等花哨等影响速度的东西
-  ;; 但是eldoc提示API参数还是非常有用的！
-  (use-package nox
-    :load-path "~/.emacs.d/packages/lsp"
-    :init
-    (defun lsp-ensure() (nox-ensure))
-    :commands(nox nox-ensure nox-rename)
-    :config
-    (setq nox-autoshutdown t)
-    (add-to-list 'nox-server-programs '((c++-mode c-mode) "clangd"))
-    (defadvice nox--apply-workspace-edit (around my-nox--apply-workspace-edit activate)
-      (setq tmp-disable-view-mode t)
-      ad-do-it
-      (setq tmp-disable-view-mode nil)
+  ;; 相比eglot，退出emacs会卡一下
+  (progn
+    (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
+    (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
+    (use-package lsp-mode
+      :init
+      ;; lens和modeline没效果？好像要配合lsp ui用
+      (setq lsp-lens-enable nil
+            lsp-modeline-code-actions-enable nil
+            lsp-modeline-diagnostics-enable nil
+            lsp-modeline-workspace-status-enable nil
+            lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
+            lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
+            lsp-enable-folding nil
+            lsp-semantic-tokens-enable nil
+            lsp-enable-links nil
+            lsp-enable-text-document-color nil
+            )
+      (use-package lsp-pyright
+        :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
+        :defer t
+        )
+      :commands (lsp lsp-deferred)
+      :config
+      ;; ccls补全遇到中文注释会出错，因为文件没有存为utf-8
+      ;; (add-to-list 'load-path "~/.emacs.d/packages/lsp/emacs-ccls-master")
+      ;; (require 'ccls)
+      
+      ;; (use-package flycheck
+      ;;   :commands(flycheck-mode)
+      ;;   )
+      (require 'lsp-diagnostics)
+      (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
+                                             (if (use-region-p)
+                                                 (call-interactively 'lsp-format-region)
+                                               (call-interactively 'lsp-format-buffer))
+			                                 )))
+    (defun lsp-ensure() (lsp-deferred))
+
+    ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
+    (use-package dap-mode
+      :load-path "~/.emacs.d/packages/lsp/dap-mode-master"
+      :after(lsp-mode)
+      :init
+      (use-package bui
+        :load-path "~/.emacs.d/packages/lsp/bui.el-master"
+        :defer t
+        )
+      (use-package lsp-treemacs
+        :load-path "~/.emacs.d/packages/lsp/lsp-treemacs-master"
+        :defer t)
+      (require 'dap-autoloads) ;; 通过dap-autoloads.txt里的命令自己生成的，没有包管理器不好办啊。注册了命令lsp会自动显示breakpoint(需要fringe)
+      ;; server log窗口太大了，减小它 https://github.com/emacs-lsp/dap-mode/issues/428
+      (add-to-list 'display-buffer-alist '(" server log\\*\\'" display-buffer-at-bottom (window-height . 0.2)))
+      ;; controls目前有bug
+      (setq dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
+      :config
+      ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
+      (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
+                                              (let ((cs (dap--cur-session)))
+                                                (if cs
+                                                    (if (dap--session-running cs)
+                                                        (call-interactively 'dap-continue)
+                                                      (call-interactively 'dap-debug-restart))
+                                                  (call-interactively 'dap-debug))
+                                                )))
+      (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
+      (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
+      (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
+      (define-key dap-mode-map (kbd "<f10>") 'dap-next)
+
+      ;; 解决hl line不及时更新问题
+      (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
+                                                (when global-hl-line-mode
+                                                  (global-hl-line-highlight))
+                                                ))
+      (use-package dap-python
+        :after (dap-mode python))
+
+      ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
+      (use-package dap-cpptools
+        :after (dap-mode cc-mode))
+      
+      (use-package dap-hydra
+        :commands(dap-hydra)
+        :init
+        (add-hook 'dap-stopped-hook
+                  (lambda (arg)
+                    (call-interactively #'dap-hydra)))
+        )
+      ;; TODO: Locals里的icon显示不正常
       )
     )
   )
 
-;; 实测eglot有的问题，lsp-mode一样也有。lsp-mode开启flymake有问题
-(when t
-  (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
-  (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
-  (use-package lsp-mode
-    :init
-    ;; lens和modeline没效果？好像要配合lsp ui用
-    (setq lsp-lens-enable nil
-          lsp-modeline-code-actions-enable nil
-          lsp-modeline-diagnostics-enable nil
-          lsp-modeline-workspace-status-enable nil
-          lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
-          lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
-          lsp-enable-folding nil
-          lsp-semantic-tokens-enable nil
-          lsp-enable-links nil
-          lsp-enable-text-document-color nil
-          )
-    
-    :commands (lsp lsp-deferred)
-    :config
-    ;; ccls补全遇到中文注释会出错，因为文件没有存为utf-8
-    ;; (add-to-list 'load-path "~/.emacs.d/packages/lsp/emacs-ccls-master")
-    ;; (require 'ccls)
-    
-    ;; (use-package flycheck
-    ;;   :commands(flycheck-mode)
-    ;;   )
-    (require 'lsp-diagnostics)
-    (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
-                                           (if (use-region-p)
-                                               (call-interactively 'lsp-format-region)
-                                             (call-interactively 'lsp-format-buffer))
-			                               )))
-  (defun lsp-ensure() (lsp-deferred)))
-
-
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
+
 ;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
-(use-package lsp-pyright
-  :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
-  :defer t
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp-ensure)
-                         )))
+(add-hook 'python-mode-hook (lambda ()
+			                  (when (featurep 'lsp-pyright)
+                                (require 'lsp-pyright)
+                                )
+			                  (lsp-ensure)
+			                  ))
 
 (defun enable-format-on-save()
   (add-hook 'before-save-hook (lambda()
@@ -1835,60 +1874,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			                (enable-format-on-save)
 			                (lsp-ensure)
 			                ))
-
-;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
-(use-package dap-mode
-  :load-path "~/.emacs.d/packages/lsp/dap-mode-master"
-  :after(lsp-mode)
-  :init
-  (use-package bui
-    :load-path "~/.emacs.d/packages/lsp/bui.el-master"
-    :defer t
-    )
-  (use-package lsp-treemacs
-    :load-path "~/.emacs.d/packages/lsp/lsp-treemacs-master"
-    :defer t)
-  (require 'dap-autoloads) ;; 通过dap-autoloads.txt里的命令自己生成的，没有包管理器不好办啊。注册了命令lsp会自动显示breakpoint(需要fringe)
-  ;; server log窗口太大了，减小它 https://github.com/emacs-lsp/dap-mode/issues/428
-  (add-to-list 'display-buffer-alist '(" server log\\*\\'" display-buffer-at-bottom (window-height . 0.2)))
-  ;; controls目前有bug
-  (setq dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
-  :config
-  ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
-  (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
-                                          (let ((cs (dap--cur-session)))
-                                            (if cs
-                                                (if (dap--session-running cs)
-                                                    (call-interactively 'dap-continue)
-                                                  (call-interactively 'dap-debug-restart))
-                                              (call-interactively 'dap-debug))
-                                            )))
-  (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
-  (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
-  (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
-  (define-key dap-mode-map (kbd "<f10>") 'dap-next)
-
-  ;; 解决hl line不及时更新问题
-  (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
-                                            (when global-hl-line-mode
-                                              (global-hl-line-highlight))
-                                            ))
-  (use-package dap-python
-    :after (dap-mode python))
-
-  ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
-  (use-package dap-cpptools
-    :after (dap-mode cc-mode))
-  
-  (use-package dap-hydra
-    :commands(dap-hydra)
-    :init
-    (add-hook 'dap-stopped-hook
-              (lambda (arg)
-                (call-interactively #'dap-hydra)))
-    )
-  ;; TODO: Locals里的icon显示不正常
-  )
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
