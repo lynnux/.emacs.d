@@ -35,19 +35,19 @@
  ;; work
  ((and 
    (string-equal system-type "windows-nt")
-   (string-equal "WIN7-2021QVBZQE" (system-name))
-   (equal (list 6 1 7601) (w32-version)) ;; win7 64
+   (string-equal "SC-202203241640" (system-name))
+   (equal (list 10 0 19042) (w32-version))
    )
   (setq
    org-directory "D:/autosync/autosync/ts/org"
    org-agenda-files (list "D:/autosync/autosync/ts/org/idea.org" "D:/autosync/autosync/ts/org/todo.org")
    )
   (setq org-default-notes-file "D:/autosync/autosync/ts/org/default.org")
-  (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE\\TF.exe")
+  (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe")
 
   ;; ls，xargs都用git里的，但git有多个bin目录，没设置/usr/bin到全局PATH，因为exe太多怕影响vs等程序(如含有link.exe)
   ;; https://emacs.stackexchange.com/questions/27326/gui-emacs-sets-the-exec-path-only-from-windows-environment-variable-but-not-from
-  (add-path-to-execute-path "F:/Git/usr/bin")
+  (add-path-to-execute-path "C:/Git/usr/bin")
   )
 
  ;; 

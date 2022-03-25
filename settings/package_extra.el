@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-22 15:37:43 lynnux>
+;; Time-stamp: <2022-03-25 15:26:29 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -978,7 +978,7 @@ _q_uit
                               ('visible (treemacs)) ;; 已展示就隐藏
                               ('exists  (call-interactively 'treemacs-add-and-display-current-project))
                               ('none    (call-interactively 'treemacs-add-and-display-current-project)))
-                            (switch-to-buffer buf) ;; focus切换回buffer里
+                            ;; (switch-to-buffer buf) ;; focus切换回buffer里
                             )))
         :config
         
@@ -1196,6 +1196,7 @@ _q_uit
        helm-follow-mode-persistent t
        helm-allow-mouse t
        ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
+       helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
        )
       
       ;; 对于 中文 启用--pre rgpre
@@ -1725,7 +1726,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(if t
+(if nil
     ;; eglot
     (use-package eglot
       :load-path "~/.emacs.d/packages/lsp"
@@ -2068,7 +2069,7 @@ _q_uit
   )
 
 ;; 由emacs module实现ctrl tab切换窗口
-(ignore-errors (module-load "pop_select"))
+(ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
 (when (fboundp 'pop-select/select)
   (defun my-pop-select(&optional backward)
     (interactive)

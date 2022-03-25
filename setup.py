@@ -14,7 +14,6 @@ import tarfile
 zip_list = [
     # http开头的排前面如果有问题就终止了
     ("https://ghproxy.com/https://github.com/emacs-tree-sitter/tree-sitter-langs/releases/download/0.11.3/tree-sitter-grammars.x86_64-pc-windows-msvc.v0.11.3.tar.gz", "packages/tree-sitter/langs/bin"),
-    
     ("packages/auto-complete/auto-complete-master.zip", "packages/auto-complete", True),
     ("packages/company-mode/company-mode-master.zip", "packages/company-mode", True),
     ("packages/dired/dired-hacks-master.zip", "packages/dired", True),
@@ -91,7 +90,7 @@ def unzip(zf):
         
     if dir_del_before_unzip is not None:
         shutil.rmtree(dir_del_before_unzip, ignore_errors = True)
-        
+
     zip_file = ZipTar(path)
     zip_list = zip_file.namelist()
     print(zip_list)
@@ -169,7 +168,6 @@ def unzip_el():
         return
     for f in zip_list:
         unzip(f)
-        break
     
 def main():
     download_bin()              # 先下载，网络失败的概率大

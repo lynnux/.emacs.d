@@ -14,10 +14,10 @@ then
 end
 
 -- work pc
-if "WIN7-2021QVBZQE" == utils.system_name()
+if "SC-202203241640" == utils.system_name()
    and MajorVersion == 6
-   and MinorVersion == 1
-   and BuildNumber == 7601
+   and MinorVersion == 2
+   and BuildNumber == 9200
 then
    emacsclientw = "c:\\green\\Emacs\\gccemacs\\bin\\emacsclientw.exe"
    runemacs = "c:\\green\\Emacs\\gccemacs\\bin\\runemacs.exe"
