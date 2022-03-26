@@ -3,14 +3,14 @@ MajorVersion, MinorVersion, BuildNumber = utils.w32_version()
 emacsclientw = ""
 runemacs = ""
 
-if "LYNNUX-PC" == utils.system_name()
-   and "lynnux" == utils.user_real_login_name()
+if "WIN-6PRFQIFSB6O" == utils.system_name()
+--   and "lynnux" == utils.user_real_login_name()
    and MajorVersion == 6
    and MinorVersion == 1
    and BuildNumber == 7601
 then
-   emacsclientw = "D:\\green\\emacs\\gccemacs\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\emacs\\gccemacs\\bin\\runemacs.exe"
+   emacsclientw = "C:\\green\\emacs\\gccemacs\\bin\\emacsclientw.exe"
+   runemacs = "C:\\green\\emacs\\gccemacs\\bin\\runemacs.exe"
 end
 
 -- work pc

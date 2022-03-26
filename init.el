@@ -16,20 +16,12 @@
 
 (cond 
  ;; home
- ((and
-   (string-equal system-type "windows-nt")
-   (string-equal "20100910-1853" (system-name)) ; computer name
-   (equal (user-real-login-name) "Administrator")
-   (equal (list 5 1 2600) (w32-version))	; xp
-   )
-  ) ;; end home
-
  ((and 
    (string-equal system-type "windows-nt")
-   (string-equal "lynnux-PC" (system-name))
+   (string-equal "WIN-6PRFQIFSB6O" (system-name))
    (equal (list 6 1 7601) (w32-version)) ;; win7 64
    )
-  (add-path-to-execute-path "D:/green/Git2/usr/bin")
+  (add-path-to-execute-path "C:/Git/usr/bin")
   )
  
  ;; work
