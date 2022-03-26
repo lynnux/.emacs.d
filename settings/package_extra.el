@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-25 15:26:29 lynnux>
+;; Time-stamp: <2022-03-26 11:45:22 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1739,7 +1739,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
       (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
             eglot-ignored-server-capabilities) 
-      ;; 临时禁止view-mode
+      ;; 临时禁止view-mode，使重命名可用
       (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
 	    (setq tmp-disable-view-mode t)
 	    ad-do-it
@@ -1773,13 +1773,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         )
       :commands (lsp lsp-deferred)
       :config
-      ;; ccls补全遇到中文注释会出错，因为文件没有存为utf-8
-      ;; (add-to-list 'load-path "~/.emacs.d/packages/lsp/emacs-ccls-master")
-      ;; (require 'ccls)
-      
-      ;; (use-package flycheck
-      ;;   :commands(flycheck-mode)
-      ;;   )
+      ;; 使重命名可用
+      (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
+	    (setq tmp-disable-view-mode t)
+	    ad-do-it
+	    (setq tmp-disable-view-mode nil)
+	    )
       (require 'lsp-diagnostics)
       (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
                                              (if (use-region-p)
