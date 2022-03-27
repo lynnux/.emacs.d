@@ -2,6 +2,7 @@
 # name: clangd
 # key: clangd
 # --
+if(NOT MSVC_IDE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_custom_target(
     clangd ALL
@@ -10,3 +11,4 @@ add_custom_target(
     \${CMAKE_SOURCE_DIR}
     )
 add_dependencies($0 clangd)
+endif()

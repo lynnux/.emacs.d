@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-16 09:30:28 lynnux>
+;; Time-stamp: <2022-03-27 15:02:18 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -123,8 +123,10 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 			  zh-font))))
 
   ;; https://www.programmingfonts.org在线看字体效果
+  ;; https://www.codingfont.com/ 正是它发现Roboto Mono的
+  ;; 很多字体要实际安装在emacs看才真正知道效果，网页只能看个大概
   (qiang-set-font
-   '("Hack" "Bitstream Vera Sans Mono" "Office Code Pro" "JetBrains Mono" "Fira Code" "Hack Regular" "Fixedsys") ":pixelsize=14"
+   '("Roboto Mono" "Cousine" "Source Code Pro" "Hack" "Bitstream Vera Sans Mono" "Office Code Pro" "JetBrains Mono" "Fira Code" "Hack Regular" "Fixedsys") ":pixelsize=14"
    '("微软雅黑" "宋体" "新宋体" "Microsoft Yahei" "黑体" "WenQuanYi Bitmap Song" "文泉驿等宽微米黑") 14)
   )
 ;; 要能区分0O和1lI(光l1就能排除很多了)，单看单词时要好看，--__能区分出来，粗体要好看，()要好看(感觉小点好看)
