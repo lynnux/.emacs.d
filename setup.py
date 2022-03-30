@@ -133,7 +133,9 @@ bin_list = [
     ]),
     ("https://ghproxy.com/https://github.com/lynnux/.emacs.d/releases/download/20220319/my-emacs-bin_x64_msvc.zip",
      [("emacs-win32-launcher.exe", "bin/emacs-win32-launcher.exe"),
-      ("pop_select.dll", "bin/pop_select.dll")])
+      ("pop_select.dll", "bin/pop_select.dll")]),
+    ("https://ghproxy.com/https://github.com/lynnux/rgpre/releases/download/2022.03.22/rgpre-windows-x86_64.zip",
+     [("rgpre.exe", "bin/rgpre.exe")])
 ]
 
 def download_zip(url):
