@@ -14,7 +14,7 @@ then
 end
 
 -- work pc
-if "SC-202203241640" == utils.system_name()
+if "DESKTOP-9JD2LQI" == utils.system_name()
    and MajorVersion == 6
    and MinorVersion == 2
    and BuildNumber == 9200

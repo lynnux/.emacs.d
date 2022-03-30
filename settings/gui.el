@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-27 15:02:18 lynnux>
+;; Time-stamp: <2022-03-30 14:58:10 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
@@ -11,6 +11,7 @@
  '(show-paren-mode t)			;()匹配提示
  '(tooltip-mode nil)			;windows会卡，不用
  '(tool-bar-mode nil)          		;不显示toolbar
+ '(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了
  '(warning-suppress-log-types '((comp) (comp)))
  '(warning-suppress-types '((comp)))
  )

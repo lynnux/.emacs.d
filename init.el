@@ -27,8 +27,8 @@
  ;; work
  ((and 
    (string-equal system-type "windows-nt")
-   (string-equal "SC-202203241640" (system-name))
-   (equal (list 10 0 19042) (w32-version))
+   (string-equal "DESKTOP-9JD2LQI" (system-name))
+   (equal (list 10 0 19044) (w32-version))
    )
   (setq
    org-directory "D:/autosync/autosync/ts/org"
