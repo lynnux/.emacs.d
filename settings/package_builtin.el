@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-17 11:41:12 lynnux>
+;; Time-stamp: <2022-04-08 10:45:37 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -6,24 +6,6 @@
 
 ;; (recentf-mode 1) 用session代替了
 (setq history-length 200)
-(defun files-recent-type (src)
-  (interactive)
-  (let* ((tocpl src ;; 全路径好些，可以通过项目名搜索，也解决了文件名相同时的bug
-		;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
-		;; 	src)
-		)
-	 (fname (completing-read "File name: " tocpl nil nil)))
-    (when fname
-      (find-file ;; (cdr (assoc-string fname tocpl))
-       fname
-       ))))
-(defun files-recent-visited ()
-  (interactive)
-  (files-recent-type file-name-history))
-(defun files-recent-changed () 
-  (interactive) 
-  ; 需要配合session.el使用
-  (files-recent-type (mapcar (lambda (x) (car x)) session-file-alist)))
 
 ;;buffer管理，真的太好用了！
 (global-set-key (kbd "C-x b") 'bs-show) ;这个更好

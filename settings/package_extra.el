@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-03-26 11:45:22 lynnux>
+;; Time-stamp: <2022-04-08 11:16:02 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -178,9 +178,9 @@ _q_uit
   )
 
 
-;; Save point position in buffer.
+;; 保存cursor位置
 (use-package saveplace
-  ;; 这里不加defer了，应该wcy加载时要run它的hook
+  ;; 这里不加defer了，wcy加载时要run它的hook
   :config
   (setq save-place-file (expand-file-name ".saveplace" user-emacs-directory))
   (setq save-place-forget-unreadable-files t)
@@ -191,19 +191,24 @@ _q_uit
     ;; 将位置居中，默认是goto-char可能是最下面
     )
   )
+
 (if t
-    (progn
+    (use-package session
       ;; session只保存了修改文件的point
       ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
       ;; C-x C-/可以跳到最近的修改处
-      (require 'session)
+      :init
+      ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
+      ;; menus需要保留，不然file-name-history即recent files列表不对
+      (setq session-initialize (list 'session 'keys 'menus))
+      :config
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       (setq session-save-file-coding-system 'utf-8)
       (add-hook 'after-init-hook 'session-initialize)
       (setq session-globals-include '((kill-ring 50)
 				                      (session-file-alist 100 t)
-				                      (file-name-history 200)))
+				                      (file-name-history 300)))
       ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
       (add-to-list 'session-globals-exclude 'rg-history)
       (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
@@ -213,10 +218,6 @@ _q_uit
       (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
       (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
       (add-to-list 'session-globals-exclude 'kmacro-ring)
-      ;; session把saveplace的hook给删除了。。 
-      (defadvice session-initialize (after my-session-initialize activate)
-	    (save-place-mode t) ;; 恢复hook
-	    )
       )
   (progn
     ;; Save minibuffer history. 不仅仅是minibuffer!
@@ -238,7 +239,7 @@ _q_uit
     (use-package recentf
       :init
       (setq recentf-save-file (expand-file-name ".recentf" user-emacs-directory))
-      (setq recentf-max-saved-items 200)
+      (setq recentf-max-saved-items 500)
       ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
       ;; remote files.
       ;; recentf-auto-cleanup 'never
@@ -260,12 +261,40 @@ _q_uit
       :hook
       (after-init . recentf-mode)
       )
+    (use-package goto-chg
+      :commands(goto-last-change)
+      :init
+      (define-key ctl-x-map [(control ?\/)] 'goto-last-change)
+      ;;   (global-set-key [(control ?,)] 'goto-last-change-reverse)
+      )
     ))
 
-(global-set-key (kbd "C-x C-f") 'hydra-find-file-select)
+(global-set-key (kbd "C-x f") 'hydra-find-file-select)
 (global-set-key (kbd "C-x C-r") 'files-recent-visited)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
 (global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+
+(defun files-recent-type (src)
+  (interactive)
+  (let* ((tocpl src ;; 全路径好些，可以通过项目名搜索，也解决了文件名相同时的bug
+		;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
+		;; 	src)
+		)
+	 (fname (completing-read "File name: " tocpl nil nil)))
+    (when fname
+      (find-file ;; (cdr (assoc-string fname tocpl))
+       fname
+       ))))
+(defun files-recent-visited ()
+  (interactive)
+  (files-recent-type (if (featurep 'recentf)
+                         recentf-list   ; 这个只在exit emacs时更新file-name-history
+                       file-name-history)))
+;; 目前只发现session有changed file列表
+(defun files-recent-changed () 
+  (interactive) 
+                                        ; 需要配合session.el使用
+  (files-recent-type (mapcar (lambda (x) (car x)) session-file-alist)))
 
 (defun hydra-find-file-select ()
   (interactive)
@@ -649,8 +678,6 @@ _q_uit
 		        (wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
-    (when (featurep 'session)
-      (session-find-file-hook))
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
@@ -1164,7 +1191,7 @@ _q_uit
       (global-set-key (kbd "C-`") 'helm-show-kill-ring)
       (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key (kbd "C-x f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
       (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
       (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
       (global-set-key (kbd "<f6>") 'helm-resume)
