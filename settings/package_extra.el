@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-11 11:33:35 lynnux>
+;; Time-stamp: <2022-04-11 15:07:05 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -416,81 +416,49 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c e") #'aya-expand)
   )
 
+;; from tabbar-ruler
+(defcustom EmacsPortable-included-buffers '("*scratch*")
+  "* Included buffers in tabbar."
+  :type '(repeat (string :tag "Buffer Name"))
+  :group 'EmacsPortable)
+(defcustom EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*")
+  "* Excluded buffers in tabbar."
+  :type '(repeat (string :tag "Buffer Name"))
+  :group 'EmacsPortable)
+(setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
+(setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
+(defun ep-tabbar-buffer-list ()
+  "Return the list of buffers to show in tabs.
+Exclude buffers whose name starts with a space or *, when they are not
+visiting a file.  The current buffer is always included."
+  (delq nil
+        (mapcar #'(lambda (b)
+                    (cond
+                     ;; Always include the current buffer.
+                     ((eq (current-buffer) b) b)
+		   ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
+                     ;; ((string= "TAGS" (format "%s" (buffer-name b))) nil)
+                     ((buffer-file-name b) b)
+		   ((member (buffer-name b) EmacsPortable-included-buffers) b)
+		   ((member (buffer-name b) EmacsPortable-excluded-buffers) nil)
+                     ((char-equal ?\  (aref (buffer-name b) 0)) nil)
+                     ((char-equal ?* (aref (buffer-name b) 0)) nil)
+                     ((buffer-live-p b) b)))
+                (buffer-list))))
+
 (if (display-graphic-p)
-    (use-package tabbar-ruler
-      :load-path "~/.emacs.d/packages/tabbar"
-      :defer 0.5 
-      :init
-      ;;org的C-tab基本上不用
-      (with-eval-after-load 'org-mode-hook
-	    (define-key org-mode-map (kbd "<C-tab>") nil))
-      (setq EmacsPortable-global-tabbar 't)
-      (setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
-      (setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
-      :config
-      (global-set-key (kbd "<C-M-tab>") 'tabbar-backward-group)
-      (global-set-key (kbd "<C-M-S-tab>") 'tabbar-forward-group)
-      ;; pop-slecet替代了
-      ;; (global-set-key (kbd "<C-tab>")
-	  ;;                 'myswitch_next_buffer_start
-	  ;;                 )
-      ;; (global-set-key (if (string-equal system-type "windows-nt")
-	  ;;   	              (kbd "<C-S-tab>")
-	  ;;   	            (kbd "<C-S-iso-lefttab>"))
-	  ;;                 (lambda () 
-	  ;;   	            (interactive)
-	  ;;   	            (myswitch_next_buffer_start t))
-	  ;;                 )
-      ;; 参考easy-kill重写了C-TAB
-      (defvar myswitch-buffer-list nil)
-      (defvar myswitch-buffer-current nil)
-      (defun myswitch-activate-keymap ()
-        (let ((map (make-sparse-keymap)))
-          (define-key map (kbd "<C-tab>") 'myswitch_next_buffer)
-          (define-key map (if (string-equal system-type "windows-nt")
-			                  (kbd "<C-S-tab>")
-		                    (kbd "<C-S-iso-lefttab>"))
-            'myswitch_prev_buffer)
-          (set-transient-map ;; 关键函数！
-           map
-           t ;; 继续keymap
-           (lambda ()
-             ;; 退出时真正切换
-             ;; 不带t，最终切换过去
-             (let ((buf (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list))))
-	           (when (and (bufferp buf) (featurep 'wcy-desktop))
-	             (with-current-buffer buf
-	               (when (eq major-mode 'not-loaded-yet)
-	                 (wcy-desktop-load-file)))))
-             )
-           )))
-      (defun myswitch_next_buffer()
-        (interactive)
-        (incf myswitch-buffer-current)
-        (if (>= myswitch-buffer-current (length myswitch-buffer-list))
-            (setq myswitch-buffer-current 0))
-        (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
+    ;; 之前用的tabbar-ruler在c-x 3多窗口会导致helm弹出延迟
+    
+    ;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
+    (when (functionp 'global-tab-line-mode)
+      (use-package tab-line
+        :defer 0.5
+        :init
+        (setq tab-line-tabs-function 'ep-tabbar-buffer-list)
+        :config
+        (global-tab-line-mode 1)  
         )
-      (defun myswitch_prev_buffer()
-        (interactive)
-        (decf myswitch-buffer-current)
-        (if (< myswitch-buffer-current 0)
-            (setq myswitch-buffer-current (1- (length myswitch-buffer-list))))
-        (switch-to-buffer (nth myswitch-buffer-current myswitch-buffer-list) t) ; 第二个参数表明不真正切换
-        )
-      (defun myswitch_next_buffer_start(&optional backward)
-        (interactive)
-        (setq myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
-						                              (ep-tabbar-buffer-list)
-					                                (buffer-list))
-					                              ))
-        (message "C-tab to cycle forward, C-S-tab backward...")
-        (setq myswitch-buffer-current 0)
-        (if backward
-            (myswitch_prev_buffer)
-          (myswitch_next_buffer))
-        (myswitch-activate-keymap)
-        )
+      
       )
   (progn
     (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
@@ -1811,9 +1779,7 @@ _q_uit
 (when (fboundp 'pop-select/select)
   (defun my-pop-select(&optional backward)
     (interactive)
-    (let* ((myswitch-buffer-list (copy-sequence (if (featurep 'tabbar-ruler) 
-						                            (ep-tabbar-buffer-list)
-					                              (buffer-list))
+    (let* ((myswitch-buffer-list (copy-sequence (ep-tabbar-buffer-list)
 					                            )
                                  )  (vec_name [])
                                     sel
@@ -1948,7 +1914,6 @@ _q_uit
       ;; https://github.com/doomemacs/themes
       (use-package doom-themes
         :load-path "~/.emacs.d/themes/themes-master"
-        :after(tabbar-ruler)
         :config
         (setq doom-themes-enable-bold nil
               doom-themes-enable-italic nil)
