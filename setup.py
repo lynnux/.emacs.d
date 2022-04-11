@@ -14,7 +14,6 @@ import tarfile
 zip_list = [
     # http开头的排前面如果有问题就终止了
     ("https://ghproxy.com/https://github.com/emacs-tree-sitter/tree-sitter-langs/releases/download/0.11.3/tree-sitter-grammars.x86_64-pc-windows-msvc.v0.11.3.tar.gz", "packages/tree-sitter/langs/bin"),
-    ("packages/auto-complete/auto-complete-master.zip", "packages/auto-complete", True),
     ("packages/company-mode/company-mode-master.zip", "packages/company-mode", True),
     ("packages/dired/dired-hacks-master.zip", "packages/dired", True),
     ("packages/easy-kill/easy-kill-extras.el-master.zip", "packages/easy-kill", True),
@@ -29,10 +28,7 @@ zip_list = [
     ("packages/lsp/lsp-treemacs-master.zip", "packages/lsp"),
     ("packages/magit/magit-master.zip", "packages/magit"),
     ("packages/multiple-cursors/multiple-cursors.el-master.zip", "packages/multiple-cursors", True),
-    ("packages/neotree/emacs-neotree-dev.zip", "packages/neotree", True),
     ("packages/projectile/rg.el-master.zip", "packages/projectile", True),
-    ("packages/smartparens/smartparens-master.zip", "packages/smartparens", True),
-    ("packages/swiper/swiper-master.zip", "packages/swiper", True),
     ("packages/treemacs/treemacs-master.zip", "packages/treemacs", True),
     ("packages/tree-sitter/elisp-tree-sitter-master.zip", "packages/tree-sitter", True),
     ("packages/tree-sitter/langs/tree-sitter-langs-master.zip", "packages/tree-sitter/langs", True),
@@ -40,7 +36,6 @@ zip_list = [
     ("packages/use-package/use-package-master.zip", "packages/use-package", True),
     ("packages/yasnippet/yasnippet-snippets-master.zip", "packages/yasnippet"),
     ("themes/all-the-icons.el-master.zip", "themes"),
-    ("themes/doom-modeline-master.zip", "themes"),
     ("themes/themes-master.zip", "themes"),
     ("themes/nyan-mode-master.zip", "themes"),
 ] 

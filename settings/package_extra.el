@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-08 11:16:02 lynnux>
+;; Time-stamp: <2022-04-11 11:33:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -201,14 +201,15 @@ _q_uit
       ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
       ;; menus需要保留，不然file-name-history即recent files列表不对
       (setq session-initialize (list 'session 'keys 'menus))
-      :config
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       (setq session-save-file-coding-system 'utf-8)
-      (add-hook 'after-init-hook 'session-initialize)
       (setq session-globals-include '((kill-ring 50)
 				                      (session-file-alist 100 t)
 				                      (file-name-history 300)))
+      
+      :config
+      (add-hook 'after-init-hook 'session-initialize)
       ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
       (add-to-list 'session-globals-exclude 'rg-history)
       (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
@@ -378,32 +379,16 @@ _c_: hide comment        _q_uit
 (global-set-key (kbd "C-a") 'mwim-beginning-of-line-or-code)
 (global-set-key (kbd "C-e") 'mwim-end-of-line-or-code)
 
-(if t
-    ;; undo-fu小巧才15K
-    (use-package undo-fu
-      :defer 0.5
-      :config
-      (global-unset-key (kbd "C-z"))
-      (global-set-key (kbd "C-z")   'undo-fu-only-undo)
-      (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
-      (global-set-key (kbd "M-/") 'undo-fu-only-redo)
-      (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
-      )
-  (use-package undo-tree
-    :defer 0.5
-    :config
-    (global-undo-tree-mode)
-    (setq undo-tree-visualizer-timestamps t)
-    (setq undo-tree-visualizer-diff t)
-    (define-key undo-tree-visualizer-mode-map (kbd "RET") 'undo-tree-visualizer-quit)
-    (setq undo-tree-auto-save-history nil
-	      undo-tree-history-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/undo/"))))
-    ;; 这个功能爽呆了
-    (global-set-key (kbd "C-z") 'undo-tree-undo)
-    (global-set-key (kbd "C-S-z") 'undo-tree-redo)
-    )
+;; undo-fu小巧才15K
+(use-package undo-fu
+  :defer 0.5
+  :config
+  (global-unset-key (kbd "C-z"))
+  (global-set-key (kbd "C-z")   'undo-fu-only-undo)
+  (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
+  (global-set-key (kbd "M-/") 'undo-fu-only-redo)
+  (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
-
 
 (use-package yasnippet
   :defer 1
@@ -580,90 +565,55 @@ _q_uit
     )  
   )
 
-
-(if nil
-    ;; auto complete 很可惜已停止维护了，暂时保留吧
-    (progn
-      (add-to-list 'load-path "~/.emacs.d/packages/auto-complete")
-      (require 'auto-complete-config)
-      (add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/auto-complete/mydict")
-      (ac-config-default)
-      (setq-default ac-sources '(ac-source-abbrev
-				                 ac-source-dictionary
-				                 ac-source-words-in-same-mode-buffers
-				                 ac-source-semantic
-				                 ac-source-yasnippet
-				                 ac-source-words-in-buffer
-				                 ac-source-words-in-all-buffer
-				                 ac-source-imenu
-				                 ac-source-files-in-current-dir
-				                 ac-source-filename))
-      (setq
-       ac-use-fuzzy t ; 貌似自动弹出的menu的是没有fuzzy的，但手动补全是可以的
-       ;; ac-auto-show-menu 0.1
-       ac-use-quick-help nil
-       ;; ac-ignore-case t
-       ac-use-comphist t
-       )
-      (add-hook 
-       'auto-complete-mode-hook 
-       (lambda() 
-	     (define-key ac-completing-map "\C-n" 'ac-next)
-	     (define-key ac-completing-map "\C-p" 'ac-previous)
-	     ))
-      (global-set-key (kbd "<C-return>") 'auto-complete)
-      (global-set-key (kbd "<M-return>") 'auto-complete)
-      )
-  (progn
-    ;; company mode，这个支持comment中文，但不支持补全history
-    (use-package company
-      :defer 1
-      :init
-      (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
-      :diminish
-      :config
-      (global-company-mode)
-      (when use-my-face
-        (set-face-attribute 'company-tooltip-selection nil :background "#666"))
-      
-      ;; 句尾TAB就很烦了。。
-      ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
-      ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
-      (define-key company-mode-map [remap completion-at-point] 'company-complete)
-      (define-key company-active-map (kbd "M-/") 'company-other-backend)
-      (define-key company-active-map (kbd "C-n") 'company-select-next)
-      (define-key company-active-map (kbd "C-p") 'company-select-previous)
-      (define-key company-active-map (kbd "M-n") 'company-next-page)
-      (define-key company-active-map (kbd "M-p") 'company-previous-page)
-      ;; 这就是我想要的啊！跟bash里的tab类似
-      (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
-      (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
-      (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-      (dotimes (i 10)
-	    (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-      (setq-default company-dabbrev-other-buffers 'all
-                    company-tooltip-align-annotations t)
-      (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
-       company-minimum-prefix-length 2
-       company-require-match nil
-       company-dabbrev-ignore-case nil
-       company-dabbrev-downcase nil
-       company-show-numbers t)
-      ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
-      ;; (with-eval-after-load 'dash
-      ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
-      ;;   (require 'company-tabnine)
-      ;;   (add-to-list 'company-backends #'company-tabnine)
-      ;;   )
-      
-      (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
-      (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-      ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
-      ;; (company-posframe-mode 1)
-      ;; (setq company-posframe-quickhelp-delay 0.1)
-      (require 'company-ctags)
-      (company-ctags-auto-setup)
-      )
+(progn
+  ;; company mode，这个支持comment中文，但不支持补全history
+  (use-package company
+    :defer 1
+    :init
+    (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+    :diminish
+    :config
+    (global-company-mode)
+    (when use-my-face
+      (set-face-attribute 'company-tooltip-selection nil :background "#666"))
+    
+    ;; 句尾TAB就很烦了。。
+    ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
+    ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
+    (define-key company-mode-map [remap completion-at-point] 'company-complete)
+    (define-key company-active-map (kbd "M-/") 'company-other-backend)
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous)
+    (define-key company-active-map (kbd "M-n") 'company-next-page)
+    (define-key company-active-map (kbd "M-p") 'company-previous-page)
+    ;; 这就是我想要的啊！跟bash里的tab类似
+    (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
+    (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
+    (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+    (dotimes (i 10)
+	  (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
+    (setq-default company-dabbrev-other-buffers 'all
+                  company-tooltip-align-annotations t)
+    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
+     company-minimum-prefix-length 2
+     company-require-match nil
+     company-dabbrev-ignore-case nil
+     company-dabbrev-downcase nil
+     company-show-numbers t)
+    ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
+    ;; (with-eval-after-load 'dash
+    ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
+    ;;   (require 'company-tabnine)
+    ;;   (add-to-list 'company-backends #'company-tabnine)
+    ;;   )
+    
+    (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
+    (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+    ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
+    ;; (company-posframe-mode 1)
+    ;; (setq company-posframe-quickhelp-delay 0.1)
+    (require 'company-ctags)
+    (company-ctags-auto-setup)
     )
   )
 
@@ -714,7 +664,6 @@ _q_uit
   (add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
   (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
   (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
-  (add-to-list 'jl-insert-marker-funcs "swiper")
   (add-to-list 'jl-insert-marker-funcs "helm-occur")
   (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
   (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
@@ -756,7 +705,7 @@ _q_uit
 
 (defun my-elisp-hook()
   (make-local-variable 'eldoc-idle-delay)
-  (setq eldoc-idle-delay 0.1) ;; 设置为0会导致鼠标点击时不显示
+  (setq eldoc-idle-delay 0.5) ;; 设置为0会导致鼠标点击时不显示
   (turn-on-eldoc-mode)
   )
 (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
@@ -813,73 +762,11 @@ _q_uit
       (setq global-ggtags t)
       )))
 
-;;; shell, main goal is for compile test
-(defvar smart-compile-run-last-buffer nil)
-(defun smart-compile-run ()
-  (interactive)
-  (if (equal (buffer-name) "*shell*")
-      (progn
-	    (if smart-compile-run-last-buffer
-	        (switch-to-buffer smart-compile-run-last-buffer)
-	      (switch-to-prev-buffer))
-	    (delete-other-windows))
-    ;; (let ((run-exe (concat (file-name-sans-extension
-    ;; 		     (file-name-nondirectory (buffer-file-name))) ".exe"))))
-    (progn
-      (setq smart-compile-run-last-buffer (buffer-name))
-      (with-current-buffer (shell)
-	    (end-of-buffer)
-	    (move-end-of-line nil)
-                                        ;(move-beginning-of-line nil)
-                                        ;(kill-line 1)
-                                        ;(insert-string run-exe)
-                                        ;(move-end-of-line nil)
-	    ))))
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
 ;; compile，加入了单独编译某个文件
 (setq compilation-auto-jump-to-first-error nil ; 自动跳到错误，这个在只有warning时相当烦！
       compilation-scroll-output t)
-(autoload 'smart-compile "smart-compile" nil t)
-(autoload 'smart-compile-c-compile "smart-compile" nil t)
-(global-set-key [(control f7)] 'smart-compile-c-compile)
-(defun smart-compile-regenerate()
-  (interactive)
-  (smart-compile 4))
-
-(defun bury-compile-buffer-if-successful (buffer string)
-  "Bury a compilation buffer if succeeded without warnings "
-  (when (and
-         (buffer-live-p buffer)
-         (string-match "compilation" (buffer-name buffer))
-         (if (string-match "finished" string)
-	         ;; 找不到如何获取代码buffer的方法，只有在compilation里变色了
-	         (progn (face-remap-add-relative
-		             'mode-line-inactive '((:foreground "ivory" :background "SeaGreen") mode-line))
-		            (face-remap-add-relative
-		             'mode-line '((:foreground "ivory" :background "SeaGreen") mode-line))
-		            t)
-	       (progn (face-remap-add-relative
-		           'mode-line-inactive '((:foreground "ivory" :background "DarkOrange2") mode-line))
-		          (face-remap-add-relative
-		           'mode-line '((:foreground "ivory" :background "DarkOrange2") mode-line))
-		          nil))
-         (not
-          (with-current-buffer buffer
-            (goto-char (point-min))
-            (search-forward "warning" nil t))))
-    (delete-windows-on buffer)
-    (run-with-timer 1 nil
-		            (lambda (buf)
-		              (bury-buffer buf)
-		              ;;(switch-to-prev-buffer (get-buffer-window buf) 'kill)
-		              )
-		            buffer)  ;; 这个左右两个窗口并不会退出窗口
-    ;; (setq current-frame (car (car (cdr (current-frame-configuration)))))
-    ;; (select-frame-set-input-focus current-frame) ; 最后这两句好像没作用，保留吧
-    ))
-;; (with-eval-after-load 'compile (add-to-list 'compilation-finish-functions
-;; 					    'bury-compile-buffer-if-successful))
 
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (add-to-list 'load-path "~/.emacs.d/packages/expand-region")
@@ -980,180 +867,89 @@ _q_uit
     ;; (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
     (setq company-tooltip-align-0annotations t))
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
-  (when (featurep 'smartparens-rust)
-    ;; 必须加载了smartparens-rust，不然没效果。其实不要smartparens-rust就好了
-    (with-eval-after-load 'smartparens-rust
-      (sp-local-pair 'rust-mode "'" nil :actions nil)
-      (sp-local-pair 'rust-mode "<" nil :actions nil) ;  第4个参数不写">"也可以
-      ))
   )
 
-(if t
-    (progn
-      (use-package treemacs
-        :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
-        :init
-        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/")
-        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/elisp")
-        (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/extra")
-        (require 'treemacs-autoloads)
-        ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
-        (global-set-key (kbd "<C-f1>") 
-                        (lambda ()(interactive)
-                          (let ((buf (current-buffer)))
-                            (pcase (treemacs-current-visibility)
-                              ('visible (treemacs)) ;; 已展示就隐藏
-                              ('exists  (call-interactively 'treemacs-add-and-display-current-project))
-                              ('none    (call-interactively 'treemacs-add-and-display-current-project)))
-                            ;; (switch-to-buffer buf) ;; focus切换回buffer里
-                            )))
-        :config
-        
-        (with-eval-after-load 'treemacs-mode
-          (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
-          (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
-          (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
+(use-package treemacs
+  :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
+  :init
+  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/")
+  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/elisp")
+  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/extra")
+  (require 'treemacs-autoloads)
+  ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
+  (global-set-key (kbd "<C-f1>") 
+                  (lambda ()(interactive)
+                    (let ((buf (current-buffer)))
+                      (pcase (treemacs-current-visibility)
+                        ('visible (treemacs)) ;; 已展示就隐藏
+                        ('exists  (call-interactively 'treemacs-add-and-display-current-project))
+                        ('none    (call-interactively 'treemacs-add-and-display-current-project)))
+                      ;; (switch-to-buffer buf) ;; focus切换回buffer里
+                      )))
+  :config
+  
+  (with-eval-after-load 'treemacs-mode
+    (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
+    (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
+    (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
 
-          (define-key treemacs-mode-map (kbd "C-x C-d")
-            ;; 抄自treemacs-visit-node-in-external-application
-            (lambda () (interactive
-                        (-if-let (path (treemacs--prop-at-point :path))
-                            (w32explore path)
-                          (treemacs-pulse-on-failure "Nothing to open here."))
-                        )))
-          
-          (when (display-graphic-p)
-            ;; 改变高亮行背景色
-            (add-hook 'treemacs-mode-hook
-                      (lambda ()
-                        (face-remap-add-relative 'hl-line '(:background "#666")))))
-          )
-        
-        ;; 避免treemacs persistence文件变成只读
-        (with-eval-after-load 'treemacs-persistence
-          (defadvice treemacs--persist (around my-treemacs--persist activate)
-            (setq tmp-disable-view-mode 2);; 2不恢复只读
-            ad-do-it
-            (setq tmp-disable-view-mode nil)
-            )
-          )
-        (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
-        (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
-        (treemacs-filewatch-mode t)          ; 监视系统文件变化
-        (setq treemacs-recenter-after-file-follow t ;好像没效果啊
-              treemacs-recenter-after-tag-follow t
-              treemacs-recenter-distance 0.5
-              ;; treemacs-no-png-images t
-              )
-        )
-      (use-package treemacs-projectile
-        :after (treemacs projectile)
-        )
-      
-      ;; 这个给dired添加图标，不错。
-      ;; 不过当doom theme设置treemacs为doom-colors时有时不显示，故而用all-the-icons-dired
-      (use-package treemacs-icons-dired
-        :disabled
-        :hook (dired-mode . treemacs-icons-dired-enable-once)
-        )
-      
-      ;; magit更新时也刷新treemacs
-      (use-package treemacs-magit
-        :after (treemacs magit)
-        )
-      (use-package cfrs
-        :commands(cfrs-read))
-      )
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/packages/neotree")
-    (autoload 'neotree-toggle "neotree" nil t)
-    (global-set-key (kbd "<C-f1>") 'neotree-toggle)
-    (setq neo-window-width 32
-          neo-create-file-auto-open t
-          neo-show-updir-line t
-          neo-mode-line-type 'neotree
-          neo-smart-open t
-          neo-show-hidden-files t
-          neo-auto-indent-point t
-          neo-vc-integration nil)
-    (with-eval-after-load 'neotree (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node))
+    (define-key treemacs-mode-map (kbd "C-x C-d")
+      ;; 抄自treemacs-visit-node-in-external-application
+      (lambda () (interactive
+                  (-if-let (path (treemacs--prop-at-point :path))
+                      (w32explore path)
+                    (treemacs-pulse-on-failure "Nothing to open here."))
+                  )))
+    
+    (when (display-graphic-p)
+      ;; 改变高亮行背景色
+      (add-hook 'treemacs-mode-hook
+                (lambda ()
+                  (face-remap-add-relative 'hl-line '(:background "#666")))))
     )
+  
+  ;; 避免treemacs persistence文件变成只读
+  (with-eval-after-load 'treemacs-persistence
+    (defadvice treemacs--persist (around my-treemacs--persist activate)
+      (setq tmp-disable-view-mode 2);; 2不恢复只读
+      ad-do-it
+      (setq tmp-disable-view-mode nil)
+      )
+    )
+  (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
+  (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
+  (treemacs-filewatch-mode t)          ; 监视系统文件变化
+  (setq treemacs-recenter-after-file-follow t ;好像没效果啊
+        treemacs-recenter-after-tag-follow t
+        treemacs-recenter-distance 0.5
+        ;; treemacs-no-png-images t
+        )
   )
+(use-package treemacs-projectile
+  :after (treemacs projectile)
+  )
+
+;; 这个给dired添加图标，不错。
+;; 不过当doom theme设置treemacs为doom-colors时有时不显示，故而用all-the-icons-dired
+(use-package treemacs-icons-dired
+  :disabled
+  :hook (dired-mode . treemacs-icons-dired-enable-once)
+  )
+
+;; magit更新时也刷新treemacs
+(use-package treemacs-magit
+  :after (treemacs magit)
+  )
+(use-package cfrs
+  :commands(cfrs-read))
+
+
+
 
 ;; 有点类似自动截段长行的效果，默认绑定到m-q，elisp-mode无效
 (autoload 'unfill-toggle "unfill" nil t)
 (global-set-key [remap fill-paragraph] #'unfill-toggle)
 
-
-(when nil
-  (use-package smartparens-config
-    :defer 0.9
-    :init
-    (add-to-list 'load-path "~/.emacs.d/packages/smartparens")
-    :config
-    (sp-use-smartparens-bindings)
-    ;; (sp-use-paredit-bindings)
-    (define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
-    (define-key smartparens-mode-map (kbd "M-a") 'sp-backward-sexp)
-    (define-key smartparens-mode-map (kbd "M-e") 'sp-forward-sexp)
-    ;; 补充paredit的M-(，其它模式由于pair不止(所以不可用
-    (sp-local-pair '(emacs-lisp-mode lisp-interaction-mode) "(" nil :bind "M-(") ; 这个其实是包装成sp-wrap了
-    (set-default 'sp-autoskip-closing-pair 'always)
-    ;; Don't kill the entire symbol on C-k
-    (set-default 'sp-hybrid-kill-entire-symbol nil)
-    ;; 参考doom设置
-    (setq sp-highlight-pair-overlay nil
-	      sp-highlight-wrap-overlay nil
-	      sp-highlight-wrap-tag-overlay nil)
-    (setq sp-max-prefix-length 25)
-    (setq sp-max-pair-length 4)
-    (smartparens-global-strict-mode)
-    ;;(setq sp-show-pair-from-inside t)
-    ;;(show-smartparens-global-mode) ;; Show parenthesis 好像没什么作用了?
-    ;;(defadvice sp-show--pair-echo-match (around my-sp-show--pair-echo-match activate)) ; 屏蔽 Matches:消息
-    
-    ;; 换行自动indent，from https://github.com/Fuco1/smartparens/issues/80
-    (defun ar/create-newline-and-enter-sexp (&rest _ignored)
-      "Open a new brace or bracket expression, with relevant newlines and indent. "
-      (newline)
-      (indent-according-to-mode)
-      (forward-line -1)
-      (indent-according-to-mode))
-    (sp-local-pair 'prog-mode "{" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
-    (sp-local-pair 'prog-mode "[" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
-    (sp-local-pair 'prog-mode "(" nil :post-handlers '((ar/create-newline-and-enter-sexp "RET")))
-
-    ;; 使支持hungry-delete
-    (with-eval-after-load 'smartparens
-      (dolist (key '( [remap delete-char]
-		              [remap delete-forward-char]))
-	    (define-key smartparens-strict-mode-map key
-	      ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-	      '(menu-item "maybe-sp-delete-char" nil
-		              :filter (lambda (&optional _)
-				                (unless (looking-at-p "[[:space:]\n]")
-				                  #'sp-delete-char)))))
-
-      (dolist (key '([remap backward-delete-char-untabify]
-                     [remap backward-delete-char]
-                     [remap delete-backward-char]))
-	    (define-key smartparens-strict-mode-map key
-	      '(menu-item "maybe-sp-backward-delete-char" nil
-		              :filter (lambda (&optional _)
-				                (unless (looking-back "[[:space:]\n]" 1)
-				                  #'sp-backward-delete-char)))))
-      
-      ;; C-W支持
-      (dolist (key '( [remap kill-region]))
-	    (define-key smartparens-strict-mode-map key
-	      '(menu-item "maybe-sp-kill-region" nil
-		              :filter (lambda (&optional _)
-				                (when (use-region-p) ;; 有选中时才用sp的
-				                  #'sp-kill-region)))))
-      )
-    
-    )  
-  )
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
@@ -1174,280 +970,206 @@ _q_uit
   (cl-find-if 'chinese-char-p (string-to-list string))
   )
 
-(if t
-    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
-    ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
-    (progn
-      (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
-      (require 'async-autoloads)
-      (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
-      (add-to-list 'load-path "~/.emacs.d/packages/helm")
-      (require 'helm-config)
-      ;;(global-set-key (kbd "C-c h") 'helm-mini)
-      (global-set-key (kbd "M-x") 'undefined)
-      (global-set-key (kbd "M-x") 'helm-M-x)
-      (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
-      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
-      (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-      (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
+;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
+;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
+(progn
+  (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
+  (require 'async-autoloads)
+  (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
+  (add-to-list 'load-path "~/.emacs.d/packages/helm")
+  (require 'helm-config)
+  ;;(global-set-key (kbd "C-c h") 'helm-mini)
+  (global-set-key (kbd "M-x") 'undefined)
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
+  (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
+  (global-set-key (kbd "C-`") 'helm-show-kill-ring)
+  (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
-      (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
-      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
-      (global-set-key (kbd "<f6>") 'helm-resume)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+  (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
+  (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
+  (global-set-key (kbd "<f6>") 'helm-resume)
 
-      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
-      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
-      (global-set-key [(control f2)] (lambda () (interactive)
-				                       (require 'vc)
-				                       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
-      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
+  ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
+  ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
+  (global-set-key [(control f2)] (lambda () (interactive)
+				                   (require 'vc)
+				                   (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+  (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
-      (global-set-key [S-f2] (lambda() (interactive)
+  (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
+  (global-set-key [S-f2] (lambda() (interactive)
                                         ; 只搜索当前目录，加入-g/*
-                               (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
-                                 (call-interactively 'helm-do-grep-ag))
-                               ))
-      (setq
-       ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
-       helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
-       helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
-       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
-       helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-       helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
-       helm-ff-file-name-history-use-recentf t
-       helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-       helm-buffers-fuzzy-matching t
-       helm-recentf-fuzzy-match    t
-       helm-follow-mode-persistent t
-       helm-allow-mouse t
-       ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
-       helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
-       )
-      
-      ;; 对于 中文 启用--pre rgpre
-      (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
-        (if (chinese-word-chinese-string-p (ad-get-arg 0))
-            (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
-              ad-do-it)
+                           (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                             (call-interactively 'helm-do-grep-ag))
+                           ))
+  (setq
+   ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
+   helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
+   helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
+   helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
+   helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+   helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
+   helm-ff-file-name-history-use-recentf t
+   helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+   helm-buffers-fuzzy-matching t
+   helm-recentf-fuzzy-match    t
+   helm-follow-mode-persistent t
+   helm-allow-mouse t
+   ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
+   helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
+   )
+  
+  ;; 对于 中文 启用--pre rgpre
+  (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
+    (if (chinese-word-chinese-string-p (ad-get-arg 0))
+        (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
           ad-do-it)
-        )
-      
-      (with-eval-after-load 'helm
-	    ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
-	    ;; describe-current-coding-system 查看当前系统编码
-	    ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
-	    
-	    ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
-	    ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
-	    ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
-	    ;;   ad-do-it
-	    ;;   (let ((fname (car-safe ad-return-value)))
-	    ;;     (when fname
-	    ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
-	    ;;       ))
-	    ;;   )
-	    ;; 临时设置cmdproxy编码
-	    (with-eval-after-load 'helm-grep
-	      (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
-	        (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	          (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	          ad-do-it
-	          (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	          )))
-	    
-	    (helm-mode 1)
-	    (when (fboundp 'diminish)
-	      (add-hook 'helm-mode-hook (lambda ()(diminish 'helm-mode)))
-	      )
-
-	    ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
-	    ;;   (message (ad-get-arg 2)))
-	    
-	    ;; 光标移动时也自动定位到所在位置
-	    (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
-	    (push "RG" helm-source-names-using-follow)
-
-        (when (display-graphic-p)
-	      ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-          ;; 当前主题背景色(face-attribute 'default :background)
-	      (custom-set-faces
-           ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
-	       '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
-	       '(helm-selection-line ((t (:underline t :background nil))))
-	       ;;helm-match-item 
-	       ))
-
-	    (define-key helm-map (kbd "<f1>") 'nil)
-	    (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
-
-	    (define-key helm-map (kbd "C-h") 'nil)
-	    (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
-	    (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
-	    (define-key helm-map (kbd "C-v") 'nil)
-	    (define-key helm-map (kbd "<f4>") 'helm-next-line)
-	    (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
-	    ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
-	    (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
-					                         (let* ((src (helm-get-current-source))
-						                            (name (assoc-default 'name src)))
-					                           (if (or (member name (list "RG" "Occur"))
-						                               (string= name "Helm occur")
-						                               (string= name "RG")) ;; TODO 
-						                           (progn (call-interactively 'next-history-element)
-							                              (move-end-of-line 1)())
-						                         ;; 其它模式还是helm-execute-persistent-action，比如文件补全
-						                         (call-interactively 'helm-execute-persistent-action) 
-						                         )
-					                           )
-					                         ))
-	    
-	    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
-	    (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-	    ;; (define-key helm-map (kbd "TAB") 'helm-next-line)
-	    ;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
-	    ;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-
-	    ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	    (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	    (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	    (define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
-        
-	    ;; helm-locate即everything里打开所在位置
-	    (define-key helm-generic-files-map (kbd "C-x C-d")
-	      (lambda ()
-	        (interactive)
-	        (with-helm-alive-p
-		      (helm-exit-and-execute-action (lambda (file)
-						                      (w32explore file)
-						                      )))))
-	    
-	    (when helm-echo-input-in-header-line
-	      (add-hook 'helm-minibuffer-set-up-hook
-		            'helm-hide-minibuffer-maybe))        
-	    )
-	  ;; 这功能不好写，将就用总比没有好吧
-	  (defun helm-grep-search-parent-directory ()
-	    (interactive)
-	    (helm-run-after-exit (lambda ()
-				               (let* ((parent (file-name-directory (directory-file-name default-directory)))
-					                  (default-directory parent))
-				                 (helm-grep-ag (expand-file-name parent) nil)))))
-	  (defun helm-show-search()
-	    (interactive)
-	    (yank)
-	    )
-	  
-	  (with-eval-after-load 'helm-grep
-	    (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	    (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
-	    ;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
-	    )
-	  (with-eval-after-load 'helm-find
-	    (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	    )
-	  (defadvice completing-read (before my-completing-read activate)
-	    (helm-mode 1))
-	  (global-set-key (kbd "M-m") 'helm-imenu)
+      ad-do-it)
+    )
+  
+  (with-eval-after-load 'helm
+	;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+	;; describe-current-coding-system 查看当前系统编码
+	;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	
+	;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+	;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
+	;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	;;   ad-do-it
+	;;   (let ((fname (car-safe ad-return-value)))
+	;;     (when fname
+	;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	;;       ))
+	;;   )
+	;; 临时设置cmdproxy编码
+	(with-eval-after-load 'helm-grep
+	  (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
+	    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	      ad-do-it
+	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	      )))
+	
+	(helm-mode 1)
+	(when (fboundp 'diminish)
+	  (add-hook 'helm-mode-hook (lambda ()(diminish 'helm-mode)))
 	  )
-  (progn
-    ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
-    ;; minibuffer也不能用鼠标
-    (add-to-list 'load-path "~/.emacs.d/packages/swiper")
-    (autoload 'swiper "swiper" nil t)
-    (setq ivy-wrap t) ;; 可以loop选择
-    (setq ivy-count-format "(%d/%d) ")
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-height 20)
-    (setq enable-recursive-minibuffers t)
-    (global-set-key "\C-s" (lambda ()(interactive)
-			                 (swiper (thing-at-point 'symbol))))
-    (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
-    (autoload 'ivy-resume "ivy" nil t)
-    (autoload 'ivy-mode "ivy" nil t)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "<f6>") 'ivy-resume)
-    ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
-    (global-set-key [f2] (lambda ()(interactive)
-			               (counsel-rg (thing-at-point 'symbol) default-directory)));; 默认git根目录，还是改为当前目录开始
-    (autoload 'counsel-rg "counsel" nil t)
-    (autoload 'counsel-M-x "counsel" nil t)
-    (autoload 'counsel-find-file "counsel" nil t)
-    (autoload 'counsel-describe-function "counsel" nil t)
-    (autoload 'counsel-describe-variable "counsel" nil t)
-    (autoload 'counsel-find-library "counsel" nil t)
-    (global-set-key (kbd "M-x") 'counsel-M-x)
-    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-    (global-set-key (kbd "<f1> l") 'counsel-find-library)
-    (global-set-key (kbd "M-m") 'counsel-imenu)
-    (with-eval-after-load 'ivy
-	  (ivy-mode 1)
-	  (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-	  (define-key ivy-minibuffer-map (kbd "C-s") 'ivy-next-line)
-	  (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
-	  (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-	  (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-	  (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
-	  (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
-	  ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
-	  (push (cons #'swiper (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-	  (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-	  )
-    ;; (with-eval-after-load 'counsel
-    ;;   (append counsel-rg-base-command "--no-ignore")) ; 好像不用加，不会搜索ignore的
-    (defadvice completing-read (before my-completing-read activate)
-	  (ivy-mode 1))
-    (add-to-list 'sp-ignore-modes-list 'minibuffer-mode) ; C-K不自然在minibuffer里禁用smartparens
-    ))
 
-;; defer加载要比smartparens早
-(if t
-    (use-package smart-hungry-delete
-      :defer 0.8
-      :config
-      (smart-hungry-delete-add-default-hooks)
-      (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
-      (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
-      (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
-      (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
-      )
-  (use-package hungry-delete
-    :defer 0.8
-    :config
-    (global-hungry-delete-mode)
-    (setq-default hungry-delete-chars-to-skip " \t\f\v") ; only horizontal whitespace
-    )  
+	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	;;   (message (ad-get-arg 2)))
+	
+	;; 光标移动时也自动定位到所在位置
+	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	(push "RG" helm-source-names-using-follow)
+
+    (when (display-graphic-p)
+	  ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+      ;; 当前主题背景色(face-attribute 'default :background)
+	  (custom-set-faces
+       ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
+	   '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
+	   '(helm-selection-line ((t (:underline t :background nil))))
+	   ;;helm-match-item 
+	   ))
+
+	(define-key helm-map (kbd "<f1>") 'nil)
+	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+
+	(define-key helm-map (kbd "C-h") 'nil)
+	(define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
+	(define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
+	(define-key helm-map (kbd "C-v") 'nil)
+	(define-key helm-map (kbd "<f4>") 'helm-next-line)
+	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
+	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
+	(define-key helm-map (kbd "<tab>") (lambda ()(interactive)
+					                     (let* ((src (helm-get-current-source))
+						                        (name (assoc-default 'name src)))
+					                       (if (or (member name (list "RG" "Occur"))
+						                           (string= name "Helm occur")
+						                           (string= name "RG")) ;; TODO 
+						                       (progn (call-interactively 'next-history-element)
+							                          (move-end-of-line 1)())
+						                     ;; 其它模式还是helm-execute-persistent-action，比如文件补全
+						                     (call-interactively 'helm-execute-persistent-action) 
+						                     )
+					                       )
+					                     ))
+	
+	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+	;; (define-key helm-map (kbd "TAB") 'helm-next-line)
+	;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
+	;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+
+	;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	(define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	(define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
+    
+	;; helm-locate即everything里打开所在位置
+	(define-key helm-generic-files-map (kbd "C-x C-d")
+	  (lambda ()
+	    (interactive)
+	    (with-helm-alive-p
+		  (helm-exit-and-execute-action (lambda (file)
+						                  (w32explore file)
+						                  )))))
+	
+	(when helm-echo-input-in-header-line
+	  (add-hook 'helm-minibuffer-set-up-hook
+		        'helm-hide-minibuffer-maybe))        
+	)
+  ;; 这功能不好写，将就用总比没有好吧
+  (defun helm-grep-search-parent-directory ()
+	(interactive)
+	(helm-run-after-exit (lambda ()
+				           (let* ((parent (file-name-directory (directory-file-name default-directory)))
+					              (default-directory parent))
+				             (helm-grep-ag (expand-file-name parent) nil)))))
+  (defun helm-show-search()
+	(interactive)
+	(yank)
+	)
+  
+  (with-eval-after-load 'helm-grep
+	(define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	(define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+	;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
+	)
+  (with-eval-after-load 'helm-find
+	(define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	)
+  (defadvice completing-read (before my-completing-read activate)
+	(helm-mode 1))
+  (global-set-key (kbd "M-m") 'helm-imenu)
+  )
+
+
+(use-package smart-hungry-delete
+  :defer 0.8
+  :config
+  (smart-hungry-delete-add-default-hooks)
+  (global-set-key [remap delete-forward-char] 'smart-hungry-delete-forward-char)
+  (global-set-key [remap delete-char] 'smart-hungry-delete-forward-char)
+  (global-set-key [remap delete-backward-char] 'smart-hungry-delete-backward-char)
+  (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
   )
 
 ;; 自动indent，indentinator有肉眼可见的闪动，但执行良好，aggressive-indent经常不起作用
-(if t
-    (use-package indentinator
-      :defer 1
-      :diminish
-      :config
-      (defun check-mode()
-	    (unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
-		            (eq major-mode 'rust-mode)) ;;(eq major-mode 'python-mode)
-	      (indentinator-mode)))
-      (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
-      (global-indentinator-mode 1)
-      )
-  (use-package aggressive-indent
-    :defer 1
-    :config
-    (global-aggressive-indent-mode 1)
-    (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
-    (add-to-list
-     'aggressive-indent-dont-indent-if
-     '(and (derived-mode-p 'c++-mode)
-	       (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-			                   (thing-at-point 'line)))))
-    ))
+(use-package indentinator
+  :defer 1
+  :diminish
+  :config
+  (defun check-mode()
+	(unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
+		        (eq major-mode 'rust-mode)) ;;(eq major-mode 'python-mode)
+	  (indentinator-mode)))
+  (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
+  (global-indentinator-mode 1)
+  )
 
 (defun copy-buffer-name (choice &optional use_win_path)
   (let ((new-kill-string)
@@ -1681,29 +1403,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
   (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
   )
-(autoload 'projectile-project-root "projectile" nil t)
-;; 没有project就用原来的smart compile
+(autoload 'projectile-compile-project "projectile" nil t)
 (global-set-key [f7] (lambda ()(interactive)
-		               (if (projectile-project-root)
-			               (progn
-			                 (call-interactively 'projectile-compile-project)
-			                 (setq compilation-read-command nil) ;; 不再提示
-			                 )
-			             (call-interactively 'smart-compile))
-		               ))
+			           (progn
+			             (call-interactively 'projectile-compile-project)
+			             (setq compilation-read-command nil) ;; 不再提示
+			             )))
 (global-set-key [(shift f7)]
 		        (lambda ()(interactive)
-		          (if (projectile-project-root)
-		              (progn
-			            (setq compilation-read-command t)
-			            (call-interactively 'projectile-compile-project)
-			            (setq compilation-read-command nil) ;; 不再提示
-			            )
-		            (progn
-		              (setq compilation-read-command t)
-		              (call-interactively 'smart-compile-regenerate))
-		            )
-		          ))
+		          (progn
+			        (setq compilation-read-command t)
+			        (call-interactively 'projectile-compile-project)
+			        (setq compilation-read-command nil) ;; 不再提示
+			        )))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (global-set-key (kbd "C-S-f") 'rg-dwim)
@@ -2153,11 +1865,6 @@ _q_uit
   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))  
   )
 
-(use-package beacon
-  :commands(beacon-mode)
-  :config
-  (setq beacon-blink-when-focused t)
-  )
 
 ;; eaf，依赖node的npm，python需要epc，不用能virtualenv，
 ;; https://gitee.com/emacs-eaf/emacs-application-framework
@@ -2223,16 +1930,6 @@ _q_uit
 
       (add-to-list 'load-path "~/.emacs.d/themes")
 
-      ;; 国人写的啊，挺好用的
-      (use-package doom-modeline
-        :load-path "~/.emacs.d/themes/doom-modeline-master"
-        :defer 1.5
-        :init
-        ;; 默认配置就可以了，一堆定制在 https://github.com/seagle0128/doom-modeline
-        :config
-        (doom-modeline-mode 1)
-        )
-      
       ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
       (use-package all-the-icons
         :load-path "~/.emacs.d/themes/all-the-icons.el-master"
