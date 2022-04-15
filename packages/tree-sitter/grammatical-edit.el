@@ -482,20 +482,36 @@ When in comment, kill to the beginning of the line."
          (prev-node (tsc-get-prev-sibling current-node))
          (current-node-text (tsc-node-text current-node))
          (current-point (point)))
-    (cond ((looking-back "\\s-+")
-           (search-backward-regexp "[^ \t\n]" nil t))
-          ((bolp)
-           (previous-line 1)
-           (end-of-line)
-           (search-backward-regexp "[^ \t\n]" nil t))
-          ((grammatical-edit-in-string-p)
-           (goto-char (tsc-node-start-position current-node)))
-          ((> (length current-node-text) 0)
-           (goto-char (tsc-node-start-position current-node))
-           (if (equal (point) current-point)
-               (backward-char 1)))
-          (prev-node
-           (goto-char (tsc-node-start-position prev-node))))))
+    (cond
+     ;; Skip blank space.
+     ((looking-back "\\s-+")
+      (search-backward-regexp "[^ \t\n]" nil t))
+
+     ;; Jump to previous non-blank char if at line beginng.
+     ((bolp)
+      (previous-line 1)
+      (end-of-line)
+      (search-backward-regexp "[^ \t\n]" nil t))
+
+     ;; Jump to previous open char.
+     ((and (eq major-mode 'web-mode)
+           (eq (tsc-node-type current-node) 'raw_text))
+      (backward-char 1)
+      (while (not (looking-at "\\(['\"<({]\\|[[]\\)")) (backward-char 1)))
+
+     ;; Jump out string if in string.
+     ((grammatical-edit-in-string-p)
+      (goto-char (tsc-node-start-position current-node)))
+
+     ;; Jump to node start position if current node exist.
+     ((> (length current-node-text) 0)
+      (goto-char (tsc-node-start-position current-node))
+      (if (equal (point) current-point)
+          (backward-char 1)))
+
+     ;; Otherwise, jump to start position of previous node.
+     (prev-node
+      (goto-char (tsc-node-start-position prev-node))))))
 
 (defun grammatical-edit-jump-right ()
   (interactive)
@@ -503,20 +519,40 @@ When in comment, kill to the beginning of the line."
          (next-node (tsc-get-next-sibling current-node))
          (current-node-text (tsc-node-text current-node))
          (current-point (point)))
-    (cond ((looking-at "\\s-+")
-           (search-forward-regexp "\\s-+" nil t))
-          ((eolp)
-           (next-line 1)
-           (beginning-of-line)
-           (search-forward-regexp "\\s-+" nil t))
-          ((grammatical-edit-in-string-p)
-           (goto-char (tsc-node-end-position current-node)))
-          ((> (length current-node-text) 0)
-           (goto-char (tsc-node-end-position current-node))
-           (if (equal (point) current-point)
-               (forward-char 1)))
-          (next-node
-           (goto-char (tsc-node-end-position next-node))))))
+    (cond
+     ;; Skip blank space.
+     ((looking-at "\\s-+")
+      (search-forward-regexp "\\s-+" nil t))
+
+     ;; Jump to next non-blank char if at line end.
+     ((eolp)
+      (next-line 1)
+      (beginning-of-line)
+      (search-forward-regexp "\\s-+" nil t))
+
+     ;; Jump into string if at before string open quote char.
+     ((eq (char-after) ?\")
+      (forward-char))
+
+     ;; Jump to next close char.
+     ((and (eq major-mode 'web-mode)
+           (eq (tsc-node-type current-node) 'raw_text))
+      (while (not (looking-at "\\(['\">)}]\\|]\\)")) (forward-char 1))
+      (forward-char 1))
+
+     ;; Jump out string if in string.
+     ((grammatical-edit-in-string-p)
+      (goto-char (tsc-node-end-position current-node)))
+
+     ;; Jump to node end position if current node exist.
+     ((> (length current-node-text) 0)
+      (goto-char (tsc-node-end-position current-node))
+      (if (equal (point) current-point)
+          (forward-char 1)))
+
+     ;; Otherwise, jump to end position of next node.
+     (next-node
+      (goto-char (tsc-node-end-position next-node))))))
 
 (defun grammatical-edit-delete-whitespace-around-cursor ()
   (grammatical-edit-delete-region (save-excursion
@@ -761,10 +797,16 @@ When in comment, kill to the beginning of the line."
 (defun grammatical-edit-kill-after-in-string ()
   (let* ((parent-bound-info (grammatical-edit-get-parent-bound-info))
          (current-node (nth 0 parent-bound-info))
-         (string-bound-end (nth 3 parent-bound-info)))
-    (if (grammatical-edit-at-raw-string-begin-p)
-        (grammatical-edit-delete-region (tsc-node-start-position current-node) (tsc-node-end-position current-node))
-      (grammatical-edit-delete-region (point) (- (tsc-node-end-position current-node) (length string-bound-end))))))
+         (current-node-bound-end (tsc-node-text (save-excursion
+                                                  (goto-char (tsc-node-end-position current-node))
+                                                  (backward-char 1)
+                                                  (tree-sitter-node-at-point)))))
+    (cond ((grammatical-edit-at-raw-string-begin-p)
+           (grammatical-edit-delete-region (tsc-node-start-position current-node) (tsc-node-end-position current-node)))
+          ((string-equal current-node-bound-end "'''")
+           (grammatical-edit-delete-region (point) (- (tsc-node-end-position current-node) (length current-node-bound-end))))
+          (t
+           (grammatical-edit-delete-region (point) (- (tsc-node-end-position current-node) 1))))))
 
 (defun grammatical-edit-kill-before-in-string ()
   (grammatical-edit-delete-region (point) (1+ (tsc-node-start-position (tree-sitter-node-at-point)))))
@@ -1194,6 +1236,11 @@ A and B are strings."
      (let ((current-node (tree-sitter-node-at-point)))
        (and (grammatical-edit-is-string-node-p current-node)
             (> (point) (tsc-node-start-position current-node))))
+
+     ;; Support *.vue string.
+     (and (string-equal (file-name-extension (buffer-file-name)) "vue")
+          (nth 3 (grammatical-edit-current-parse-state)))
+
      (grammatical-edit-before-string-close-quote-p))))
 
 (defun grammatical-edit-in-single-quote-string-p ()
@@ -1269,16 +1316,30 @@ A and B are strings."
     (open-line 1)
     ;; Indent close parentheses line.
     (save-excursion
-      (let* ((inhibit-message t))
-        (goto-char (cdr (grammatical-edit-current-node-range)))
-        (indent-according-to-mode)
-        ))
+      (grammatical-edit-jump-left)
+      (grammatical-edit-match-paren 1)
+      (indent-according-to-mode))
     ;; Indent blank line.
     (indent-according-to-mode))
    ;; Newline and indent.
    (t
     (newline arg)
     (indent-according-to-mode))))
+
+(defun grammatical-edit-jump-up ()
+  (interactive)
+  (let* ((current-node (tree-sitter-node-at-point))
+         (parent-node (tsc-get-parent current-node)))
+    (if parent-node
+        (let ((parent-node-start-position (tsc-node-start-position parent-node)))
+          (if (equal parent-node-start-position (point))
+              (progn
+                (backward-char)
+                (grammatical-edit-jump-up))
+            (goto-char parent-node-start-position)
+            (scroll-down 3)))
+      (grammatical-edit-jump-left)
+      (back-to-indentation))))
 
 ;; Integrate with eldoc
 (with-eval-after-load 'eldoc

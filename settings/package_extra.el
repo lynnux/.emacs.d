@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-11 15:07:05 lynnux>
+;; Time-stamp: <2022-04-14 16:54:43 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -1433,7 +1433,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(if nil
+(if t
     ;; eglot
     (use-package eglot
       :load-path "~/.emacs.d/packages/lsp"
