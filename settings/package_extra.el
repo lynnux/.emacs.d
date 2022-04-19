@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-14 16:54:43 lynnux>
+;; Time-stamp: <2022-04-19 10:55:20 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 
@@ -381,7 +381,6 @@ _c_: hide comment        _q_uit
 
 ;; undo-fu小巧才15K
 (use-package undo-fu
-  :defer 0.5
   :config
   (global-unset-key (kbd "C-z"))
   (global-set-key (kbd "C-z")   'undo-fu-only-undo)
@@ -389,6 +388,20 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-/") 'undo-fu-only-redo)
   (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
+;; 开启auto save必须要的东西!
+(use-package undo-fu-session
+  :after(undo-fu)
+  :config
+  (global-undo-fu-session-mode))
+
+;; 经常C-x C-s按错，还是用这个吧
+(use-package super-save
+  :defer 0.5
+  :init
+  ;; 默认切换窗口时保存，这里确保idle时也保存
+  (setq super-save-auto-save-when-idle t) 
+  :config
+  (super-save-mode +1))
 
 (use-package yasnippet
   :defer 1
@@ -599,10 +612,12 @@ _q_uit
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
+    (when (featurep 'undo-fu-session)
+      (undo-fu-session-recover-safe))
     ))
 
 (use-package google-c-style
-  :commands(google-set-c-style))
+            :commands(google-set-c-style))
 
 (defun my-c-mode-hook-set()
   (google-set-c-style)

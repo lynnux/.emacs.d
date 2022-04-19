@@ -78,3 +78,4 @@ packages/tree-sitter/lisp/*
 /themes/doom-modeline-master/
 /packages/lsp/lsp-pyright-master/
 /themes/nyan-mode-master/
+/undo-fu-session/
