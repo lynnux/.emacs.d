@@ -79,3 +79,4 @@ packages/tree-sitter/lisp/*
 /packages/lsp/lsp-pyright-master/
 /themes/nyan-mode-master/
 /undo-fu-session/
+/themes/diff-hl-master/

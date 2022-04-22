@@ -38,6 +38,7 @@ zip_list = [
     ("themes/all-the-icons.el-master.zip", "themes"),
     ("themes/themes-master.zip", "themes"),
     ("themes/nyan-mode-master.zip", "themes"),
+    ("themes/diff-hl-master.zip", "themes"),
 ] 
 class ZipTar():
     def __init__(self, path):

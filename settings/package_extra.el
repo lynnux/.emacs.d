@@ -1,6 +1,7 @@
-;; Time-stamp: <2022-04-19 10:55:20 lynnux>
+;; Time-stamp: <2022-04-22 15:14:53 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
+;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
 
 ;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度
 ;; :load-path不是延迟设置
@@ -294,7 +295,7 @@ _q_uit
 ;; 目前只发现session有changed file列表
 (defun files-recent-changed () 
   (interactive) 
-                                        ; 需要配合session.el使用
+  ;; 需要配合session.el使用
   (files-recent-type (mapcar (lambda (x) (car x)) session-file-alist)))
 
 (defun hydra-find-file-select ()
@@ -304,7 +305,7 @@ _q_uit
       "
 _c_: file changed  _v_: file visited
 _a_: file at point _e_: helm locate
-_r_: file visited
+_r_: file visited  _p_: file in project
 _q_uit
 "
       ("e" helm-locate nil :color blue)
@@ -312,6 +313,7 @@ _q_uit
       ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
       ("r" files-recent-visited nil :color blue)
+      ("p" projectile-find-file nil :color blue)
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
@@ -1898,6 +1900,40 @@ _q_uit
   :defer 1.5
   :config
   (nyan-mode)
+  )
+
+(use-package diff-hl
+  :load-path "~/.emacs.d/themes/diff-hl-master"
+  :defer 1.4
+  :config
+  (global-diff-hl-mode)
+  ;; 默认修改时会去掉高亮，这个让它保留
+  (use-package diff-hl-flydiff
+    :config
+    (diff-hl-flydiff-mode)
+    )
+
+  ;; 经测试我们只能用这个，否则为view mode时按q会调用view mode的q
+  (use-package diff-hl-margin
+    :config
+    (diff-hl-margin-mode))
+  
+  (use-package diff-hl-dired
+    :config
+    (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+    )
+
+  ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
+  (use-package diff-hl-show-hunk
+    :config
+    (global-diff-hl-show-hunk-mouse-mode))
+
+  ;; 这个用起来有bug
+  (use-package diff-hl-show-hunk-posframe
+    :disabled 
+    :config
+    (setq diff-hl-show-hunk-function 'diff-hl-show-hunk-posframe)
+    )
   )
 
 ;; 好的theme特点:

@@ -491,6 +491,8 @@ Argument PENDING-LIST an `pending-undo-list' compatible list."
       (content-header nil)
       (content-data nil)
 
+      (coding-system-for-write buffer-file-coding-system)
+
       ;; Quiet compression messages for `with-auto-compression-mode'.
       (jka-compr-verbose nil))
 
@@ -571,6 +573,8 @@ Argument PENDING-LIST an `pending-undo-list' compatible list."
       (undo-file nil)
       (content-header nil)
       (content-data nil)
+
+      (coding-system-for-read buffer-file-coding-system)
 
       ;; Quiet compression messages for `with-auto-compression-mode'.
       (jka-compr-verbose nil))
