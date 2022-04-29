@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-29 14:20:38 lynnux>
+;; Time-stamp: <2022-04-29 17:52:30 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1967,13 +1967,24 @@ _q_uit
                                        )))
   )
 
+
+(ignore-errors (module-load
+                "H:\\prj\\rust\\emacs-beacon\\target\\debug\\emacs_beacon.dll"
+                ;; (expand-file-name "~/.emacs.d/bin/pop_select.dll")
+                ))
+
 (use-package beacon
   :defer 1.5
   :init
-  (setq beacon-blink-when-focused t)
+  ;; (setq beacon-blink-when-focused t)
   :config
   (beacon-mode 1)
   (defun beacon-blink() (interactive)
+         (when (fboundp 'emacs-beacon/beacon)
+           (let ((p (window-absolute-pixel-position)))
+             (emacs-beacon/beacon (car p) (cdr p) 5000 1)
+             )
+           )
          ;; 打算弄个emacs module专门来画，这样低配机就不卡了
          ;; (message (format "%d"(car (window-absolute-pixel-position))))
          )
