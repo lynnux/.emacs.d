@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-22 15:14:53 lynnux>
+;; Time-stamp: <2022-04-29 11:39:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -390,14 +390,18 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-/") 'undo-fu-only-redo)
   (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
-;; 开启auto save必须要的东西!
+
 (use-package undo-fu-session
+  :disabled
   :after(undo-fu)
   :config
   (global-undo-fu-session-mode))
 
 ;; 经常C-x C-s按错，还是用这个吧
+;;super save好像eldoc都会触发保存，有点烦
+;; (auto-save-visited-mode 1)
 (use-package super-save
+  ;; :disabled
   :defer 0.5
   :init
   ;; 默认切换窗口时保存，这里确保idle时也保存
@@ -1907,16 +1911,23 @@ _q_uit
   :defer 1.4
   :config
   (global-diff-hl-mode)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   ;; 默认修改时会去掉高亮，这个让它保留
   (use-package diff-hl-flydiff
     :config
     (diff-hl-flydiff-mode)
     )
 
-  ;; 经测试我们只能用这个，否则为view mode时按q会调用view mode的q
   (use-package diff-hl-margin
+    :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
     :config
-    (diff-hl-margin-mode))
+    ;; (diff-hl-margin-mode) 这个会遍历buffer-list导致启动卡一下，所以我们手动hook
+    (progn
+      (add-hook 'diff-hl-mode-on-hook 'diff-hl-margin-local-mode)
+      (add-hook 'diff-hl-mode-off-hook 'diff-hl-margin-local-mode-off)
+      (add-hook 'diff-hl-dired-mode-on-hook 'diff-hl-margin-local-mode)
+      (add-hook 'diff-hl-dired-mode-off-hook 'diff-hl-margin-local-mode-off))
+    )
   
   (use-package diff-hl-dired
     :config
@@ -1926,14 +1937,40 @@ _q_uit
   ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
   (use-package diff-hl-show-hunk
     :config
-    (global-diff-hl-show-hunk-mouse-mode))
+    (global-diff-hl-show-hunk-mouse-mode)
+    ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
+    (defvar set-transient-map-exit-func nil)
+    (defun my-diff-hl-inline-popup-hide()
+      (interactive)
+      (diff-hl-inline-popup-hide)
+      (when (functionp set-transient-map-exit-func)
+        (funcall set-transient-map-exit-func))
+      )
+    (defvar diff-hl-inline-popup-transient-mode-map1
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
+        (define-key map [escape] #'my-diff-hl-inline-popup-hide)
+        (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
+        map)
+      )
+    (set-keymap-parent diff-hl-inline-popup-transient-mode-map1
+                       diff-hl-show-hunk-map)
+    (setq diff-hl-show-hunk-function (lambda (buffer &optional _ignored-line)
+                                       (funcall 'diff-hl-show-hunk-inline-popup buffer _ignored-line)
+                                       (setq set-transient-map-exit-func (set-transient-map diff-hl-inline-popup-transient-mode-map1 t 'diff-hl-inline-popup-hide))
+                                       )))
+  )
 
-  ;; 这个用起来有bug
-  (use-package diff-hl-show-hunk-posframe
-    :disabled 
-    :config
-    (setq diff-hl-show-hunk-function 'diff-hl-show-hunk-posframe)
-    )
+(use-package beacon
+  :defer 1.5
+  :init
+  (setq beacon-blink-when-focused t)
+  :config
+  (beacon-mode 1)
+  (defun beacon-blink() (interactive)
+         ;; 打算弄个emacs module专门来画，这样低配机就不卡了
+         ;; (message (format "%d"(car (window-absolute-pixel-position))))
+         )
   )
 
 ;; 好的theme特点:
