@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-29 11:53:44 lynnux>
+;; Time-stamp: <2022-04-29 14:20:38 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1556,6 +1556,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;; TODO: Locals里的icon显示不正常
       )
     )
+  )
+
+(use-package quickrun
+  :commands(quickrun quickrun-shell helm-quickrun)
+  :init
+  (global-set-key (kbd "<f5>") 'quickrun)
+  (setq quickrun-option-shebang nil)    ;; windows没有这东西
+  :config
+  ;; 添加额外消息，不然执行了都不知道
+  (defun my/quickrun-after-run-hook ()
+    (save-excursion
+      (read-only-mode -1)
+      (goto-char (point-max))
+      (newline)
+      (insert (format "Command %s at %s"
+                      (propertize "finished" 'face 'compilation-info)
+                      (current-time-string)))
+      (read-only-mode 1)))
+  (add-hook 'quickrun-after-run-hook 'my/quickrun-after-run-hook)
   )
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
