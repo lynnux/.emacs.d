@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-29 11:39:44 lynnux>
+;; Time-stamp: <2022-04-29 11:53:44 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -436,30 +436,17 @@ _c_: hide comment        _q_uit
   )
 
 ;; from tabbar-ruler
-(defcustom EmacsPortable-included-buffers '("*scratch*")
-  "* Included buffers in tabbar."
-  :type '(repeat (string :tag "Buffer Name"))
-  :group 'EmacsPortable)
-(defcustom EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*")
-  "* Excluded buffers in tabbar."
-  :type '(repeat (string :tag "Buffer Name"))
-  :group 'EmacsPortable)
-(setq EmacsPortable-excluded-buffers '("*Messages*" "*Completions*" "*ESS*" "*Compile-Log*" "*Ibuffer*" "*SPEEDBAR*" "*etags tmp*" "*reg group-leader*" "*Pymacs*" "*grep*"))
-(setq EmacsPortable-included-buffers '("*scratch*" "*shell*"))
+(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*"))
 (defun ep-tabbar-buffer-list ()
-  "Return the list of buffers to show in tabs.
-Exclude buffers whose name starts with a space or *, when they are not
-visiting a file.  The current buffer is always included."
   (delq nil
         (mapcar #'(lambda (b)
                     (cond
                      ;; Always include the current buffer.
                      ((eq (current-buffer) b) b)
-		   ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
-                     ;; ((string= "TAGS" (format "%s" (buffer-name b))) nil)
+		             ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
+                     ((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
                      ((buffer-file-name b) b)
-		   ((member (buffer-name b) EmacsPortable-included-buffers) b)
-		   ((member (buffer-name b) EmacsPortable-excluded-buffers) nil)
+		             ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
                      ((buffer-live-p b) b)))
