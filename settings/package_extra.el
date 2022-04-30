@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-30 16:21:03 lynnux>
+;; Time-stamp: <2022-04-30 20:21:34 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -391,12 +391,6 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
 
-(use-package undo-fu-session
-  :disabled
-  :after(undo-fu)
-  :config
-  (global-undo-fu-session-mode))
-
 ;; 经常C-x C-s按错，还是用这个吧
 ;;super save好像eldoc都会触发保存，有点烦
 ;; (auto-save-visited-mode 1)
@@ -605,8 +599,6 @@ _q_uit
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
-    (when (featurep 'undo-fu-session)
-      (undo-fu-session-recover-safe))
     ))
 
 (use-package google-c-style
@@ -918,14 +910,6 @@ _q_uit
   )
 (use-package cfrs
   :commands(cfrs-read))
-
-
-
-
-;; 有点类似自动截段长行的效果，默认绑定到m-q，elisp-mode无效
-(autoload 'unfill-toggle "unfill" nil t)
-(global-set-key [remap fill-paragraph] #'unfill-toggle)
-
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
@@ -1365,21 +1349,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 
 ;; projectile搜索配合rg
-(add-to-list 'load-path "~/.emacs.d/packages/projectile")
-(defun invoke_projectile ()
-  (interactive)
-  (require 'projectile)
-  (projectile-mode +1)
-  (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
-  )
-(global-set-key (kbd "C-;") 'invoke_projectile)
-
-(with-eval-after-load 'projectile
+(use-package projectile
+  :load-path "~/.emacs.d/packages/projectile"
+  :commands(projectile-compile-project)
+  :init
+  (defun invoke_projectile ()
+    (interactive)
+    (require 'projectile)
+    (projectile-mode +1)
+    (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
+    )
+  (global-set-key (kbd "C-;") 'invoke_projectile)
+  (setq projectile-enable-caching nil)
+  (setq projectile-indexing-method 'alien) ; 默认查找文件没有按.gitignore
+  (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录
+  :config
   (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
+  ;; 去掉多种搜索方法，只用一种
   (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
   (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
+
   )
-(autoload 'projectile-compile-project "projectile" nil t)
+
 (global-set-key [f7] (lambda ()(interactive)
 			           (progn
 			             (call-interactively 'projectile-compile-project)
@@ -1427,17 +1418,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ad-do-it
   (setq tmp-disable-view-mode nil)
   )
-
-;; which-key，用于一些自带mode-map的比较好，用原生的帮助显示太乱了
-(use-package which-key
-  :disabled
-  :init
-  (with-eval-after-load 'bookmark
-    (define-key bookmark-bmenu-mode-map "?" (lambda ()(interactive)(which-key-show-keymap 'bookmark-bmenu-mode-map))))
-  (with-eval-after-load 'dired
-    (unless (featurep 'dired+) ;; dired+ has `diredp-dired-plus-help`
-      (define-key dired-mode-map "?" (lambda ()(interactive) (which-key-show-keymap 'dired-mode-map)))))
-  :commands(which-key-show-keymap))
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
