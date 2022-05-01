@@ -127,7 +127,7 @@ bin_list = [
     ("https://ghproxy.com/https://github.com/sharkdp/fd/releases/download/v8.3.2/fd-v8.3.2-x86_64-pc-windows-msvc.zip", [
         ("fd-v8.3.2-x86_64-pc-windows-msvc/fd.exe", "bin/fd.exe")
     ]),
-    ("https://ghproxy.com/https://github.com/lynnux/.emacs.d/releases/download/Tag20220430/my-emacs-bin_x64_msvc.zip",
+    ("https://ghproxy.com/https://github.com/lynnux/.emacs.d/releases/download/20220501/winbin64.zip",
      [("emacs-win32-launcher.exe", "bin/emacs-win32-launcher.exe"),
       ("pop_select.dll", "bin/pop_select.dll"),
       ("emacs_beacon.dll", "bin/emacs_beacon.dll")
