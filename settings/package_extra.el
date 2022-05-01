@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-30 21:56:19 lynnux>
+;; Time-stamp: <2022-05-01 13:23:35 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1447,6 +1447,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       :load-path "~/.emacs.d/packages/lsp"
       :init
       (defun lsp-ensure() (eglot-ensure))
+      (setq eglot-confirm-server-initiated-edits nil) ; 避免code action的提示
       :commands (eglot eglot-ensure eglot-rename)
       :config
       ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
@@ -1803,6 +1804,7 @@ _q_uit
 
 ;; 由emacs module实现ctrl tab切换窗口
 (ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
+
 (when (fboundp 'pop-select/select)
   (defun my-pop-select(&optional backward)
     (interactive)
