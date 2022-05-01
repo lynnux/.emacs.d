@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-01 13:23:35 lynnux>
+;; Time-stamp: <2022-05-01 14:39:03 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1985,7 +1985,8 @@ _q_uit
     :config
     (beacon-mode 1)
     (defadvice beacon-blink (around my-beacon-blink activate)
-      (when  (fboundp 'emacs-beacon/beacon) 
+      ;; 目前偶尔不是emacs时也弹窗
+      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
         (let ((p (window-absolute-pixel-position)))
           (emacs-beacon/beacon (car p) ; x
                                (cdr p) ; y
