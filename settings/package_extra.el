@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-02 11:34:03 lynnux>
+;; Time-stamp: <2022-05-02 11:47:25 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -94,6 +94,7 @@ _q_uit
   (define-key dired-mode-map "w" 'View-scroll-page-backward)
   (define-key dired-mode-map "W" 'dired-copy-filename-as-kill)
   (define-key dired-mode-map "1" 'delete-other-windows)
+  (define-key dired-mode-map "\C-t" 'mark-word) ; 还有t, U等mark快捷键
 
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
