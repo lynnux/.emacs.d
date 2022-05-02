@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-01 14:39:03 lynnux>
+;; Time-stamp: <2022-05-02 11:34:03 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1361,10 +1361,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   (global-set-key (kbd "C-;") 'invoke_projectile)
   (setq projectile-enable-caching nil)
-  (setq projectile-indexing-method 'hybrid) ; 默认查找文件没有按.gitignore。hybrid默认alien，但支持sort
-  (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录
+  (setq projectile-indexing-method 'alien) ; 默认查找文件没有按.gitignore。hybrid默认alien，但支持sort
+  (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录。用了helm-projectile无效
   (setq projectile-sort-order 'recently-active) ; 先buffer，再文件
-  (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
+  ;; (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
   (use-package helm-projectile
     :commands(helm-projectile helm-projectile-on)
     :config
