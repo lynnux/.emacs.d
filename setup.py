@@ -39,6 +39,8 @@ zip_list = [
     ("themes/themes-master.zip", "themes"),
     ("themes/nyan-mode-master.zip", "themes"),
     ("themes/diff-hl-master.zip", "themes"),
+    ("packages/org/emacs-maple-preview-master.zip", "packages/org"),
+    
 ] 
 class ZipTar():
     def __init__(self, path):

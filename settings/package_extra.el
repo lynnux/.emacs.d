@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-02 11:47:25 lynnux>
+;; Time-stamp: <2022-05-03 22:47:58 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1995,6 +1995,24 @@ _q_uit
                                (truncate (* beacon-blink-delay 1000)) ; delay
                                )))))
   )
+
+(use-package maple-preview
+  :load-path "~/.emacs.d/packages/org"
+  :defer t
+  :init
+  (defalias 'note-preview 'maple-preview-mode)
+  (autoload 'maple-preview-mode "emacs-maple-preview-master/maple-preview" "" t nil)
+  (setq maple-preview:allow-modes '(org-mode markdown-mode html-mode web-mode mhtml-mode))
+  :config
+  (defadvice maple-preview:init (after my-maple-preview:init activate)
+    ;; 这个hook还达到了自动滚屏的效果? (需要用鼠标点击不同位置)
+    (add-hook 'buffer-list-update-hook 'maple-preview:send-to-server)
+    )
+  (defadvice maple-preview:finalize (after my-maple-preview:finalize activate)
+    (remove-hook 'buffer-list-update-hook 'maple-preview:send-to-server)
+    )
+  )
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
