@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-03 22:47:58 lynnux>
+;; Time-stamp: <2022-05-04 12:15:55 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1362,7 +1362,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   (global-set-key (kbd "C-;") 'invoke_projectile)
   (setq projectile-enable-caching nil)
-  (setq projectile-indexing-method 'alien) ; 默认查找文件没有按.gitignore。hybrid默认alien，但支持sort
+  (setq projectile-indexing-method 'native) ; 默认查找文件没有按.gitignore。hybrid默认alien，但支持sort。除了native其它中文路径有问题
   (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录。用了helm-projectile无效
   (setq projectile-sort-order 'recently-active) ; 先buffer，再文件
   ;; (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
@@ -1371,10 +1371,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :config
     ) ; C-; h调用helm-projectile多功能集合！
   :config
-  ;; remap key，这样就可以用C-z actions了
+    ;; remap key，这样就可以用C-z actions了
   (helm-projectile-on)
   (define-key projectile-mode-map [remap projectile-ripgrep] #'projectile-ripgrep) ; 不要用helm-rg
-
+  
   ;; 不用recentf，替换成session用的file-name-history
   (defadvice projectile-recentf-files (around my-projectile-recentf-files activate) 
     (setq ad-return-value (let ((project-root (projectile-acquire-root)))
