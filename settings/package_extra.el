@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-04 14:32:31 lynnux>
+;; Time-stamp: <2022-05-04 20:13:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -401,7 +401,8 @@ _c_: hide comment        _q_uit
   :defer 0.5
   :init
   ;; 默认切换窗口时保存，这里确保idle时也保存
-  (setq super-save-auto-save-when-idle t) 
+  (setq super-save-auto-save-when-idle t)
+  :diminish
   :config
   (super-save-mode +1))
 
@@ -1711,6 +1712,7 @@ _q_uit
 (setq tree-sitter-langs--testing t) ;; 静止联网check bin
 ;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
+  :diminish(tree-sitter-mode)
   :commands(tree-sitter-hl-mode)
   ;; 来自tree-sitter-major-mode-language-alist
   :hook ((sh-mode
