@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-04-08 10:45:37 lynnux>
+;; Time-stamp: <2022-05-04 18:43:39 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -319,3 +319,5 @@ Run occur in all buffers whose names match this type for REXP."
   )
 
 (global-auto-revert-mode)
+
+(setq-default compilation-scroll-output 'first-error)
