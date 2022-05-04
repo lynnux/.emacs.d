@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-04 13:57:12 lynnux>
+;; Time-stamp: <2022-05-04 14:32:31 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -1188,7 +1188,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'load-path "~/.emacs.d/packages/magit")
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq magit-version "3.3.0")
-  :commands (magit)
+  :commands (magit magit-status)        ;; magit-status for projectile
   :bind(("C-c C-c". magit))
   :config
   )
