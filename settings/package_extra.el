@@ -1345,7 +1345,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :init
   (setq xref-search-program 'ripgrep
-        xref-auto-jump-to-first-definition 'show
+        xref-auto-jump-to-first-definition 'show ;; 自动跳转到第一个
         xref-auto-jump-to-first-xref 'show)
   :config
   (define-key xref--xref-buffer-mode-map (kbd "C-n") 'xref-next-line)
@@ -1354,6 +1354,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key xref--xref-buffer-mode-map (kbd "M-p") 'xref-prev-group)
   (define-key xref--xref-buffer-mode-map [remap keyboard-quit] 'xref-quit-and-pop-marker-stack)
   (define-key xref--xref-buffer-mode-map "q" 'xref-quit-and-pop-marker-stack)
+  (define-key xref--xref-buffer-mode-map "w" 'scroll-down-command)
   
   (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
     (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
