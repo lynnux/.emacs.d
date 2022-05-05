@@ -1340,9 +1340,36 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
+;; project内置查找会用到，支持ripgrep了！
+(use-package xref
+  :defer t
+  :init
+  (setq xref-search-program 'ripgrep
+        xref-auto-jump-to-first-definition 'show
+        xref-auto-jump-to-first-xref 'show)
+  :config
+  (define-key xref--xref-buffer-mode-map (kbd "C-n") 'xref-next-line)
+  (define-key xref--xref-buffer-mode-map (kbd "C-p") 'xref-prev-line)
+  (define-key xref--xref-buffer-mode-map (kbd "M-n") 'xref-next-group)
+  (define-key xref--xref-buffer-mode-map (kbd "M-p") 'xref-prev-group)
+  (define-key xref--xref-buffer-mode-map [remap keyboard-quit] 'xref-quit-and-pop-marker-stack)
+  (define-key xref--xref-buffer-mode-map "q" 'xref-quit-and-pop-marker-stack)
+  
+  (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
+    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      ;; 检查是否含中文
+	  (if (chinese-word-chinese-string-p (ad-get-arg 0))
+          (let ((xref-search-program-alist (list (cons 'ripgrep (concat (cdr (assoc 'ripgrep xref-search-program-alist)) " --pre rgpre")))))
+            ad-do-it
+            )
+        ad-do-it)
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
+
 (if t
-    ;; 没有cache查找文件也超快！有时间再更新了
+    ;; 没有cache查找文件也超快！
     (use-package project
+      :defer t
       :bind-keymap ("C-;" . project-prefix-map)
       :commands(project-compile)
       :init
@@ -1355,28 +1382,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (?b "Buffer" project-switch-to-buffer)
               (?v "VC-Dir" project-vc-dir)
               (?e "Eshell" project-eshell)
-              ))
-      (setq xref-search-program 'ripgrep)
-      ;; grep + xref还挺好用的
+              )
+            project-switch-use-entire-map t ; switch prj时也可以按其它键
+            ) 
       ;; 这个还可以避免projectile search的bug(比如搜索 projectile-indexing-method，projectile.el就被忽略了)
       (define-key project-prefix-map "s" 'project-find-regexp)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       :config
-      (use-package xref
-        :defer t
-        :config
-        (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
-	      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-            ;; 检查是否含中文
-	        (if (chinese-word-chinese-string-p (ad-get-arg 0))
-                (let ((xref-search-program-alist (list (cons 'ripgrep (concat (cdr (assoc 'ripgrep xref-search-program-alist)) " --pre rgpre")))))
-                  ad-do-it
-                  )
-              ad-do-it)
-	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	        )))
-
       )
   (use-package projectile
     :disabled ;; 搞不懂为什么load-path会被设置
