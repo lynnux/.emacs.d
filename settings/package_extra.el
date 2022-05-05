@@ -1352,6 +1352,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (?s "Search" project-find-regexp)
               (?d "Dired" project-dired)
               (?m "Magit" magit-status)
+              (?b "Buffer" project-switch-to-buffer)
               (?v "VC-Dir" project-vc-dir)
               (?e "Eshell" project-eshell)
               ))
