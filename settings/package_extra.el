@@ -302,6 +302,11 @@ _q_uit
 (defun hydra-find-file-select ()
   (interactive)
   (unless (functionp 'hydra-find-file/body)
+    (defun prj-find-file()
+      (interactive)
+      (if (featurep 'projectile)
+          (call-interactively 'projectile-find-file)
+        (call-interactively 'project-find-file)))
     (defhydra hydra-find-file ()
       "
 _c_: file changed  _v_: file visited
@@ -314,7 +319,7 @@ _q_uit
       ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
       ("r" files-recent-visited nil :color blue)
-      ("p" projectile-find-file nil :color blue)
+      ("p" prj-find-file nil :color blue)
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
@@ -1335,11 +1340,23 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
-(if nil
+(if t
     ;; 没有cache查找文件也超快！有时间再更新了
     (use-package project
       :bind-keymap ("C-;" . project-prefix-map)
+      :commands(project-compile)
       :init
+      ;; p切换project时显示的命令
+      (setq project-switch-commands
+            '((?f "File" project-find-file)
+              (?s "Search" project-find-regexp)
+              (?d "Dired" project-dired)
+              (?m "Magit" magit-status)
+              (?v "VC-Dir" project-vc-dir)
+              (?e "Eshell" project-eshell)
+              ))
+      (define-key project-prefix-map "s" 'project-find-regexp) ; gref + xref还挺好用的
+      (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       :config
       )
   (use-package projectile
@@ -1395,19 +1412,24 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 去掉多种搜索方法，只用一种
     (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
     (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
+    (define-key projectile-mode-map (kbd "C-; m") #'magit)
     )
   )
 
 (global-set-key [f7] (lambda ()(interactive)
 			           (progn
-			             (call-interactively 'projectile-compile-project)
+                         (if (featurep 'projectile)
+                             (call-interactively 'projectile-compile-project)
+			               (call-interactively 'project-compile))
 			             (setq compilation-read-command nil) ;; 不再提示
 			             )))
 (global-set-key [(shift f7)]
 		        (lambda ()(interactive)
 		          (progn
 			        (setq compilation-read-command t)
-			        (call-interactively 'projectile-compile-project)
+                    (if (featurep 'projectile)
+                        (call-interactively 'projectile-compile-project)
+                      (call-interactively 'project-compile))
 			        (setq compilation-read-command nil) ;; 不再提示
 			        )))
 
@@ -1999,11 +2021,12 @@ _q_uit
       ;; (message (concat (symbol-name this-command) " " (symbol-name last-command)))
       (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
         (let ((p (window-absolute-pixel-position)))
-          (emacs-beacon/beacon (car p) ; x
-                               (cdr p) ; y
-                               (truncate (* beacon-blink-duration 1000)) ; timer
-                               (truncate (* beacon-blink-delay 1000)) ; delay
-                               )))))
+          (when p
+            (emacs-beacon/beacon (car p) ; x
+                                 (cdr p) ; y
+                                 (truncate (* beacon-blink-duration 1000)) ; timer
+                                 (truncate (* beacon-blink-delay 1000)) ; delay
+                                 ))))))
   )
 
 (use-package maple-preview
