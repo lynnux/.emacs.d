@@ -429,7 +429,7 @@ _c_: hide comment        _q_uit
   )
 
 ;; from tabbar-ruler
-(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*"))
+(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*" "*xref*"))
 (defun ep-tabbar-buffer-list ()
   (delq nil
         (mapcar #'(lambda (b)
@@ -1356,11 +1356,30 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (?v "VC-Dir" project-vc-dir)
               (?e "Eshell" project-eshell)
               ))
-      (define-key project-prefix-map "s" 'project-find-regexp) ; gref + xref还挺好用的
+      (setq xref-search-program 'ripgrep)
+      ;; grep + xref还挺好用的
+      ;; 这个还可以避免projectile search的bug(比如搜索 projectile-indexing-method，projectile.el就被忽略了)
+      (define-key project-prefix-map "s" 'project-find-regexp)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       :config
+      (use-package xref
+        :defer t
+        :config
+        (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
+	      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+            ;; 检查是否含中文
+	        (if (chinese-word-chinese-string-p (ad-get-arg 0))
+                (let ((xref-search-program-alist (list (cons 'ripgrep (concat (cdr (assoc 'ripgrep xref-search-program-alist)) " --pre rgpre")))))
+                  ad-do-it
+                  )
+              ad-do-it)
+	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	        )))
+
       )
   (use-package projectile
+    :disabled ;; 搞不懂为什么load-path会被设置
     :load-path "~/.emacs.d/packages/projectile"
     :commands(projectile-compile-project)
     :init
