@@ -1,4 +1,3 @@
-;; Time-stamp: <2022-05-04 20:13:07 lynnux>
 ;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
@@ -276,7 +275,7 @@ _q_uit
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
 (global-set-key (kbd "C-x C-r") 'files-recent-visited)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
-(global-set-key (kbd "C-c h") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+(global-set-key (kbd "C-c m") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
 
 (defun files-recent-type (src)
   (interactive)
@@ -394,17 +393,9 @@ _c_: hide comment        _q_uit
   )
 
 ;; 经常C-x C-s按错，还是用这个吧
-;;super save好像eldoc都会触发保存，有点烦
-;; (auto-save-visited-mode 1)
-(use-package super-save
-  ;; :disabled
-  :defer 0.5
-  :init
-  ;; 默认切换窗口时保存，这里确保idle时也保存
-  (setq super-save-auto-save-when-idle t)
-  :diminish
-  :config
-  (super-save-mode +1))
+(setq auto-save-visited-interval 1
+      save-silently t)
+(auto-save-visited-mode 1)
 
 (use-package yasnippet
   :defer 1
@@ -1127,8 +1118,8 @@ _q_uit
   :diminish
   :config
   (defun check-mode()
-	(unless (or (derived-mode-p 'c-mode 'c++-mode) ;; c/cpp保存时调用clang-format
-		        (eq major-mode 'rust-mode)) ;;(eq major-mode 'python-mode)
+	(unless (or nil;;(derived-mode-p 'c-mode 'c++-mode)
+		        (eq major-mode 'fundamental-mode)) ;;(eq major-mode 'python-mode)
 	  (indentinator-mode)))
   (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
   (global-indentinator-mode 1)
@@ -1208,13 +1199,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (interactive)
   (shell-command "git config --global --unset http.proxy")
   (shell-command "git config --global --unset https.proxy"))
-
-;;; zig mode
-(autoload 'zig-mode "zig-mode" nil t)
-(add-to-list 'auto-mode-alist '("\\.zig\\'" . zig-mode))
-(modify-coding-system-alist 'file "\\.zig\\'" 'utf-8-with-signature) ; 强制zig文件视为utf8，否则有中文显示问题
-(setq zig-format-on-save nil)
-(with-eval-after-load 'zig-mode (add-hook 'zig-mode-hook (lambda () (local-set-key [(meta f8)] 'zig-format-buffer))))
 
 ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
 (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
@@ -1351,61 +1335,67 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
-;; projectile搜索配合rg
-(use-package projectile
-  :load-path "~/.emacs.d/packages/projectile"
-  :commands(projectile-compile-project)
-  :init
-  (defun invoke_projectile ()
-    (interactive)
-    (require 'projectile)
-    (projectile-mode +1)
-    (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
-    )
-  (global-set-key (kbd "C-;") 'invoke_projectile)
-  (setq projectile-enable-caching nil)
-  ;; 默认native查找文件没有按.gitignore。hybrid基于native但枚举目录时调用alien所以支持ignore，并支持sort，唯一缺点不过滤recent
-  (setq projectile-indexing-method 'hybrid)
-  (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录。用了helm-projectile无效
-  (setq projectile-sort-order 'recently-active) ; 先buffer，再文件
-  ;; (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
-  (use-package helm-projectile
-    :commands(helm-projectile helm-projectile-on)
+(if nil
+    ;; 没有cache查找文件也超快！有时间再更新了
+    (use-package project
+      :bind-keymap ("C-;" . project-prefix-map)
+      :init
+      :config
+      )
+  (use-package projectile
+    :load-path "~/.emacs.d/packages/projectile"
+    :commands(projectile-compile-project)
+    :init
+    (defun invoke_projectile ()
+      (interactive)
+      (require 'projectile)
+      (projectile-mode +1)
+      (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
+      )
+    (global-set-key (kbd "C-;") 'invoke_projectile)
+    (setq projectile-enable-caching t)    ;; 公司这台win10不cache特别慢
+    ;; 默认native查找文件没有按.gitignore。hybrid基于native但枚举目录时调用alien所以支持ignore，并支持sort，唯一缺点不过滤recent
+    (setq projectile-indexing-method 'hybrid)
+    (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录。用了helm-projectile无效
+    (setq projectile-sort-order 'recently-active) ; 先buffer，再文件
+    ;; (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
+    (use-package helm-projectile
+      :commands(helm-projectile helm-projectile-on)
+      :config
+      )                           ; C-; h调用helm-projectile多功能集合！
     :config
-    )                           ; C-; h调用helm-projectile多功能集合！
-  :config
-  ;; 解决fd乱码及git ls-files乱码
-  (defadvice projectile-files-via-ext-command (around my-projectile-files-via-ext-command activate)
-	(let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	  ad-do-it
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	  ))
-  (when nil
-    ;; 强制用fd
-    (defadvice projectile-get-ext-command (around my-projectile-get-ext-command activate)
-      (setq ad-return-value projectile-generic-command)
-      ))
-  
-  ;; remap key，这样就可以用C-z actions了
-  (helm-projectile-on)
-  (define-key projectile-mode-map [remap projectile-ripgrep] #'projectile-ripgrep) ; 不要用helm-rg
-  
-  ;; 不用recentf，替换成session用的file-name-history
-  (defadvice projectile-recentf-files (around my-projectile-recentf-files activate) 
-    (setq ad-return-value (let ((project-root (projectile-acquire-root)))
-                            (mapcar
-                             (lambda (f) (file-relative-name f project-root))
-                             (cl-remove-if-not
-                              (lambda (f) (string-prefix-p project-root (expand-file-name f)))
-                              file-name-history))))
+    ;; 解决fd乱码及git ls-files乱码
+    (defadvice projectile-files-via-ext-command (around my-projectile-files-via-ext-command activate)
+	  (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	    ad-do-it
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	    ))
+    (when nil
+      ;; 强制用fd
+      (defadvice projectile-get-ext-command (around my-projectile-get-ext-command activate)
+        (setq ad-return-value projectile-generic-command)
+        ))
+    
+    ;; remap key，这样就可以用C-z actions了
+    ;; (helm-projectile-on)
+    ;; (define-key projectile-mode-map [remap projectile-ripgrep] #'projectile-ripgrep) ; 不要用helm-rg
+    
+    ;; 不用recentf，替换成session用的file-name-history
+    (defadvice projectile-recentf-files (around my-projectile-recentf-files activate) 
+      (setq ad-return-value (let ((project-root (projectile-acquire-root)))
+                              (mapcar
+                               (lambda (f) (file-relative-name f project-root))
+                               (cl-remove-if-not
+                                (lambda (f) (string-prefix-p project-root (expand-file-name f)))
+                                file-name-history))))
+      )
+    
+    (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
+    ;; 去掉多种搜索方法，只用一种
+    (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
+    (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
     )
-  
-  (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
-  ;; 去掉多种搜索方法，只用一种
-  (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
-  (define-key projectile-mode-map (kbd "C-; s") #'projectile-ripgrep) ; 对C-; s同样生效
-
   )
 
 (global-set-key [f7] (lambda ()(interactive)
@@ -1618,12 +1608,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	      (lambda ()
 	        (when (derived-mode-p 'c-mode 'c++-mode)
 	          ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
-              (enable-format-on-save)
+              ;; (enable-format-on-save)
               (my-c-mode-hook-set)
               (lsp-ensure)
 	          )))
 (add-hook 'rust-mode-hook (lambda ()
-			                (enable-format-on-save)
+			                ;; (enable-format-on-save)
 			                (lsp-ensure)
 			                ))
 
@@ -1940,6 +1930,7 @@ _q_uit
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   ;; 默认修改时会去掉高亮，这个让它保留
   (use-package diff-hl-flydiff
+    :disabled ;; auto save设置为1秒就不需要了
     :config
     (diff-hl-flydiff-mode)
     )
@@ -1963,6 +1954,7 @@ _q_uit
   ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
   (use-package diff-hl-show-hunk
     :config
+    (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
     (global-diff-hl-show-hunk-mouse-mode)
     ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
     (defvar set-transient-map-exit-func nil)
@@ -2004,6 +1996,7 @@ _q_uit
     (beacon-mode 1)
     (defadvice beacon-blink (around my-beacon-blink activate)
       ;; 目前偶尔不是emacs时也弹窗
+      ;; (message (concat (symbol-name this-command) " " (symbol-name last-command)))
       (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
         (let ((p (window-absolute-pixel-position)))
           (emacs-beacon/beacon (car p) ; x
