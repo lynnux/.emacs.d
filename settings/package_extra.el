@@ -598,10 +598,12 @@ _q_uit
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
+    (when (featurep 'beacon)
+      (beacon-blink))
     ))
 
 (use-package google-c-style
-            :commands(google-set-c-style))
+  :commands( google-set-c-style))
 
 (defun my-c-mode-hook-set()
   (google-set-c-style)
@@ -2024,6 +2026,7 @@ _q_uit
         (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
         (define-key map [escape] #'my-diff-hl-inline-popup-hide)
         (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
+        (define-key map (kbd "RET") #'my-diff-hl-inline-popup-hide)
         map)
       )
     (set-keymap-parent diff-hl-inline-popup-transient-mode-map1
@@ -2047,6 +2050,7 @@ _q_uit
     (setq beacon-blink-when-focused t)
     (setq beacon-blink-delay 0.01)
     (setq beacon-blink-duration 0.2)
+    (setq beacon-blink-when-window-scrolls nil) ; 开启了auto save，保存时都会闪故而屏蔽
     :config
     (beacon-mode 1)
     (defadvice beacon-blink (around my-beacon-blink activate)
