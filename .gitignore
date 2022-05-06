@@ -83,3 +83,7 @@ packages/tree-sitter/lisp/*
 /url/
 /packages/org/emacs-maple-preview-master/
 /projects
+/.org-id-locations
+/org-roam.db
+/packages/org/emacsql-master/
+/packages/org/org-roam/

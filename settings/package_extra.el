@@ -1382,7 +1382,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (?s "Search" project-find-regexp)
               (?d "Dired" project-dired)
               (?m "Magit" magit-status)
-              (?b "Buffer" project-switch-to-buffer)
+              (?b "Buffer" project-switch-to-buffer); 这个当recent buffer使用了
               (?v "VC-Dir" project-vc-dir)
               (?e "Eshell" project-eshell)
               )
@@ -1390,6 +1390,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             ) 
       ;; 这个还可以避免projectile search的bug(比如搜索 projectile-indexing-method，projectile.el就被忽略了)
       (define-key project-prefix-map "s" 'project-find-regexp)
+      (define-key project-prefix-map "S" 'project-shell)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       :config
       )
@@ -2083,6 +2084,27 @@ _q_uit
     )
   )
 
+(use-package emacsql
+  :defer t
+  :load-path "~/.emacs.d/packages/org/emacsql-master"
+  )
+(use-package org-roam
+  :load-path "~/.emacs.d/packages/org/org-roam"
+  :custom
+  (org-roam-directory (file-truename "G:\\doc\\orgtest"))
+  :init
+  (require 'org-roam-autoloads)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n g" . org-roam-graph)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture)
+         ;; Dailies
+         ("C-c n j" . org-roam-dailies-capture-today))
+  :config
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  (org-roam-db-autosync-mode)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，

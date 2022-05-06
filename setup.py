@@ -40,6 +40,8 @@ zip_list = [
     ("themes/nyan-mode-master.zip", "themes"),
     ("themes/diff-hl-master.zip", "themes"),
     ("packages/org/emacs-maple-preview-master.zip", "packages/org"),
+    ("packages/org/org-roam.zip", "packages/org"),
+    ("packages/org/emacsql-master.zip", "packages/org"),
     
 ] 
 class ZipTar():
