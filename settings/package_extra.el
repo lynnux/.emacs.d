@@ -79,12 +79,13 @@ _q_uit
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
   (setq dired-recursive-deletes (quote top)) ; “top” means ask once
-  (setq dired-dwim-target t) ;; 开两个dired的话会自动识别other dired为target
+  (setq dired-dwim-target t  ;; 开两个dired的话会自动识别other dired为target
+        dired-kill-when-opening-new-dired-buffer t ; 28.1新加的
+        )
   ;; 不新开buf打开文件和目录，还有个效果是打开文件后自动关闭了dired buffer
   (define-key dired-mode-map [remap dired-find-file] 'dired-find-alternate-file)
   (define-key dired-mode-map (kbd "C-l") (lambda () (interactive) (find-alternate-file ".."))) ;; C-l上级目录
   (define-key dired-mode-map (kbd "l") (lambda () (interactive) (find-alternate-file ".."))) ;; l上级目录
-  (define-key dired-mode-map [remap quit-window] 'volatile-kill-buffer)  ;; 关闭dired不然tab有问题
   (define-key dired-mode-map (kbd "C-o") 'avy-goto-word-1)
   ;; dired里面再次C-x d可以设置路径
   (define-key dired-mode-map (kbd "C-x d") (lambda ()(interactive) (call-interactively 'dired)))
@@ -401,6 +402,23 @@ _c_: hide comment        _q_uit
 (setq auto-save-visited-interval 1
       save-silently t)
 (auto-save-visited-mode 1)
+(when auto-save-visited-mode
+  ;; 参考super save，对于某些命令立即调用保存，避免save buffer yes no提示
+  (setq super-save-triggers '(magit project-compile save-buffers-kill-terminal volatile-kill-buffer))
+  (defun super-save-command-advice (&rest _args) 
+    (super-save-command))
+  (defun super-save-advise-trigger-commands ()
+    (mapc
+     (lambda (command)
+       (advice-add command :before #'super-save-command-advice))
+     super-save-triggers))
+  (defun super-save-command ()
+    (when auto-save-visited-mode ;; 暂时没有remove advice
+      ;; 调用auto-save-visited-mode的timer省一些逻辑
+      (apply (timer--function auto-save--timer) (timer--args auto-save--timer)) 
+      ))
+  (super-save-advise-trigger-commands)
+  )
 
 (use-package yasnippet
   :defer 1
@@ -2090,10 +2108,8 @@ _q_uit
   )
 (use-package org-roam
   :load-path "~/.emacs.d/packages/org/org-roam"
-  :custom
-  (org-roam-directory (file-truename "G:\\doc\\orgtest"))
   :init
-  (require 'org-roam-autoloads)
+  (require 'org-roam-autoloads) 
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
          ("C-c n g" . org-roam-graph)
