@@ -2099,6 +2099,9 @@ _q_uit
   (autoload 'maple-preview-mode "emacs-maple-preview-master/maple-preview" "" t nil)
   (setq maple-preview:allow-modes '(org-mode markdown-mode html-mode web-mode mhtml-mode))
   :config
+  (defadvice maple-preview:open-browser (around my-maple-preview:open-browser activate)
+    (eww (format "http://%s:%s/preview" maple-preview:host maple-preview:port))
+    )
   (defadvice maple-preview:init (after my-maple-preview:init activate)
     ;; 这个hook还达到了自动滚屏的效果? (需要用鼠标点击不同位置)
     (add-hook 'buffer-list-update-hook 'maple-preview:send-to-server)
@@ -2144,6 +2147,20 @@ _q_uit
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
   )
+
+(use-package eww
+  :defer t
+  :config
+  (define-key eww-mode-map "w" 'scroll-down-command)
+  (use-package shr
+    :defer t
+    :config
+    ;; 修复选中图片时按w不生效问题
+    (define-key shr-image-map "w" nil)
+    (define-key eww-link-keymap "w" nil)
+    )
+  )
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
