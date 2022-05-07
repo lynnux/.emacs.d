@@ -2118,7 +2118,8 @@ _q_uit
          ;; Dailies
          ("C-c n j" . org-roam-dailies-capture-today))
   :config
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  ;; find时列表加入tag，这么好的功能居然不加入默认？
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))) 
   (org-roam-db-autosync-mode)
   )
 
