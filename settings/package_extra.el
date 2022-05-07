@@ -447,7 +447,7 @@ _c_: hide comment        _q_uit
   )
 
 ;; from tabbar-ruler
-(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*" "*xref*"))
+(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*" "*xref*" "*org-roam*"))
 (defun ep-tabbar-buffer-list ()
   (delq nil
         (mapcar #'(lambda (b)
@@ -655,6 +655,7 @@ _q_uit
   (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
   (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
   (add-to-list 'jl-insert-marker-funcs "session-jump-to-last-change")
+  (add-to-list 'jl-insert-marker-funcs "org-roam-preview-visit")
   (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
   (defun my-save-pos()
     (interactive)
@@ -1208,6 +1209,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :commands (magit magit-status)        ;; magit-status for projectile
   :bind(("C-c C-c". magit))
   :config
+  (define-key magit-status-mode-map "L" 'magit-section-up)
   )
 (defun git-add-file ()
   "Adds (with force) the file from the current buffer to the git repo"
@@ -1392,7 +1394,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (use-package project
       :defer t
       :bind-keymap ("C-;" . project-prefix-map)
-      :commands(project-compile)
+      :commands(project-compile project-find-regexp)
       :init
       ;; p切换project时显示的命令
       (setq project-switch-commands
@@ -1410,6 +1412,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "s" 'project-find-regexp)
       (define-key project-prefix-map "S" 'project-shell)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
+      (global-set-key (kbd "C-S-f") 'project-find-regexp)
       :config
       )
   (use-package projectile
@@ -1487,39 +1490,42 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			        (setq compilation-read-command nil) ;; 不再提示
 			        )))
 
-;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
-(global-set-key (kbd "C-S-f") 'rg-dwim)
-(setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
-(autoload 'rg-dwim "rg" nil t)
-(with-eval-after-load 'rg-result
-  ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
-  ;; 临时设置cmdproxy编码
-  (defadvice rg-run (around my-run activate)
-    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	  ad-do-it
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	  ))
-  (defadvice rg-recompile (around my-rg-recompile activate)
-    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	  ad-do-it
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	  ))
-  ;; 中文
-  (defadvice rg-build-command (around my-rg-build-command activate)
-    (if (chinese-word-chinese-string-p (ad-get-arg 0))
-        (let ((rg-command-line-flags (list "--pre rgpre")))
-          ad-do-it
-          )
-      ad-do-it))
-  )
+;; 自带的project-find-regexp的xref好用的一批，除了不能用wgrep编辑
+(when (featurep 'projectile)
+  ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
+  (global-set-key (kbd "C-S-f") 'rg-dwim)
+  (setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
+  (autoload 'rg-dwim "rg" nil t)
+  (with-eval-after-load 'rg-result
+    ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
+    ;; 临时设置cmdproxy编码
+    (defadvice rg-run (around my-run activate)
+      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	    ad-do-it
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	    ))
+    (defadvice rg-recompile (around my-rg-recompile activate)
+      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	    ad-do-it
+	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	    ))
+    ;; 中文
+    (defadvice rg-build-command (around my-rg-build-command activate)
+      (if (chinese-word-chinese-string-p (ad-get-arg 0))
+          (let ((rg-command-line-flags (list "--pre rgpre")))
+            ad-do-it
+            )
+        ad-do-it))
+    )
 
-;;
-(defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
-  (setq tmp-disable-view-mode t)
-  ad-do-it
-  (setq tmp-disable-view-mode nil)
+  ;; 使wrep可编辑
+  (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
+    (setq tmp-disable-view-mode t)
+    ad-do-it
+    (setq tmp-disable-view-mode nil)
+    )
   )
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
@@ -2102,24 +2108,40 @@ _q_uit
     )
   )
 
+(use-package winner
+  :defer 1.2
+  :config
+  (winner-mode +1)
+  (define-key winner-mode-map (kbd "<C-left>") #'winner-undo)
+  (define-key winner-mode-map (kbd "<C-right>") #'winner-redo)  
+  )
+
 (use-package emacsql
   :defer t
   :load-path "~/.emacs.d/packages/org/emacsql-master"
   )
+;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
+;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
   :load-path "~/.emacs.d/packages/org/org-roam"
   :init
-  (require 'org-roam-autoloads) 
+  (setq org-roam-db-gc-threshold most-positive-fixnum)
+  (setq org-roam-database-connector 'sqlite-builtin) ; 使用29版本以上自营的sqlite，但是仍然需要上面的emacsql
+  (require 'org-roam-autoloads)
+  ;; TODO: 设置buffer里RET打开other buffer
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
          ("C-c n g" . org-roam-graph)
          ("C-c n i" . org-roam-node-insert)
+         ("C-c n t" . org-roam-tag-add); C-c C-q用org自带的添加tag好像也是可以用的
          ("C-c n c" . org-roam-capture)
+         ("C-c n h" . org-id-get-create) ; 给子标题添加id，这样才可以索引
          ;; Dailies
          ("C-c n j" . org-roam-dailies-capture-today))
-  :config
+          :config
+  (use-package emacsql-sqlite-builtin)
   ;; find时列表加入tag，这么好的功能居然不加入默认？
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))) 
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
   )
 
