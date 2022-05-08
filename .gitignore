@@ -35,7 +35,7 @@ packages/neotree/*
 packages/smartparens/*
 !packages/smartparens/smartparens-master.zip
 smex-items
-packages/swiper/*
+packages/swiper/swiper-master
 packages/company-mode/*
 recentf
 packages/magit/*
