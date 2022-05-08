@@ -845,10 +845,6 @@ _q_uit
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 (modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; 带中文必须这个编码，干脆就默认
 (with-eval-after-load 'rust-mode
-  (when (featurep 'auto-complete)
-    (make-local-variable 'ac-auto-start) ; 自动弹出会卡
-    (setq ac-auto-start nil)
-    )
   (when (featurep 'company)
     ;; (make-local-variable 'company-idle-delay)
     ;; (setq company-idle-delay nil) 	; 不自动补全
@@ -1380,7 +1376,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   
   (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
     (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      ;; 注意project search是xargs实现的，会向rg先发送文件列表，因此对输入编码有要求
+	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . utf-8))
       ;; 检查是否含中文
 	  (if (chinese-word-chinese-string-p (ad-get-arg 0))
           (let ((xref-search-program-alist (list (cons 'ripgrep (concat (cdr (assoc 'ripgrep xref-search-program-alist)) " --pre rgpre")))))
@@ -1414,6 +1411,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       (global-set-key (kbd "C-S-f") 'project-find-regexp)
       :config
+      ;; 好像自动识别find的输出了(git里的find)
+      ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
+      ;;   (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	  ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      ;;     ad-do-it
+	  ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
       )
   (use-package projectile
     :disabled ;; 搞不懂为什么load-path会被设置
@@ -1440,7 +1443,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :config
     ;; 解决fd乱码及git ls-files乱码
     (defadvice projectile-files-via-ext-command (around my-projectile-files-via-ext-command activate)
-	  (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
 	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
 	    ad-do-it
 	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
@@ -1951,7 +1954,7 @@ _q_uit
   )
 
 
-;; eaf，依赖node的npm，python需要epc，不用能virtualenv，
+;; eaf，依赖node的npm，不用能virtualenv，
 ;; https://gitee.com/emacs-eaf/emacs-application-framework
 ;; install-eaf.py --use-mirror --install app
 ;; browser video-player pdf-viewer mindmap jupyter
@@ -1963,15 +1966,11 @@ _q_uit
     :init
     (add-to-list 'load-path eaf-path)
     :commands(eaf-open
-              eaf-get-theme-foreground-color ;; brower
-              ;; eaf-app-binding-alist ;; mindmap
+              eaf-get-theme-foreground-color ;; for brower
               ) 
-    :custom
-    (eaf-browser-continue-where-left-off t)
-    (eaf-browser-enable-adblocker t)
-    (browse-url-browser-function 'eaf-open-browser)
+    ;; :custom
+    ;; (eaf-browser-enable-adblocker t)
     :config
-    (defalias 'browse-web #'eaf-open-browser)
     ;; 补充eaf-open
     ;; 测试就成功显示了一次，*eaf*啥也不显示
     (when (file-exists-p (concat eaf-path "/app/markdown-previewer"))
@@ -1984,6 +1983,7 @@ _q_uit
         (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
         ))
     )
+  
   (when (file-exists-p (concat eaf-path "/app/browser"))
     (use-package eaf-browser
       :init
@@ -2100,7 +2100,9 @@ _q_uit
   (setq maple-preview:allow-modes '(org-mode markdown-mode html-mode web-mode mhtml-mode))
   :config
   (defadvice maple-preview:open-browser (around my-maple-preview:open-browser activate)
-    (eww (format "http://%s:%s/preview" maple-preview:host maple-preview:port))
+    (if (functionp 'eaf-open-browser)
+        (eaf-open-browser (format "http://%s:%s/preview" maple-preview:host maple-preview:port))
+      ad-do-it)
     )
   (defadvice maple-preview:init (after my-maple-preview:init activate)
     ;; 这个hook还达到了自动滚屏的效果? (需要用鼠标点击不同位置)
@@ -2130,10 +2132,39 @@ _q_uit
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
   (setq org-roam-database-connector 'sqlite-builtin) ; 使用29版本以上自营的sqlite，但是仍然需要上面的emacsql
+  (setq org-roam-capture-templates
+        '(
+          ("d" "default" plain "%?"
+           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n") :unnarrowed t)
+          ("t" "tech" plain "%?"
+           :target (file+head "tech/%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n") :unnarrowed t)
+          ("w" "work" plain "%?"
+           :target (file+head "work/%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n") :unnarrowed t)
+          ("h" "home" plain "%?"
+           :target (file+head "home/%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n") :unnarrowed t)
+          )
+        )
+  
   (require 'org-roam-autoloads)
+  (defun call-project-find()
+    (interactive)
+    (let ((default-directory org-roam-directory))
+      (call-interactively 'project-find-file)
+      ))
+  (defun call-project-search()
+    (interactive)
+    (let ((default-directory org-roam-directory))
+      (call-interactively 'project-find-regexp)
+      ))
   ;; TODO: 设置buffer里RET打开other buffer
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
+         ("C-c n p" . call-project-find)  ;; 文件查找
+         ("C-c n s" . call-project-search) ;; 内容搜索
          ("C-c n g" . org-roam-graph)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n t" . org-roam-tag-add); C-c C-q用org自带的添加tag好像也是可以用的

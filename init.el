@@ -22,7 +22,7 @@
    (equal (list 6 1 7601) (w32-version)) ;; win7 64
    )
   (setq
-   org-roam-directory (file-truename "f:\\doc\\orgtest")
+   org-roam-directory (file-truename "F:/doc/mynote")
    )
   (add-path-to-execute-path "C:/Git/usr/bin"))
  
