@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-04 18:43:39 lynnux>
+;; Time-stamp: <2022-05-09 11:09:09 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -203,7 +203,8 @@ Cancels itself, if this buffer was killed."
   (when (and (bufferp ad-return-value) (featurep 'wcy-desktop) (not disable-startup-load))
     (with-current-buffer ad-return-value
       (when (eq major-mode 'not-loaded-yet)
-	(wcy-desktop-load-file)))) ;; 自动加载，但有个副作用是emacs启动会加载一个，通过上面的1秒timer解决
+	    (wcy-desktop-load-file)
+        ))) ;; 自动加载，但有个副作用是emacs启动会加载一个，通过上面的1秒timer解决
   (when (and tmp-disable-view-mode (bufferp ad-return-value))
     (with-current-buffer ad-return-value
       (when view-mode
@@ -215,9 +216,7 @@ Cancels itself, if this buffer was killed."
 	  (run-with-local-idle-timer 2 nil (lambda ()
 					     (view-mode 1)
 					     ))))
-	)
-      ))
-  )
+	))))
 
 (defadvice find-file-noselect (around my-find-file-noselect activate)
   ad-do-it
@@ -226,6 +225,7 @@ Cancels itself, if this buffer was killed."
 ;; 参考org-capture-target-buffer和org-find-base-buffer-visiting，找到下面两个的hook点
 (defadvice get-file-buffer (around my-get-file-buffer activate)
   ad-do-it
+  ;; ivy会调用这个导致wcy加载，不能用ivy-use-virtual-buffers
   (check-tmp-disable-view-mode)
   )
 (defadvice find-buffer-visiting (around my-find-buffer-visiting activate)

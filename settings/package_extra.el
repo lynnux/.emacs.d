@@ -498,7 +498,11 @@ _c_: hide comment        _q_uit
   (global-set-key [f3] 'symbol-overlay-jump-next)
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
-  (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode symbol-overlay-mode)
+  (defun turn-on-symbol-overlay-mode()
+	(unless (or (eq major-mode 'minibuffer-mode)
+		        nil)
+	  (symbol-overlay-mode)))
+  (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode turn-on-symbol-overlay-mode)
   (global-highlight-symbol-mode 1)
   (defhydra symbol-overlay-select ()
     "
@@ -945,6 +949,10 @@ _q_uit
   "Return t if STRING is a Chinese string."
   (cl-find-if 'chinese-char-p (string-to-list string))
   )
+
+(use-package snails
+  :load-path "~/.emacs.d/packages/minibuffer/snails-master"
+  )
 (when nil
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
@@ -1172,8 +1180,9 @@ _q_uit
             ivy-use-selectable-prompt t
             ivy-wrap t ;; 可以loop选择
             ivy-count-format "(%d/%d) "
-            ivy-use-virtual-buffers t
-            ivy-height 20
+            ivy-height 12
+            ivy-fixed-height-minibuffer t
+            ;; ivy-use-virtual-buffers t，这个会get-file-buffer导致wcy自动加载
             )
       (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
       (global-set-key (kbd "C-c C-r") 'ivy-resume)
@@ -1198,6 +1207,67 @@ _q_uit
 	     '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
 	     '(ivy-cursor ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
 	     ))
+
+      ;; 自动搜索光标下的单词
+      ;; Pre-fill search keywords
+      ;; @see https://www.reddit.com/r/emacs/comments/b7g1px/withemacs_execute_commands_like_marty_mcfly/
+      (defvar my-ivy-fly-commands
+        '(query-replace-regexp
+          flush-lines keep-lines ivy-read
+          swiper swiper-backward swiper-all
+          swiper-isearch swiper-isearch-backward
+          lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol
+          counsel-grep-or-swiper counsel-grep-or-swiper-backward
+          counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
+          my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
+          ))
+
+      (defvar my-ivy-fly-back-commands
+        '(self-insert-command
+          ivy-forward-char ivy-delete-char delete-forward-char kill-word kill-sexp
+          end-of-line mwim-end-of-line mwim-end-of-code-or-line mwim-end-of-line-or-code
+          yank ivy-yank-word ivy-yank-char ivy-yank-symbol counsel-yank-pop))
+
+      (defvar-local my-ivy-fly--travel nil)
+      (defun my-ivy-fly-back-to-present ()
+        (cond ((and (memq last-command my-ivy-fly-commands)
+                    (equal (this-command-keys-vector) (kbd "M-p")))
+               ;; repeat one time to get straight to the first history item
+               (setq unread-command-events
+                     (append unread-command-events
+                             (listify-key-sequence (kbd "M-p")))))
+              ((or (memq this-command my-ivy-fly-back-commands)
+                   (equal (this-command-keys-vector) (kbd "M-n")))
+               (unless my-ivy-fly--travel
+                 (delete-region (point) (point-max))
+                 (when (memq this-command '(ivy-forward-char
+                                            ivy-delete-char delete-forward-char
+                                            kill-word kill-sexp
+                                            end-of-line mwim-end-of-line
+                                            mwim-end-of-code-or-line
+                                            mwim-end-of-line-or-code))
+                   (insert (ivy-cleanup-string ivy-text))
+                   (when (memq this-command '(ivy-delete-char
+                                              delete-forward-char
+                                              kill-word kill-sexp))
+                     (beginning-of-line)))
+                 (setq my-ivy-fly--travel t)))))
+
+      (defun my-ivy-fly-time-travel ()
+        (when (memq this-command my-ivy-fly-commands)
+          (insert (propertize
+                   (save-excursion
+		             (set-buffer (window-buffer (minibuffer-selected-window)))
+		             (ivy-thing-at-point))
+                   'face 'shadow))
+          (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
+          (beginning-of-line)))
+
+      (add-hook 'minibuffer-setup-hook #'my-ivy-fly-time-travel)
+      (add-hook 'minibuffer-exit-hook
+                (lambda ()
+                  (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t)))
+      
       )
     
     (use-package counsel
@@ -1214,20 +1284,19 @@ _q_uit
       (global-set-key (kbd "<f1> l") 'counsel-find-library)
       (global-set-key (kbd "M-m") 'counsel-imenu)
       ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
-      (global-set-key [f2] (lambda ()(interactive)
-                             ;; 不忽略ignore，要忽略ignore请用project search
-                             (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
-                               (counsel-rg (thing-at-point 'symbol) default-directory))
-			                 ))
+      (defun my-counsel-rg()
+        (interactive)
+        (require 'counsel)
+        ;; 不忽略ignore，要忽略ignore请用project search
+        (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
+          (call-interactively 'counsel-rg)))
+      (global-set-key [f2] 'my-counsel-rg)
       :config
       )
     (use-package swiper
       :commands(swiper swiper-isearch)
       :init
-      (global-set-key "\C-s" 'swiper-isearch
-                      ;; (lambda ()(interactive)
-			          ;;   (swiper-isearch (thing-at-point 'symbol)))
-                      )
+      (global-set-key "\C-s" 'swiper)
       :config
       (define-key swiper-map (kbd "C-s") 'swiper) ;; 结果里二次搜索，不过前两个字符输入有bug？
       )
@@ -1250,11 +1319,11 @@ _q_uit
   :defer 1
   :diminish
   :config
-  (defun check-mode()
+  (defun turn-on-indentinator-mode()
 	(unless (or (eq major-mode 'minibuffer-mode);;(derived-mode-p 'c-mode 'c++-mode)
 		        (eq major-mode 'fundamental-mode)) ;;(eq major-mode 'python-mode)
 	  (indentinator-mode)))
-  (define-globalized-minor-mode global-indentinator-mode indentinator-mode check-mode)
+  (define-globalized-minor-mode global-indentinator-mode indentinator-mode turn-on-indentinator-mode)
   (global-indentinator-mode 1)
   )
 
