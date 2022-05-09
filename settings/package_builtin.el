@@ -1,4 +1,4 @@
-;; Time-stamp: <2022-05-09 11:09:09 lynnux>
+;; Time-stamp: <2022-05-09 13:29:56 lynnux>
 ;; 说明：
 ;; 自带的lisp包设置等
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
@@ -198,25 +198,27 @@ Cancels itself, if this buffer was killed."
 (when disable-startup-load
   (run-with-idle-timer 1 nil (lambda ()
 			       (setq disable-startup-load nil))))
-(defvar tmp-disable-view-mode nil);; 在需要的函数defadvice里设置，2不恢复只读
+(defvar tmp-disable-view-mode nil);; 在需要的函数defadvice里设置，2不恢复只读，3禁用
 (defun check-tmp-disable-view-mode ()
-  (when (and (bufferp ad-return-value) (featurep 'wcy-desktop) (not disable-startup-load))
-    (with-current-buffer ad-return-value
-      (when (eq major-mode 'not-loaded-yet)
-	    (wcy-desktop-load-file)
-        ))) ;; 自动加载，但有个副作用是emacs启动会加载一个，通过上面的1秒timer解决
-  (when (and tmp-disable-view-mode (bufferp ad-return-value))
-    (with-current-buffer ad-return-value
-      (when view-mode
-	(view-mode -1) ;; 临时禁用
-	(cond
-	 ((eq tmp-disable-view-mode 2)())
-	 (t
-	  ;; 2秒后恢复只读，实际上idle可能超过2秒
-	  (run-with-local-idle-timer 2 nil (lambda ()
-					     (view-mode 1)
-					     ))))
-	))))
+  (unless (eq tmp-disable-view-mode 3)
+    (when (and (bufferp ad-return-value) (featurep 'wcy-desktop) (not disable-startup-load))
+      (with-current-buffer ad-return-value
+        (when (eq major-mode 'not-loaded-yet)
+	      (wcy-desktop-load-file)
+          ))) ;; 自动加载，但有个副作用是emacs启动会加载一个，通过上面的1秒timer解决
+    (when (and tmp-disable-view-mode (bufferp ad-return-value))
+      (with-current-buffer ad-return-value
+        (when view-mode
+	      (view-mode -1) ;; 临时禁用
+	      (cond
+	       ((eq tmp-disable-view-mode 2)())
+	       (t
+	        ;; 2秒后恢复只读，实际上idle可能超过2秒
+	        (run-with-local-idle-timer 2 nil (lambda ()
+					                           (view-mode 1)
+					                           ))))
+	      )))    
+    ))
 
 (defadvice find-file-noselect (around my-find-file-noselect activate)
   ad-do-it

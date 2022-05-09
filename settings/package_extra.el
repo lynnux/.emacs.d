@@ -281,10 +281,10 @@ _q_uit
 (defun files-recent-type (src)
   (interactive)
   (let* ((tocpl src ;; 全路径好些，可以通过项目名搜索，也解决了文件名相同时的bug
-		;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
-		;; 	src)
-		)
-	 (fname (completing-read "File name: " tocpl nil nil)))
+		        ;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
+		        ;; 	src)
+		        )
+	     (fname (completing-read "File name: " tocpl nil nil)))
     (when fname
       (find-file ;; (cdr (assoc-string fname tocpl))
        fname
@@ -660,6 +660,11 @@ _q_uit
   (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
   (add-to-list 'jl-insert-marker-funcs "session-jump-to-last-change")
   (add-to-list 'jl-insert-marker-funcs "org-roam-preview-visit")
+  (add-to-list 'jl-insert-marker-funcs "counsel-rg")
+  (add-to-list 'jl-insert-marker-funcs "swiper")
+  (add-to-list 'jl-insert-marker-funcs "consult-line")
+  (add-to-list 'jl-insert-marker-funcs "consult-ripgrep")
+
   (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
   (defun my-save-pos()
     (interactive)
@@ -882,12 +887,12 @@ _q_uit
     (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
 
     (define-key treemacs-mode-map (kbd "C-x C-d")
-      ;; 抄自treemacs-visit-node-in-external-application
-      (lambda () (interactive
-                  (-if-let (path (treemacs--prop-at-point :path))
-                      (w32explore path)
-                    (treemacs-pulse-on-failure "Nothing to open here."))
-                  )))
+                ;; 抄自treemacs-visit-node-in-external-application
+                (lambda () (interactive
+                            (-if-let (path (treemacs--prop-at-point :path))
+                                (w32explore path)
+                              (treemacs-pulse-on-failure "Nothing to open here."))
+                            )))
     
     (when (display-graphic-p)
       ;; 改变高亮行背景色
@@ -951,17 +956,110 @@ _q_uit
   )
 
 (use-package snails
+  :disabled
   :load-path "~/.emacs.d/packages/minibuffer/snails-master"
   )
-(when nil
+
+;; 自动搜索光标下的单词，非helm的方案都需要这个
+(defun enable-minibuffer-auto-search-at-point()
+  ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
+  ;; @see https://www.reddit.com/r/emacs/comments/b7g1px/withemacs_execute_commands_like_marty_mcfly/
+  ;; 还有个更简单的https://emacs-china.org/t/xxx-thing-at-point/18047，但是不太注意细节
+  (defvar my-ivy-fly-commands
+    '(query-replace-regexp
+      flush-lines keep-lines ivy-read
+      swiper swiper-backward swiper-all
+      swiper-isearch swiper-isearch-backward
+      lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol
+      counsel-grep-or-swiper counsel-grep-or-swiper-backward
+      counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
+      my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
+      consult-line consult-ripgrep
+      my-consult-ripgrep
+      ))
+
+  (defvar my-ivy-fly-back-commands
+    '(self-insert-command
+      ivy-forward-char ivy-delete-char delete-forward-char kill-word kill-sexp
+      end-of-line mwim-end-of-line mwim-end-of-code-or-line mwim-end-of-line-or-code
+      yank ivy-yank-word ivy-yank-char ivy-yank-symbol counsel-yank-pop))
+
+  (defvar-local my-ivy-fly--travel nil)
+  (defun my-ivy-fly-back-to-present ()
+    (cond ((and (memq last-command my-ivy-fly-commands)
+                (equal (this-command-keys-vector) (kbd "M-p")))
+           ;; repeat one time to get straight to the first history item
+           (setq unread-command-events
+                 (append unread-command-events
+                         (listify-key-sequence (kbd "M-p")))))
+          ((or (memq this-command my-ivy-fly-back-commands)
+               (equal (this-command-keys-vector) (kbd "M-n")))
+           (unless my-ivy-fly--travel
+             (delete-region (point) (point-max))
+             (when (memq this-command '(ivy-forward-char
+                                        ivy-delete-char delete-forward-char
+                                        kill-word kill-sexp
+                                        end-of-line mwim-end-of-line
+                                        mwim-end-of-code-or-line
+                                        mwim-end-of-line-or-code))
+               ;; 如果是C-e之类，会重新插入搜索内容，但不再是灰的啦
+               (when (functionp 'ivy-cleanup-string)
+                 (insert (ivy-cleanup-string ivy-text)))
+               (when (featurep 'vertico)
+                 (insert (substring-no-properties (or (car-safe vertico--input) ""))))
+               (when (memq this-command '(ivy-delete-char
+                                          delete-forward-char
+                                          kill-word kill-sexp))
+                 (beginning-of-line)))
+             (setq my-ivy-fly--travel t)))))
+
+  (defun my-ivy-fly-time-travel ()
+    (when (memq this-command my-ivy-fly-commands)
+      (insert (propertize
+               (save-excursion
+		         (set-buffer (window-buffer (minibuffer-selected-window)))
+                 ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
+		         (or (seq-some (lambda (thing) (thing-at-point thing t))
+					           '(region symbol sexp)) ;; url sexp
+			         "")
+                 )
+               'face 'shadow))
+      (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
+      (beginning-of-line)))
+
+  (add-hook 'minibuffer-setup-hook #'my-ivy-fly-time-travel)
+  (add-hook 'minibuffer-exit-hook
+            (lambda ()
+              (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t)))
+  )
+
+;; 经测试，感觉这个是最快的比ivy还快
+(when t
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
     :load-path "~/.emacs.d/packages/minibuffer"
     :init
-    (setq enable-recursive-minibuffers t)
+    (setq enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
+          vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
+          )
     :defer 1.0
     :config
     (vertico-mode 1)
+    (enable-minibuffer-auto-search-at-point)
+    (define-key vertico-map (kbd "TAB") 'end-of-line
+                ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
+                ;; '(lambda ()(interactive)
+                ;;    (next-history-element 2))
+                )
+    (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
+    (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
+
+    ;; 习惯只要underline，不随主题改变
+	(custom-set-faces
+	 '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
+	 '(consult-preview-line ((t (:underline t :background nil))))
+	 )
+    
     (use-package orderless
       :config
       (defun sanityinc/use-orderless-in-minibuffer ()
@@ -969,17 +1067,25 @@ _q_uit
       (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
       )
     )
-  (use-package compat
-    :defer t
-    :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
-    )
   (use-package consult
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
-    :commands(consult-buffer
+    :commands(consult-ripgrep
+              consult-buffer
+              consult-line
               consult-buffer-other-window
               consult-buffer-other-frame
-              consult-goto-line)
+              consult-goto-line
+              )
     :init
+    ;; https://github.com/phikal/compat.el
+    (use-package compat
+      :defer t
+      :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
+      )
+    (defun my-consult-ripgrep()
+      (interactive)
+      (let  ((consult-ripgrep-args )))
+      )
     (global-set-key [f2] 'consult-ripgrep)
     (global-set-key (kbd "C-x C-b") 'consult-buffer)
     (global-set-key (kbd "C-s") 'consult-line)
@@ -990,72 +1096,72 @@ _q_uit
     :config
     )
   )
-(if nil
-    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
-    ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
-    (progn
-      (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
-      (require 'async-autoloads)
-      (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
-      (add-to-list 'load-path "~/.emacs.d/packages/helm")
-      (require 'helm-config)
-      ;;(global-set-key (kbd "C-c h") 'helm-mini)
-      (global-set-key (kbd "M-x") 'undefined)
-      (global-set-key (kbd "M-x") 'helm-M-x)
-      (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
-      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
-      (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-      (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
+(when nil
+  ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
+  ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
+  (progn
+    (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
+    (require 'async-autoloads)
+    (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
+    (add-to-list 'load-path "~/.emacs.d/packages/helm")
+    (require 'helm-config)
+    ;;(global-set-key (kbd "C-c h") 'helm-mini)
+    (global-set-key (kbd "M-x") 'undefined)
+    (global-set-key (kbd "M-x") 'helm-M-x)
+    (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
+    (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
+    (global-set-key (kbd "C-`") 'helm-show-kill-ring)
+    (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
-      (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
-      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
-      (global-set-key (kbd "<f6>") 'helm-resume)
+    (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+    (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
+    (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
+    (global-set-key (kbd "<f6>") 'helm-resume)
 
-      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
-      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
-      (global-set-key [(control f2)] (lambda () (interactive)
-				                       (require 'vc)
-				                       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
-      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
+    ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
+    ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
+    (global-set-key [(control f2)] (lambda () (interactive)
+				                     (require 'vc)
+				                     (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+    (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
 
-      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
-      (global-set-key [S-f2] (lambda() (interactive)
+    (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
+    (global-set-key [S-f2] (lambda() (interactive)
                                         ; 只搜索当前目录，加入-g/*
-                               (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
-                                 (call-interactively 'helm-do-grep-ag))
-                               ))
-      (setq
-       ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
-       helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
-       helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
-       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
-       helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-       helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
-       helm-ff-file-name-history-use-recentf t
-       helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-       helm-buffers-fuzzy-matching t
-       helm-recentf-fuzzy-match    t
-       helm-follow-mode-persistent t
-       helm-allow-mouse t
-       ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
-       helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
-       )
-      
-      ;; 对于 中文 启用--pre rgpre
-      (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
-        (if (chinese-word-chinese-string-p (ad-get-arg 0))
-            (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
-              ad-do-it)
-          ad-do-it)
-        )
-      
-      (with-eval-after-load 'helm
-	    ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
-	    ;; describe-current-coding-system 查看当前系统编码
-	    ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
-	    
-	    ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+                             (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                               (call-interactively 'helm-do-grep-ag))
+                             ))
+    (setq
+     ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
+     helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
+     helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
+     helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
+     helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+     helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
+     helm-ff-file-name-history-use-recentf t
+     helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+     helm-buffers-fuzzy-matching t
+     helm-recentf-fuzzy-match    t
+     helm-follow-mode-persistent t
+     helm-allow-mouse t
+     ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
+     helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
+     )
+    
+    ;; 对于 中文 启用--pre rgpre
+    (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
+      (if (chinese-word-chinese-string-p (ad-get-arg 0))
+          (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
+            ad-do-it)
+        ad-do-it)
+      )
+    
+    (with-eval-after-load 'helm
+	  ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+	  ;; describe-current-coding-system 查看当前系统编码
+	  ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	  
+	  ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
 	  ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
 	  ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
 	  ;;   ad-do-it
@@ -1175,6 +1281,7 @@ _q_uit
     (use-package ivy
       :load-path "~/.emacs.d/packages/swiper/swiper-master"
       :commands(ivy-switch-buffer ivy-resume ivy-mode)
+      :diminish
       :init
       (setq enable-recursive-minibuffers t ;; minibuffer可以再起如F1 f等命令
             ivy-use-selectable-prompt t
@@ -1182,8 +1289,13 @@ _q_uit
             ivy-count-format "(%d/%d) "
             ivy-height 12
             ivy-fixed-height-minibuffer t
+            ivy-on-del-error-function #'ignore
+            ivy-initial-inputs-alist nil ;; 去掉开头的^
             ;; ivy-use-virtual-buffers t，这个会get-file-buffer导致wcy自动加载
             )
+      ;; Better performance on Windows
+      (setq ivy-dynamic-exhibit-delay-ms 200)
+      
       (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
       (global-set-key (kbd "C-c C-r") 'ivy-resume)
       (global-set-key (kbd "<f6>") 'ivy-resume)
@@ -1204,70 +1316,12 @@ _q_uit
         (ivy-mode 1))
       (when (display-graphic-p)
 	    (custom-set-faces
+         ;; minibuffer里的当前行
 	     '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-	     '(ivy-cursor ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
+         ;; buffer里的当前行
+	     '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
 	     ))
-
-      ;; 自动搜索光标下的单词
-      ;; Pre-fill search keywords
-      ;; @see https://www.reddit.com/r/emacs/comments/b7g1px/withemacs_execute_commands_like_marty_mcfly/
-      (defvar my-ivy-fly-commands
-        '(query-replace-regexp
-          flush-lines keep-lines ivy-read
-          swiper swiper-backward swiper-all
-          swiper-isearch swiper-isearch-backward
-          lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol
-          counsel-grep-or-swiper counsel-grep-or-swiper-backward
-          counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
-          my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
-          ))
-
-      (defvar my-ivy-fly-back-commands
-        '(self-insert-command
-          ivy-forward-char ivy-delete-char delete-forward-char kill-word kill-sexp
-          end-of-line mwim-end-of-line mwim-end-of-code-or-line mwim-end-of-line-or-code
-          yank ivy-yank-word ivy-yank-char ivy-yank-symbol counsel-yank-pop))
-
-      (defvar-local my-ivy-fly--travel nil)
-      (defun my-ivy-fly-back-to-present ()
-        (cond ((and (memq last-command my-ivy-fly-commands)
-                    (equal (this-command-keys-vector) (kbd "M-p")))
-               ;; repeat one time to get straight to the first history item
-               (setq unread-command-events
-                     (append unread-command-events
-                             (listify-key-sequence (kbd "M-p")))))
-              ((or (memq this-command my-ivy-fly-back-commands)
-                   (equal (this-command-keys-vector) (kbd "M-n")))
-               (unless my-ivy-fly--travel
-                 (delete-region (point) (point-max))
-                 (when (memq this-command '(ivy-forward-char
-                                            ivy-delete-char delete-forward-char
-                                            kill-word kill-sexp
-                                            end-of-line mwim-end-of-line
-                                            mwim-end-of-code-or-line
-                                            mwim-end-of-line-or-code))
-                   (insert (ivy-cleanup-string ivy-text))
-                   (when (memq this-command '(ivy-delete-char
-                                              delete-forward-char
-                                              kill-word kill-sexp))
-                     (beginning-of-line)))
-                 (setq my-ivy-fly--travel t)))))
-
-      (defun my-ivy-fly-time-travel ()
-        (when (memq this-command my-ivy-fly-commands)
-          (insert (propertize
-                   (save-excursion
-		             (set-buffer (window-buffer (minibuffer-selected-window)))
-		             (ivy-thing-at-point))
-                   'face 'shadow))
-          (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
-          (beginning-of-line)))
-
-      (add-hook 'minibuffer-setup-hook #'my-ivy-fly-time-travel)
-      (add-hook 'minibuffer-exit-hook
-                (lambda ()
-                  (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t)))
-      
+      (enable-minibuffer-auto-search-at-point)
       )
     
     (use-package counsel
@@ -1289,7 +1343,8 @@ _q_uit
         (require 'counsel)
         ;; 不忽略ignore，要忽略ignore请用project search
         (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
-          (call-interactively 'counsel-rg)))
+          (counsel-rg nil default-directory) ; 从当前目录开始搜索
+          ))
       (global-set-key [f2] 'my-counsel-rg)
       :config
       )
@@ -2077,20 +2132,20 @@ _q_uit
     (dolist (key '( [remap delete-char]
 		            [remap delete-forward-char]))
       (define-key grammatical-edit-mode-map key
-        ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-        '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		            :filter (lambda (&optional _)
-			                  (unless (looking-at-p "[[:space:]\n]")
-			                    #'grammatical-edit-forward-delete)))))
+                  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+                  '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		                      :filter (lambda (&optional _)
+			                            (unless (looking-at-p "[[:space:]\n]")
+			                              #'grammatical-edit-forward-delete)))))
 
     (dolist (key '([remap backward-delete-char-untabify]
 		           [remap backward-delete-char]
 		           [remap delete-backward-char]))
       (define-key grammatical-edit-mode-map key
-        '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		            :filter (lambda (&optional _)
-			                  (unless (looking-back "[[:space:]\n]" 1)
-			                    #'grammatical-edit-backward-delete)))))
+                  '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		                      :filter (lambda (&optional _)
+			                            (unless (looking-back "[[:space:]\n]" 1)
+			                              #'grammatical-edit-backward-delete)))))
     )
   )
 
@@ -2375,7 +2430,7 @@ _q_uit
          ("C-c n h" . org-id-get-create) ; 给子标题添加id，这样才可以索引
          ;; Dailies
          ("C-c n j" . org-roam-dailies-capture-today))
-          :config
+  :config
   (use-package emacsql-sqlite-builtin)
   ;; find时列表加入tag，这么好的功能居然不加入默认？
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
