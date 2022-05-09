@@ -90,3 +90,4 @@ packages/tree-sitter/lisp/*
 packages/minibuffer/snails-master*
 packages/minibuffer/consult-main/*
 packages/minibuffer/compat.el-master/*
+/packages/minibuffer/vertico-main/

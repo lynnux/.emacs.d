@@ -1020,7 +1020,7 @@ _q_uit
 		         (set-buffer (window-buffer (minibuffer-selected-window)))
                  ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
 		         (or (seq-some (lambda (thing) (thing-at-point thing t))
-					           '(region symbol sexp)) ;; url sexp
+					           '(region symbol)) ;; url sexp
 			         "")
                  )
                'face 'shadow))
@@ -1037,20 +1037,34 @@ _q_uit
 (when t
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
-    :load-path "~/.emacs.d/packages/minibuffer"
+    :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
     :init
     (setq enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
           vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
+          vertico-resize nil ;; 让它初始化就固定大小
+          vertico-count 20 ;; 高度多少行
           )
     :defer 1.0
     :config
     (vertico-mode 1)
     (enable-minibuffer-auto-search-at-point)
-    (define-key vertico-map (kbd "TAB") 'end-of-line
-                ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
-                ;; '(lambda ()(interactive)
-                ;;    (next-history-element 2))
-                )
+    ;; extension说明
+    ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
+    ;; vertico-directory.el  测试没成功
+    ;; vertico-flat.el       跟原生那样的补全，无用
+    ;; vertico-grid.el       自动多列显示！这个很牛。但中文乱码排列也会乱。行太长会自动隐藏，所以需要大显示屏
+    ;; vertico-indexed.el    给结果列表前面加上数字索引
+    ;; vertico-mouse.el      鼠标支持，好像就支持点击，scroll都不行
+    ;; vertico-multiform.el  设置自动执行某种如grid视图
+    ;; vertico-quick.el      快速插入或者快速jump，后者实现类似avy
+    ;; vertico-repeat.el     helm resume功能，但只记录搜索词，最后执行哪行不知道。关键还跟上面自动搜索光标下的设置冲突
+    ;; vertico-reverse.el    reverse结果列表
+
+    ;; (define-key vertico-map (kbd "TAB") 'end-of-line
+    ;;             ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
+    ;;             ;; '(lambda ()(interactive)
+    ;;             ;;    (next-history-element 2))
+    ;;             )
     (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
     (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
 
@@ -1059,13 +1073,27 @@ _q_uit
 	 '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
 	 '(consult-preview-line ((t (:underline t :background nil))))
 	 )
+
+    ;; (global-set-key [f6] #'vertico-repeat) ;; 没什么用，还跟上面这个有冲突，不如用M-n M-p
+    
+    (use-package vertico-quick
+      :defer t ;; 配合load延迟加载，并且不需要设置load path
+      :init
+      (setq vertico-quick1 "arstne")
+      (setq vertico-quick2 "ioh")
+      :config
+      (define-key vertico-map "\C-o" #'vertico-quick-exit);; 类似avy
+      )
+    (load "extensions/vertico-quick")
     
     (use-package orderless
+      :defer t ;; 配合load延迟加载，并且不需要设置load path
       :config
       (defun sanityinc/use-orderless-in-minibuffer ()
         (setq-local completion-styles '(substring orderless)))
       (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
       )
+    (load "minibuffer/orderless")
     )
   (use-package consult
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
@@ -1084,9 +1112,11 @@ _q_uit
       )
     (defun my-consult-ripgrep()
       (interactive)
-      (let  ((consult-ripgrep-args )))
+      ;; 不忽略ignore，从当前目录开始搜索
+      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
+        (consult-ripgrep default-directory))
       )
-    (global-set-key [f2] 'consult-ripgrep)
+    (global-set-key [f2] 'my-consult-ripgrep)
     (global-set-key (kbd "C-x C-b") 'consult-buffer)
     (global-set-key (kbd "C-s") 'consult-line)
     (global-set-key [remap switch-to-buffer] 'consult-buffer)
