@@ -194,6 +194,33 @@ _q_uit
     )
   )
 
+;; 还是放弃session的那个file-name-history吧，现在都用这个了
+(use-package recentf
+  :init
+  (setq recentf-save-file (expand-file-name ".recentf" user-emacs-directory))
+  (setq recentf-max-saved-items 500)
+  ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
+  ;; remote files.
+  ;; recentf-auto-cleanup 'never
+  (setq recentf-exclude
+        '(".cache"
+          ".cask"
+          "bookmarks"
+          "cache"
+          "recentf"
+          "undo-tree-hist"
+          "url"
+          "COMMIT_EDITMSG\\'"
+          "/ssh:"
+          "/sudo:"
+          "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
+          "^/tmp/"
+          (lambda (file) (file-in-directory-p file package-user-dir))))
+  :config
+  :hook
+  (after-init . recentf-mode)
+  )
+
 (if t
     (use-package session
       ;; session只保存了修改文件的point
@@ -202,7 +229,7 @@ _q_uit
       :init
       ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
       ;; menus需要保留，不然file-name-history即recent files列表不对
-      (setq session-initialize (list 'session 'keys 'menus))
+      (setq session-initialize (list 'session 'keys))
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
@@ -222,6 +249,7 @@ _q_uit
       (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
       (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
       (add-to-list 'session-globals-exclude 'kmacro-ring)
+      (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
       )
   (progn
     ;; Save minibuffer history. 不仅仅是minibuffer!
@@ -240,31 +268,6 @@ _q_uit
       (setq savehist-save-minibuffer-history t)
       (savehist-mode t))
 
-    (use-package recentf
-      :init
-      (setq recentf-save-file (expand-file-name ".recentf" user-emacs-directory))
-      (setq recentf-max-saved-items 500)
-      ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
-      ;; remote files.
-      ;; recentf-auto-cleanup 'never
-      (setq recentf-exclude
-            '(".cache"
-              ".cask"
-              "bookmarks"
-              "cache"
-              "recentf"
-              "undo-tree-hist"
-              "url"
-              "COMMIT_EDITMSG\\'"
-              "/ssh:"
-              "/sudo:"
-              "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
-              "^/tmp/"
-              (lambda (file) (file-in-directory-p file package-user-dir))))
-      :config
-      :hook
-      (after-init . recentf-mode)
-      )
     (use-package goto-chg
       :commands(goto-last-change)
       :init
@@ -955,11 +958,6 @@ _q_uit
   (cl-find-if 'chinese-char-p (string-to-list string))
   )
 
-(use-package snails
-  :disabled
-  :load-path "~/.emacs.d/packages/minibuffer/snails-master"
-  )
-
 ;; 自动搜索光标下的单词，非helm的方案都需要这个
 (defun enable-minibuffer-auto-search-at-point()
   ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
@@ -1034,7 +1032,7 @@ _q_uit
   )
 
 ;; 经测试，感觉这个是最快的比ivy还快
-(when t
+(when nil
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
     :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
@@ -1044,7 +1042,7 @@ _q_uit
           vertico-resize nil ;; 让它初始化就固定大小
           vertico-count 20 ;; 高度多少行
           )
-    :defer 1.0
+    :defer 0.3
     :config
     (vertico-mode 1)
     (enable-minibuffer-auto-search-at-point)
@@ -1085,6 +1083,17 @@ _q_uit
       (define-key vertico-map "\C-o" #'vertico-quick-exit);; 类似avy
       )
     (load "extensions/vertico-quick")
+
+    (when nil
+      (use-package vertico-buffer
+        :defer t
+        :init
+        (setq vertico-buffer-display-action '(display-buffer-in-side-window))
+        :config
+        (vertico-buffer-mode)
+        )
+      (load "extensions/vertico-buffer")
+      )
     
     (use-package orderless
       :defer t ;; 配合load延迟加载，并且不需要设置load path
@@ -1095,6 +1104,8 @@ _q_uit
       )
     (load "minibuffer/orderless")
     )
+
+  ;; bug很多啊，rg中文乱码不能跳过去，没有F6
   (use-package consult
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
     :commands(consult-ripgrep
@@ -1105,6 +1116,10 @@ _q_uit
               consult-goto-line
               )
     :init
+    (setq
+     consult-line-start-from-top nil      ;; 默认前面行反而显示在后面
+     consult-line-point-placement 'match-beginning ;; 这个有bug啊，它好像用的mark-ring实现的
+     )
     ;; https://github.com/phikal/compat.el
     (use-package compat
       :defer t
@@ -1112,12 +1127,13 @@ _q_uit
       )
     (defun my-consult-ripgrep()
       (interactive)
+      (require 'consult)
       ;; 不忽略ignore，从当前目录开始搜索
       (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
         (consult-ripgrep default-directory))
       )
     (global-set-key [f2] 'my-consult-ripgrep)
-    (global-set-key (kbd "C-x C-b") 'consult-buffer)
+    (global-set-key (kbd "C-x C-b") 'consult-buffer) ; 含buffer, recentf，bookmark！还带预览功能！
     (global-set-key (kbd "C-s") 'consult-line)
     (global-set-key [remap switch-to-buffer] 'consult-buffer)
     (global-set-key [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
@@ -1126,183 +1142,194 @@ _q_uit
     :config
     )
   )
-(when nil
-  ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
-  ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
-    (require 'async-autoloads)
-    (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
-    (add-to-list 'load-path "~/.emacs.d/packages/helm")
-    (require 'helm-config)
-    ;;(global-set-key (kbd "C-c h") 'helm-mini)
-    (global-set-key (kbd "M-x") 'undefined)
-    (global-set-key (kbd "M-x") 'helm-M-x)
-    (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
-    (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
-    (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-    (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
-
-    (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
-    (global-set-key (kbd "C-x C-b") 'helm-buffers-list) ; 比原来那个好啊
-    (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
-    (global-set-key (kbd "<f6>") 'helm-resume)
-
-    ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
-    ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
-    (global-set-key [(control f2)] (lambda () (interactive)
-				                     (require 'vc)
-				                     (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
-    (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
-
-    (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
-    (global-set-key [S-f2] (lambda() (interactive)
-                                        ; 只搜索当前目录，加入-g/*
-                             (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
-                               (call-interactively 'helm-do-grep-ag))
-                             ))
-    (setq
-     ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
-     helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
-     helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
-     helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
-     helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-     helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
-     helm-ff-file-name-history-use-recentf t
-     helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-     helm-buffers-fuzzy-matching t
-     helm-recentf-fuzzy-match    t
-     helm-follow-mode-persistent t
-     helm-allow-mouse t
-     ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
-     helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
-     )
-    
-    ;; 对于 中文 启用--pre rgpre
-    (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
-      (if (chinese-word-chinese-string-p (ad-get-arg 0))
-          (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
-            ad-do-it)
-        ad-do-it)
-      )
-    
-    (with-eval-after-load 'helm
-	  ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
-	  ;; describe-current-coding-system 查看当前系统编码
-	  ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
-	  
-	  ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
-	  ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
-	  ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
-	  ;;   ad-do-it
-	  ;;   (let ((fname (car-safe ad-return-value)))
-	  ;;     (when fname
-	  ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
-	  ;;       ))
-	  ;;   )
-	  ;; 临时设置cmdproxy编码
-	  (with-eval-after-load 'helm-grep
-	    (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
-	      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	        ad-do-it
-	        (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	        )))
-	  
-	  (helm-mode 1)
-	  (when (fboundp 'diminish)
-	    (add-hook 'helm-mode-hook (lambda ()(diminish 'helm-mode)))
-	    )
-
-	  ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
-	  ;;   (message (ad-get-arg 2)))
-	  
-	  ;; 光标移动时也自动定位到所在位置
-	  (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
-	  (push "RG" helm-source-names-using-follow)
-
-      (when (display-graphic-p)
-	    ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-        ;; 当前主题背景色(face-attribute 'default :background)
-	    (custom-set-faces
-         ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
-	     '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
-	     '(helm-selection-line ((t (:underline t :background nil))))
-	     ;;helm-match-item 
-	     ))
-
-	  (define-key helm-map (kbd "<f1>") 'nil)
-	  (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
-
-	  (define-key helm-map (kbd "C-h") 'nil)
-	  (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
-	  (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
-	  (define-key helm-map (kbd "C-v") 'nil)
-	  (define-key helm-map (kbd "<f4>") 'helm-next-line)
-	  (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
-	  ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
-	  (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
-					                       (let* ((src (helm-get-current-source))
-						                          (name (assoc-default 'name src)))
-					                         (if (or (member name (list "RG" "Occur"))
-						                             (string= name "Helm occur")
-						                             (string= name "RG")) ;; TODO 
-						                         (progn (call-interactively 'next-history-element)
-							                            (move-end-of-line 1)())
-						                       ;; 其它模式还是helm-execute-persistent-action，比如文件补全
-						                       (call-interactively 'helm-execute-persistent-action) 
-						                       )
-					                         )
-					                       ))
-	  
-	  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
-	  (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-	  ;; (define-key helm-map (kbd "TAB") 'helm-next-line)
-	  ;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
-	  ;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-
-	  ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	  (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	  (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	  (define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
+(if t
+    ;; 用helm可以抛弃好多包啊，有imenu-anywhere，popup-kill-ring，ripgrep，minibuffer-complete-cycle，etags-select那三个，everything(helm-locate)
+    ;; 参考helm作者的配置https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el
+    (progn
+      (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
+      (require 'async-autoloads)
+      (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
+      (add-to-list 'load-path "~/.emacs.d/packages/helm")
+      (setq
+       ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
+       helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
+       helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
+       helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
+       helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+       helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
+       helm-ff-file-name-history-use-recentf t
+       helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+       helm-buffers-fuzzy-matching t
+       helm-recentf-fuzzy-match    t
+       helm-follow-mode-persistent t
+       helm-allow-mouse t
+       ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
+       helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
+       helm-display-buffer-default-height 20;; 窗口高度，半屏有时候确实太占空间，预览时有些内容看不到
+       helm-for-files-preferred-list
+       '(helm-source-buffers-list
+         helm-source-recentf
+         helm-source-bookmarks
+         ;; helm-source-file-cache
+         ;; helm-source-files-in-current-dir
+         ;; helm-source-locate
+         )
+       )
       
-	  ;; helm-locate即everything里打开所在位置
-	  (define-key helm-generic-files-map (kbd "C-x C-d")
-	              (lambda ()
-	                (interactive)
-	                (with-helm-alive-p
-		             (helm-exit-and-execute-action (lambda (file)
-						                             (w32explore file)
-						                             )))))
-	  
-	  (when helm-echo-input-in-header-line
-	    (add-hook 'helm-minibuffer-set-up-hook
-		          'helm-hide-minibuffer-maybe))        
-	  )
-    ;; 这功能不好写，将就用总比没有好吧
-    (defun helm-grep-search-parent-directory ()
-	  (interactive)
-	  (helm-run-after-exit (lambda ()
-				             (let* ((parent (file-name-directory (directory-file-name default-directory)))
-					                (default-directory parent))
-				               (helm-grep-ag (expand-file-name parent) nil)))))
-    (defun helm-show-search()
-	  (interactive)
-	  (yank)
-	  )
-    
-    (with-eval-after-load 'helm-grep
-	  (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	  (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
-	  ;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
-	  )
-    (with-eval-after-load 'helm-find
-	  (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	  )
-    (defadvice completing-read (before my-completing-read activate)
-	  (helm-mode 1))
-    (global-set-key (kbd "M-m") 'helm-imenu)
-    )
+      (require 'helm-config)
+      ;;(global-set-key (kbd "C-c h") 'helm-mini)
+      (global-set-key (kbd "M-x") 'undefined)
+      (global-set-key (kbd "M-x") 'helm-M-x)
+      (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
+      (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
+      (global-set-key (kbd "C-`") 'helm-show-kill-ring)
+      (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
+
+      (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+      (global-set-key (kbd "C-x C-b") 'helm-multi-files) ; 源为 helm-for-files-preferred-list
+      (global-set-key (kbd "C-c C-r") 'helm-resume)	  ;继续刚才的session
+      (global-set-key (kbd "<f6>") 'helm-resume)
+
+      ;; (define-key global-map [remap find-tag]              'helm-etags-select) ;; 
+      ;; (define-key global-map [remap xref-find-definitions] 'helm-etags-select) ;; 不知道为什么会屏蔽local key
+      (global-set-key [(control f2)] (lambda () (interactive)
+				                       (require 'vc)
+				                       (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+      (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
+
+      (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
+      (global-set-key [S-f2] (lambda() (interactive)
+                                        ; 只搜索当前目录，加入-g/*
+                               (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g/* %s %s %s"))
+                                 (call-interactively 'helm-do-grep-ag))
+                               ))
+      
+      
+      ;; 对于 中文 启用--pre rgpre
+      (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
+        (if (chinese-word-chinese-string-p (ad-get-arg 0))
+            (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
+              ad-do-it)
+          ad-do-it)
+        )
+      
+      (with-eval-after-load 'helm
+	    ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+	    ;; describe-current-coding-system 查看当前系统编码
+	    ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	    
+	    ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+	    ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
+	    ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	    ;;   ad-do-it
+	    ;;   (let ((fname (car-safe ad-return-value)))
+	    ;;     (when fname
+	    ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	    ;;       ))
+	    ;;   )
+	    ;; 临时设置cmdproxy编码
+	    (with-eval-after-load 'helm-grep
+	      (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
+	        (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	          (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	          ad-do-it
+	          (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	          )))
+	    
+	    (helm-mode 1)
+	    (when (fboundp 'diminish)
+	      (add-hook 'helm-mode-hook (lambda ()(diminish 'helm-mode)))
+	      )
+
+	    ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	    ;;   (message (ad-get-arg 2)))
+	    
+	    ;; 光标移动时也自动定位到所在位置
+	    (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	    (push "RG" helm-source-names-using-follow)
+
+        (when (display-graphic-p)
+	      ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+          ;; 当前主题背景色(face-attribute 'default :background)
+	      (custom-set-faces
+           ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
+	       '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
+	       '(helm-selection-line ((t (:underline t :background nil))))
+	       ;;helm-match-item 
+	       ))
+
+	    (define-key helm-map (kbd "<f1>") 'nil)
+	    (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+
+	    (define-key helm-map (kbd "C-h") 'nil)
+	    (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
+	    (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
+	    (define-key helm-map (kbd "C-v") 'nil)
+	    (define-key helm-map (kbd "<f4>") 'helm-next-line)
+	    (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
+	    ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
+	    (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
+					                         (let* ((src (helm-get-current-source))
+						                            (name (assoc-default 'name src)))
+					                           (if (or (member name (list "RG" "Occur"))
+						                               (string= name "Helm occur")
+						                               (string= name "RG")) ;; TODO 
+						                           (progn (call-interactively 'next-history-element)
+							                              (move-end-of-line 1)())
+						                         ;; 其它模式还是helm-execute-persistent-action，比如文件补全
+						                         (call-interactively 'helm-execute-persistent-action) 
+						                         )
+					                           )
+					                         ))
+	    
+	    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	    (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+	    ;; (define-key helm-map (kbd "TAB") 'helm-next-line)
+	    ;; (define-key helm-map (kbd "<backtab>") 'helm-previous-line)
+	    ;;(define-key helm-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+
+	    ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	    (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	    (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	    (define-key helm-buffer-map (kbd "C-s") 'helm-next-line) ;原occur
+        
+	    ;; helm-locate即everything里打开所在位置
+	    (define-key helm-generic-files-map (kbd "C-x C-d")
+	                (lambda ()
+	                  (interactive)
+	                  (with-helm-alive-p
+		                (helm-exit-and-execute-action (lambda (file)
+						                                (w32explore file)
+						                                )))))
+	    
+	    (when helm-echo-input-in-header-line
+	      (add-hook 'helm-minibuffer-set-up-hook
+		            'helm-hide-minibuffer-maybe))        
+	    )
+      ;; 这功能不好写，将就用总比没有好吧
+      (defun helm-grep-search-parent-directory ()
+	    (interactive)
+	    (helm-run-after-exit (lambda ()
+				               (let* ((parent (file-name-directory (directory-file-name default-directory)))
+					                  (default-directory parent))
+				                 (helm-grep-ag (expand-file-name parent) nil)))))
+      (defun helm-show-search()
+	    (interactive)
+	    (yank)
+	    )
+      
+      (with-eval-after-load 'helm-grep
+	    (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	    (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+	    ;; (define-key helm-grep-map (kbd "<tab>") 'helm-show-search) ; TODO: 空输入的时候，自动补全光标下的单词
+	    )
+      (with-eval-after-load 'helm-find
+	    (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	    )
+      (defadvice completing-read (before my-completing-read activate)
+	    (helm-mode 1))
+      (global-set-key (kbd "M-m") 'helm-imenu)
+      )
 
   (progn
     ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
@@ -1488,17 +1515,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (shell-command "git config --global --unset http.proxy")
   (shell-command "git config --global --unset https.proxy"))
 
-;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
-(autoload 'dumb-jump-xref-activate "dumb-jump" nil t)
-(setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
-(global-set-key (kbd "C-.") 'xref-find-definitions)
-(global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
-(with-eval-after-load 'dumb-jump
-  (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
-    ;; arount设置有问题
-    (setq dumb-jump-default-project default-directory) ; 默认设置为当前目录
-    )
+(use-package dumb-jum
+  :commands(dumb-jump-xref-activate)
+  :init
+  ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  ;; (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
+  (global-set-key (kbd "C-.") 'xref-find-definitions)
+  (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)  
+  :config
+  ;; (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
+  ;;   ;; arount设置有问题
+  ;;   (setq dumb-jump-default-project default-directory) ; 默认设置为当前目录
+  ;;   )
   )
 
 ;; easy-kill，添加类似vim里yi/a的东西！

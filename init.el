@@ -35,7 +35,7 @@
   (setq
    org-directory "D:/autosync/autosync/ts/org"
    org-agenda-files (list "D:/autosync/autosync/ts/org/idea.org" "D:/autosync/autosync/ts/org/todo.org")
-   org-roam-directory (file-truename "G:\\doc\\orgtest")
+   org-roam-directory (file-truename "G:/doc/mynote")
    )
   (setq org-default-notes-file "D:/autosync/autosync/ts/org/default.org")
   (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\IDE\\TF.exe")

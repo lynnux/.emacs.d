@@ -87,7 +87,7 @@ packages/tree-sitter/lisp/*
 /org-roam.db
 /packages/org/emacsql-master/
 /packages/org/org-roam/
-packages/minibuffer/snails-master*
+packages/minibuffer/snails-master/*
 packages/minibuffer/consult-main/*
 packages/minibuffer/compat.el-master/*
 /packages/minibuffer/vertico-main/

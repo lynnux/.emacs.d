@@ -1,4 +1,3 @@
-;; Time-stamp: <2022-03-30 14:58:10 lynnux>
 ;; 界面相关的
 
 (custom-set-variables
