@@ -23,8 +23,8 @@ packages/yasnippet/yasnippet-snippets-master/python-mode/*
 packages/expand-region/*
 !packages/expand-region/expand-region.el-master.zip
 
-packages/helm/*
-!packages/helm/helm.7z
+packages/helm/helm-master/*
+packages/helm/emacs-async-master/*
 
 packages/multiple-cursors/*
 !packages/multiple-cursors/multiple-cursors.el-master.zip
