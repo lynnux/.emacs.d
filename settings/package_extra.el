@@ -1014,19 +1014,22 @@ _q_uit
                  (beginning-of-line)))
              (setq my-ivy-fly--travel t)))))
 
+  (defvar disable-for-vertico-repeat nil)
   (defun my-ivy-fly-time-travel ()
-    (when (memq this-command my-ivy-fly-commands)
-      (insert (propertize
-               (save-excursion
-		         (set-buffer (window-buffer (minibuffer-selected-window)))
-                 ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
-		         (or (seq-some (lambda (thing) (thing-at-point thing t))
-					           '(region symbol)) ;; url sexp
-			         "")
-                 )
-               'face 'shadow))
-      (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
-      (beginning-of-line)))
+    (unless disable-for-vertico-repeat
+      (when (memq this-command my-ivy-fly-commands)
+        (insert (propertize
+                 (save-excursion
+		           (set-buffer (window-buffer (minibuffer-selected-window)))
+                   ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
+		           (or (seq-some (lambda (thing) (thing-at-point thing t))
+					             '(region symbol)) ;; url sexp
+			           "")
+                   )
+                 'face 'shadow))
+        (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
+        (beginning-of-line)))
+    )
 
   (add-hook 'minibuffer-setup-hook #'my-ivy-fly-time-travel)
   (add-hook 'minibuffer-exit-hook
@@ -1075,18 +1078,26 @@ _q_uit
 	 '(consult-preview-line ((t (:underline t :background nil))))
 	 )
 
+    ;; 只会恢复关键词
+    ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
+    ;; consult-ripgrep暂时没有好方法
     (use-package vertico-repeat
       :defer t
       :commands(vertico-repeat)
       :init
-      (global-set-key [f6] #'vertico-repeat) ;; 没什么用，还跟上面这个有冲突，不如用M-n M-p
+      (global-set-key [f6] #'vertico-repeat); C-u F6还可以选择
       :config
+      ;; 避免跟enable-minibuffer-auto-search-at-point冲突
+      (defadvice vertico-repeat (around my-vertico-repeat activate)
+        (let ((disable-for-vertico-repeat t))
+          ad-do-it
+          ))
       (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
       )
     (load "extensions/vertico-repeat")
     
     (use-package vertico-quick
-        :defer t ;; 配合load延迟加载，并且不需要设置load path
+      :defer t ;; 配合load延迟加载，并且不需要设置load path
       :init
       (setq vertico-quick1 "arstne")
       (setq vertico-quick2 "ioh")
