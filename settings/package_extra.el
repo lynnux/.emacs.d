@@ -1051,7 +1051,7 @@ _q_uit
     (setq enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
           vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
           vertico-resize nil ;; 让它初始化就固定大小
-          vertico-count 20 ;; 高度多少行
+          vertico-count 20   ;; 高度多少行
           )
     :defer 0.3
     :config
@@ -1087,39 +1087,52 @@ _q_uit
     ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
     ;; consult-ripgrep暂时没有好方法
     (use-package vertico-repeat
-      :defer t
-      :commands(vertico-repeat)
+      :load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions"
+      :commands(vertico-repeat vertico-repeat-save)
       :init
-      (global-set-key [f6] #'vertico-repeat); C-u F6还可以选择
+      (global-set-key [f6] #'vertico-repeat) ; C-u F6还可以选择
+      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
       :config
       ;; 避免跟enable-minibuffer-auto-search-at-point冲突
       (defadvice vertico-repeat (around my-vertico-repeat activate)
         (let ((disable-for-vertico-repeat t))
           ad-do-it
-          ))
-      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-      )
-    (load "extensions/vertico-repeat")
-    
+          )))
     (use-package vertico-quick
-      :defer t ;; 配合load延迟加载，并且不需要设置load path
+      :commands(vertico-quick-exit)
       :init
       (setq vertico-quick1 "arstne")
       (setq vertico-quick2 "ioh")
+      ;; 类似avy，我一直想在helm中实现的
+      (define-key vertico-map "\C-o" #'vertico-quick-exit))
+    (use-package vertico-grid
+      :commands(vertico-multiform-grid vertico-grid-mode)
+      :init
+      (define-key vertico-map "\M-G" #'vertico-multiform-grid))
+    (use-package vertico-reverse
+      :commands(vertico-multiform-reverse vertico-reverse-mode)
+      :init
+      (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
+    (use-package vertico-multiform
+      :init
+      ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
+      (setq vertico-multiform-commands
+            '((consult-line buffer)
+              (execute-extended-command grid) ; M-x
+              (yas-insert-snippet grid)))
+      ;; (setq vertico-multiform-categories
+      ;;       '((file buffer grid)
+      ;;         (imenu (:not indexed mouse))
+      ;;         (symbol (vertico-sort-function . vertico-sort-alpha))))
+      (define-key vertico-map "\M-V" #'vertico-multiform-vertical)
       :config
-      (define-key vertico-map "\C-o" #'vertico-quick-exit);; 类似avy
+      (vertico-multiform-mode)
       )
-    (load "extensions/vertico-quick")
-
-    (when nil
-      (use-package vertico-buffer
-        :defer t
-        :init
-        (setq vertico-buffer-display-action '(display-buffer-in-side-window))
-        :config
-        (vertico-buffer-mode)
-        )
-      (load "extensions/vertico-buffer")
+    
+    (use-package vertico-buffer
+      :commands(vertico-buffer-mode)
+      :init
+      ;; (setq vertico-buffer-display-action '(display-buffer-in-side-window))
       )
 
     ;; 启动用无序匹配
@@ -1127,8 +1140,8 @@ _q_uit
       :defer t ;; 配合load延迟加载，并且不需要设置load path
       :config
       (setq completion-styles '(orderless basic)
-            ;; completion-category-defaults nil
-            ;; completion-category-overrides nil
+            completion-category-defaults nil
+            completion-category-overrides '((file (styles partial-completion))) ; 不是真覆盖，只是优化
             )
       ;; (defun sanityinc/use-orderless-in-minibuffer ()
       ;;   (setq-local completion-styles '(substring orderless)))
@@ -1151,8 +1164,8 @@ _q_uit
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :bind
-      (("C-." . embark-act)         ;; pick some comfortable binding
-       ("M-." . embark-dwim)        ;; good alternative: M-.
+      (("C-." . embark-act)  ;; pick some comfortable binding
+       ("M-." . embark-dwim) ;; good alternative: M-.
        ("<f1> B" . embark-bindings)
        ) ;; alternative for `describe-bindings'
       :init
@@ -1170,7 +1183,7 @@ _q_uit
     (use-package embark-consult
       :disabled
       :after (embark consult)
-      :demand t ; only necessary if you have the hook below
+      :demand t            ; only necessary if you have the hook below
       ;; if you want to have consult previews as you move around an
       ;; auto-updating embark collect buffer
       :hook
@@ -1343,9 +1356,9 @@ _q_uit
 	              (lambda ()
 	                (interactive)
 	                (with-helm-alive-p
-		              (helm-exit-and-execute-action (lambda (file)
-						                              (w32explore file)
-						                              ))))))
+		             (helm-exit-and-execute-action (lambda (file)
+						                             (w32explore file)
+						                             ))))))
     
     :diminish
     :config
