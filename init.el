@@ -33,8 +33,9 @@
    (equal (list 10 0 19044) (w32-version))
    )
   (setq
-   org-directory "D:/autosync/autosync/ts/org"
-   org-agenda-files (list "D:/autosync/autosync/ts/org/idea.org" "D:/autosync/autosync/ts/org/todo.org")
+   org-directory "H:/doc/autosync/autosync/ts/org"
+   org-agenda-files (list "H:/doc/autosync/autosync/ts/org/idea.org" "H:/doc/autosync/autosync/ts/org/todo.org")
+   ;; 是否有必要统一到一个目录呢
    org-roam-directory (file-truename "G:/doc/mynote")
    )
   (setq org-default-notes-file "D:/autosync/autosync/ts/org/default.org")

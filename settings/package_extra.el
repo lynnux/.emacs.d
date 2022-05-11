@@ -480,7 +480,9 @@ _c_: hide comment        _q_uit
       (use-package tab-line
         :defer 0.5
         :init
-        (setq tab-line-tabs-function 'ep-tabbar-buffer-list)
+        (setq tab-line-tabs-function 'ep-tabbar-buffer-list
+              tab-line-close-button-show t
+              tab-line-new-button-show nil)
         :config
         (global-tab-line-mode 1)  
         )
@@ -1037,6 +1039,9 @@ _q_uit
               (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t)))
   )
 
+;; 关闭minibuffer，关闭其它窗口
+(global-set-key (kbd "C-1") 'keyboard-escape-quit)
+
 ;; 经测试，感觉这个是最快的比ivy还快
 (when t
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
@@ -1153,6 +1158,8 @@ _q_uit
       :init
       (setq prefix-help-command #'embark-prefix-help-command)
       :config
+      (define-key vertico-map (kbd "C-c C-o") 'embark-export)
+      (define-key vertico-map (kbd "C-c C-c") 'embark-act)
       ;; Hide the mode line of the Embark live/completions buffers
       ;; (add-to-list 'display-buffer-alist
       ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
