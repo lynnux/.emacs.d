@@ -567,9 +567,17 @@ _q_uit
   ;; company mode，这个支持comment中文，但不支持补全history
   (use-package company
     :defer 1
-    :init
-    (add-to-list 'load-path "~/.emacs.d/packages/company-mode")
+    :load-path "~/.emacs.d/packages/company-mode"
     :diminish
+    :init
+    (setq-default company-dabbrev-other-buffers 'all
+                  company-tooltip-align-annotations t)
+    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
+     company-minimum-prefix-length 2
+     company-require-match nil
+     company-dabbrev-ignore-case nil
+     company-dabbrev-downcase nil
+     company-show-numbers t)
     :config
     (global-company-mode)
     (when use-my-face
@@ -588,16 +596,10 @@ _q_uit
     (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
     (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
     (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+    ;; CTRL+数字快速选择
     (dotimes (i 10)
 	  (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-    (setq-default company-dabbrev-other-buffers 'all
-                  company-tooltip-align-annotations t)
-    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
-     company-minimum-prefix-length 2
-     company-require-match nil
-     company-dabbrev-ignore-case nil
-     company-dabbrev-downcase nil
-     company-show-numbers t)
+
     ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
     ;; (with-eval-after-load 'dash
     ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
@@ -607,11 +609,6 @@ _q_uit
     
     (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
     (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-    ;; (require 'company-posframe) ;; 挺好，但感觉对启动有影响
-    ;; (company-posframe-mode 1)
-    ;; (setq company-posframe-quickhelp-delay 0.1)
-    (require 'company-ctags)
-    (company-ctags-auto-setup)
     )
   )
 
@@ -1038,7 +1035,7 @@ _q_uit
   )
 
 ;; 经测试，感觉这个是最快的比ivy还快
-(when nil
+(when t
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
     :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
@@ -1078,10 +1075,18 @@ _q_uit
 	 '(consult-preview-line ((t (:underline t :background nil))))
 	 )
 
-    ;; (global-set-key [f6] #'vertico-repeat) ;; 没什么用，还跟上面这个有冲突，不如用M-n M-p
+    (use-package vertico-repeat
+      :defer t
+      :commands(vertico-repeat)
+      :init
+      (global-set-key [f6] #'vertico-repeat) ;; 没什么用，还跟上面这个有冲突，不如用M-n M-p
+      :config
+      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+      )
+    (load "extensions/vertico-repeat")
     
     (use-package vertico-quick
-      :defer t ;; 配合load延迟加载，并且不需要设置load path
+        :defer t ;; 配合load延迟加载，并且不需要设置load path
       :init
       (setq vertico-quick1 "arstne")
       (setq vertico-quick2 "ioh")
@@ -1123,7 +1128,7 @@ _q_uit
               )
     :init
     (setq
-     consult-line-start-from-top nil      ;; 默认前面行反而显示在后面
+     consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
      consult-line-point-placement 'match-beginning ;; 这个有bug啊，它好像用的mark-ring实现的
      )
     ;; https://github.com/phikal/compat.el
@@ -1148,7 +1153,7 @@ _q_uit
     :config
     )
   )
-(if t
+(when nil
   (use-package helm
     :defer t
     :init
