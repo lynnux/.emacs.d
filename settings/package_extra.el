@@ -1116,15 +1116,58 @@ _q_uit
         )
       (load "extensions/vertico-buffer")
       )
-    
+
+    ;; 启动用无序匹配
     (use-package orderless
       :defer t ;; 配合load延迟加载，并且不需要设置load path
       :config
-      (defun sanityinc/use-orderless-in-minibuffer ()
-        (setq-local completion-styles '(substring orderless)))
-      (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
+      (setq completion-styles '(orderless basic)
+            ;; completion-category-defaults nil
+            ;; completion-category-overrides nil
+            )
+      ;; (defun sanityinc/use-orderless-in-minibuffer ()
+      ;;   (setq-local completion-styles '(substring orderless)))
+      ;; (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
       )
     (load "minibuffer/orderless")
+
+    ;; 美化，embark也需要这个
+    (use-package marginalia
+      :defer t
+      :bind (("M-A" . marginalia-cycle)
+             :map minibuffer-local-map
+             ("M-A" . marginalia-cycle))
+      :init
+      :config
+      (marginalia-mode)
+      )
+    (load "minibuffer/marginalia")
+
+    (use-package embark
+      :load-path "~/.emacs.d/packages/minibuffer/embark-master"
+      :bind
+      (("C-." . embark-act)         ;; pick some comfortable binding
+       ("M-." . embark-dwim)        ;; good alternative: M-.
+       ("<f1> B" . embark-bindings)
+       ) ;; alternative for `describe-bindings'
+      :init
+      (setq prefix-help-command #'embark-prefix-help-command)
+      :config
+      ;; Hide the mode line of the Embark live/completions buffers
+      ;; (add-to-list 'display-buffer-alist
+      ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+      ;;                nil
+      ;;                (window-parameters (mode-line-format . none))))
+      )
+    ;; Consult users will also want the embark-consult package.
+    (use-package embark-consult
+      :disabled
+      :after (embark consult)
+      :demand t ; only necessary if you have the hook below
+      ;; if you want to have consult previews as you move around an
+      ;; auto-updating embark collect buffer
+      :hook
+      (embark-collect-mode . consult-preview-at-point-mode))
     )
 
   ;; bug很多啊，rg中文乱码不能跳过去，没有F6
@@ -1140,8 +1183,13 @@ _q_uit
     :init
     (setq
      consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
-     consult-line-point-placement 'match-beginning ;; 这个有bug啊，它好像用的mark-ring实现的
+     consult-line-point-placement 'match-beginning
+     consult-async-min-input 1
      )
+    ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
+    (add-to-list 'process-coding-system-alist 
+                 '("[rR][gG]" . (utf-8 . gbk-dos)))
+    
     ;; https://github.com/phikal/compat.el
     (use-package compat
       :defer t
@@ -1162,6 +1210,13 @@ _q_uit
     (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
     (global-set-key [remap goto-line] 'consult-goto-line)
     :config
+    ;; 含中文字符搜索时添加--pre rgpre
+    (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
+      (if (chinese-word-chinese-string-p (ad-get-arg 0))
+          (let ((consult-ripgrep-args (concat consult-ripgrep-args " --pre rgpre")))
+            ad-do-it
+            )
+        ad-do-it))
     )
   )
 (when nil
