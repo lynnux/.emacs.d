@@ -978,7 +978,7 @@ _q_uit
       counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
       my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
       consult-line consult-ripgrep
-      my-consult-ripgrep
+      my-consult-ripgrep my-consult-ripgrep-only-current-dir
       ))
 
   (defvar my-ivy-fly-back-commands
@@ -1042,8 +1042,9 @@ _q_uit
 ;; 关闭minibuffer，关闭其它窗口
 (global-set-key (kbd "C-1") 'keyboard-escape-quit)
 
-;; 经测试，感觉这个是最快的比ivy还快
+;; 优点：速度快，预览快(好像并没有真的加载)，embark无敌！
 (when t
+  (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
     :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
@@ -1117,7 +1118,10 @@ _q_uit
       :init
       ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
       (setq vertico-multiform-commands
-            '((consult-line buffer)
+            '((consult-line buffer) ; buffer 可以显示更多搜索出来的内容
+              (my-consult-ripgrep buffer)
+              (my-consult-ripgrep-only-current-dir buffer)
+              (consult-ripgrep buffer) 
               (execute-extended-command grid) ; M-x
               (yas-insert-snippet grid)))
       ;; (setq vertico-multiform-categories
@@ -1137,21 +1141,15 @@ _q_uit
 
     ;; 启动用无序匹配
     (use-package orderless
-      :defer t ;; 配合load延迟加载，并且不需要设置load path
       :config
       (setq completion-styles '(orderless basic)
             completion-category-defaults nil
             completion-category-overrides '((file (styles partial-completion))) ; 不是真覆盖，只是优化
             )
-      ;; (defun sanityinc/use-orderless-in-minibuffer ()
-      ;;   (setq-local completion-styles '(substring orderless)))
-      ;; (add-hook 'minibuffer-setup-hook 'sanityinc/use-orderless-in-minibuffer)
       )
-    (load "minibuffer/orderless")
 
-    ;; 美化，embark也需要这个
+    ;; 美化
     (use-package marginalia
-      :defer t
       :bind (("M-A" . marginalia-cycle)
              :map minibuffer-local-map
              ("M-A" . marginalia-cycle))
@@ -1159,20 +1157,22 @@ _q_uit
       :config
       (marginalia-mode)
       )
-    (load "minibuffer/marginalia")
 
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :bind
-      (("C-." . embark-act)  ;; pick some comfortable binding
-       ("M-." . embark-dwim) ;; good alternative: M-.
-       ("<f1> B" . embark-bindings)
-       ) ;; alternative for `describe-bindings'
+      (("C-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
+       ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
+       ("<f1> B" . embark-bindings) ;; 列举当前可用的键及其命令
+       )
       :init
-      (setq prefix-help-command #'embark-prefix-help-command)
+      (setq
+       prefix-help-command #'embark-prefix-help-command
+       embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
+       )
       :config
       (define-key vertico-map (kbd "C-c C-o") 'embark-export)
-      (define-key vertico-map (kbd "C-c C-c") 'embark-act)
+      ;; (define-key vertico-map (kbd "C-c C-c") 'embark-act)
       ;; Hide the mode line of the Embark live/completions buffers
       ;; (add-to-list 'display-buffer-alist
       ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -1181,16 +1181,24 @@ _q_uit
       )
     ;; Consult users will also want the embark-consult package.
     (use-package embark-consult
-      :disabled
       :after (embark consult)
       :demand t            ; only necessary if you have the hook below
       ;; if you want to have consult previews as you move around an
       ;; auto-updating embark collect buffer
       :hook
       (embark-collect-mode . consult-preview-at-point-mode))
+    ;; 随时选择路径
+    (use-package consult-dir
+      :defer t
+      :commands()
+      :config
+      (define-key vertico-map "\M-D" 'consult-dir)
+      )
+    (load "minibuffer/consult-dir")
+    
     )
 
-  ;; bug很多啊，rg中文乱码不能跳过去，没有F6
+  ;; 预览功能很快！好像不是真的加载
   (use-package consult
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
     :commands(consult-ripgrep
@@ -1203,8 +1211,8 @@ _q_uit
     :init
     (setq
      consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
-     consult-line-point-placement 'match-beginning
-     consult-async-min-input 1
+     consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
+     consult-async-min-input 1 ;; 确保单个汉字也可以搜索
      )
     ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
     (add-to-list 'process-coding-system-alist 
@@ -1215,14 +1223,24 @@ _q_uit
       :defer t
       :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
       )
-    (defun my-consult-ripgrep()
-      (interactive)
+    
+    (defun my-consult-ripgrep(&optional dir)
+      (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
       (require 'consult)
-      ;; 不忽略ignore，从当前目录开始搜索
+      ;; 不忽略ignore
       (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
-        (consult-ripgrep default-directory))
+        (consult-ripgrep (or dir default-directory)))
+      )
+    (defun my-consult-ripgrep-only-current-dir(&optional dir)
+      (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
+      (require 'consult)
+      ;; 不忽略ignore
+      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore -g!*/")))
+        (consult-ripgrep (or dir default-directory)))
       )
     (global-set-key [f2] 'my-consult-ripgrep)
+    (global-set-key [S-f2] 'my-consult-ripgrep-only-current-dir)
+    
     (global-set-key (kbd "C-x C-b") 'consult-buffer) ; 含buffer, recentf，bookmark！还带预览功能！
     (global-set-key (kbd "C-s") 'consult-line)
     (global-set-key [remap switch-to-buffer] 'consult-buffer)
