@@ -221,7 +221,7 @@ _q_uit
   (after-init . recentf-mode)
   )
 
-(if t
+(if nil
     (use-package session
       ;; session只保存了修改文件的point
       ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
@@ -264,7 +264,7 @@ _q_uit
       (setq history-delete-duplicates nil)
       (setq savehist-autosave-interval nil); save on kill only
       ;; Save search entries as well.
-      (setq savehist-additional-variables '(search-ring regexp-search-ring))
+      ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
       (setq savehist-save-minibuffer-history t)
       (savehist-mode t))
 
@@ -1189,13 +1189,9 @@ _q_uit
       (embark-collect-mode . consult-preview-at-point-mode))
     ;; 随时选择路径
     (use-package consult-dir
-      :defer t
-      :commands()
+      :commands(consult-dir)
       :config
-      (define-key vertico-map "\M-D" 'consult-dir)
-      )
-    (load "minibuffer/consult-dir")
-    
+      (define-key vertico-map "\M-D" 'consult-dir))
     )
 
   ;; 预览功能很快！好像不是真的加载
