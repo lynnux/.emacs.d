@@ -1840,7 +1840,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "s" 'my-project-search)
       (define-key project-prefix-map "S" 'project-shell)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
-      (global-set-key (kbd "C-S-f") 'my-project-search)
       :config
       ;; 好像自动识别find的输出了(git里的find)
       ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
@@ -1924,13 +1923,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			        (setq compilation-read-command nil) ;; 不再提示
 			        )))
 
-;; 自带的project-find-regexp的xref好用的一批，除了不能用wgrep编辑
-(when (featurep 'projectile)
-  ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
-  (global-set-key (kbd "C-S-f") 'rg-dwim)
+;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
+(use-package rg
+  :load-path "~/.emacs.d/packages/projectile"
+  :commands(rg-dwim)
+  :init
   (setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
-  (autoload 'rg-dwim "rg" nil t)
-  (with-eval-after-load 'rg-result
+  (global-set-key (kbd "C-S-f") 'rg-dwim)
+  :config
+  (use-package rg-result
+    :defer t
+    :config
     ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
     ;; 临时设置cmdproxy编码
     (defadvice rg-run (around my-run activate)
@@ -1953,14 +1956,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             )
         ad-do-it))
     )
-
-  ;; 使wrep可编辑
-  (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
-    (setq tmp-disable-view-mode t)
-    ad-do-it
-    (setq tmp-disable-view-mode nil)
+  (use-package wgrep
+    :defer t
+    :config
+    ;; 使wrep可编辑
+    (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
+      (setq tmp-disable-view-mode t)
+      ad-do-it
+      (setq tmp-disable-view-mode nil)
+      )
     )
   )
+
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
