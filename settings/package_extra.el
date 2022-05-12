@@ -565,7 +565,25 @@ _q_uit
     )  
   )
 
-(progn
+;; company加图后有bug先用这个了
+(use-package corfu
+  :defer 1
+  :load-path "~/.emacs.d/packages/corfu/corfu-main"
+  :init
+  (setq corfu-cycle t
+        corfu-auto t
+        corfu-auto-prefix 2
+        )
+  ;; lsp bridge依赖corfu-info
+  (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
+  :config
+  (global-corfu-mode)
+  (global-set-key (kbd "<C-return>") 'completion-at-point)
+  (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
+  (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
+  )
+
+(when nil
   ;; company mode，这个支持comment中文，但不支持补全history
   (use-package company
     :defer 1
@@ -1962,6 +1980,51 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 
+;; 是真的快！期待后面解决bug了
+(use-package lsp-bridge
+  :disabled
+  :load-path "~/.emacs.d/packages/corfu/corfu-main/lsp-bridge-master"
+  :defer 2.0
+  :config
+  (require 'lsp-bridge-orderless)
+  (require 'lsp-bridge-icon)
+
+  (dolist (hook (list
+                 'c-mode-hook
+                 'c++-mode-hook
+                 'java-mode-hook
+                 'python-mode-hook
+                 'ruby-mode-hook
+                 'rust-mode-hook
+                 'elixir-mode-hook
+                 'go-mode-hook
+                 'haskell-mode-hook
+                 'haskell-literate-mode-hook
+                 'dart-mode-hook
+                 'scala-mode-hook
+                 'typescript-mode-hook
+                 'typescript-tsx-mode-hook
+                 'js2-mode-hook
+                 'js-mode-hook
+                 'rjsx-mode-hook
+                 'tuareg-mode-hook
+                 'latex-mode-hook
+                 'Tex-latex-mode-hook
+                 'texmode-hook
+                 'context-mode-hook
+                 'texinfo-mode-hook
+                 'bibtex-mode-hook
+	             'clojure-mode-hook
+	             'clojurec-mode-hook
+	             'clojurescript-mode-hook
+	             'clojurex-mode-hook
+                 ))
+    (add-hook hook (lambda ()
+                     (setq-local corfu-auto nil)  ;; let lsp-bridge control when popup completion frame
+                     (lsp-bridge-mode 1)
+                     )))
+  
+  )
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
@@ -2047,41 +2110,41 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       :config
       ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
       (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
-                                              (let ((cs (dap--cur-session)))
-                                                (if cs
-                                                    (if (dap--session-running cs)
-                                                        (call-interactively 'dap-continue)
-                                                      (call-interactively 'dap-debug-restart))
-                                                  (call-interactively 'dap-debug))
-                                                )))
-      (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
-      (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
-      (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
-      (define-key dap-mode-map (kbd "<f10>") 'dap-next)
+                                                (let ((cs (dap--cur-session)))
+                                                  (if cs
+                                                      (if (dap--session-running cs)
+                                                          (call-interactively 'dap-continue)
+                                                        (call-interactively 'dap-debug-restart))
+                                                    (call-interactively 'dap-debug))
+                                                  )))
+        (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
+        (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
+        (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
+        (define-key dap-mode-map (kbd "<f10>") 'dap-next)
 
-      ;; 解决hl line不及时更新问题
-      (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
-                                                (when global-hl-line-mode
-                                                  (global-hl-line-highlight))
-                                                ))
-      (use-package dap-python
-        :after (dap-mode python))
+        ;; 解决hl line不及时更新问题
+        (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
+                                                  (when global-hl-line-mode
+                                                    (global-hl-line-highlight))
+                                                  ))
+        (use-package dap-python
+          :after (dap-mode python))
 
-      ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
-      (use-package dap-cpptools
-        :after (dap-mode cc-mode))
-      
-      (use-package dap-hydra
-        :commands(dap-hydra)
-        :init
-        (add-hook 'dap-stopped-hook
-                  (lambda (arg)
-                    (call-interactively #'dap-hydra)))
+        ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
+        (use-package dap-cpptools
+          :after (dap-mode cc-mode))
+        
+        (use-package dap-hydra
+          :commands(dap-hydra)
+          :init
+          (add-hook 'dap-stopped-hook
+                    (lambda (arg)
+                      (call-interactively #'dap-hydra)))
+          )
+        ;; TODO: Locals里的icon显示不正常
         )
-      ;; TODO: Locals里的icon显示不正常
       )
     )
-  )
 
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
