@@ -639,7 +639,6 @@ _q_uit
   (google-set-c-style)
   (setq c-basic-offset 4) ;; tab4个空格习惯了
   (abbrev-mode -1) ;; 有yas就够了
-  (define-key c-mode-base-map (kbd "C-c C-c") 'magit)
   (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
   (define-key c-mode-base-map "\177" nil) ;; backspack
   )
@@ -1609,9 +1608,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq magit-version "3.3.0")
   :commands (magit magit-status)        ;; magit-status for projectile
-  :bind(("C-c C-c". magit))
   :config
-  (define-key magit-status-mode-map "L" 'magit-section-up)
+  (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
   )
 (defun git-add-file ()
   "Adds (with force) the file from the current buffer to the git repo"
