@@ -1086,11 +1086,6 @@ _q_uit
            ;; vertico-repeat.el     helm resume功能，但只记录搜索词，最后执行哪行不知道。关键还跟上面自动搜索光标下的设置冲突
            ;; vertico-reverse.el    reverse结果列表
 
-           ;; (define-key vertico-map (kbd "TAB") 'end-of-line
-           ;;             ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
-           ;;             ;; '(lambda ()(interactive)
-           ;;             ;;    (next-history-element 2))
-           ;;             )
            (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
            (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
 
@@ -1940,10 +1935,24 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
   :load-path "~/.emacs.d/packages/projectile"
-  :commands(rg-dwim)
+  :commands(rg-define-search)
   :init
+  (defun my/rg-dwim()
+    (interactive)
+    ;; type为all，不然h就会当成c从而忽略了cpp文件。要指定类型可以在rg buffer按f修改
+    (unless (functionp 'rg-dwim-project-dir-type-all)
+      (rg-define-search rg-dwim-project-dir-type-all
+        :query point
+        :format literal
+        :files "everything"
+        :dir project
+        )
+      )
+    (call-interactively 'rg-dwim-project-dir-type-all)
+    )
+  
   (setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
-  (global-set-key (kbd "C-S-f") 'rg-dwim)
+  (global-set-key (kbd "C-S-f") 'my/rg-dwim)
   :config
   (use-package rg-result
     :defer t
