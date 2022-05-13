@@ -676,19 +676,15 @@ _q_uit
   :config
   (global-set-key (kbd "M-n") 'jl-jump-forward)
   (global-set-key (kbd "M-p") 'jl-jump-backward)
-  (add-to-list 'jl-insert-marker-funcs "my-switch-buffer")
-  (add-to-list 'jl-insert-marker-funcs "ggtags-find-tag-dwim")
-  (add-to-list 'jl-insert-marker-funcs "ggtags-find-reference")
-  (add-to-list 'jl-insert-marker-funcs "ggtags-find-file")
-  (add-to-list 'jl-insert-marker-funcs "helm-occur")
-  (add-to-list 'jl-insert-marker-funcs "helm-imenu-in-all-buffers")
-  (add-to-list 'jl-insert-marker-funcs "xref-find-definitions")
-  (add-to-list 'jl-insert-marker-funcs "session-jump-to-last-change")
-  (add-to-list 'jl-insert-marker-funcs "org-roam-preview-visit")
-  (add-to-list 'jl-insert-marker-funcs "counsel-rg")
-  (add-to-list 'jl-insert-marker-funcs "swiper")
-  (add-to-list 'jl-insert-marker-funcs "consult-line")
-  (add-to-list 'jl-insert-marker-funcs "consult-ripgrep")
+  (cl-dolist (one '("xref-find-definitions"
+                    "ggtags-find-tag-dwim"  "ggtags-find-reference" "ggtags-find-file"
+                    "helm-occur" "helm-imenu-in-all-buffers"  
+                    "session-jump-to-last-change" "org-roam-preview-visit" "counsel-rg"
+                    "swiper" "consult-line""consult-ripgrep"
+                    "my-consult-ripgrep" "embark-act"
+                    ))
+    (add-to-list 'jl-insert-marker-funcs one)
+    )
 
   (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
   (defun my-save-pos()
@@ -995,7 +991,7 @@ _q_uit
       counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
       my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
       consult-line consult-ripgrep
-      my-consult-ripgrep my-consult-ripgrep-only-current-dir
+      my-consult-ripgrep my-consult-ripgrep-only-current-dir my-consult-ripgrep-or-line
       ))
 
   (defvar my-ivy-fly-back-commands
@@ -1059,493 +1055,499 @@ _q_uit
 ;; 关闭minibuffer，关闭其它窗口
 (global-set-key (kbd "C-1") 'keyboard-escape-quit)
 
-;; 优点：速度快，预览快(好像并没有真的加载)，embark无敌！
-(when t
-  (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
-  ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
-  (use-package vertico
-    :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
-    :init
-    (setq enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
-          vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
-          vertico-resize nil ;; 让它初始化就固定大小
-          vertico-count 20   ;; 高度多少行
-          )
-    :defer 0.3
-    :config
-    (vertico-mode 1)
-    (enable-minibuffer-auto-search-at-point)
-    ;; extension说明
-    ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
-    ;; vertico-directory.el  测试没成功
-    ;; vertico-flat.el       跟原生那样的补全，无用
-    ;; vertico-grid.el       自动多列显示！这个很牛。但中文乱码排列也会乱。行太长会自动隐藏，所以需要大显示屏
-    ;; vertico-indexed.el    给结果列表前面加上数字索引
-    ;; vertico-mouse.el      鼠标支持，好像就支持点击，scroll都不行
-    ;; vertico-multiform.el  设置自动执行某种如grid视图
-    ;; vertico-quick.el      快速插入或者快速jump，后者实现类似avy
-    ;; vertico-repeat.el     helm resume功能，但只记录搜索词，最后执行哪行不知道。关键还跟上面自动搜索光标下的设置冲突
-    ;; vertico-reverse.el    reverse结果列表
+;; 测试leakxxx.db C-s helm直接卡死了，vertio和ivy都是2秒弹出(每次都是)，对app.lua vertico由于创建buffer首次要慢点
+(defconst minibuffer-use-which 1)     ; 1.vertico 2.helm 3.ivy
+(cond ((eq minibuffer-use-which 1)
+       ;; 优点：速度快，预览快(好像并没有真的加载)，embark无敌！
+       (progn
+         (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
+         ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
+         (use-package vertico
+           :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
+           :init
+           (setq enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
+                 vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
+                 vertico-resize nil ;; 让它初始化就固定大小
+                 vertico-count 20   ;; 高度多少行
+                 )
+           :defer 0.3
+           :config
+           (vertico-mode 1)
+           (enable-minibuffer-auto-search-at-point)
+           ;; extension说明
+           ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
+           ;; vertico-directory.el  测试没成功
+           ;; vertico-flat.el       跟原生那样的补全，无用
+           ;; vertico-grid.el       自动多列显示！这个很牛。但中文乱码排列也会乱。行太长会自动隐藏，所以需要大显示屏
+           ;; vertico-indexed.el    给结果列表前面加上数字索引
+           ;; vertico-mouse.el      鼠标支持，好像就支持点击，scroll都不行
+           ;; vertico-multiform.el  设置自动执行某种如grid视图
+           ;; vertico-quick.el      快速插入或者快速jump，后者实现类似avy
+           ;; vertico-repeat.el     helm resume功能，但只记录搜索词，最后执行哪行不知道。关键还跟上面自动搜索光标下的设置冲突
+           ;; vertico-reverse.el    reverse结果列表
 
-    ;; (define-key vertico-map (kbd "TAB") 'end-of-line
-    ;;             ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
-    ;;             ;; '(lambda ()(interactive)
-    ;;             ;;    (next-history-element 2))
-    ;;             )
-    (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
-    (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
+           ;; (define-key vertico-map (kbd "TAB") 'end-of-line
+           ;;             ;; 上面的enable-minibuffer-auto-search-at-point处理了细节不再需要M-n了
+           ;;             ;; '(lambda ()(interactive)
+           ;;             ;;    (next-history-element 2))
+           ;;             )
+           (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
+           (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
 
-    ;; 习惯只要underline，不随主题改变
-	(custom-set-faces
-	 '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
-	 '(consult-preview-line ((t (:underline t :background nil))))
-	 )
+           ;; 习惯只要underline，不随主题改变
+	       (custom-set-faces
+	        '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
+	        '(consult-preview-line ((t (:underline t :background nil))))
+	        )
 
-    ;; 只会恢复关键词
-    ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
-    ;; consult-ripgrep暂时没有好方法
-    (use-package vertico-repeat
-      :load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions"
-      :commands(vertico-repeat vertico-repeat-save)
-      :init
-      (global-set-key [f6] #'vertico-repeat) ; C-u F6还可以选择
-      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-      :config
-      ;; 避免跟enable-minibuffer-auto-search-at-point冲突
-      (defadvice vertico-repeat (around my-vertico-repeat activate)
-        (let ((disable-for-vertico-repeat t))
-          ad-do-it
-          )))
-    (use-package vertico-quick
-      :commands(vertico-quick-exit)
-      :init
-      (setq vertico-quick1 "arstne")
-      (setq vertico-quick2 "ioh")
-      ;; 类似avy，我一直想在helm中实现的
-      (define-key vertico-map "\C-o" #'vertico-quick-exit))
-    (use-package vertico-grid
-      :commands(vertico-multiform-grid vertico-grid-mode)
-      :init
-      (define-key vertico-map "\M-G" #'vertico-multiform-grid))
-    (use-package vertico-reverse
-      :commands(vertico-multiform-reverse vertico-reverse-mode)
-      :init
-      (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
-    (use-package vertico-multiform
-      :init
-      ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
-      (setq vertico-multiform-commands
-            '((consult-line buffer) ; buffer 可以显示更多搜索出来的内容
-              (my-consult-ripgrep buffer)
-              (my-consult-ripgrep-only-current-dir buffer)
-              (consult-ripgrep buffer) 
-              (execute-extended-command grid) ; M-x
-              (yas-insert-snippet grid)))
-      ;; (setq vertico-multiform-categories
-      ;;       '((file buffer grid)
-      ;;         (imenu (:not indexed mouse))
-      ;;         (symbol (vertico-sort-function . vertico-sort-alpha))))
-      (define-key vertico-map "\M-V" #'vertico-multiform-vertical)
-      :config
-      (vertico-multiform-mode)
-      )
-    
-    (use-package vertico-buffer
-      :commands(vertico-buffer-mode)
-      :init
-      ;; (setq vertico-buffer-display-action '(display-buffer-in-side-window))
-      )
+           ;; 只会恢复关键词
+           ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
+           ;; consult-ripgrep暂时没有好方法
+           (use-package vertico-repeat
+             :load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions"
+             :commands(vertico-repeat vertico-repeat-save)
+             :init
+             (global-set-key [f6] #'vertico-repeat) ; C-u F6还可以选择
+             (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+             :config
+             ;; 避免跟enable-minibuffer-auto-search-at-point冲突
+             (defadvice vertico-repeat (around my-vertico-repeat activate)
+               (let ((disable-for-vertico-repeat t))
+                 ad-do-it
+                 )))
+           (use-package vertico-quick
+             :commands(vertico-quick-exit)
+             :init
+             (setq vertico-quick1 "arstne")
+             (setq vertico-quick2 "ioh")
+             ;; 类似avy，我一直想在helm中实现的
+             (define-key vertico-map "\C-o" #'vertico-quick-exit))
+           (use-package vertico-grid
+             :commands(vertico-multiform-grid vertico-grid-mode)
+             :init
+             (define-key vertico-map "\M-G" #'vertico-multiform-grid))
+           (use-package vertico-reverse
+             :commands(vertico-multiform-reverse vertico-reverse-mode)
+             :init
+             (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
+           (use-package vertico-multiform
+             :init
+             ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
+             (setq vertico-multiform-commands
+                   '(
+                     (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
+                     (my-consult-ripgrep buffer)
+                     (my-consult-ripgrep-only-current-dir buffer)
+                     (consult-ripgrep buffer) 
+                     (execute-extended-command grid) ; M-x
+                     (yas-insert-snippet grid)))
+             ;; (setq vertico-multiform-categories
+             ;;       '((file buffer grid)
+             ;;         (imenu (:not indexed mouse))
+             ;;         (symbol (vertico-sort-function . vertico-sort-alpha))))
+             (define-key vertico-map "\M-V" #'vertico-multiform-vertical)
+             :config
+             (vertico-multiform-mode)
+             )
+           
+           (use-package vertico-buffer
+             :commands(vertico-buffer-mode)
+             :init
+             ;; (setq vertico-buffer-display-action '(display-buffer-in-side-window))
+             )
 
-    ;; 启动用无序匹配
-    (use-package orderless
-      :config
-      (setq completion-styles '(orderless basic)
-            completion-category-defaults nil
-            completion-category-overrides '((file (styles partial-completion))) ; 不是真覆盖，只是优化
-            )
-      )
+           ;; 启动用无序匹配
+           (use-package orderless
+             :config
+             (setq completion-styles '(orderless basic)
+                   completion-category-defaults nil
+                   completion-category-overrides '((file (styles partial-completion))) ; 不是真覆盖，只是优化
+                   )
+             )
 
-    ;; 美化
-    (use-package marginalia
-      :bind (("M-A" . marginalia-cycle)
-             :map minibuffer-local-map
-             ("M-A" . marginalia-cycle))
-      :init
-      :config
-      (marginalia-mode)
-      )
+           ;; 美化
+           (use-package marginalia
+             :bind (("M-A" . marginalia-cycle)
+                    :map minibuffer-local-map
+                    ("M-A" . marginalia-cycle))
+             :init
+             :config
+             (marginalia-mode)
+             )
 
-    (use-package embark
-      :load-path "~/.emacs.d/packages/minibuffer/embark-master"
-      :bind
-      (("C-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
-       ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
-       ("<f1> B" . embark-bindings) ;; 列举当前可用的键及其命令
-       )
-      :init
-      (setq
-       prefix-help-command #'embark-prefix-help-command
-       embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
-       )
-      :config
-      (define-key vertico-map (kbd "C-c C-o") 'embark-export)
-      ;; (define-key vertico-map (kbd "C-c C-c") 'embark-act)
-      ;; Hide the mode line of the Embark live/completions buffers
-      ;; (add-to-list 'display-buffer-alist
-      ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-      ;;                nil
-      ;;                (window-parameters (mode-line-format . none))))
-      )
-    ;; Consult users will also want the embark-consult package.
-    (use-package embark-consult
-      :after (embark consult)
-      :demand t            ; only necessary if you have the hook below
-      ;; if you want to have consult previews as you move around an
-      ;; auto-updating embark collect buffer
-      :hook
-      (embark-collect-mode . consult-preview-at-point-mode))
-    ;; 随时选择路径
-    (use-package consult-dir
-      :commands(consult-dir)
-      :config
-      (define-key vertico-map "\M-D" 'consult-dir))
-    )
-
-  ;; 预览功能很快！好像不是真的加载
-  (use-package consult
-    :load-path "~/.emacs.d/packages/minibuffer/consult-main"
-    :commands(consult-ripgrep
-              consult-buffer
-              consult-line
-              consult-buffer-other-window
-              consult-buffer-other-frame
-              consult-goto-line
+           (use-package embark
+             :load-path "~/.emacs.d/packages/minibuffer/embark-master"
+             :bind
+             (("C-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
+              ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
+              ("<f1> B" . embark-bindings) ;; 列举当前可用的键及其命令
               )
-    :init
-    (setq
-     consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
-     consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
-     consult-async-min-input 1 ;; 确保单个汉字也可以搜索
-     )
-    ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
-    (add-to-list 'process-coding-system-alist 
-                 '("[rR][gG]" . (utf-8 . gbk-dos)))
-    
-    ;; https://github.com/phikal/compat.el
-    (use-package compat
-      :defer t
-      :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
-      )
-    
-    (defun my-consult-ripgrep(&optional dir)
-      (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
-      (require 'consult)
-      ;; 不忽略ignore
-      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
-        (consult-ripgrep (or dir default-directory)))
-      )
-    (defun my-consult-ripgrep-only-current-dir(&optional dir)
-      (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
-      (require 'consult)
-      ;; 不忽略ignore
-      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore -g!*/")))
-        (consult-ripgrep (or dir default-directory)))
-      )
-    (global-set-key [f2] 'my-consult-ripgrep)
-    (global-set-key [S-f2] 'my-consult-ripgrep-only-current-dir)
-    
-    (global-set-key (kbd "C-x C-b") 'consult-buffer) ; 含buffer, recentf，bookmark！还带预览功能！
-    (global-set-key (kbd "C-s") 'consult-line)
-    (global-set-key [remap switch-to-buffer] 'consult-buffer)
-    (global-set-key [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
-    (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
-    (global-set-key [remap goto-line] 'consult-goto-line)
-    :config
-    ;; 含中文字符搜索时添加--pre rgpre
-    (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
-      (if (chinese-word-chinese-string-p (ad-get-arg 0))
-          (let ((consult-ripgrep-args (concat consult-ripgrep-args " --pre rgpre")))
-            ad-do-it
+             :init
+             (setq
+              prefix-help-command #'embark-prefix-help-command
+              embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
+              )
+             :config
+             (define-key vertico-map (kbd "C-c C-o") 'embark-export)
+             ;; (define-key vertico-map (kbd "C-c C-c") 'embark-act)
+             ;; Hide the mode line of the Embark live/completions buffers
+             ;; (add-to-list 'display-buffer-alist
+             ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+             ;;                nil
+             ;;                (window-parameters (mode-line-format . none))))
+             )
+           ;; Consult users will also want the embark-consult package.
+           (use-package embark-consult
+             :after (embark consult)
+             :demand t            ; only necessary if you have the hook below
+             ;; if you want to have consult previews as you move around an
+             ;; auto-updating embark collect buffer
+             :hook
+             (embark-collect-mode . consult-preview-at-point-mode))
+           ;; 随时选择路径
+           (use-package consult-dir
+             :commands(consult-dir)
+             :config
+             (define-key vertico-map "\M-D" 'consult-dir))
+           )
+
+         ;; 预览功能很快！好像不是真的加载
+         (use-package consult
+           :load-path "~/.emacs.d/packages/minibuffer/consult-main"
+           :commands(consult-ripgrep
+                     consult-buffer
+                     consult-line
+                     consult-buffer-other-window
+                     consult-buffer-other-frame
+                     consult-goto-line
+                     )
+           :init
+           (setq
+            consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
+            consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
+            consult-async-min-input 1 ;; 确保单个汉字也可以搜索
+            ;; consult-fontify-max-size 1024 ;; 不设置的话大文件第1次用consult-line会卡几秒，设置consult-fontify-preserve就不需要设置这个了
+            consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
             )
-        ad-do-it))
-    )
-  )
-(when nil
-  (use-package helm
-    :defer t
-    :init
-    (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
-    (require 'async-autoloads)
-    (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
-    (require 'helm-config)
-    (defadvice completing-read (before my-completing-read activate)
-	  (helm-mode 1))
-    (setq
-     ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
-     helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
-     helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
-     helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
-     helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
-     helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
-     helm-ff-file-name-history-use-recentf t
-     helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
-     helm-buffers-fuzzy-matching t
-     helm-recentf-fuzzy-match    t
-     helm-follow-mode-persistent t
-     helm-allow-mouse t
-     ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
-     helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
-     helm-display-buffer-default-height 20 ;; 窗口高度，半屏有时候确实太占空间，预览时有些内容看不到
-     helm-for-files-preferred-list ;; helm-multi-files的source设置
-     '(helm-source-buffers-list
-       helm-source-recentf
-       helm-source-bookmarks
-       ;; helm-source-file-cache
-       ;; helm-source-files-in-current-dir
-       ;; helm-source-locate
+           ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
+           (add-to-list 'process-coding-system-alist 
+                        '("[rR][gG]" . (utf-8 . gbk-dos)))
+           
+           ;; https://github.com/phikal/compat.el
+           (use-package compat
+             :defer t
+             :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
+             )
+           
+           (defun my-consult-ripgrep(&optional dir)
+             (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
+             (require 'consult)
+             ;; 不忽略ignore
+             (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
+               (consult-ripgrep (or dir default-directory)))
+             )
+           (defun my-consult-ripgrep-only-current-dir(&optional dir)
+             (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
+             (require 'consult)
+             ;; 不忽略ignore
+             (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore -g!*/")))
+               (consult-ripgrep (or dir default-directory)))
+             )
+           (global-set-key [f2] 'my-consult-ripgrep)
+           (global-set-key [S-f2] 'my-consult-ripgrep-only-current-dir)
+           
+           (global-set-key (kbd "C-x C-b") 'consult-buffer) ; 含buffer, recentf，bookmark！还带预览功能！
+           (global-set-key (kbd "C-s") 'consult-line)
+           (global-set-key [remap switch-to-buffer] 'consult-buffer)
+           (global-set-key [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
+           (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
+           (global-set-key [remap goto-line] 'consult-goto-line)
+           :config
+           ;; 含中文字符搜索时添加--pre rgpre
+           (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
+             (if (chinese-word-chinese-string-p (ad-get-arg 0))
+                 (let ((consult-ripgrep-args (concat consult-ripgrep-args " --pre rgpre")))
+                   ad-do-it
+                   )
+               ad-do-it))
+           )
+
+         )       
        )
-     )
-    (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
-    (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
-    (global-set-key (kbd "M-x") 'undefined)
-    (global-set-key (kbd "M-x") 'helm-M-x)
-    (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
-    (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
-    (global-set-key (kbd "C-`") 'helm-show-kill-ring)
-    (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
-    (global-set-key (kbd "C-x C-b") 'helm-multi-files) ; 源为 helm-for-files-preferred-list
-    (global-set-key (kbd "C-c C-r") 'helm-resume) ;继续刚才的session
-    (global-set-key (kbd "<f6>") 'helm-resume)
-    (global-set-key (kbd "M-m") 'helm-imenu)
-    (global-set-key [(control f2)]
-                    (lambda () (interactive)
-				      (require 'vc)
-				      (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
-    (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
-    (global-set-key [S-f2]
-                    (lambda() (interactive)
-                      ;; 只搜索当前目录，加入-g/*，有时候有问题，xref是-g '!*/'，但没测试成功
-                      (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g!*/ %s %s %s"))
-                        (call-interactively 'helm-do-grep-ag))
-                      ))
-
-    (use-package helm-grep
-      :defer t
-      :config
-      ;; 对于 中文 启用--pre rgpre
-      (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
-        (if (chinese-word-chinese-string-p (ad-get-arg 0))
-            (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
-              ad-do-it)
-          ad-do-it)
-        )
-	  ;; 临时设置cmdproxy编码
-      (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
-	    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	      ad-do-it
-	      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	      ))
-      ;; 这功能不好写，将就用总比没有好吧
-      (defun helm-grep-search-parent-directory ()
-	    (interactive)
-	    (helm-run-after-exit (lambda ()
-				               (let* ((parent (file-name-directory (directory-file-name default-directory)))
-					                  (default-directory parent))
-				                 (helm-grep-ag (expand-file-name parent) nil)))))
-      (defun helm-show-search()
-	    (interactive)
-	    (yank)
-	    )
-      (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	  (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
-      )
-    (use-package helm-find
-      :defer t
-      :config
-	  (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-      )
-    (use-package helm-files
-      :defer t
-      :config
-      (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-      )
-    (use-package helm-buffers
-      :defer t
-      :config
-	  (define-key helm-buffer-map (kbd "C-s") 'helm-next-line)
-      )
-    (use-package helm-buffers
-      :defer t
-      :config
-	  (define-key helm-buffer-map (kbd "C-s") 'helm-next-line))
-    (use-package helm-types
-      :defer t
-      :config
-      ;; helm-locate即everything里打开所在位置
-	  (define-key helm-generic-files-map (kbd "C-x C-d")
-	              (lambda ()
-	                (interactive)
-	                (with-helm-alive-p
-		             (helm-exit-and-execute-action (lambda (file)
-						                             (w32explore file)
-						                             ))))))
-    
-    :diminish
-    :config
-	;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
-    ;; describe-current-coding-system 查看当前系统编码
-	;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
-	
-	;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
-	;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
-	;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
-	;;   ad-do-it
-	;;   (let ((fname (car-safe ad-return-value)))
-	;;     (when fname
-	;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
-	;;       ))
-	;;   )
-	;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
-	;;   (message (ad-get-arg 2)))
-	
-	(helm-mode 1)
-
-	;; 光标移动时也自动定位到所在位置
-	(push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
-	(push "RG" helm-source-names-using-follow)
-
-    (when (display-graphic-p)
-	  ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
-      ;; 当前主题背景色(face-attribute 'default :background)
-	  (custom-set-faces
-       ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
-	   '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
-	   '(helm-selection-line ((t (:underline t :background nil))))
-	   ;;helm-match-item 
-	   ))
-
-	(define-key helm-map (kbd "<f1>") 'nil)
-	(define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
-
-	(define-key helm-map (kbd "C-h") 'nil)
-	(define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
-	(define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
-	(define-key helm-map (kbd "C-v") 'nil)
-	(define-key helm-map (kbd "<f4>") 'helm-next-line)
-	(define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
-	;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
-    ;; rg occur下自动补全搜索词，其它原样
-	(define-key helm-map (kbd "<tab>") (lambda ()(interactive)
-					                     (let* ((src (helm-get-current-source))
-						                        (name (assoc-default 'name src)))
-					                       (if (or (member name (list "RG" "Occur"))
-						                           (string= name "Helm occur")
-						                           (string= name "RG")) ;; TODO 
-						                       (progn (call-interactively 'next-history-element)
-							                          (move-end-of-line 1)())
-						                     ;; 其它模式还是helm-execute-persistent-action，比如文件补全
-						                     (call-interactively 'helm-execute-persistent-action) 
-						                     )
-					                       )
-					                     ))
-	
-	(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
-	(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-
-	;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	(define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	
-	(when helm-echo-input-in-header-line
-	  (add-hook 'helm-minibuffer-set-up-hook
-		        'helm-hide-minibuffer-maybe))
-    )
-  
-
-  (progn
-    ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
-    ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
-    ;; minibuffer也不能用鼠标
-    (use-package ivy
-      :load-path "~/.emacs.d/packages/swiper/swiper-master"
-      :commands(ivy-switch-buffer ivy-resume ivy-mode)
-      :diminish
-      :init
-      (setq enable-recursive-minibuffers t ;; minibuffer可以再起如F1 f等命令
-            ivy-use-selectable-prompt t
-            ivy-wrap t ;; 可以loop选择
-            ivy-count-format "(%d/%d) "
-            ivy-height 12
-            ivy-fixed-height-minibuffer t
-            ivy-on-del-error-function #'ignore
-            ivy-initial-inputs-alist nil ;; 去掉开头的^
-            ;; ivy-use-virtual-buffers t，这个会get-file-buffer导致wcy自动加载
+      ((eq minibuffer-use-which 2)
+       (use-package helm
+         :defer t
+         :init
+         (add-to-list 'load-path "~/.emacs.d/packages/helm/emacs-async-master")
+         (require 'async-autoloads)
+         (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
+         (require 'helm-config)
+         (defadvice completing-read (before my-completing-read activate)
+	       (helm-mode 1))
+         (setq
+          ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
+          helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
+          helm-grep-ag-pipe-cmd-switches '("--colors match:style:nobold") ;; 多个patterns时通过pipe
+          helm-move-to-line-cycle-in-source t ; 使到顶尾时可以循环，缺点是如果有两个列表，下面那个用C-o或者M->切换过去
+          helm-echo-input-in-header-line t ; 这个挺awesome的，不使用minibuffer，在中间眼睛移动更小
+          helm-split-window-in-side-p t ; 不然的话，如果有两个窗口，它就会使用另一个窗口。另一个是横的还好，竖的就不习惯了
+          helm-ff-file-name-history-use-recentf t
+          helm-ff-search-library-in-sexp t ; search for library in `require' and `declare-function' sexp.
+          helm-buffers-fuzzy-matching t
+          helm-recentf-fuzzy-match    t
+          helm-follow-mode-persistent t
+          helm-allow-mouse t
+          ;;helm-grep-input-idle-delay 0.02 	; 默认0.1，让搜索有延迟
+          helm-browse-url-default-browser-alist nil ; 新版本提示没有browse-url-galeon-program，致helm-find-files不能用，直接屏蔽算了，用不到
+          helm-display-buffer-default-height 20 ;; 窗口高度，半屏有时候确实太占空间，预览时有些内容看不到
+          helm-for-files-preferred-list ;; helm-multi-files的source设置
+          '(helm-source-buffers-list
+            helm-source-recentf
+            helm-source-bookmarks
+            ;; helm-source-file-cache
+            ;; helm-source-files-in-current-dir
+            ;; helm-source-locate
             )
-      ;; Better performance on Windows
-      (setq ivy-dynamic-exhibit-delay-ms 200)
-      
-      (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
-      (global-set-key (kbd "C-c C-r") 'ivy-resume)
-      (global-set-key (kbd "<f6>") 'ivy-resume)
-      :config
-      (ivy-mode 1)
-      (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-      (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
-      (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-      (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-      (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
-      (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
-      ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
-      (push (cons #'swiper (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-      (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
-            ivy-hooks-alist)
-      (defadvice completing-read (before my-completing-read activate)
-        (ivy-mode 1))
-      (when (display-graphic-p)
-	    (custom-set-faces
-         ;; minibuffer里的当前行
-	     '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-         ;; buffer里的当前行
-	     '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-	     ))
-      (enable-minibuffer-auto-search-at-point)
-      )
-    
-    (use-package counsel
-      :commands(counsel-rg
-                counsel-M-x counsel-find-file
-                counsel-describe-function
-                counsel-describe-variable counsel-find-library
-                counsel-imenu)
-      :init
-      (global-set-key (kbd "M-x") 'counsel-M-x)
-      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-      (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-      (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-      (global-set-key (kbd "<f1> l") 'counsel-find-library)
-      (global-set-key (kbd "M-m") 'counsel-imenu)
-      ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
-      (defun my-counsel-rg()
-        (interactive)
-        (require 'counsel)
-        ;; 不忽略ignore，要忽略ignore请用project search
-        (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
-          (counsel-rg nil default-directory) ; 从当前目录开始搜索
-          ))
-      (global-set-key [f2] 'my-counsel-rg)
-      :config
-      )
-    (use-package swiper
-      :commands(swiper swiper-isearch)
-      :init
-      (global-set-key "\C-s" 'swiper)
-      :config
-      (define-key swiper-map (kbd "C-s") 'swiper) ;; 结果里二次搜索，不过前两个字符输入有bug？
-      )
-    )
-  )
+          )
+         (autoload 'ansi-color-apply-sequence "ansi-color" nil t) ; F2时要被helm-lib使用
+         (autoload 'helm-fd-1 "helm-fd" nil t) ; F2时要被helm-lib使用
+         (global-set-key (kbd "M-x") 'undefined)
+         (global-set-key (kbd "M-x") 'helm-M-x)
+         (global-set-key (kbd "C-s") 'helm-occur) ;; 不用helm swoop了，这个支持在c-x c-b里使用。开启follow mode
+         (global-set-key (kbd "M-y") 'helm-show-kill-ring) ; 比popup-kill-ring好的是多了搜索
+         (global-set-key (kbd "C-`") 'helm-show-kill-ring)
+         (global-set-key (kbd "C-x C-f") 'helm-find-files) ; 这个操作多文件非常方便！ C-c ?仔细学学！
+         (global-set-key (kbd "C-x C-b") 'helm-multi-files) ; 源为 helm-for-files-preferred-list
+         (global-set-key (kbd "C-c C-r") 'helm-resume) ;继续刚才的session
+         (global-set-key (kbd "<f6>") 'helm-resume)
+         (global-set-key (kbd "M-m") 'helm-imenu)
+         (global-set-key [(control f2)]
+                         (lambda () (interactive)
+				           (require 'vc)
+				           (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+         (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
+         (global-set-key [S-f2]
+                         (lambda() (interactive)
+                           ;; 只搜索当前目录，加入-g/*，有时候有问题，xref是-g '!*/'，但没测试成功
+                           (let ((helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore -g!*/ %s %s %s"))
+                             (call-interactively 'helm-do-grep-ag))
+                           ))
 
+         (use-package helm-grep
+           :defer t
+           :config
+           ;; 对于 中文 启用--pre rgpre
+           (defadvice helm-grep-ag-prepare-cmd-line (around my-helm-grep-ag-prepare-cmd-line activate)
+             (if (chinese-word-chinese-string-p (ad-get-arg 0))
+                 (let ((helm-grep-ag-command (concat helm-grep-ag-command " --pre rgpre")))
+                   ad-do-it)
+               ad-do-it)
+             )
+	       ;; 临时设置cmdproxy编码
+           (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
+	         (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	           (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	           ad-do-it
+	           (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	           ))
+           ;; 这功能不好写，将就用总比没有好吧
+           (defun helm-grep-search-parent-directory ()
+	         (interactive)
+	         (helm-run-after-exit (lambda ()
+				                    (let* ((parent (file-name-directory (directory-file-name default-directory)))
+					                       (default-directory parent))
+				                      (helm-grep-ag (expand-file-name parent) nil)))))
+           (defun helm-show-search()
+	         (interactive)
+	         (yank)
+	         )
+           (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	       (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+           )
+         (use-package helm-find
+           :defer t
+           :config
+	       (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+           )
+         (use-package helm-files
+           :defer t
+           :config
+           (define-key helm-find-files-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+           )
+         (use-package helm-buffers
+           :defer t
+           :config
+	       (define-key helm-buffer-map (kbd "C-s") 'helm-next-line)
+           )
+         (use-package helm-buffers
+           :defer t
+           :config
+	       (define-key helm-buffer-map (kbd "C-s") 'helm-next-line))
+         (use-package helm-types
+           :defer t
+           :config
+           ;; helm-locate即everything里打开所在位置
+	       (define-key helm-generic-files-map (kbd "C-x C-d")
+	                   (lambda ()
+	                     (interactive)
+	                     (with-helm-alive-p
+		                  (helm-exit-and-execute-action (lambda (file)
+						                                  (w32explore file)
+						                                  ))))))
+         
+         :diminish
+         :config
+	     ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+         ;; describe-current-coding-system 查看当前系统编码
+	     ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	     
+	     ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+	     ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
+	     ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	     ;;   ad-do-it
+	     ;;   (let ((fname (car-safe ad-return-value)))
+	     ;;     (when fname
+	     ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	     ;;       ))
+	     ;;   )
+	     ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	     ;;   (message (ad-get-arg 2)))
+	     
+	     (helm-mode 1)
+
+	     ;; 光标移动时也自动定位到所在位置
+	     (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	     (push "RG" helm-source-names-using-follow)
+
+         (when (display-graphic-p)
+	       ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+           ;; 当前主题背景色(face-attribute 'default :background)
+	       (custom-set-faces
+            ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
+	        '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
+	        '(helm-selection-line ((t (:underline t :background nil))))
+	        ;;helm-match-item 
+	        ))
+
+	     (define-key helm-map (kbd "<f1>") 'nil)
+	     (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+
+	     (define-key helm-map (kbd "C-h") 'nil)
+	     (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
+	     (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
+	     (define-key helm-map (kbd "C-v") 'nil)
+	     (define-key helm-map (kbd "<f4>") 'helm-next-line)
+	     (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
+	     ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
+         ;; rg occur下自动补全搜索词，其它原样
+	     (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
+					                          (let* ((src (helm-get-current-source))
+						                             (name (assoc-default 'name src)))
+					                            (if (or (member name (list "RG" "Occur"))
+						                                (string= name "Helm occur")
+						                                (string= name "RG")) ;; TODO 
+						                            (progn (call-interactively 'next-history-element)
+							                               (move-end-of-line 1)())
+						                          ;; 其它模式还是helm-execute-persistent-action，比如文件补全
+						                          (call-interactively 'helm-execute-persistent-action) 
+						                          )
+					                            )
+					                          ))
+	     
+	     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	     (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+
+	     ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	     (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	     
+	     (when helm-echo-input-in-header-line
+	       (add-hook 'helm-minibuffer-set-up-hook
+		             'helm-hide-minibuffer-maybe))
+         ))
+      ((eq minibuffer-use-which 3)
+       (progn
+         ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
+         ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
+         ;; minibuffer也不能用鼠标
+         (use-package ivy
+           :load-path "~/.emacs.d/packages/swiper/swiper-master"
+           :commands(ivy-switch-buffer ivy-resume ivy-mode)
+           :diminish
+           :init
+           (setq enable-recursive-minibuffers t ;; minibuffer可以再起如F1 f等命令
+                 ivy-use-selectable-prompt t
+                 ivy-wrap t ;; 可以loop选择
+                 ivy-count-format "(%d/%d) "
+                 ivy-height 12
+                 ivy-fixed-height-minibuffer t
+                 ivy-on-del-error-function #'ignore
+                 ivy-initial-inputs-alist nil ;; 去掉开头的^
+                 ;; ivy-use-virtual-buffers t，这个会get-file-buffer导致wcy自动加载
+                 )
+           ;; Better performance on Windows
+           (setq ivy-dynamic-exhibit-delay-ms 200)
+           
+           (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
+           (global-set-key (kbd "C-c C-r") 'ivy-resume)
+           (global-set-key (kbd "<f6>") 'ivy-resume)
+           :config
+           (ivy-mode 1)
+           (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
+           (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
+           (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
+           (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
+           (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
+           (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
+           ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
+           (push (cons #'swiper (lambda () (setq ivy-calling t)))
+                 ivy-hooks-alist)
+           (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
+                 ivy-hooks-alist)
+           (defadvice completing-read (before my-completing-read activate)
+             (ivy-mode 1))
+           (when (display-graphic-p)
+	         (custom-set-faces
+              ;; minibuffer里的当前行
+	          '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
+              ;; buffer里的当前行
+	          '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
+	          ))
+           (enable-minibuffer-auto-search-at-point)
+           )
+         
+         (use-package counsel
+           :commands(counsel-rg
+                     counsel-M-x counsel-find-file
+                     counsel-describe-function
+                     counsel-describe-variable counsel-find-library
+                     counsel-imenu)
+           :init
+           (global-set-key (kbd "M-x") 'counsel-M-x)
+           (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+           (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+           (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+           (global-set-key (kbd "<f1> l") 'counsel-find-library)
+           (global-set-key (kbd "M-m") 'counsel-imenu)
+           ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
+           (defun my-counsel-rg()
+             (interactive)
+             (require 'counsel)
+             ;; 不忽略ignore，要忽略ignore请用project search
+             (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
+               (counsel-rg nil default-directory) ; 从当前目录开始搜索
+               ))
+           (global-set-key [f2] 'my-counsel-rg)
+           :config
+           )
+         (use-package swiper
+           :commands(swiper swiper-isearch)
+           :init
+           (global-set-key "\C-s" 'swiper)
+           :config
+           (define-key swiper-map (kbd "C-s") 'swiper) ;; 结果里二次搜索，不过前两个字符输入有bug？
+           )
+         ))
+      )
 
 (use-package smart-hungry-delete
   :defer 0.8
@@ -1985,41 +1987,62 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
 (defconst lsp-use-which 3) ;; 1.eglot 2.lsp mode 3.lsp bridge
 (cond ((eq lsp-use-which 3)
-       (use-package lsp-bridge
-         :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
-         :commands(lsp-bridge-mode)
-         :init
-         (defun lsp-ensure()
-           (setq-local corfu-auto nil)  ;; let lsp-bridge control when popup completion frame    
-           (lsp-bridge-mode 1)
-           (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
+       (progn
+         (use-package lsp-bridge
+           :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+           :commands(lsp-bridge-mode)
+           :init
+           (defun lsp-ensure()
+             (setq-local corfu-auto nil)  ;; let lsp-bridge control when popup completion frame    
+             (lsp-bridge-mode 1)
+             (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
+             (when (functionp 'eglot-ensure)
+               (eglot-ensure)
+               )
+             )
+           :config
+           (require 'lsp-bridge-orderless)
+           (require 'lsp-bridge-icon)
+           ;; 解决上下键容易跟corfu上下键混起的问题，但这样某些地方需要自己C-return了
+           (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
+             (setq-local corfu-auto-prefix 1)
+             )
            )
-         :config
-         (require 'lsp-bridge-orderless)
-         (require 'lsp-bridge-icon)
-         ))
+         (use-package eglot
+           :load-path "~/.emacs.d/packages/lsp"
+           :init
+           (unless (functionp 'lsp-bridge-mode)
+             (defun lsp-ensure() (eglot-ensure)))
+           (setq eglot-confirm-server-initiated-edits nil) ; 避免code action的提示
+           :commands (eglot eglot-ensure eglot-rename)
+           :config
+           ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+           ;; (add-to-list 'eglot-stay-out-of 'flymake)
+           (when (functionp 'lsp-bridge-mode)   ;; 用lsp-bridge时，eglot只开启部分功能
+             (add-to-list 'eglot-stay-out-of 'xref)
+             (add-to-list 'eglot-stay-out-of 'company) ;; 它还会用原生的，所以要remove-hook completion-at-point-functions
+             (add-hook 'eglot-managed-mode-hook
+                       (lambda ()
+                         (remove-hook 'completion-at-point-functions #'eglot-completion-at-point t)
+                         (remove-hook 'xref-backend-functions 'eglot-xref-backend t)
+                         ))
+             )
+           (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+           (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+                 eglot-ignored-server-capabilities) 
+           ;; 临时禁止view-mode，使重命名可用
+           (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	         (setq tmp-disable-view-mode t)
+	         ad-do-it
+	         (setq tmp-disable-view-mode nil)
+	         )
+           ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+           (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+           )
+         )
+       )
       ((eq lsp-use-which 1)
-       (use-package eglot
-         :load-path "~/.emacs.d/packages/lsp"
-         :init
-         (defun lsp-ensure() (eglot-ensure))
-         (setq eglot-confirm-server-initiated-edits nil) ; 避免code action的提示
-         :commands (eglot eglot-ensure eglot-rename)
-         :config
-         ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-         ;; (add-to-list 'eglot-stay-out-of 'flymake)
-         (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-         (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-               eglot-ignored-server-capabilities) 
-         ;; 临时禁止view-mode，使重命名可用
-         (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	       (setq tmp-disable-view-mode t)
-	       ad-do-it
-	       (setq tmp-disable-view-mode nil)
-	       )
-         ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-         (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-         ))
+       ())
       ((eq lsp-use-which 2)
        (progn
          (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
