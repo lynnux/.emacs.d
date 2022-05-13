@@ -221,7 +221,24 @@ _q_uit
   (after-init . recentf-mode)
   )
 
-(if nil
+;; Save minibuffer history. 不仅仅是minibuffer!
+(use-package savehist
+  :defer 0.4
+  :config
+  (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
+  ;; The maximum length of a minibuffer history list. Once reached, the oldest
+  ;; entries get deleted.
+  (setq history-length 10000)
+  ;; Keep duplicates in the history.
+  (setq history-delete-duplicates nil)
+  (setq savehist-autosave-interval nil); save on kill only
+  ;; Save search entries as well.
+  ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
+  (setq savehist-save-minibuffer-history t)
+  (savehist-mode t))
+
+(if t
+    ;; session的C-x C-/貌似好用一点？
     (use-package session
       ;; session只保存了修改文件的point
       ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
@@ -229,7 +246,7 @@ _q_uit
       :init
       ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
       ;; menus需要保留，不然file-name-history即recent files列表不对
-      (setq session-initialize (list 'session 'keys))
+      (setq session-initialize (list 'keys))
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
@@ -252,22 +269,6 @@ _q_uit
       (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
       )
   (progn
-    ;; Save minibuffer history. 不仅仅是minibuffer!
-    (use-package savehist
-      :defer 0.4
-      :config
-      (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
-      ;; The maximum length of a minibuffer history list. Once reached, the oldest
-      ;; entries get deleted.
-      (setq history-length 10000)
-      ;; Keep duplicates in the history.
-      (setq history-delete-duplicates nil)
-      (setq savehist-autosave-interval nil); save on kill only
-      ;; Save search entries as well.
-      ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
-      (setq savehist-save-minibuffer-history t)
-      (savehist-mode t))
-
     (use-package goto-chg
       :commands(goto-last-change)
       :init
@@ -413,7 +414,8 @@ _c_: hide comment        _q_uit
 (auto-save-visited-mode 1)
 (when auto-save-visited-mode
   ;; 参考super save，对于某些命令立即调用保存，避免save buffer yes no提示
-  (setq super-save-triggers '(magit project-compile save-buffers-kill-terminal volatile-kill-buffer))
+  (setq super-save-triggers '(magit project-compile quickrun
+                                    save-buffers-kill-terminal volatile-kill-buffer))
   (defun super-save-command-advice (&rest _args) 
     (super-save-command))
   (defun super-save-advise-trigger-commands ()
@@ -456,7 +458,8 @@ _c_: hide comment        _q_uit
   )
 
 ;; from tabbar-ruler
-(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*eww*" "*xref*" "*org-roam*"))
+(setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*rg*"
+                                       "*eww*" "*xref*" "*org-roam*"))
 (defun ep-tabbar-buffer-list ()
   (delq nil
         (mapcar #'(lambda (b)
@@ -1954,6 +1957,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
   (global-set-key (kbd "C-S-f") 'my/rg-dwim)
   :config
+  (define-key rg-mode-map "w" 'scroll-down-command)
+  (define-key rg-mode-map (kbd "C-o") 'avy-goto-word-1)
   (use-package rg-result
     :defer t
     :config
@@ -1998,6 +2003,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (cond ((eq lsp-use-which 3)
        (progn
          (use-package lsp-bridge
+           :disabled
            :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
            :commands(lsp-bridge-mode)
            :init
@@ -2015,6 +2021,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            ;; 解决上下键容易跟corfu上下键混起的问题，但这样某些地方需要自己C-return了
            (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
              (setq-local corfu-auto-prefix 1)
+             )
+           )
+         
+         ;; 当lsp bridge被禁用时，我们只用它的lsp-bridge-icon来配置corfu的图标显示
+         (unless (functionp 'lsp-bridge-mode)
+           (use-package lsp-bridge-icon
+             :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+             :after(corfu)
              )
            )
          (use-package eglot
@@ -2703,8 +2717,7 @@ _q_uit
       ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
       (use-package all-the-icons
         :load-path "~/.emacs.d/themes/all-the-icons.el-master"
-        :defer t
-        
+        :defer t 
         )
       ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
       (use-package all-the-icons-dired
