@@ -183,6 +183,13 @@ _q_uit
 	)
   )
 
+(use-package help-mode
+  :defer t
+  :config
+  (define-key help-mode-map "w" 'scroll-down-command)
+  (define-key help-mode-map (kbd "M-p") 'help-go-back)
+  (define-key help-mode-map (kbd "M-n") 'help-go-forward)
+  )
 
 ;; 保存cursor位置
 (use-package saveplace
@@ -225,22 +232,6 @@ _q_uit
   (after-init . recentf-mode)
   )
 
-;; Save minibuffer history. 不仅仅是minibuffer!
-(use-package savehist
-  :defer 0.4
-  :config
-  (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
-  ;; The maximum length of a minibuffer history list. Once reached, the oldest
-  ;; entries get deleted.
-  (setq history-length 10000)
-  ;; Keep duplicates in the history.
-  (setq history-delete-duplicates nil)
-  (setq savehist-autosave-interval nil); save on kill only
-  ;; Save search entries as well.
-  ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
-  (setq savehist-save-minibuffer-history t)
-  (savehist-mode t))
-
 (if t
     ;; session的C-x C-/貌似好用一点？
     (use-package session
@@ -250,7 +241,7 @@ _q_uit
       :init
       ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
       ;; menus需要保留，不然file-name-history即recent files列表不对
-      (setq session-initialize (list 'keys))
+      (setq session-initialize (list 'session 'keys)) ; 如果要重新打开文件也可以jump to last，那么就需要'session
       ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
       (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
       ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
@@ -273,6 +264,23 @@ _q_uit
       (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
       )
   (progn
+    ;; Save minibuffer history. 不仅仅是minibuffer!
+    (use-package savehist
+      :defer 0.4
+      :config
+      (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
+      ;; The maximum length of a minibuffer history list. Once reached, the oldest
+      ;; entries get deleted.
+      (setq history-length 10000)
+      ;; Keep duplicates in the history.
+      (setq history-delete-duplicates nil)
+      (setq savehist-autosave-interval nil); save on kill only
+      ;; Save search entries as well.
+      ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
+      (setq savehist-save-minibuffer-history t)
+      (savehist-mode t))
+
+    ;; 跟indentinator有冲突，会跳到indentinator修改的地方
     (use-package goto-chg
       :commands(goto-last-change)
       :init
@@ -1126,7 +1134,8 @@ _q_uit
            ;; vertico-reverse.el    reverse结果列表
 
            (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
-           (define-key vertico-map (kbd "C-r") 'vertico-previous) ; 不支持在结果里搜索
+           (define-key vertico-map (kbd "C-r") 'vertico-previous)
+           (define-key vertico-map (kbd "C-l") 'vertico-directory-delete-word)
 
            ;; 习惯只要underline，不随主题改变
 	       (custom-set-faces
@@ -1149,6 +1158,9 @@ _q_uit
                (let ((disable-for-vertico-repeat t))
                  ad-do-it
                  )))
+           (use-package vertico-directory
+             :commands(vertico-directory-delete-word)
+             )
            (use-package vertico-quick
              :commands(vertico-quick-exit)
              :init
@@ -2048,7 +2060,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (cond ((eq lsp-use-which 3)
        (progn
          (use-package lsp-bridge
-           :disabled
            :load-path "C:/Users/Administrator/Desktop/lsp-bridge"
            :commands(lsp-bridge-mode)
            :init
@@ -2062,12 +2073,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
              )
            :config
            ;; 解决上下键容易跟corfu上下键混起的问题，但这样某些地方需要自己C-return了
-           (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
-             (setq-local corfu-auto-prefix 1)
-             )
+           ;; (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
+           ;;   (setq-local corfu-auto-prefix 1)
+           ;;   )
            )
          
          (use-package eglot
+           :disabled
            :load-path "~/.emacs.d/packages/lsp"
            :init
            (unless (functionp 'lsp-bridge-mode)
