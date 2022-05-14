@@ -592,6 +592,10 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
+         ;; 拷贝lsp-bridge的这两个设置了
+         (load "corfu/corfu-icon")
+         (load "corfu/corfu-orderless")
+         (add-hook 'corfu-mode-hook 'corfu-orderless-setup)
 
          (use-package cape
            :load-path "~/.emacs.d/packages/corfu/cape-main"
@@ -2057,23 +2061,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
              )
            :config
-           (require 'lsp-bridge-orderless)
-           (require 'lsp-bridge-icon)
            ;; 解决上下键容易跟corfu上下键混起的问题，但这样某些地方需要自己C-return了
            (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
              (setq-local corfu-auto-prefix 1)
              )
            )
          
-         ;; 当lsp bridge被禁用时，我们只用它的lsp-bridge-icon来配置corfu的图标显示
-         (when (and (functionp 'global-corfu-mode) (not (functionp 'lsp-bridge-mode)))
-           ;; use-package总是会执行:load-path，无论有没有unless什么的
-           (my-eval-string "(use-package lsp-bridge-icon
-                              :load-path \"~/.emacs.d/packages/lsp/lsp-bridge-master\"
-                              :init
-                              :after(corfu)
-                              )")
-           )
          (use-package eglot
            :load-path "~/.emacs.d/packages/lsp"
            :init
