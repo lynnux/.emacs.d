@@ -572,9 +572,10 @@ _q_uit
     )  
   )
 
-(defconst completion-use-which 2); 1 corfu 2.company
+(defconst completion-use-which 1); 1 corfu 2.company
 (cond ((eq completion-use-which 1)
-       ;; company加图后有bug先用这个了
+       ;; corfu的原理是添加completion-at-point-functions，很标准的做法
+       ;; company机制不清楚。eglot+ctags用corfu好配一点
        (use-package corfu
          :defer 1
          :load-path "~/.emacs.d/packages/corfu/corfu-main"
@@ -582,7 +583,7 @@ _q_uit
          :init
          (setq corfu-cycle t
                corfu-auto t
-               corfu-auto-prefix 2
+               corfu-auto-prefix 1
                )
          ;; lsp bridge依赖corfu-info
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
@@ -591,6 +592,30 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
+
+         (use-package cape
+           :load-path "~/.emacs.d/packages/corfu/cape-main"
+           :config
+           ;; company虽然没用，但是use-package会自动设置load-path，所以没问题
+           (require 'company)
+           (require 'company-dabbrev)
+           (require 'cape-keyword)
+           (require 'company-yasnippet)
+           
+           (load "corfu/company-ctags.el")
+           (when (functionp 'eglot-ensure)
+             ;; eglot貌似会覆盖之前的，所以在要它之前设置completion-at-point-functions
+             (add-hook 'eglot-managed-mode-hook
+                       (lambda()
+                         (dolist (c (mapcar #'cape-company-to-capf
+                                            (list #'company-ctags
+                                                  #'company-yasnippet
+                                                  #'company-dabbrev
+                                                  )))
+                           (add-to-list 'completion-at-point-functions c))
+                         (add-to-list 'completion-at-point-functions #'cape-keyword)
+                         )))
+           )
          )       
        )
       ((eq completion-use-which 2)
@@ -918,12 +943,12 @@ _q_uit
     (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
 
     (define-key treemacs-mode-map (kbd "C-x C-d")
-                ;; 抄自treemacs-visit-node-in-external-application
-                (lambda () (interactive
-                            (-if-let (path (treemacs--prop-at-point :path))
-                                (w32explore path)
-                              (treemacs-pulse-on-failure "Nothing to open here."))
-                            )))
+      ;; 抄自treemacs-visit-node-in-external-application
+      (lambda () (interactive
+                  (-if-let (path (treemacs--prop-at-point :path))
+                      (w32explore path)
+                    (treemacs-pulse-on-failure "Nothing to open here."))
+                  )))
     
     (when (display-graphic-p)
       ;; 改变高亮行背景色
@@ -1212,7 +1237,7 @@ _q_uit
            ;; 随时选择路径
            (use-package consult-dir
              :commands(consult-dir)
-             :config
+             :init
              (define-key vertico-map "\M-D" 'consult-dir))
            )
 
@@ -1393,12 +1418,12 @@ _q_uit
            :config
            ;; helm-locate即everything里打开所在位置
 	       (define-key helm-generic-files-map (kbd "C-x C-d")
-	                   (lambda ()
-	                     (interactive)
-	                     (with-helm-alive-p
-		                  (helm-exit-and-execute-action (lambda (file)
-						                                  (w32explore file)
-						                                  ))))))
+	         (lambda ()
+	           (interactive)
+	           (with-helm-alive-p
+		        (helm-exit-and-execute-action (lambda (file)
+						                        (w32explore file)
+						                        ))))))
          
          :diminish
          :config
@@ -1842,6 +1867,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       :bind-keymap ("C-;" . project-prefix-map)
       :commands(project-compile project-find-regexp)
       :init
+      ;; eglot+ctags补全是不错的方案(clangd flymake很多错误时补全失灵)
+      (defun my/generate-tags()
+        (interactive)
+        ;; 由于use-package自动设置:load-path，所以是可以使用的
+        (require 'projectile)
+        (call-interactively 'projectile-regenerate-tags)
+        )
       ;; p切换project时显示的命令
       (setq project-switch-commands
             '((?f "File" my-project-find-file)
@@ -1859,6 +1891,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "s" 'my-project-search)
       (define-key project-prefix-map "S" 'project-shell)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
+      (define-key project-prefix-map "t" 'my/generate-tags)
+      
       :config
       ;; 好像自动识别find的输出了(git里的find)
       ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
@@ -1952,11 +1986,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; type为all，不然h就会当成c从而忽略了cpp文件。要指定类型可以在rg buffer按f修改
     (unless (functionp 'rg-dwim-project-dir-type-all)
       (rg-define-search rg-dwim-project-dir-type-all
-        :query point
-        :format literal
-        :files "everything"
-        :dir project
-        )
+                        :query point
+                        :format literal
+                        :files "everything"
+                        :dir project
+                        )
       )
     (call-interactively 'rg-dwim-project-dir-type-all)
     )
@@ -2393,20 +2427,20 @@ _q_uit
     (dolist (key '( [remap delete-char]
 		            [remap delete-forward-char]))
       (define-key grammatical-edit-mode-map key
-                  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-                  '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		                      :filter (lambda (&optional _)
-			                            (unless (looking-at-p "[[:space:]\n]")
-			                              #'grammatical-edit-forward-delete)))))
+        ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+        '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		            :filter (lambda (&optional _)
+			                  (unless (looking-at-p "[[:space:]\n]")
+			                    #'grammatical-edit-forward-delete)))))
 
     (dolist (key '([remap backward-delete-char-untabify]
 		           [remap backward-delete-char]
 		           [remap delete-backward-char]))
       (define-key grammatical-edit-mode-map key
-                  '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		                      :filter (lambda (&optional _)
-			                            (unless (looking-back "[[:space:]\n]" 1)
-			                              #'grammatical-edit-backward-delete)))))
+        '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		            :filter (lambda (&optional _)
+			                  (unless (looking-back "[[:space:]\n]" 1)
+			                    #'grammatical-edit-backward-delete)))))
     )
   )
 

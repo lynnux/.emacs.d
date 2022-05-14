@@ -94,3 +94,4 @@ packages/minibuffer/compat.el-master/*
 /packages/minibuffer/embark-master/
 /packages/corfu/corfu-main/*
 /packages/lsp/lsp-bridge-master/
+/packages/corfu/cape-main/
