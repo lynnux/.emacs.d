@@ -11,6 +11,10 @@
 (add-to-list 'load-path
 	         "~/.emacs.d/packages")
 
+;; 用于use-package避免自动设置:laod-path
+(defun my-eval-string (string)
+  (eval (car (read-from-string (format "(progn %s)" string)))))
+
 ;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
@@ -568,72 +572,75 @@ _q_uit
     )  
   )
 
-;; company加图后有bug先用这个了
-(use-package corfu
-  :defer 1
-  :load-path "~/.emacs.d/packages/corfu/corfu-main"
-  :init
-  (setq corfu-cycle t
-        corfu-auto t
-        corfu-auto-prefix 2
-        )
-  ;; lsp bridge依赖corfu-info
-  (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
-  :config
-  (global-corfu-mode)
-  (global-set-key (kbd "<C-return>") 'completion-at-point)
-  (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
-  (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-  )
+(defconst completion-use-which 2); 1 corfu 2.company
+(cond ((eq completion-use-which 1)
+       ;; company加图后有bug先用这个了
+       (use-package corfu
+         :defer 1
+         :load-path "~/.emacs.d/packages/corfu/corfu-main"
+         :commands(global-corfu-mode)
+         :init
+         (setq corfu-cycle t
+               corfu-auto t
+               corfu-auto-prefix 2
+               )
+         ;; lsp bridge依赖corfu-info
+         (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
+         :config
+         (global-corfu-mode)
+         (global-set-key (kbd "<C-return>") 'completion-at-point)
+         (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
+         (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
+         )       
+       )
+      ((eq completion-use-which 2)
+       ;; company mode，这个支持comment中文，但不支持补全history
+       (use-package company
+         :defer 1
+         :load-path "~/.emacs.d/packages/company-mode"
+         :diminish
+         :init
+         (setq-default company-dabbrev-other-buffers 'all
+                       company-tooltip-align-annotations t)
+         (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
+          company-minimum-prefix-length 2
+          company-require-match nil
+          company-dabbrev-ignore-case nil
+          company-dabbrev-downcase nil
+          company-show-numbers t)
+         :config
+         (global-company-mode)
+         (when use-my-face
+           (set-face-attribute 'company-tooltip-selection nil :background "#666"))
+         
+         ;; 句尾TAB就很烦了。。
+         ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
+         ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
+         (define-key company-mode-map [remap completion-at-point] 'company-complete)
+         (define-key company-active-map (kbd "M-/") 'company-other-backend)
+         (define-key company-active-map (kbd "C-n") 'company-select-next)
+         (define-key company-active-map (kbd "C-p") 'company-select-previous)
+         (define-key company-active-map (kbd "M-n") 'company-next-page)
+         (define-key company-active-map (kbd "M-p") 'company-previous-page)
+         ;; 这就是我想要的啊！跟bash里的tab类似
+         (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
+         (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
+         (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
+         ;; CTRL+数字快速选择
+         (dotimes (i 10)
+	       (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
 
-(when nil
-  ;; company mode，这个支持comment中文，但不支持补全history
-  (use-package company
-    :defer 1
-    :load-path "~/.emacs.d/packages/company-mode"
-    :diminish
-    :init
-    (setq-default company-dabbrev-other-buffers 'all
-                  company-tooltip-align-annotations t)
-    (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
-     company-minimum-prefix-length 2
-     company-require-match nil
-     company-dabbrev-ignore-case nil
-     company-dabbrev-downcase nil
-     company-show-numbers t)
-    :config
-    (global-company-mode)
-    (when use-my-face
-      (set-face-attribute 'company-tooltip-selection nil :background "#666"))
-    
-    ;; 句尾TAB就很烦了。。
-    ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
-    ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
-    (define-key company-mode-map [remap completion-at-point] 'company-complete)
-    (define-key company-active-map (kbd "M-/") 'company-other-backend)
-    (define-key company-active-map (kbd "C-n") 'company-select-next)
-    (define-key company-active-map (kbd "C-p") 'company-select-previous)
-    (define-key company-active-map (kbd "M-n") 'company-next-page)
-    (define-key company-active-map (kbd "M-p") 'company-previous-page)
-    ;; 这就是我想要的啊！跟bash里的tab类似
-    (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
-    (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
-    (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-    ;; CTRL+数字快速选择
-    (dotimes (i 10)
-	  (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-
-    ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
-    ;; (with-eval-after-load 'dash
-    ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
-    ;;   (require 'company-tabnine)
-    ;;   (add-to-list 'company-backends #'company-tabnine)
-    ;;   )
-    
-    (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
-    (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-    )
-  )
+         ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
+         ;; (with-eval-after-load 'dash
+         ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
+         ;;   (require 'company-tabnine)
+         ;;   (add-to-list 'company-backends #'company-tabnine)
+         ;;   )
+         
+         (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
+         (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
+         )     
+       ))
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (use-package wcy-desktop
@@ -2004,7 +2011,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
        (progn
          (use-package lsp-bridge
            :disabled
-           :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+           :load-path "C:/Users/Administrator/Desktop/lsp-bridge"
            :commands(lsp-bridge-mode)
            :init
            (defun lsp-ensure()
@@ -2025,11 +2032,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            )
          
          ;; 当lsp bridge被禁用时，我们只用它的lsp-bridge-icon来配置corfu的图标显示
-         (unless (functionp 'lsp-bridge-mode)
-           (use-package lsp-bridge-icon
-             :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
-             :after(corfu)
-             )
+         (when (and (functionp 'global-corfu-mode) (not (functionp 'lsp-bridge-mode)))
+           ;; use-package总是会执行:load-path，无论有没有unless什么的
+           (my-eval-string "(use-package lsp-bridge-icon
+                              :load-path \"~/.emacs.d/packages/lsp/lsp-bridge-master\"
+                              :init
+                              :after(corfu)
+                              )")
            )
          (use-package eglot
            :load-path "~/.emacs.d/packages/lsp"
