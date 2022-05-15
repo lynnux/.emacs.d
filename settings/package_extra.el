@@ -1193,14 +1193,16 @@ _q_uit
              ;;         (symbol (vertico-sort-function . vertico-sort-alpha))))
              (define-key vertico-map "\M-V" #'vertico-multiform-vertical)
              :config
-             (vertico-multiform-mode)
-             )
+             (vertico-multiform-mode))
            
            (use-package vertico-buffer
              :commands(vertico-buffer-mode)
              :init
              ;; (setq vertico-buffer-display-action '(display-buffer-in-side-window))
              )
+           (use-package vertico-mouse
+             :config
+             (vertico-mouse-mode))
 
            ;; 启动用无序匹配
            (use-package orderless
@@ -2060,6 +2062,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (cond ((eq lsp-use-which 3)
        (progn
          (use-package lsp-bridge
+           :disabled
            :load-path "C:/Users/Administrator/Desktop/lsp-bridge"
            :commands(lsp-bridge-mode)
            :init
@@ -2079,7 +2082,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            )
          
          (use-package eglot
-           :disabled
            :load-path "~/.emacs.d/packages/lsp"
            :init
            (unless (functionp 'lsp-bridge-mode)
@@ -2454,9 +2456,26 @@ _q_uit
   )
 
 ;; 由emacs module实现ctrl tab切换窗口
-(ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
+;; (ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
+(ignore-errors (module-load "F:/prj/rust/pop-select/target/release/pop_select.dll"))
 
-(when (fboundp 'pop-select/select)
+(when (functionp 'pop-select/gui-set-transparent-all-frame)
+  (defvar cur-transparent 255)
+  (defconst step-transparent 20)
+  (pop-select/gui-set-transparent-all-frame cur-transparent)
+  (defun dec-transparent()
+    (interactive)
+    (setq cur-transparent (min 255 (+ cur-transparent step-transparent)))
+    (pop-select/gui-set-transparent-all-frame cur-transparent))
+  (defun inc-transparent()
+    (interactive)
+    (setq cur-transparent (max 0 (- cur-transparent step-transparent)))
+    (pop-select/gui-set-transparent-all-frame cur-transparent))
+  (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
+  (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
+  )
+
+(when (fboundp 'pop-select/pop-select)
   (defun my-pop-select(&optional backward)
     (interactive)
     (let* ((myswitch-buffer-list (copy-sequence (ep-tabbar-buffer-list)
@@ -2467,10 +2486,10 @@ _q_uit
       (cl-dolist (buf myswitch-buffer-list)
         (setq vec_name (vconcat vec_name (list (buffer-name buf)))))
       ;; 返回序号
-      (setq sel (pop-select/select vec_name (if backward
-                                                (1- (length vec_name))
-                                              1
-                                              )))
+      (setq sel (pop-select/pop-select vec_name (if backward
+                                                    (1- (length vec_name))
+                                                  1
+                                                  )))
       (let ((buf (switch-to-buffer (nth sel myswitch-buffer-list))))
         (when (and (bufferp buf) (featurep 'wcy-desktop))
 	      (with-current-buffer buf
@@ -2485,6 +2504,31 @@ _q_uit
 	                (kbd "<C-S-iso-lefttab>"))
                   (lambda ()(interactive)
                     (my-pop-select t)))
+  )
+
+(when (fboundp 'pop-select/beacon-set-parameters)
+  ;; 51afef
+  (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
+  (use-package beacon
+    :defer 1.5
+    :init
+    (setq beacon-blink-when-focused t)
+    (setq beacon-blink-delay 0.01)
+    (setq beacon-blink-duration 0.2)
+    (setq beacon-blink-when-window-scrolls nil) ; 开启了auto save，保存时都会闪故而屏蔽
+    :config
+    (beacon-mode 1)
+    (defadvice beacon-blink (around my-beacon-blink activate)
+      ;; 目前偶尔不是emacs时也弹窗
+      ;; (message (concat (symbol-name this-command) " " (symbol-name last-command)))
+      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
+        (let ((p (window-absolute-pixel-position)))
+          (when p
+            (pop-select/beacon-blink (car p) ; x
+                                     (cdr p) ; y
+                                     (truncate (* beacon-blink-duration 1000)) ; timer
+                                     (truncate (* beacon-blink-delay 1000)) ; delay
+                                     ))))))
   )
 
 ;; jump后自动把屏幕居中
@@ -2618,35 +2662,6 @@ _q_uit
                                        (funcall 'diff-hl-show-hunk-inline-popup buffer _ignored-line)
                                        (setq set-transient-map-exit-func (set-transient-map diff-hl-inline-popup-transient-mode-map1 t 'diff-hl-inline-popup-hide))
                                        )))
-  )
-
-
-(ignore-errors (module-load
-                (expand-file-name "~/.emacs.d/bin/emacs_beacon.dll")
-                ))
-(when (fboundp 'emacs-beacon/set-window-parameters)
-  ;; 51afef
-  (emacs-beacon/set-window-parameters 300 20 #x51 #xaf #xef 50)
-  (use-package beacon
-    :defer 1.5
-    :init
-    (setq beacon-blink-when-focused t)
-    (setq beacon-blink-delay 0.01)
-    (setq beacon-blink-duration 0.2)
-    (setq beacon-blink-when-window-scrolls nil) ; 开启了auto save，保存时都会闪故而屏蔽
-    :config
-    (beacon-mode 1)
-    (defadvice beacon-blink (around my-beacon-blink activate)
-      ;; 目前偶尔不是emacs时也弹窗
-      ;; (message (concat (symbol-name this-command) " " (symbol-name last-command)))
-      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
-        (let ((p (window-absolute-pixel-position)))
-          (when p
-            (emacs-beacon/beacon (car p) ; x
-                                 (cdr p) ; y
-                                 (truncate (* beacon-blink-duration 1000)) ; timer
-                                 (truncate (* beacon-blink-delay 1000)) ; delay
-                                 ))))))
   )
 
 (use-package maple-preview
