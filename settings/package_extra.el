@@ -1213,12 +1213,13 @@ _q_uit
 
            ;; 美化
            (use-package marginalia
+             :commands(marginalia-mode)
              :bind (("M-A" . marginalia-cycle)
                     :map minibuffer-local-map
                     ("M-A" . marginalia-cycle))
              :init
-             :config
              (marginalia-mode)
+             :config
              )
 
            (use-package embark
@@ -1232,6 +1233,7 @@ _q_uit
              (setq
               prefix-help-command #'embark-prefix-help-command
               embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
+              embark-quit-after-action nil     ;; 默认就退出minibuffer了
               )
              :config
              ;; C-h可以输入命令，有时候显示不全或许记不住命令行
