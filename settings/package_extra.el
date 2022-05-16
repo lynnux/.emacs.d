@@ -610,6 +610,8 @@ _q_uit
 
          (use-package cape
            :load-path "~/.emacs.d/packages/corfu/cape-main"
+           :init
+           (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
            ;; company虽然没用，但是use-package会自动设置load-path，所以没问题
            (require 'company)
