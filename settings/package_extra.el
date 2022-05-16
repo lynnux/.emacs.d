@@ -1131,8 +1131,9 @@ _q_uit
            ;; vertico-reverse.el    reverse结果列表
 
            (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
-           (define-key vertico-map (kbd "C-r") 'vertico-previous)
+           ;; (define-key vertico-map (kbd "C-r") 'vertico-previous) ;; C-r可以复制
            (define-key vertico-map (kbd "C-l") 'vertico-directory-delete-word)
+           (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
 
            ;; 习惯只要underline，不随主题改变
 	       (custom-set-faces
