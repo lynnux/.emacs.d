@@ -731,7 +731,7 @@ _q_uit
                     "helm-occur" "helm-imenu-in-all-buffers"  
                     "session-jump-to-last-change" "org-roam-preview-visit" "counsel-rg"
                     "swiper" "consult-line""consult-ripgrep"
-                    "my-consult-ripgrep" "embark-act"
+                    "my-consult-ripgrep" "embark-act" "consult-imenu-multi" "keyboard-escape-quit"
                     ))
     (add-to-list 'jl-insert-marker-funcs one)
     )
@@ -1132,7 +1132,29 @@ _q_uit
 
            (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
            ;; (define-key vertico-map (kbd "C-r") 'vertico-previous) ;; C-r可以复制
-           (define-key vertico-map (kbd "C-l") 'vertico-directory-delete-word)
+           (defun my/vertico-C-l ()
+             "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
+	         (interactive)
+             ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
+             (if (eq 'consult-grep
+                     (completion-metadata-get
+                      (completion-metadata
+                       (buffer-substring (minibuffer-prompt-end)
+                                         (max (minibuffer-prompt-end) (point)))
+                       minibuffer-completion-table
+                       minibuffer-completion-predicate)
+                      'category))
+                 (progn
+                   ;; 设置当前目录为父目录
+                   (setq default-directory (file-name-directory (directory-file-name default-directory)))
+                   ;; 参考enable-minibuffer-auto-search-at-point获取当前输入
+                   (let ((text (substring-no-properties (or (car-safe vertico--input) ""))))
+                     (delete-minibuffer-contents) ;; 参考vertico-directory-up
+                     (insert text)
+                     ))
+               (call-interactively 'vertico-directory-delete-word)
+               ))
+           (define-key vertico-map (kbd "C-l") 'my/vertico-C-l)
            (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
 
            ;; 习惯只要underline，不随主题改变
@@ -2571,6 +2593,7 @@ _q_uit
     )
   (scroll-on-jump-advice-add jl-jump-backward) ; 有效
   (scroll-on-jump-advice-add jl-jump-forward) ; 有效
+  (scroll-on-jump-advice-add push-button) ; 有效
   
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
