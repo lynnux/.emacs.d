@@ -100,6 +100,9 @@ _q_uit
   (define-key dired-mode-map "1" 'delete-other-windows)
   (define-key dired-mode-map "\C-t" 'mark-word) ; 还有t, U等mark快捷键
 
+  ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
+  (define-key dired-mode-map (kbd "C-c C-p") 'wdired-change-to-wdired-mode)
+  
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
   (require 'dired-quick-sort)
@@ -628,7 +631,7 @@ _q_uit
                          (add-to-list 'completion-at-point-functions #'cape-keyword)
                          )))
            )
-         )       
+         )
        )
       ((eq completion-use-which 2)
        ;; company mode，这个支持comment中文，但不支持补全history
@@ -732,12 +735,6 @@ _q_uit
                     ))
     (add-to-list 'jl-insert-marker-funcs one)
     )
-
-  (global-set-key [(control ?\,)] 'my-save-pos) ; 手动触发记录位置
-  (defun my-save-pos()
-    (interactive)
-    )
-  (add-to-list 'jl-insert-marker-funcs "my-save-pos")
   )
 
 (use-package iss-mode
@@ -955,12 +952,12 @@ _q_uit
     (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
 
     (define-key treemacs-mode-map (kbd "C-x C-d")
-      ;; 抄自treemacs-visit-node-in-external-application
-      (lambda () (interactive
-                  (-if-let (path (treemacs--prop-at-point :path))
-                      (w32explore path)
-                    (treemacs-pulse-on-failure "Nothing to open here."))
-                  )))
+                ;; 抄自treemacs-visit-node-in-external-application
+                (lambda () (interactive
+                            (-if-let (path (treemacs--prop-at-point :path))
+                                (w32explore path)
+                              (treemacs-pulse-on-failure "Nothing to open here."))
+                            )))
     
     (when (display-graphic-p)
       ;; 改变高亮行背景色
@@ -1236,13 +1233,9 @@ _q_uit
               embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
               )
              :config
+             ;; C-h可以输入命令，有时候显示不全或许记不住命令行
              (define-key vertico-map (kbd "C-c C-o") 'embark-export)
-             ;; (define-key vertico-map (kbd "C-c C-c") 'embark-act)
-             ;; Hide the mode line of the Embark live/completions buffers
-             ;; (add-to-list 'display-buffer-alist
-             ;;              '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-             ;;                nil
-             ;;                (window-parameters (mode-line-format . none))))
+             (define-key vertico-map (kbd "C-c C-c") 'embark-act)
              )
            ;; Consult users will also want the embark-consult package.
            (use-package embark-consult
@@ -1304,12 +1297,24 @@ _q_uit
            (global-set-key [f2] 'my-consult-ripgrep)
            (global-set-key [S-f2] 'my-consult-ripgrep-only-current-dir)
            
-           (global-set-key (kbd "C-x C-b") 'consult-buffer) ; 含buffer, recentf，bookmark！还带预览功能！
-           (global-set-key (kbd "C-s") 'consult-line)
+           ;; 按f/b/m/p加上空格可以只显示相应files/buffer/bookmark/project！
+           (global-set-key (kbd "C-x C-b") 'consult-buffer)
+           (global-set-key (kbd "C-s") 'consult-line)  ;; consult-line -> embark-export to occur-mode 按e进行编辑，是实时更新buffer的
            (global-set-key [remap switch-to-buffer] 'consult-buffer)
            (global-set-key [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
            (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
            (global-set-key [remap goto-line] 'consult-goto-line)
+
+           (use-package consult-imenu
+             :commands(consult-imenu consult-imenu-multi)
+             :init
+             ;; 所有project打开的buffer中查找，太爽了！因为函数名/变量等没有多少，所以没有效率问题
+             (global-set-key [(control ?\,)] 'consult-imenu-multi)
+             (global-set-key (kbd "M-m") 'consult-imenu)
+             )
+           (use-package consult-org
+             :commands(consult-org-agenda) ; 这个很卡啊，还是不替换C-c a了(C-c a再按t也比较卡，应该是org mode问题)
+             )
            :config
            ;; 含中文字符搜索时添加--pre rgpre
            (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
@@ -1318,8 +1323,8 @@ _q_uit
                    ad-do-it
                    )
                ad-do-it))
+           (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)
            )
-
          )       
        )
       ((eq minibuffer-use-which 2)
@@ -1369,6 +1374,7 @@ _q_uit
          (global-set-key (kbd "C-c C-r") 'helm-resume) ;继续刚才的session
          (global-set-key (kbd "<f6>") 'helm-resume)
          (global-set-key (kbd "M-m") 'helm-imenu)
+         (global-set-key [(control ?\,)] 'helm-imenu)
          (global-set-key [(control f2)]
                          (lambda () (interactive)
 				           (require 'vc)
@@ -1436,12 +1442,12 @@ _q_uit
            :config
            ;; helm-locate即everything里打开所在位置
 	       (define-key helm-generic-files-map (kbd "C-x C-d")
-	         (lambda ()
-	           (interactive)
-	           (with-helm-alive-p
-		        (helm-exit-and-execute-action (lambda (file)
-						                        (w32explore file)
-						                        ))))))
+	                   (lambda ()
+	                     (interactive)
+	                     (with-helm-alive-p
+		                  (helm-exit-and-execute-action (lambda (file)
+						                                  (w32explore file)
+						                                  ))))))
          
          :diminish
          :config
@@ -1576,6 +1582,7 @@ _q_uit
            (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
            (global-set-key (kbd "<f1> l") 'counsel-find-library)
            (global-set-key (kbd "M-m") 'counsel-imenu)
+           (global-set-key [(control ?\,)] 'counsel-imenu)
            ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
            (defun my-counsel-rg()
              (interactive)
@@ -1614,7 +1621,12 @@ _q_uit
   :config
   (defun turn-on-indentinator-mode()
 	(unless (or (eq major-mode 'minibuffer-mode);;(derived-mode-p 'c-mode 'c++-mode)
-		        (eq major-mode 'fundamental-mode)) ;;(eq major-mode 'python-mode)
+		        (eq major-mode 'fundamental-mode)
+                (eq major-mode 'occur-edit-mode)
+                (eq major-mode 'wdired-mode)
+                (eq major-mode 'grep-mode)
+                (eq major-mode 'dired-mode)
+                )
 	  (indentinator-mode)))
   (define-globalized-minor-mode global-indentinator-mode indentinator-mode turn-on-indentinator-mode)
   (global-indentinator-mode 1)
@@ -2043,15 +2055,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             )
         ad-do-it))
     )
-  (use-package wgrep
-    :defer t
-    :config
-    ;; 使wrep可编辑
-    (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
-      (setq tmp-disable-view-mode t)
-      ad-do-it
-      (setq tmp-disable-view-mode nil)
-      )
+  )
+
+;; consult-grep -> embark-export to grep-mode
+;; grep mode里C-c C-p开启编辑，C-c C-c完成，C-c C-k放弃编辑
+(use-package wgrep
+  :after(grep)
+  :config
+  ;; 使wrep可编辑
+  (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
+    (setq tmp-disable-view-mode t)
+    ad-do-it
+    (setq tmp-disable-view-mode nil)
     )
   )
 
@@ -2434,20 +2449,20 @@ _q_uit
     (dolist (key '( [remap delete-char]
 		            [remap delete-forward-char]))
       (define-key grammatical-edit-mode-map key
-        ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-        '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		            :filter (lambda (&optional _)
-			                  (unless (looking-at-p "[[:space:]\n]")
-			                    #'grammatical-edit-forward-delete)))))
+                  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+                  '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		                      :filter (lambda (&optional _)
+			                            (unless (looking-at-p "[[:space:]\n]")
+			                              #'grammatical-edit-forward-delete)))))
 
     (dolist (key '([remap backward-delete-char-untabify]
 		           [remap backward-delete-char]
 		           [remap delete-backward-char]))
       (define-key grammatical-edit-mode-map key
-        '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		            :filter (lambda (&optional _)
-			                  (unless (looking-back "[[:space:]\n]" 1)
-			                    #'grammatical-edit-backward-delete)))))
+                  '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		                      :filter (lambda (&optional _)
+			                            (unless (looking-back "[[:space:]\n]" 1)
+			                              #'grammatical-edit-backward-delete)))))
     )
   )
 
@@ -2458,19 +2473,31 @@ _q_uit
 ;; 由emacs module实现ctrl tab切换窗口
 ;; (ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
 (ignore-errors (module-load "F:/prj/rust/pop-select/target/release/pop_select.dll"))
+(ignore-errors (module-load "H:/prj/rust/pop-select/target/release/pop_select.dll"))
 
-(when (functionp 'pop-select/gui-set-transparent-all-frame)
+(when (functionp 'pop-select/transparent-set-background)
   (defvar cur-transparent 255)
   (defconst step-transparent 20)
-  (pop-select/gui-set-transparent-all-frame cur-transparent)
+  ;; (pop-select/gui-set-transparent-all-frame cur-transparent)
   (defun dec-transparent()
     (interactive)
     (setq cur-transparent (min 255 (+ cur-transparent step-transparent)))
-    (pop-select/gui-set-transparent-all-frame cur-transparent))
+    (let* ((rgb (color-name-to-rgb (face-background 'default)))
+           (r (round (*(nth 0 rgb) 255)))
+           (g (round (*(nth 0 rgb) 255)))
+           (b (round (*(nth 0 rgb) 255))))
+      (pop-select/transparent-set-background cur-transparent r g b)
+      )
+    )
   (defun inc-transparent()
     (interactive)
     (setq cur-transparent (max 0 (- cur-transparent step-transparent)))
-    (pop-select/gui-set-transparent-all-frame cur-transparent))
+    (let* ((rgb (color-name-to-rgb (face-background 'default)))
+           (r (round (*(nth 0 rgb) 255)))
+           (g (round (*(nth 0 rgb) 255)))
+           (b (round (*(nth 0 rgb) 255))))
+      (pop-select/transparent-set-background cur-transparent r g b)
+      ))
   (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
   (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
   )
