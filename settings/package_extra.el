@@ -502,7 +502,8 @@ _c_: hide comment        _q_uit
               tab-line-close-button-show t
               tab-line-new-button-show nil)
         :config
-        (global-tab-line-mode 1)  
+        (global-tab-line-mode 1)
+        (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
         )
       
       )
@@ -528,7 +529,7 @@ _c_: hide comment        _q_uit
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   (defun turn-on-symbol-overlay-mode()
-	(unless (or (eq major-mode 'minibuffer-mode)
+	(unless (or (memq major-mode '(minibuffer-mode))
 		        nil)
 	  (symbol-overlay-mode)))
   (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode turn-on-symbol-overlay-mode)
@@ -808,9 +809,7 @@ _q_uit
 (defun ggtag-all-buffer (enable)
   (cl-dolist (buffer (buffer-list))
     (with-current-buffer buffer
-      (when (or (eq major-mode 'c++-mode)
-		        (eq major-mode 'c-mode)
-		        (eq major-mode 'objc-mode))
+      (when (memq major-mode '(c++-mode c-mode objc-mode))
 	    (ggtags-mode enable)))))
 (defun ggtag-toggle()
   (interactive)
@@ -1670,12 +1669,14 @@ _q_uit
   :diminish
   :config
   (defun turn-on-indentinator-mode()
-	(unless (or (eq major-mode 'minibuffer-mode);;(derived-mode-p 'c-mode 'c++-mode)
-		        (eq major-mode 'fundamental-mode)
-                (eq major-mode 'occur-edit-mode)
-                (eq major-mode 'wdired-mode)
-                (eq major-mode 'grep-mode)
-                (eq major-mode 'dired-mode)
+	(unless (or (memq major-mode '(minibuffer-mode
+                                   fundamental-mode
+                                   emacs-lisp-mode
+                                   occur-edit-mode
+                                   wdired-mode
+                                   grep-mode
+                                   dired-mode
+                                   ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
 	  (indentinator-mode)))
   (define-globalized-minor-mode global-indentinator-mode indentinator-mode turn-on-indentinator-mode)
@@ -2369,14 +2370,7 @@ _q_uit
   :commands
   (rainbow-delimiters-mode)
   :hook
-  (prog-mode . rainbow-delimiters-mode
-	         ;; (lambda ()
-	         ;; 	 (unless  (or 
-	         ;; 		   (eq major-mode 'emacs-lisp-mode)
-	         ;; 		   (eq major-mode 'lisp-interaction-mode)
-	         ;; 		   )
-	         ;; 	   (rainbow-delimiters-mode)))
-	         )
+  (prog-mode . rainbow-delimiters-mode)
   :config
   (when use-my-face
     (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#B3B3B3")
