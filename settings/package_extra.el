@@ -429,15 +429,22 @@ _c_: hide comment        _q_uit
 (auto-save-visited-mode 1)
 (when auto-save-visited-mode
   ;; 参考super save，对于某些命令立即调用保存，避免save buffer yes no提示
-  (setq super-save-triggers '(magit project-compile quickrun
+  (defvar super-save-triggers '(magit project-compile quickrun
                                     save-buffers-kill-terminal volatile-kill-buffer))
+  ;; 调用后立即执行的。eglot只有保存后才会更新code actions
+  (defvar super-save-triggers-after '(eglot-code-actions))
   (defun super-save-command-advice (&rest _args) 
     (super-save-command))
   (defun super-save-advise-trigger-commands ()
     (mapc
      (lambda (command)
        (advice-add command :before #'super-save-command-advice))
-     super-save-triggers))
+     super-save-triggers)
+    (mapc
+     (lambda (command)
+       (advice-add command :after #'super-save-command-advice))
+     super-save-triggers-after)
+    )
   (defun super-save-command ()
     (when auto-save-visited-mode ;; 暂时没有remove advice
       ;; 调用auto-save-visited-mode的timer省一些逻辑
@@ -937,10 +944,107 @@ _q_uit
     (setq sr-speedbar-right-side nil
           sr-speedbar-auto-refresh t
           dframe-update-speed 0.2
+          speedbar-show-unknown-files t ;; 我去rust文件都不认识？
+          speedbar-obj-do-check nil ;; 默认检查如c文件的obj文件是否更新
+          speedbar-vc-do-check nil ;; 好像不支持git吧
+          speedbar-directory-unshown-regexp "^\(\.\.*$\)\'" ;; 显示unkown dir
+          ;; speedbar-hide-button-brackets-flag t
+          speedbar-use-images nil ;; 图标太丑了，或许可以用all-the-icon?
+          ;; speedbar-expand-image-button-alist nil
+          ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
           )
     (defvar sr-invoke-dir nil)
     (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
     :config
+    ;; (defadvice ezimage-insert-image-button-maybe (before my-ezimage-insert-image-button-maybe activate)
+    ;;   (message (format "%d %d" (ad-get-arg 0) (ad-get-arg 1)))
+    ;;   )
+
+    ;; 使用all-the-icons-insert来插入
+    (defvar speedbar-all-the-icon-alist
+      `(("<+>" . ,(all-the-icons-octicon "file-directory"))
+        ("<->" . " aa")
+        ("< >" . " aa")
+        ("[+]" . " aa")
+        ("[-]" . " aa")
+        ("[?]" . " aa")
+        ("[ ]" . " aa")
+        ("{+}" . " aa")
+        ("{-}" . " aa")
+        ("<M>" . " aa")
+        ("<d>" . " aa")
+        ("<i>" . " aa")
+        (" =>" . " aa")
+        (" +>" . " aa")
+        (" ->" . " aa")
+        (">"   . "aa")
+        ("@"   . "aa")
+        ("  @" . " aa")
+        ("*"   . " aa")
+        ("#"   . " aa")
+        ("!"   . " aa")
+        ("//"  . " aa")
+        ("%"   . " aa")
+        ))
+    ;; 还是抄来过方便
+    (defun my/speedbar-make-tag-line (orig-fun &rest args)
+      (let ((exp-button-type (ad-get-argument args 0))
+            (exp-button-char (ad-get-argument args 1))
+            (exp-button-function (ad-get-argument args 2))
+            (exp-button-data (ad-get-argument args 3))
+            (tag-button (ad-get-argument args 4))
+            (tag-button-function (ad-get-argument args 5))
+            (tag-button-data (ad-get-argument args 6))
+            (tag-button-face (ad-get-argument args 7))
+            (depth (ad-get-argument args 8))
+            )
+        (let ((start (point))
+	          (end (progn
+	                 (insert (int-to-string depth) ":")
+	                 (point)))
+	          (depthspacesize (* depth speedbar-indentation-width)))
+          (put-text-property start end 'invisible t)
+          (insert-char ?  depthspacesize nil)
+          (put-text-property (- (point) depthspacesize) (point) 'invisible nil)
+          (let* ((exp-button (cond ((eq exp-button-type 'bracket) "[%c]")
+			                       ((eq exp-button-type 'angle) "<%c>")
+			                       ((eq exp-button-type 'curly) "{%c}")
+			                       ((eq exp-button-type 'expandtag) " %c>")
+			                       ((eq exp-button-type 'statictag) " =>")
+			                       (t ">")))
+	             (buttxt (format exp-button exp-button-char))
+                 ;; 修改的地方 ==================================
+                 (buttxt-icon (assoc buttxt speedbar-all-the-icon-alist))
+	             (start (point))
+	             (end (progn
+                        (if buttxt-icon
+                            (insert (cdr buttxt-icon))
+                          (insert buttxt))
+                        (point)))
+                 ;; =======================================
+	             (bf (if (and exp-button-type (not (eq exp-button-type 'statictag)))
+		                 'speedbar-button-face nil))
+	             (mf (if exp-button-function 'speedbar-highlight-face nil))
+	             )
+            (speedbar-make-button start end bf mf exp-button-function exp-button-data)
+            (if speedbar-hide-button-brackets-flag
+	            (progn
+	              (put-text-property start (1+ start) 'invisible t)
+	              (put-text-property end (1- end) 'invisible t)))
+            )
+          (insert-char ?  1 nil)
+          (put-text-property (1- (point)) (point) 'invisible nil)
+          (let ((start (point))
+	            (end (progn (insert tag-button) (point))))
+            (insert-char ?\n 1 nil)
+            (put-text-property (1- (point)) (point) 'invisible nil)
+            (speedbar-make-button start end tag-button-face
+			                      (if tag-button-function 'speedbar-highlight-face nil)
+			                      tag-button-function tag-button-data))
+          ))
+      )
+    (advice-add 'speedbar-make-tag-line :around 'my/speedbar-make-tag-line)
+
     (unless sr-speedbar-auto-refresh
       ;; 重新打开时更新目录
       (defadvice sr-speedbar-toggle (before my-sr-speedbar-toggle activate)
@@ -949,11 +1053,12 @@ _q_uit
           (sr-speedbar-refresh)
           t)
         ))
-    (define-key speedbar-mode-map (kbd "l")
-                (lambda ()
-                  (interactive)
-                  (setq default-directory (file-name-directory (directory-file-name default-directory)))
-                  (speedbar-refresh)))
+    (define-key speedbar-mode-map (kbd "l") 'speedbar-up-directory)
+    (define-key speedbar-mode-map (kbd "w") 'speedbar-scroll-down)
+    (define-key speedbar-mode-map (kbd "SPC") 'speedbar-scroll-up)
+    (define-key speedbar-file-key-map (kbd "SPC") 'speedbar-scroll-up)
+    (define-key speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
+    (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
     )
   )
 
@@ -1671,11 +1776,11 @@ _q_uit
   (defun turn-on-indentinator-mode()
 	(unless (or (memq major-mode '(minibuffer-mode
                                    fundamental-mode
-                                   emacs-lisp-mode
                                    occur-edit-mode
                                    wdired-mode
                                    grep-mode
                                    dired-mode
+                                   speedbar-mode
                                    ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
 	  (indentinator-mode)))
