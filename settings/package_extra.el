@@ -943,108 +943,17 @@ _q_uit
     :init
     (setq sr-speedbar-right-side nil
           sr-speedbar-auto-refresh t
-          dframe-update-speed 0.2
+          dframe-update-speed 0.2   ;; 自动刷新时间
           speedbar-show-unknown-files t ;; 我去rust文件都不认识？
           speedbar-obj-do-check nil ;; 默认检查如c文件的obj文件是否更新
           speedbar-vc-do-check nil ;; 好像不支持git吧
           speedbar-directory-unshown-regexp "^\(\.\.*$\)\'" ;; 显示unkown dir
           ;; speedbar-hide-button-brackets-flag t
-          speedbar-use-images nil ;; 图标太丑了，或许可以用all-the-icon?
-          ;; speedbar-expand-image-button-alist nil
+          speedbar-use-images t ;; 图标太丑了，或许可以用all-the-icon?
           ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
           )
-    (defvar sr-invoke-dir nil)
     (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
     :config
-    ;; (defadvice ezimage-insert-image-button-maybe (before my-ezimage-insert-image-button-maybe activate)
-    ;;   (message (format "%d %d" (ad-get-arg 0) (ad-get-arg 1)))
-    ;;   )
-
-    ;; 使用all-the-icons-insert来插入
-    (defvar speedbar-all-the-icon-alist
-      `(("<+>" . ,(all-the-icons-octicon "file-directory"))
-        ("<->" . " aa")
-        ("< >" . " aa")
-        ("[+]" . " aa")
-        ("[-]" . " aa")
-        ("[?]" . " aa")
-        ("[ ]" . " aa")
-        ("{+}" . " aa")
-        ("{-}" . " aa")
-        ("<M>" . " aa")
-        ("<d>" . " aa")
-        ("<i>" . " aa")
-        (" =>" . " aa")
-        (" +>" . " aa")
-        (" ->" . " aa")
-        (">"   . "aa")
-        ("@"   . "aa")
-        ("  @" . " aa")
-        ("*"   . " aa")
-        ("#"   . " aa")
-        ("!"   . " aa")
-        ("//"  . " aa")
-        ("%"   . " aa")
-        ))
-    ;; 还是抄来过方便
-    (defun my/speedbar-make-tag-line (orig-fun &rest args)
-      (let ((exp-button-type (ad-get-argument args 0))
-            (exp-button-char (ad-get-argument args 1))
-            (exp-button-function (ad-get-argument args 2))
-            (exp-button-data (ad-get-argument args 3))
-            (tag-button (ad-get-argument args 4))
-            (tag-button-function (ad-get-argument args 5))
-            (tag-button-data (ad-get-argument args 6))
-            (tag-button-face (ad-get-argument args 7))
-            (depth (ad-get-argument args 8))
-            )
-        (let ((start (point))
-	          (end (progn
-	                 (insert (int-to-string depth) ":")
-	                 (point)))
-	          (depthspacesize (* depth speedbar-indentation-width)))
-          (put-text-property start end 'invisible t)
-          (insert-char ?  depthspacesize nil)
-          (put-text-property (- (point) depthspacesize) (point) 'invisible nil)
-          (let* ((exp-button (cond ((eq exp-button-type 'bracket) "[%c]")
-			                       ((eq exp-button-type 'angle) "<%c>")
-			                       ((eq exp-button-type 'curly) "{%c}")
-			                       ((eq exp-button-type 'expandtag) " %c>")
-			                       ((eq exp-button-type 'statictag) " =>")
-			                       (t ">")))
-	             (buttxt (format exp-button exp-button-char))
-                 ;; 修改的地方 ==================================
-                 (buttxt-icon (assoc buttxt speedbar-all-the-icon-alist))
-	             (start (point))
-	             (end (progn
-                        (if buttxt-icon
-                            (insert (cdr buttxt-icon))
-                          (insert buttxt))
-                        (point)))
-                 ;; =======================================
-	             (bf (if (and exp-button-type (not (eq exp-button-type 'statictag)))
-		                 'speedbar-button-face nil))
-	             (mf (if exp-button-function 'speedbar-highlight-face nil))
-	             )
-            (speedbar-make-button start end bf mf exp-button-function exp-button-data)
-            (if speedbar-hide-button-brackets-flag
-	            (progn
-	              (put-text-property start (1+ start) 'invisible t)
-	              (put-text-property end (1- end) 'invisible t)))
-            )
-          (insert-char ?  1 nil)
-          (put-text-property (1- (point)) (point) 'invisible nil)
-          (let ((start (point))
-	            (end (progn (insert tag-button) (point))))
-            (insert-char ?\n 1 nil)
-            (put-text-property (1- (point)) (point) 'invisible nil)
-            (speedbar-make-button start end tag-button-face
-			                      (if tag-button-function 'speedbar-highlight-face nil)
-			                      tag-button-function tag-button-data))
-          ))
-      )
-    (advice-add 'speedbar-make-tag-line :around 'my/speedbar-make-tag-line)
-
     (unless sr-speedbar-auto-refresh
       ;; 重新打开时更新目录
       (defadvice sr-speedbar-toggle (before my-sr-speedbar-toggle activate)
@@ -1053,9 +962,12 @@ _q_uit
           (sr-speedbar-refresh)
           t)
         ))
+    (define-key speedbar-mode-map (kbd "q") 'sr-speedbar-close)
     (define-key speedbar-mode-map (kbd "l") 'speedbar-up-directory)
     (define-key speedbar-mode-map (kbd "w") 'speedbar-scroll-down)
     (define-key speedbar-mode-map (kbd "SPC") 'speedbar-scroll-up)
+    (define-key speedbar-file-key-map (kbd "<") 'beginning-of-buffer)
+    (define-key speedbar-file-key-map (kbd ">") 'end-of-buffer)
     (define-key speedbar-file-key-map (kbd "SPC") 'speedbar-scroll-up)
     (define-key speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
     (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
@@ -2957,7 +2869,10 @@ _q_uit
       ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
       (use-package all-the-icons
         :load-path "~/.emacs.d/themes/all-the-icons.el-master"
-        :defer t 
+        :commands(all-the-icons-octicon
+                  all-the-icons-faicon
+                  all-the-icons-material
+                  )
         )
       ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
       (use-package all-the-icons-dired
