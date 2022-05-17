@@ -929,25 +929,65 @@ _q_uit
   (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
   )
 
+(defconst filetree-use-which 1) ; 1.speedbar 2.treemacs
+(when (eq filetree-use-which 1)
+  ;; treemacs bug太多了，还经常create pipe fail: too many open，project递归稍微深点切换文件还卡
+  (use-package sr-speedbar
+    :commands(sr-speedbar-toggle)
+    :init
+    (setq sr-speedbar-right-side nil
+          sr-speedbar-auto-refresh t
+          dframe-update-speed 0.2
+          )
+    (defvar sr-invoke-dir nil)
+    (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
+    :config
+    (unless sr-speedbar-auto-refresh
+      ;; 重新打开时更新目录
+      (defadvice sr-speedbar-toggle (before my-sr-speedbar-toggle activate)
+        (unless (sr-speedbar-exist-p)
+          (message default-directory)
+          (sr-speedbar-refresh)
+          t)
+        ))
+    (define-key speedbar-mode-map (kbd "l")
+                (lambda ()
+                  (interactive)
+                  (setq default-directory (file-name-directory (directory-file-name default-directory)))
+                  (speedbar-refresh)))
+    )
+  )
+
+;; dap-mode的依赖
 (use-package treemacs
   :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
   :init
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+    )
+  ;; magit更新时也刷新treemacs
+  (use-package treemacs-magit
+    :after (treemacs magit)
+    )
+  (use-package cfrs
+    :commands(cfrs-read))
+  
   (add-to-list 'load-path "~/.emacs.d/packages/treemacs/")
   (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/elisp")
   (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/extra")
   (require 'treemacs-autoloads)
-  ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
-  (global-set-key (kbd "<C-f1>") 
-                  (lambda ()(interactive)
-                    (let ((buf (current-buffer)))
-                      (pcase (treemacs-current-visibility)
-                        ('visible (treemacs)) ;; 已展示就隐藏
-                        ('exists  (call-interactively 'treemacs-add-and-display-current-project))
-                        ('none    (call-interactively 'treemacs-add-and-display-current-project)))
-                      ;; (switch-to-buffer buf) ;; focus切换回buffer里
-                      )))
+  (unless (eq filetree-use-which 1)
+    ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
+    (global-set-key (kbd "<C-f1>") 
+                    (lambda ()(interactive)
+                      (let ((buf (current-buffer)))
+                        (pcase (treemacs-current-visibility)
+                          ('visible (treemacs)) ;; 已展示就隐藏
+                          ('exists  (call-interactively 'treemacs-add-and-display-current-project))
+                          ('none    (call-interactively 'treemacs-add-and-display-current-project)))
+                        ;; (switch-to-buffer buf) ;; focus切换回buffer里
+                        ))))
   :config
-  
   (with-eval-after-load 'treemacs-mode
     (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
     (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
@@ -985,23 +1025,6 @@ _q_uit
         ;; treemacs-no-png-images t
         )
   )
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-  )
-
-;; 这个给dired添加图标，不错。
-;; 不过当doom theme设置treemacs为doom-colors时有时不显示，故而用all-the-icons-dired
-(use-package treemacs-icons-dired
-  :disabled
-  :hook (dired-mode . treemacs-icons-dired-enable-once)
-  )
-
-;; magit更新时也刷新treemacs
-(use-package treemacs-magit
-  :after (treemacs magit)
-  )
-(use-package cfrs
-  :commands(cfrs-read))
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
