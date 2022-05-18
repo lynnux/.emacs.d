@@ -740,7 +740,7 @@ _q_uit
                     "ggtags-find-tag-dwim"  "ggtags-find-reference" "ggtags-find-file"
                     "helm-occur" "helm-imenu-in-all-buffers"  
                     "session-jump-to-last-change" "org-roam-preview-visit" "counsel-rg"
-                    "swiper" "consult-line""consult-ripgrep"
+                    "swiper" "consult-line""consult-ripgrep" "avy-goto-word-1"
                     "my-consult-ripgrep" "embark-act" "consult-imenu-multi" "keyboard-escape-quit"
                     ))
     (add-to-list 'jl-insert-marker-funcs one)
@@ -915,7 +915,56 @@ _q_uit
   (global-set-key [remap goto-line] 'avy-goto-line)
   (setq avy-background t) ;; 开启跟ace一样了
   (setq-default avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
-  )
+  :config
+  ;; 神器啊！avy还可以直接对目标进行一些操作。先C-o输入单词开头字母，然后按命令key，再输入目标的标识就可以
+  ;; 这里实现了不跳到目标就执行相关操作，avy-dispatch-alist
+  ;; 相关代码抄自 https://karthinks.com/software/avy-can-do-anything/
+  (defun avy-action-kill-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-whole-line))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+  (defun avy-action-copy-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (cl-destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'line)
+        (copy-region-as-kill start end)))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank)) t)
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
+  
+  (when (fboundp 'embark-act)
+    (defun avy-action-embark (pt)
+      (unwind-protect
+          (save-excursion
+            (goto-char pt)
+            (embark-act))
+        (select-window
+         (cdr (ring-ref avy-ring 0))))
+      t)
+    (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark
+          (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay ; 自带用的X，x会kill并跳过去
+          (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
+          ;; (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+          (alist-get ?w avy-dispatch-alist) 'avy-action-copy ; 原n是不能用了
+          (alist-get ?c avy-dispatch-alist) 'avy-action-copy-whole-line
+          (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line
+          ;; (alist-get ?t avy-dispatch-alist) 'avy-action-teleport ; 目标剪切到当前处
+          (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line  ;; 目标整行剪切到此处
+          )
+    ))
 
 ;;; autohotkey文件编辑
 (autoload 'xahk-mode "xahk-mode"
