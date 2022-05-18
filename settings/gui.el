@@ -10,7 +10,7 @@
  '(show-paren-mode t)			;()匹配提示
  '(tooltip-mode nil)			;windows会卡，不用
  '(tool-bar-mode nil)          		;不显示toolbar
- '(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了
+ '(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
  '(warning-suppress-log-types '((comp) (comp)))
  '(warning-suppress-types '((comp)))
  )

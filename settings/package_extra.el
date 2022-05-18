@@ -1839,19 +1839,80 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;;   )
   )
 
-;; easy-kill，添加类似vim里yi/a的东西！
-(add-to-list 'load-path "~/.emacs.d/packages/easy-kill")
-(global-set-key [remap kill-ring-save] 'easy-kill)
-(autoload 'easy-kill "easy-kill" nil t)
-(autoload 'easy-mark "easy-kill" nil t)
-;; 有选中或者mark时用expand-region，否则用easy-mark
-(global-set-key "\C-t" (lambda ()(interactive)
-			             (if (region-active-p)
-			                 (call-interactively 'er/expand-region)
-			               (call-interactively 'easy-mark)
-			               ))) ; 替换expand-region
+(use-package which-key
+  :init
+  (setq which-key-popup-type 'minibuffer)
+  :commands(which-key--show-keymap which-key--hide-popup)
+  :config
+  ;; 去掉easy-kill-前辍
+  ;; (push '((nil . "easy-kill-digit-argument") . (nil . "")) which-key-replacement-alist)
+  (push '((nil . "easy-kill-") . (nil . "")) which-key-replacement-alist)
+  
+  ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
+  ;; easy-kill-help 可以显示所有功能
+  ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
+  (let ((replace_list '(
+                        ("T". "string-up-to-char-backward")
+                        ("t". "string-to-char-backward")
+                        ("F". "string-up-to-char-forward")
+                        ("f". "string-to-char-forward")
+                        ("a". "buffer")
+                        ("\\$". "forward-line-edge")    ; 正则
+                        ("\\^". "backward-line-edge")   ; 正则
+                        ("=". "my-line")
+                        ("w". "word")
+                        ("s". "sexp")
+                        ("l". "list")
+                        ("f". "filename")
+                        ("d". "defun")
+                        ("D". "defun-name")
+                        ("e". "line")
+                        ("b". "buffer-file-name")
+                        ("'". "squoted-string")
+                        ("\\\"". "dquoted-string") ;; 转义
+                        ("`". "bquoted-string")
+                        ("q". "quoted-string")
+                        ("Q". "quoted-string-universal")
+                        (")". "parentheses-pair-content")
+                        ("(". "parentheses-pair")
+                        ("]". "brackets-pair-content")
+                        ("\\[". "brackets-pair") ;; 正则
+                        ("}". "curlies-pair-content")
+                        ("{". "curlies-pair")
+                        (">". "angles-pair-content")
+                        ("<". "angles-pair")
+                        )))
+    (cl-dolist (one replace_list)
+      (push `((,(car one) . "easy-kill-thing") . (nil . ,(cdr one))) which-key-replacement-alist)
+      )))
 
-(with-eval-after-load 'easy-kill
+;; easy-kill，添加类似vim里yi/a的东西！
+(use-package easy-kill
+  :load-path "~/.emacs.d/packages/easy-kill"
+  :commands(easy-kill easy-mark)
+  :init
+  (global-set-key [remap kill-ring-save] 'easy-kill)
+  ;; 有选中或者mark时用expand-region，否则用easy-mark
+  ;; 替换expand-region
+  (global-set-key "\C-t" (lambda ()(interactive)
+			               (if (region-active-p)
+			                   (call-interactively 'er/expand-region)
+			                 (call-interactively 'easy-mark)
+			                 )))
+  :config
+  (defvar my-easy-kill-map nil)
+  (defadvice easy-kill-activate-keymap (before my-easy-kill-activate-keymap activate)
+    (unless my-easy-kill-map
+      (let ((easy-kill-base-map easy-kill-base-map))
+        ;; remove number keys
+        (cl-loop for i from 0 to 9
+                 do (keymap-unset easy-kill-base-map (number-to-string i)))
+        (setq my-easy-kill-map (easy-kill-map))
+        ))
+    (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
+    ;; which-key--hide-popup 关闭
+    )
+  
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
       (let ((string (buffer-substring (line-beginning-position)
@@ -1894,6 +1955,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; easy kill退出时也清除我们的overlay
   (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
     (kill-my-line-ov)
+    (which-key--hide-popup)
     )
   ;; 当overlay改变时，如按w也清除我们的overlay
   ;; (defun move-overlay-around (orig-fun n begin end &rest args)
