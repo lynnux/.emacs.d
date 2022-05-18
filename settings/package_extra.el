@@ -1927,18 +1927,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
       )
     )
-  ;; easy kill退出时也清除我们的overlay
+  ;; easy kill退出清除我们的overlay
   (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
     (kill-my-line-ov))
-  ;; 当overlay改变时，如按w也清除我们的overlay
-  ;; (defun move-overlay-around (orig-fun n begin end &rest args)
-  ;;   (when (and (eq n easy-kill-candidate) (/= begin end)) ;; easy kill没有overlay的begin end都是(point)
-  ;;     (kill-my-line-ov))
-  ;;   (apply orig-fun n begin end args)
-  ;;   )
-  ;; (advice-add 'move-overlay :around #'move-overlay-around)
-  ;; (advice-remove 'move-overlay #'move-overlay-around)
-  ;; 担心move-overlay影响效率使用下面方法
+  ;; easy按其它键时会调用move-overlay，这个时候也需要清除我们的overlay
   (defadvice easy-kill-adjust-candidate (after my-easy-kill-adjust-candidate activate)
     ;; 参考easy-kill-candidate
     (with-current-buffer (easy-kill-get buffer)
@@ -1949,19 +1941,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          ))))
   
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
-  ;; 测试带汉字也会。。还是添加overlay表示复制了吧
+  ;; 测试带汉字也会。。所以屏蔽echo
   (defun easy-kill-echo-around (orig-fun format-string &rest args)
-    ;; (apply orig-fun format-string
-    ;; 	   (let ((no-line (ignore-errors
-    ;; 			    (when (listp args)
-    ;; 			      (list (string-join (split-string (substring-no-properties (car args)) "[\n]+"))))
-    ;; 			    )))
-    ;; 	     (if no-line
-    ;; 		 no-line
-    ;; 	       args)))
     )
   (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
-  ;;(advice-remove 'easy-kill-echo  #'easy-kill-echo-around)
   (add-to-list 'easy-kill-alist '(?= my-line ""))
 
   (setq easy-mark-try-things '(word sexp)) ; word优先，特别是有横杠什么都时候
