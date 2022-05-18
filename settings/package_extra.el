@@ -2903,6 +2903,25 @@ _q_uit
     )
   )
 
+;; emacs的鼠标右键！
+(use-package strokes
+  :disabled ;; 斜上还是不好用，容易混起，竖横倒是好用
+  :defer 1.5
+  :init
+  (global-set-key (kbd "<down-mouse-3>") 'strokes-do-stroke) ; Draw strokes with RMB
+  (setq strokes-use-strokes-buffer nil) ; Don't draw strokes to the screen
+  :config
+  (strokes-mode)
+  ;; 使用 strokes-global-set-stroke来添加，emacs退出时会问你是否保存
+  ;; 竖是竖分屏，横是横分屏。_|到顶，-|到bottom，斜上 toggle-frame-maximized
+  (defun emacs-minimize()
+    (interactive)
+    (w32-send-sys-command #xf020)
+    )
+  (defun emacs-normal()
+    (interactive)
+    (w32-send-sys-command #xf120))
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
