@@ -1880,7 +1880,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (setq my-easy-kill-map (easy-kill-map))
         ))
     (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
-    ;; which-key--hide-popup 关闭
+    ;; which-key--hide-popup都不用调用，只要按一键它自动就关了，所以下面kill-my-line-ov在改变overlay时又调用which-key
     )
   
   (defadvice easy-kill (after my-easy-kill activate)
@@ -1918,15 +1918,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	    )
       ))
   
-  (defun kill-my-line-ov()
+  (defun kill-my-line-ov(&optional change-key)
     (when my-line-ov
       (delete-overlay my-line-ov)
-      (setq my-line-ov nil)))
+      (setq my-line-ov nil))
+    ;; 在按其它easy-kill的键时也显示（居然不闪烁）
+    (when (and change-key my-easy-kill-map)
+      (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
+      )
+    )
   ;; easy kill退出时也清除我们的overlay
   (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
-    (kill-my-line-ov)
-    (which-key--hide-popup)
-    )
+    (kill-my-line-ov))
   ;; 当overlay改变时，如按w也清除我们的overlay
   ;; (defun move-overlay-around (orig-fun n begin end &rest args)
   ;;   (when (and (eq n easy-kill-candidate) (/= begin end)) ;; easy kill没有overlay的begin end都是(point)
@@ -1941,9 +1944,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (with-current-buffer (easy-kill-get buffer)
       (pcase (easy-kill-get bounds)
         (`(,_x . ,_x) ();; 这就是字符串形式
-	     )
-        (`(,beg . ,end) (kill-my-line-ov)
-	     ))))
+         )
+        (`(,beg . ,end) (kill-my-line-ov t)
+         ))))
   
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
   ;; 测试带汉字也会。。还是添加overlay表示复制了吧
