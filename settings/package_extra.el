@@ -1906,7 +1906,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (let ((easy-kill-base-map easy-kill-base-map))
         ;; remove number keys
         (cl-loop for i from 0 to 9
-                 do (keymap-unset easy-kill-base-map (number-to-string i)))
+                 do (define-key easy-kill-base-map (number-to-string i) nil))
         (setq my-easy-kill-map (easy-kill-map))
         ))
     (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
