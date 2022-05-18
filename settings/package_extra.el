@@ -1879,8 +1879,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                         ("\\[". "brackets-pair") ;; 正则
                         ("}". "curlies-pair-content")
                         ("{". "curlies-pair")
-                        (">". "angles-pair-content")
-                        ("<". "angles-pair")
+                        (">". "backward-line-edge")
+                        ("<". "forward-line-edge")
                         )))
     (cl-dolist (one replace_list)
       (push `((,(car one) . "easy-kill-thing") . (nil . ,(cdr one))) which-key-replacement-alist)
@@ -2001,8 +2001,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?a buffer ""))
-  ;; (add-to-list 'easy-kill-alist '(?< buffer-before-point "")) ;; 拿给copy<>感觉更常用
-  ;; (add-to-list 'easy-kill-alist '(?> buffer-after-point ""))
+  (add-to-list 'easy-kill-alist '(?< backward-line-edge ""))
+  (add-to-list 'easy-kill-alist '(?> forward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?t string-to-char-backward ""))
@@ -2019,8 +2019,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?\[ brackets-pair "\n") t)
   (add-to-list 'easy-kill-alist '(?}  curlies-pair-content "\n") t)
   (add-to-list 'easy-kill-alist '(?{  curlies-pair "\n") t)
-  (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
-  (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
+  ;; (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
+  ;; (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
 ;; project内置查找会用到，支持ripgrep了！
