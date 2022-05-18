@@ -1851,39 +1851,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
   ;; easy-kill-help 可以显示所有功能
   ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
-  (let ((replace_list '(
-                        ("T". "string-up-to-char-backward")
-                        ("t". "string-to-char-backward")
-                        ("F". "string-up-to-char-forward")
-                        ("f". "string-to-char-forward")
-                        ("a". "buffer")
-                        ("\\$". "forward-line-edge")    ; 正则
-                        ("\\^". "backward-line-edge")   ; 正则
-                        ("=". "my-line")
-                        ("w". "word")
-                        ("s". "sexp")
-                        ("l". "list")
-                        ("f". "filename")
-                        ("d". "defun")
-                        ("D". "defun-name")
-                        ("e". "line")
-                        ("b". "buffer-file-name")
-                        ("'". "squoted-string")
-                        ("\\\"". "dquoted-string") ;; 转义
-                        ("`". "bquoted-string")
-                        ("q". "quoted-string")
-                        ("Q". "quoted-string-universal")
-                        (")". "parentheses-pair-content")
-                        ("(". "parentheses-pair")
-                        ("]". "brackets-pair-content")
-                        ("\\[". "brackets-pair") ;; 正则
-                        ("}". "curlies-pair-content")
-                        ("{". "curlies-pair")
-                        (">". "backward-line-edge")
-                        ("<". "forward-line-edge")
-                        )))
-    (cl-dolist (one replace_list)
-      (push `((,(car one) . "easy-kill-thing") . (nil . ,(cdr one))) which-key-replacement-alist)
+  (when (fboundp 'easy-kill)
+    (cl-dolist (one easy-kill-alist)
+      (push `((,(regexp-quote (char-to-string (car one))) . "easy-kill-thing") . (nil . ,(symbol-name (nth 1 one)))) which-key-replacement-alist)
       )))
 
 ;; easy-kill，添加类似vim里yi/a的东西！
