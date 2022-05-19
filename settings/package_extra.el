@@ -628,18 +628,19 @@ _q_uit
            (require 'company-yasnippet)
            
            (load "corfu/company-ctags.el")
+           (defun my/set-cape-hook()
+             (dolist (c (mapcar #'cape-company-to-capf
+                                (list #'company-ctags
+                                      #'company-yasnippet
+                                      #'company-dabbrev
+                                      )))
+               (add-to-list 'completion-at-point-functions c))
+             (add-to-list 'completion-at-point-functions #'cape-keyword)
+             )
+           (add-hook 'prog-mode-hook 'my/set-cape-hook)
            (when (functionp 'eglot-ensure)
              ;; eglot貌似会覆盖之前的，所以在要它之前设置completion-at-point-functions
-             (add-hook 'eglot-managed-mode-hook
-                       (lambda()
-                         (dolist (c (mapcar #'cape-company-to-capf
-                                            (list #'company-ctags
-                                                  #'company-yasnippet
-                                                  #'company-dabbrev
-                                                  )))
-                           (add-to-list 'completion-at-point-functions c))
-                         (add-to-list 'completion-at-point-functions #'cape-keyword)
-                         )))
+             (add-hook 'eglot-managed-mode-hook 'my/set-cape-hook))
            )
          )
        )
