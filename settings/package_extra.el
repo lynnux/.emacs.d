@@ -1841,20 +1841,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (use-package which-key
   :init
-  (setq which-key-popup-type 'minibuffer)
+  (setq
+   which-key-popup-type 'side-window ;；用minibuffer当easy-mark时会移动屏幕，需要easy-kill-init-candidate里屏蔽narrow-to-region，并且非set-transient-map一闪而过
+   which-key-use-C-h-commands nil ;; 避免C-h时调用成which-key的
+   )
   :commands(which-key--show-keymap which-key--hide-popup)
   :config
-  ;; 去掉easy-kill-前辍
-  ;; (push '((nil . "easy-kill-digit-argument") . (nil . "")) which-key-replacement-alist)
-  (push '((nil . "easy-kill-") . (nil . "")) which-key-replacement-alist)
-  
-  ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
-  ;; easy-kill-help 可以显示所有功能
-  ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
-  (when (fboundp 'easy-kill)
-    (cl-dolist (one easy-kill-alist)
-      (push `((,(regexp-quote (char-to-string (car one))) . "easy-kill-thing") . (nil . ,(symbol-name (nth 1 one)))) which-key-replacement-alist)
-      )))
+  )
 
 ;; easy-kill，添加类似vim里yi/a的东西！
 (use-package easy-kill
@@ -1871,16 +1864,40 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			                 )))
   :config
   (defvar my-easy-kill-map nil)
-  (defadvice easy-kill-activate-keymap (before my-easy-kill-activate-keymap activate)
-    (unless my-easy-kill-map
-      (let ((easy-kill-base-map easy-kill-base-map))
-        ;; remove number keys
-        (cl-loop for i from 0 to 9
-                 do (define-key easy-kill-base-map (number-to-string i) nil))
-        (setq my-easy-kill-map (easy-kill-map))
-        ))
-    (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
-    ;; which-key--hide-popup都不用调用，只要按一键它自动就关了，所以下面kill-my-line-ov在改变overlay时又调用which-key
+  (when (functionp 'which-key--show-keymap)
+    ;; 简化which-key提示
+    (with-eval-after-load 'which-key
+      ;; 去掉easy-kill-前辍
+      ;; (push '((nil . "easy-kill-digit-argument") . (nil . "")) which-key-replacement-alist)
+      (push '((nil . "easy-kill-") . (nil . "")) which-key-replacement-alist)
+      
+      ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
+      ;; easy-kill-help 可以显示所有功能
+      ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
+      (cl-dolist (one easy-kill-alist)
+        (push `((,(regexp-quote (char-to-string (car one))) . "easy-kill-thing") . (nil . ,(symbol-name (nth 1 one)))) which-key-replacement-alist)
+        )
+      )
+    
+    (defadvice easy-kill-activate-keymap (before my-easy-kill-activate-keymap activate)
+      (unless my-easy-kill-map
+        (let ((easy-kill-base-map easy-kill-base-map))
+          ;; remove number keys
+          (cl-loop for i from 0 to 9
+                   do (define-key easy-kill-base-map (number-to-string i) nil))
+          (setq my-easy-kill-map (easy-kill-map))
+          ))
+      (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
+      ;; which-key--hide-popup都不用调用，只要按一键它自动就关了，所以下面kill-my-line-ov在改变overlay时又调用which-key
+      )
+    (defun my-set-transient-map-exit()
+      (which-key--hide-popup))
+    (defadvice set-transient-map (before my-set-transient-map activate)
+      (let ((map (ad-get-arg 0)))
+        ;; 判断是否是easy-kill的keymap
+        (when (eq (lookup-key map "?") 'easy-kill-help)
+          (ad-set-arg 2 'my-set-transient-map-exit)
+          )))
     )
   
   (defadvice easy-kill (after my-easy-kill activate)
@@ -1921,12 +1938,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defun kill-my-line-ov(&optional change-key)
     (when my-line-ov
       (delete-overlay my-line-ov)
-      (setq my-line-ov nil))
-    ;; 在按其它easy-kill的键时也显示（居然不闪烁）
-    (when (and change-key my-easy-kill-map)
-      (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
-      )
-    )
+      (setq my-line-ov nil)))
   ;; easy kill退出清除我们的overlay
   (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
     (kill-my-line-ov))
@@ -2059,6 +2071,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "t" 'my/generate-tags)
       
       :config
+      (when (functionp 'which-key--show-keymap)
+        (defadvice project--switch-project-command (around my-project--switch-project-command activate)
+          (which-key--show-keymap "Action?" project-prefix-map nil nil 'no-paging)
+          ad-do-it
+          (which-key--hide-popup)
+          ))
+      
       ;; 好像自动识别find的输出了(git里的find)
       ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
       ;;   (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
