@@ -1887,8 +1887,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                    do (define-key easy-kill-base-map (number-to-string i) nil))
           (setq my-easy-kill-map (easy-kill-map))
           ))
-      (which-key--show-keymap "Action?" my-easy-kill-map nil nil 'no-paging)
-      ;; which-key--hide-popup都不用调用，只要按一键它自动就关了，所以下面kill-my-line-ov在改变overlay时又调用which-key
+      (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)
       )
     (defun my-set-transient-map-exit()
       (which-key--hide-popup))
@@ -2073,7 +2072,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       :config
       (when (functionp 'which-key--show-keymap)
         (defadvice project--switch-project-command (around my-project--switch-project-command activate)
-          (which-key--show-keymap "Action?" project-prefix-map nil nil 'no-paging)
+          (which-key--show-keymap "keymap" project-prefix-map nil nil 'no-paging)
           ad-do-it
           (which-key--hide-popup)
           ))
