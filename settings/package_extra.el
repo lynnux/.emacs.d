@@ -1890,13 +1890,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           ))
       (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)
       )
-    (defun my-set-transient-map-exit()
-      (which-key--hide-popup))
     (defadvice set-transient-map (before my-set-transient-map activate)
       (let ((map (ad-get-arg 0)))
         ;; 判断是否是easy-kill的keymap
         (when (eq (lookup-key map "?") 'easy-kill-help)
-          (ad-set-arg 2 'my-set-transient-map-exit)
+          (ad-set-arg 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
           )))
     )
   
