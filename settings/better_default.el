@@ -1,4 +1,3 @@
-;; Time-stamp: <2022-03-13 10:20:57 lynnux>
 ;; gui相关设置在set_gui.el中
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
@@ -48,8 +47,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (if (and (not (region-active-p)) (not (looking-at "[ \t]*$")))
       (comment-or-uncomment-region (line-beginning-position) (line-end-position))
     (comment-dwim arg)))
-(global-set-key "\M-;" 'qiang-comment-dwim-line)
-(global-set-key [(meta ?/)] 'comment-line)
 
 (defun comment-eclipse ()
   (interactive)
