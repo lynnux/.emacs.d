@@ -2398,8 +2398,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
              :load-path "~/.emacs.d/packages/lsp/lsp-treemacs-master"
              :defer t)
            (require 'dap-autoloads) ;; 通过dap-autoloads.txt里的命令自己生成的，没有包管理器不好办啊。注册了命令lsp会自动显示breakpoint(需要fringe)
-           ;; server log窗口太大了，减小它 https://github.com/emacs-lsp/dap-mode/issues/428
-           (add-to-list 'display-buffer-alist '(" server log\\*\\'" display-buffer-at-bottom (window-height . 0.2)))
            ;; controls目前有bug
            (setq dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
            :config
@@ -3021,6 +3019,50 @@ _q_uit
     (interactive)
     (w32-send-sys-command #xf120))
   )
+
+;; 好像会卡死emacs？
+;; (use-package popper
+;;   :load-path "~/.emacs.d/packages/window/popper-master"
+;;   :bind (("C-4"   . popper-toggle-latest)
+;;          ("C-5"   . popper-cycle)
+;;          ;; ("C-M-`" . popper-toggle-type)
+;;          )
+;;   :commands(popper-mode)
+;;   :init
+;;   (setq popper-reference-buffers
+;;         '("\\*Messages\\*"
+;;           "Output\\*$"
+;;           "\\*Async Shell Command\\*"
+;;           help-mode
+;;           compilation-mode))
+;;   :config
+;;   (popper-mode +1)
+;;   (require 'popper-echo)
+;;   (popper-echo-mode +1)
+;;   (defun my-popper-fit-window-height (win)
+;;     "Determine the height of popup window WIN by fitting it to the buffer's content."
+;;     (fit-window-to-buffer
+;;      win
+;;      (floor (frame-height) 3)
+;;      (floor (frame-height) 3)))
+;;   (setq popper-window-height #'my-popper-fit-window-height)
+;;   )
+
+;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
+(use-package shackle
+  :defer 1.0
+  :init
+  (setq
+   shackle-default-rule nil
+   shackle-default-alignment 'below
+   shackle-rules '( ;; 更多设置参看shackle.el
+                   (compilation-mode :noselect t :align 'below :size 0.2);; noselect只是cursor不移动过去
+                   (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
+                   (magit-status-mode    :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
+                   (magit-log-mode       :select t :inhibit-window-quit t :same t)
+                   ))
+  :config
+  (shackle-mode 1))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
