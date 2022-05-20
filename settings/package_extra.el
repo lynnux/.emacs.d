@@ -603,8 +603,8 @@ _q_uit
          (setq corfu-cycle t
                corfu-auto t
                corfu-auto-prefix 1
+               corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
                )
-         ;; lsp bridge依赖corfu-info
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
          (global-corfu-mode)
@@ -660,6 +660,14 @@ _q_uit
          (load "corfu/corfu-orderless")
          (add-hook 'corfu-mode-hook 'corfu-orderless-setup)
 
+         ;; 将补全移动到minibuffer进行，这样就可以用embark了！
+         (defun corfu-move-to-minibuffer ()
+           (interactive)
+           (let ((completion-extra-properties corfu--extra)
+                 completion-cycle-threshold completion-cycling)
+             (apply #'consult-completion-in-region completion-in-region--data)))
+         (define-key corfu-map "\M-m" #'corfu-move-to-minibuffer)
+         
          (use-package cape
            :load-path "~/.emacs.d/packages/corfu/cape-main"
            :init
@@ -679,6 +687,7 @@ _q_uit
                           cape-file
                           cape-keyword
                           cape-dabbrev
+                          cape-symbol   ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
@@ -1423,6 +1432,7 @@ _q_uit
                      consult-buffer-other-window
                      consult-buffer-other-frame
                      consult-goto-line
+                     consult-completion-in-region
                      )
            :init
            (setq
