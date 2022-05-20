@@ -96,3 +96,5 @@ packages/minibuffer/compat.el-master/*
 /packages/lsp/lsp-bridge-master/
 /packages/corfu/cape-main/
 /strokes
+/.tags/
+/packages/citre/citre-master

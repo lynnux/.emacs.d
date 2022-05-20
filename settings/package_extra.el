@@ -604,6 +604,7 @@ _q_uit
                corfu-auto t
                corfu-auto-prefix 1
                corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
+               corfu-auto-delay 0.3 ;; 避免输完后马上C-n/C-p也补全
                )
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
@@ -679,6 +680,7 @@ _q_uit
            
            (load "corfu/company-ctags.el")
            (defun my/set-cape-hook()
+             (interactive)
              (dolist (c `(,@(mapcar #'cape-company-to-capf
                                     (list
                                      ;; #'company-ctags
@@ -1401,7 +1403,7 @@ _q_uit
              (setq
               prefix-help-command #'embark-prefix-help-command
               embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
-              embark-quit-after-action nil     ;; 默认就退出minibuffer了
+              ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
               )
              :config
              ;; C-h可以输入命令，有时候显示不全或许记不住命令行
@@ -2073,8 +2075,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         ad-do-it)
 	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
 
-;; (use-package citre
-;;   :load-path "~/.emacs.d/packages/citre")
+;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
+(use-package citre-config
+  :defer 1.0
+  :load-path "~/.emacs.d/packages/citre/citre-master"
+  )
 
 (defun my-project-search()
   (interactive)
@@ -2104,9 +2109,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;; eglot+ctags补全是不错的方案(clangd flymake很多错误时补全失灵)
       (defun my/generate-tags()
         (interactive)
-        ;; 由于use-package自动设置:load-path，所以是可以使用的
-        (require 'projectile)
-        (call-interactively 'projectile-regenerate-tags)
+        ;; projectile那个tags太简单了，不能指定语言很慢
+        (when (functionp 'citre-update-this-tags-file)
+          (call-interactively 'citre-update-this-tags-file))
         )
       ;; p切换project时显示的命令
       (setq project-switch-commands
