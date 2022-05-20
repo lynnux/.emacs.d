@@ -608,6 +608,50 @@ _q_uit
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
          (global-corfu-mode)
+
+         ;; 历史输入排前！
+         (use-package corfu-history
+           :init
+           ;; session自己就记录了corfu-history了，savehist需要配置
+           :config
+           (corfu-history-mode 1)
+           )
+         (use-package corfu-quick
+           :commands(corfu-quick-insert corfu-quick-complete)
+           :init
+           (setq corfu-quick1 "arstne"
+                 corfu-quick2 "ioh")
+           (define-key corfu-map (kbd "C-o") 'corfu-quick-insert) ; corfu-quick-complete 效果是一样的，分不清
+           )
+         (use-package corfu-indexed
+           :config
+           ;; 参考company-complete-number写的
+           (defun my/company-complete-number (number)
+             (interactive
+              (list (let* ((type (event-basic-type last-command-event))
+                           (char (if (characterp type)
+                                     ;; Number on the main row.
+                                     type
+                                   ;; Keypad number, if bound directly.
+                                   (car (last (string-to-list (symbol-name type))))))
+                           (number (- char ?0)))
+                      (if (zerop number) 0 number))))
+             (let ((current-prefix-arg `(,number)))
+               (call-interactively 'corfu-complete)  
+               ))
+           ;; CTRL+数字快速选择
+           (dotimes (i 10)
+	         (define-key corfu-map (read-kbd-macro (format "C-%d" i)) 'my/company-complete-number))
+           (corfu-indexed-mode)
+           )
+         (use-package corfu-info
+           :commands(corfu-info-documentation corfu-info-location)
+           :init
+           ;; 对于elisp-completion-at-point后端，这两个是可以用的，但是提示是Dabbrev的话就无法用了
+           (define-key corfu-map (kbd "M-h") 'corfu-info-documentation)
+           (define-key corfu-map "\M-l" 'corfu-info-location)
+           )
+         
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
@@ -622,20 +666,22 @@ _q_uit
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
            ;; company虽然没用，但是use-package会自动设置load-path，所以没问题
-           (require 'company)
-           (require 'company-dabbrev)
            (require 'cape-keyword)
            (require 'company-yasnippet)
            
            (load "corfu/company-ctags.el")
            (defun my/set-cape-hook()
-             (dolist (c (mapcar #'cape-company-to-capf
-                                (list #'company-ctags
-                                      #'company-yasnippet
-                                      #'company-dabbrev
-                                      )))
+             (dolist (c `(,@(mapcar #'cape-company-to-capf
+                                    (list
+                                     ;; #'company-ctags
+                                     #'company-yasnippet
+                                     ))
+                          cape-file
+                          cape-keyword
+                          cape-dabbrev
+                          ))
+               ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
-             (add-to-list 'completion-at-point-functions #'cape-keyword)
              )
            (add-hook 'prog-mode-hook 'my/set-cape-hook)
            (when (functionp 'eglot-ensure)
@@ -1275,8 +1321,8 @@ _q_uit
            (use-package vertico-quick
              :commands(vertico-quick-exit)
              :init
-             (setq vertico-quick1 "arstne")
-             (setq vertico-quick2 "ioh")
+             (setq vertico-quick1 "arstne"
+                   vertico-quick2 "ioh")
              ;; 类似avy，我一直想在helm中实现的
              (define-key vertico-map "\C-o" #'vertico-quick-exit))
            (use-package vertico-grid
@@ -2016,6 +2062,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             )
         ad-do-it)
 	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
+
+;; (use-package citre
+;;   :load-path "~/.emacs.d/packages/citre")
 
 (defun my-project-search()
   (interactive)
