@@ -1265,7 +1265,7 @@ _q_uit
            :defer 0.3
            :config
            (vertico-mode 1)
-           (enable-minibuffer-auto-search-at-point)
+           (enable-minibuffer-auto-search-at-point) ;; consult有个:initial也可以设置，不过搜索其它的话要先删除
            ;; extension说明
            ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
            ;; vertico-directory.el  测试没成功
@@ -1429,12 +1429,13 @@ _q_uit
          (use-package consult
            :load-path "~/.emacs.d/packages/minibuffer/consult-main"
            :commands(consult-ripgrep
-                     consult-buffer
+                     consult-buffer ;; buffer+recent+bookmark
                      consult-line
                      consult-buffer-other-window
                      consult-buffer-other-frame
-                     consult-goto-line
-                     consult-completion-in-region
+                     consult-goto-line ;; 带预览
+                     consult-completion-in-region ;; 将补全移动到minibuffer进行
+                     consult-project-buffer;; buffer+file
                      )
            :init
            (setq
@@ -2112,8 +2113,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         ))
 (defun my-project-find-file()
   (interactive)
-  (call-interactively 'project-find-file)
+  (if (functionp 'consult-project-buffer)
+      (call-interactively 'consult-project-buffer);; buffer+file，还带有排序功能！
+    (call-interactively 'project-find-file))
   )
+(defun my-project-buffer()
+  (interactive)
+  (if (functionp 'consult-project-buffer)
+      (call-interactively 'consult-project-buffer)
+    (call-interactively 'project-switch-to-buffer)))
 
 (if t
     ;; 没有cache查找文件也超快！
@@ -2131,11 +2139,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         )
       ;; p切换project时显示的命令
       (setq project-switch-commands
-            '((?f "File" my-project-find-file)
+            `((?f "File" my-project-find-file)
               (?s "Search" my-project-search)
               (?d "Dired" project-dired)
               (?m "Magit" magit-status)
-              (?b "Buffer" project-switch-to-buffer); 这个当recent buffer使用了
+              (?b "Buffer" my-project-buffer) ; 这个当recent buffer使用了
               (?v "VC-Dir" project-vc-dir)
               (?e "Eshell" project-eshell)
               )
@@ -2147,6 +2155,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "S" 'project-shell)
       (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
       (define-key project-prefix-map "t" 'my/generate-tags)
+      (define-key project-prefix-map "b" 'my-project-buffer)
       
       :config
       (when (functionp 'which-key--show-keymap)
@@ -3093,6 +3102,17 @@ _q_uit
   ;; (setq cd2/region-command 'cd2/comment-or-uncomment-region) ;; comment-dwim那种模式，多行需要全部选中
   (global-set-key "\M-;" 'comment-dwim-2)
   )
+
+;; 修改光标下的数字，这个支持十六进制(shift-number不支持)
+(use-package evil-numbers
+  :commands(evil-numbers/inc-at-pt evil-numbers/dec-at-pt)
+  :init
+  (global-set-key (kbd "C-=") 'evil-numbers/inc-at-pt)
+  (global-set-key (kbd "C--") 'evil-numbers/dec-at-pt)
+  (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
+  (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
+  )
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
