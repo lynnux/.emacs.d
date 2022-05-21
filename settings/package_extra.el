@@ -3127,6 +3127,19 @@ _q_uit
   (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
   )
 
+(use-package so-long
+  :defer 1.3
+  :config
+  (global-so-long-mode))
+
+(use-package drag-stuff
+  :commands(drag-stuff-up drag-stuff-down drag-stuff-right drag-stuff-left)
+  :init
+  (global-set-key (kbd "C-<up>") 'drag-stuff-up)
+  (global-set-key (kbd "C-<down>") 'drag-stuff-down)
+  ;; (global-set-key (kbd "C-<left>") 'drag-stuff-left) ;; 左右移动貌似没什么用，还是留给winner-mode
+  ;; (global-set-key (kbd "C-<right>") 'drag-stuff-right)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
