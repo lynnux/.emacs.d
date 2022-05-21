@@ -604,7 +604,7 @@ _q_uit
                corfu-auto t
                corfu-auto-prefix 1
                corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
-               corfu-auto-delay 0.3 ;; 避免输完后马上C-n/C-p也补全
+               corfu-auto-delay 0.5 ;; 避免输完后马上C-n/C-p也补全
                )
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
@@ -1401,11 +1401,11 @@ _q_uit
               )
              :init
              (setq
-              prefix-help-command #'embark-prefix-help-command
               embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
               ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
               )
              :config
+             (setq prefix-help-command #'embark-prefix-help-command)
              ;; C-h可以输入命令，有时候显示不全或许记不住命令行
              (define-key vertico-map (kbd "C-c C-o") 'embark-export)
              (define-key vertico-map (kbd "C-c C-c") 'embark-act)
@@ -1471,13 +1471,14 @@ _q_uit
            (global-set-key [f2] 'my-consult-ripgrep)
            (global-set-key [S-f2] 'my-consult-ripgrep-only-current-dir)
            
-           ;; 按f/b/m/p加上空格可以只显示相应files/buffer/bookmark/project！
+           ;; 按f/b/m/p加上空格可以只显示相应files/buffer/bookmark/project！(project默认hidden)
            (global-set-key (kbd "C-x C-b") 'consult-buffer)
            (global-set-key (kbd "C-s") 'consult-line)  ;; consult-line -> embark-export to occur-mode 按e进行编辑，是实时更新buffer的
            (global-set-key [remap switch-to-buffer] 'consult-buffer)
            (global-set-key [remap switch-to-buffer-other-window] 'consult-buffer-other-window)
            (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
            (global-set-key [remap goto-line] 'consult-goto-line)
+           (global-set-key [remap bookmark-jump] 'consult-bookmark)
 
            (use-package consult-imenu
              :commands(consult-imenu consult-imenu-multi)
@@ -1489,7 +1490,21 @@ _q_uit
            (use-package consult-org
              :commands(consult-org-agenda) ; 这个很卡啊，还是不替换C-c a了(C-c a再按t也比较卡，应该是org mode问题)
              )
+           (use-package consult-xref
+             :commands(consult-xref)
+             :init
+             (setq xref-show-xrefs-function #'consult-xref
+                   xref-show-definitions-function #'consult-xref)
+             )
            :config
+           ;; 禁止某些preview
+           (consult-customize
+            consult-recent-file
+            consult--source-bookmark consult--source-recent-file
+            consult--source-project-recent-file
+            ;; :preview-key '(:debounce 0.2 any) ;; 只是延迟
+            :preview-key (kbd "M-.")
+            )
            ;; 含中文字符搜索时添加--pre rgpre
            (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
              (if (chinese-word-chinese-string-p (ad-get-arg 0))
@@ -2078,6 +2093,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 (use-package citre-config
   :defer 1.0
+  :diminish(citre-mode)
   :load-path "~/.emacs.d/packages/citre/citre-master"
   )
 
@@ -2320,6 +2336,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            (setq eglot-confirm-server-initiated-edits nil) ; 避免code action的提示
            :commands (eglot eglot-ensure eglot-rename)
            :config
+           (advice-add 'jsonrpc--log-event :around
+                       (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
            ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
            ;; (add-to-list 'eglot-stay-out-of 'flymake)
            (when (functionp 'lsp-bridge-mode)   ;; 用lsp-bridge时，eglot只开启部分功能
@@ -3053,13 +3071,15 @@ _q_uit
   :defer 1.0
   :init
   (setq
+   shackle-default-size 0.4
    shackle-default-rule nil
    shackle-default-alignment 'below
-   shackle-rules '( ;; 更多设置参看shackle.el
+   shackle-rules '( ;; 更多设置参看shackle.el https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
                    (compilation-mode :noselect t :align 'below :size 0.2);; noselect只是cursor不移动过去
                    (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
                    (magit-status-mode    :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
                    (magit-log-mode       :select t :inhibit-window-quit t :same t)
+                   ("\\*Backtrace\\*" :noselect t :align 'below :size 0.2) ;; C-x C-e执行错误，noselect没效果啊？
                    ))
   :config
   (shackle-mode 1))
