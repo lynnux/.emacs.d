@@ -897,30 +897,26 @@ _q_uit
       compilation-scroll-output t)
 
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
-(add-to-list 'load-path "~/.emacs.d/packages/expand-region")
 (use-package expand-region
-  :commands(er/expand-region))
-;; (autoload 'er/expand-region "expand-region" nil t)
-;; (autoload 'er/contract-region "expand-region" nil t)
-;; (global-set-key "\C-t" 'er/expand-region)
-;; (global-set-key (kbd "C-S-t") 'er/contract-region)
+  :load-path "~/.emacs.d/packages/expand-region"
+  :commands(er/expand-region er/contract-region)
+  :init
+  (global-set-key (kbd "C-S-t") 'er/contract-region)
+  :config
+  ;; see https://github.com/magnars/expand-region.el/issues/229
+  ;; (global-set-key (kbd "C-q") #'(lambda (arg)
+  ;;   			                  (interactive "P")
+  ;;   			                  (setq transient-mark-mode t)
+  ;;   			                  (set-mark-command arg)))
+  )
 
-;; see https://github.com/magnars/expand-region.el/issues/229
-(with-eval-after-load "expand-region"
-  (global-set-key (kbd "C-q") #'(lambda (arg)
-				                  (interactive "P")
-				                  (setq transient-mark-mode t)
-				                  (set-mark-command arg))))
-;;; 解决被(setq show-paren-style 'expression)覆盖的问题
-;; (defadvice show-paren-function (around not-show-when-expand-region activate)
-;;   (if (and (or (eq major-mode 'lisp-interaction-mode) (eq major-mode 'emacs-lisp-mode))
-;; 	   (memq last-command '(er/expand-region er/contract-region easy-mark easy-kill-er-expand easy-kill-er-unexpand)))
-;;       (progn
-;; 	(setq show-paren-style 'parenthesis)
-;; 	ad-do-it
-;; 	(setq show-paren-style 'expression)
-;; 	)
-;;     ad-do-it))
+(use-package smart-region
+  :commands(smart-region) 
+  :init
+  ;; C-q不动再按C-q触发expand region，移动到其它行，同一列触发multiple-cursors，不同列是rectangle-mark
+  ;; 同列触发mc这个要常用，不过有bug有汉字的话判定为rectangle-mark
+  (global-set-key (kbd "C-q") 'smart-region)
+  )
 
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
@@ -2107,6 +2103,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 (use-package citre-config
+  :disabled ;; 输入汉子导致emacs卡死(它自己设置了capf)？Message查看提示process什么失败，还以为是corfu导致的呢。。
   :defer 1.0
   :diminish(citre-mode)
   :load-path "~/.emacs.d/packages/citre/citre-master"
@@ -2915,6 +2912,7 @@ _q_uit
   (use-package diff-hl-show-hunk
     :config
     (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
+    (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk);; 目前还没有绑定这个的
     (global-diff-hl-show-hunk-mouse-mode)
     ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
     (defvar set-transient-map-exit-func nil)
