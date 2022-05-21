@@ -1444,6 +1444,7 @@ _q_uit
             consult-async-min-input 1 ;; 确保单个汉字也可以搜索
             ;; consult-fontify-max-size 1024 ;; 不设置的话大文件第1次用consult-line会卡几秒，设置consult-fontify-preserve就不需要设置这个了
             consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
+            consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
             )
            ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
            (add-to-list 'process-coding-system-alist 
@@ -1480,12 +1481,18 @@ _q_uit
            (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
            (global-set-key [remap goto-line] 'consult-goto-line)
            (global-set-key [remap bookmark-jump] 'consult-bookmark)
-
+           
+           (defun my-project-imenu()
+             (interactive)
+             (if (and (boundp 'eglot--managed-mode) eglot--managed-mode)
+                 (call-interactively 'consult-eglot-symbols)
+               (call-interactively 'consult-imenu-multi)))
+           
            (use-package consult-imenu
              :commands(consult-imenu consult-imenu-multi)
              :init
              ;; 所有project打开的buffer中查找，太爽了！因为函数名/变量等没有多少，所以没有效率问题
-             (global-set-key [(control ?\,)] 'consult-imenu-multi)
+             ;; (global-set-key [(control ?\,)] 'consult-imenu-multi)
              (global-set-key (kbd "M-m") 'consult-imenu)
              )
            (use-package consult-org
@@ -1496,6 +1503,13 @@ _q_uit
              :init
              (setq xref-show-xrefs-function #'consult-xref
                    xref-show-definitions-function #'consult-xref)
+             )
+           ;; 还有个consult-lsp如果用lsp mode的话
+           (use-package consult-eglot
+             :commands(consult-eglot-symbols)
+             :init
+             (global-set-key [(control ?\,)] 'my-project-imenu)
+             ;; 好像没办法过滤，只有用vertico的f+空格过滤function，其它见`consult-eglot-narrow'
              )
            :config
            ;; 禁止某些preview
