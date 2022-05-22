@@ -677,23 +677,27 @@ _q_uit
            ;; company虽然没用，但是use-package会自动设置load-path，所以没问题
            (require 'cape-keyword)
            (require 'company-yasnippet)
-           
-           (load "corfu/company-ctags.el")
+           ;; (require 'company-etags)
+           ;; (setq company-ctags-support-etags t)
+           ;; (load "corfu/company-ctags.el")
            (defun my/set-cape-hook()
              (interactive)
-             (dolist (c `(,@(mapcar #'cape-company-to-capf
-                                    (list
-                                     ;; #'company-ctags
-                                     #'company-yasnippet
-                                     ))
+             (dolist (c `(
                           cape-file
                           cape-keyword
                           cape-dabbrev
                           cape-symbol   ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
+                          ,@(mapcar #'cape-company-to-capf
+                                    (list
+                                     #'company-yasnippet
+                                     ;; #'company-etags ;; 这个优先级最大比较好，不然除非输够字符才出来
+                                     ))
+                          tags-completion-at-point-function ;; 自带的支持etags!
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
              )
+           ;; 最烦的是eglot和其它会把completion-at-point-functions设为local导致不生效，所以要hook
            (add-hook 'prog-mode-hook 'my/set-cape-hook)
            (when (functionp 'eglot-ensure)
              ;; eglot貌似会覆盖之前的，所以在要它之前设置completion-at-point-functions
@@ -747,7 +751,8 @@ _q_uit
          
          (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
          (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-         )     
+         ;; eglot默认设置为company-capf，要添加etags补全还挺困难的！
+         )
        ))
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
@@ -2132,7 +2137,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   (use-package etags
     :defer t
-    :commands(find-tag--default tags-lazy-completion-table)
+    :commands(find-tag--default ;; 修复eglot的xref at-point
+              tags-lazy-completion-table ;; 空白处M-.
+              tags-completion-at-point-function ;; etags的capf
+              )
     :init
     ;; xref有bug，xref-backend-functions只支持一个backend(无论local hook或者全局)
     ;; https://github.com/seagle0128/.emacs.d/blob/3eabad00e75605ad1277fb37ebc1bf0619e44180/lisp/init-ctags.el#L62
@@ -2160,18 +2168,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       )
     ;; 避免每次都提示查找TAG文件
     (defconst ask-when-to-tag nil) ;; xref-find-definitions advise没成功。
-    (add-hook 'prog-mode-hook (lambda()
-                                (make-local-variable 'tags-file-name)
-                                ;; 参考`citre-update-this-tags-file'
-                                (if-let* ((tagsfile (citre-tags-file-path)))
-                                    (visit-tags-table tagsfile t)
-                                  (when (and ask-when-to-tag (y-or-n-p "Can't find tags file for this buffer.  Create one? "))
-                                    (citre-create-tags-file)
-                                    (setq tagsfile (citre-tags-file-path))
-                                    (when tagsfile
-                                      (visit-tags-table tagsfile t))
-                                    ))))
-    (setq tags-add-tables nil) ;; 屏蔽是否保留tag提示，不保留，否则会混起
+    (defun check_tags()
+      ;; 参考`citre-update-this-tags-file'
+      (if-let* ((tagsfile (citre-tags-file-path)))
+          (visit-tags-table tagsfile t)
+        (when (and ask-when-to-tag (y-or-n-p "Can't find tags file for this buffer.  Create one? "))
+          (citre-create-tags-file)
+          (setq tagsfile (citre-tags-file-path))
+          (when tagsfile
+            (visit-tags-table tagsfile t))
+          ))
+      )
+    (add-hook 'prog-mode-hook 'check_tags)
+    (setq tags-add-tables nil  ;; 打开其它工程时保留tag提示，不保留，否则会混起
+          tags-revert-without-query t;; 当TAGS更新后不提示是否revert TAGS buffer
+          )
     :config
     (defadvice etags-verify-tags-table (around my-etags-verify-tags-table activate)
       ;; 判断是否有效是开头是0xC字符
