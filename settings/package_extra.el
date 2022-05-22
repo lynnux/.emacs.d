@@ -1,4 +1,4 @@
-;; 非官方自带packages的设置
+;; 非官方自带packages的设置 -*- lexical-binding: t -*-
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
 
@@ -2102,11 +2102,87 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
 
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
-(use-package citre-config
-  :disabled ;; 输入汉子导致emacs卡死(它自己设置了capf)？Message查看提示process什么失败，还以为是corfu导致的呢。。
-  :defer 1.0
-  :diminish(citre-mode)
+;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
+;; 所以目前仅用它来创建TAGS文件
+(use-package citre-ctags
+  ;; :disabled ;; 输入汉子导致emacs卡死(它自己设置了capf)？Message查看提示process什么失败，还以为是corfu导致的呢。。
+  ;; :diminish(citre-mode)
   :load-path "~/.emacs.d/packages/citre/citre-master"
+  :commands(citre-create-tags-file citre-update-this-tags-file)
+  :init
+  (setq citre-default-create-tags-file-location 'project-cache
+        citre-use-project-root-when-creating-tags t
+        citre-tags-file-per-project-cache-dir "" ;; 强制tag放到根目录，需配合后面设置
+        ;; citre-prompt-language-for-ctags-command t 设置这个就没有确认对话框了 
+        citre-edit-cmd-buf-default-cmd "ctags
+-o
+%TAGSFILE%
+;; programming languages to be scanned
+--languages=C,C++
+--kinds-all=*
+--fields=*
+--extras=*
+-Re
+;; add dirs/files to scan here, one line per dir/file
+;; add exclude by: --exclude=target
+"
+        )
+  (use-package citre-util
+    :commands(citre-tags-file-path)
+    )
+  (use-package etags
+    :defer t
+    :commands(find-tag--default tags-lazy-completion-table)
+    :init
+    ;; xref有bug，xref-backend-functions只支持一个backend(无论local hook或者全局)
+    ;; https://github.com/seagle0128/.emacs.d/blob/3eabad00e75605ad1277fb37ebc1bf0619e44180/lisp/init-ctags.el#L62
+    (define-advice xref--create-fetcher (:around (fn &rest args) fallback)
+      (let ((fetcher (apply fn args))
+            (etag-fetcher
+             (let ((xref-backend-functions '(etags--xref-backend t)))
+               (ignore xref-backend-functions)
+               (apply fn args))))
+        ;; 这个需要开启-*- lexical-binding: t -*-，写在开头就可以了
+        (lambda ()
+          (or (with-demoted-errors "%s, fallback to etag"
+                (funcall fetcher))
+              (funcall etag-fetcher)
+              ))))
+    ;; 最坑的是eglot定义了个xref-backend-identifier-at-point，却只是用来在找不到时提示找不到"LSP identifier at point."
+    ;; 这样传给etags去查找的就是"LSP identifier at point."
+    (with-eval-after-load 'eglot
+      ;; 好像没有删除generic的办法，重新定义eglot的xref-backend-identifier-at-point
+      (cl-defmethod xref-backend-identifier-at-point ((_backend (eql eglot)))
+        (find-tag--default))
+      ;; 在空白处运行M-.
+      (cl-defmethod xref-backend-identifier-completion-table ((_backend (eql eglot)))
+        (tags-lazy-completion-table))
+      )
+    ;; 避免每次都提示查找TAG文件
+    (defconst ask-when-to-tag nil) ;; xref-find-definitions advise没成功。
+    (add-hook 'prog-mode-hook (lambda()
+                                (make-local-variable 'tags-file-name)
+                                ;; 参考`citre-update-this-tags-file'
+                                (if-let* ((tagsfile (citre-tags-file-path)))
+                                    (visit-tags-table tagsfile t)
+                                  (when (and ask-when-to-tag (y-or-n-p "Can't find tags file for this buffer.  Create one? "))
+                                    (citre-create-tags-file)
+                                    (setq tagsfile (citre-tags-file-path))
+                                    (when tagsfile
+                                      (visit-tags-table tagsfile t))
+                                    ))))
+    (setq tags-add-tables nil) ;; 屏蔽是否保留tag提示，不保留，否则会混起
+    :config
+    (defadvice etags-verify-tags-table (around my-etags-verify-tags-table activate)
+      ;; 判断是否有效是开头是0xC字符
+      (setq ad-return-value t)
+      ))
+  :config
+  ;; 强制tag名
+  (defadvice citre--path-to-cache-tags-file-name (around my-citre--path-to-cache-tags-file-name activate)
+    (setq ad-return-value "TAGS")
+    )
+  (define-key citre-edit-cmd-buf-map (kbd "C-c C-l") 'citre-edit-cmd-buf-add-lang)
   )
 
 (defun my-project-search()
