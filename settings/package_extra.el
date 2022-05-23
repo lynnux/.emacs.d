@@ -1901,6 +1901,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :commands (magit magit-status)        ;; magit-status for projectile
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
+  (define-key magit-status-mode-map (kbd "<C-tab>") nil) ;; 使切换buffer
   )
 (defun git-add-file ()
   "Adds (with force) the file from the current buffer to the git repo"
