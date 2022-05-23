@@ -701,6 +701,8 @@ _q_uit
            (add-hook 'prog-mode-hook 'my/set-cape-hook)
            (when (functionp 'eglot-ensure)
              ;; eglot貌似会覆盖之前的，所以在要它之前设置completion-at-point-functions
+             ;; eglot的capf没有:exclusive标识，所以是独占的？把其它capf排它前面应该就OK
+             ;; 参看讨论 https://github.com/joaotavora/eglot/issues/812
              (add-hook 'eglot-managed-mode-hook 'my/set-cape-hook))
            )
          )
@@ -2144,7 +2146,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               tags-completion-at-point-function ;; etags的capf
               )
     :init
-    ;; xref有bug，xref-backend-functions只支持一个backend(无论local hook或者全局)
+    ;; xref有bug，`xref-backend-functions'只支持一个backend(无论local hook或者全局)
     ;; https://github.com/seagle0128/.emacs.d/blob/3eabad00e75605ad1277fb37ebc1bf0619e44180/lisp/init-ctags.el#L62
     (define-advice xref--create-fetcher (:around (fn &rest args) fallback)
       (let ((fetcher (apply fn args))
@@ -2164,7 +2166,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;; 好像没有删除generic的办法，重新定义eglot的xref-backend-identifier-at-point
       (cl-defmethod xref-backend-identifier-at-point ((_backend (eql eglot)))
         (find-tag--default))
-      ;; 在空白处运行M-.
+      ;; 在空白处运行M-. eglot提示没实现，那就直接换成etags的了。此功能用consult-eglot也可以(C-,)
       (cl-defmethod xref-backend-identifier-completion-table ((_backend (eql eglot)))
         (tags-lazy-completion-table))
       )
