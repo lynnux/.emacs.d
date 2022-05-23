@@ -2055,7 +2055,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
-  (add-to-list 'easy-kill-alist '(?a buffer ""))
+  (assq-delete-all ?b easy-kill-alist)  ;; 默认是buffer-file-name，先删除再添加，否则which-key提示不正确
+  (add-to-list 'easy-kill-alist '(?b buffer ""))
+  (add-to-list 'easy-kill-alist '(?a buffer-file-name ""))
   (add-to-list 'easy-kill-alist '(?< backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?> forward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
@@ -2235,6 +2237,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (when (functionp 'citre-update-this-tags-file)
           (call-interactively 'citre-update-this-tags-file))
         )
+      (defun my-project-magit()
+        (interactive)
+        (let ((pr (project-current t)))
+          (magit-status (project-root pr))))
       ;; p切换project时显示的命令
       (setq project-switch-commands
             `((?f "File" my-project-find-file)
@@ -2251,7 +2257,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "f" 'my-project-find-file)
       (define-key project-prefix-map "s" 'my-project-search)
       (define-key project-prefix-map "S" 'project-shell)
-      (define-key project-prefix-map "m" 'magit) ; v保留，那个更快更精简
+      (define-key project-prefix-map "m" 'my-project-magit) ; v保留，那个更快更精简
       (define-key project-prefix-map "t" 'my/generate-tags)
       (define-key project-prefix-map "b" 'my-project-buffer)
       
