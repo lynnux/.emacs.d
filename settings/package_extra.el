@@ -1307,6 +1307,8 @@ _q_uit
                ))
            (define-key vertico-map (kbd "C-l") 'my/vertico-C-l)
            (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
+           (define-key vertico-map (kbd "M-o") 'vertico-next-group) ;; 下个组,C-o给avy了
+           (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
 
            ;; 习惯只要underline，不随主题改变
 	       (custom-set-faces
