@@ -684,6 +684,7 @@ _q_uit
              (interactive)
              (dolist (c `(
                           cape-file
+                          tags-completion-at-point-function ;; 自带的支持etags!
                           cape-keyword
                           cape-dabbrev
                           cape-symbol   ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
@@ -692,7 +693,6 @@ _q_uit
                                      #'company-yasnippet
                                      ;; #'company-etags ;; 这个优先级最大比较好，不然除非输够字符才出来
                                      ))
-                          tags-completion-at-point-function ;; 自带的支持etags!
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
@@ -2267,9 +2267,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 没有cache查找文件也超快！
     (use-package project
       :defer t
-      :bind-keymap ("C-;" . project-prefix-map)
       :commands(project-compile project-find-regexp)
       :init
+      (defun invoke_project ()
+        (interactive)
+        (when (functionp' which-key--show-keymap)
+          (which-key--show-keymap "keymap" project-prefix-map nil nil 'no-paging)
+          )
+        (set-transient-map project-prefix-map nil 'which-key--hide-popup)
+        )
+      (global-set-key (kbd "C-;") 'invoke_project)
+      
       ;; eglot+ctags补全是不错的方案(clangd flymake很多错误时补全失灵)
       (defun my/generate-tags()
         (interactive)
