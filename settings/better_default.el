@@ -11,7 +11,6 @@
 (define-key global-map (kbd "C-x SPC") (lambda () (interactive)
       (switch-to-buffer (other-buffer (current-buffer) 1)))) ; 最近buffer切换
 (global-set-key (kbd "C-v") 'yank)	; 翻页基本不用
-(global-set-key (kbd "C-S-v") 'popup-kill-ring)
 (delete-selection-mode 1);; 选中替换模式，比较方便，但是据说有副作用，先用用再说
 (global-set-key [?\C-h] 'delete-backward-char) ;C-H当删除很好用！
 (global-set-key [?\M-h] 'backward-kill-word) ;M-H顺便也弄上
