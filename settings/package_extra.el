@@ -923,6 +923,14 @@ _q_uit
   ;; C-q不动再按C-q触发expand region，移动到其它行，同一列触发multiple-cursors，不同列是rectangle-mark
   ;; 同列触发mc这个要常用，不过有bug有汉字的话判定为rectangle-mark
   (global-set-key (kbd "C-q") 'smart-region)
+  :config
+  (when (functionp 'which-key--show-keymap)
+    (defadvice smart-region (after my-smart-region activate)
+      (when rectangle-mark-mode
+        (which-key--show-keymap "keymap" ctl-x-r-map nil nil 'no-paging)
+        (set-transient-map ctl-x-r-map (lambda()rectangle-mark-mode) 'which-key--hide-popup)
+        )
+      ))
   )
 
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
