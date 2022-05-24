@@ -61,7 +61,6 @@
 
 ;;窗口按键设置
 (global-set-key (kbd "C-1") 'delete-other-windows) ; Alt-1 关闭其它窗口
-(global-set-key (kbd "M-1") 'other-window)
 (defun volatile-kill-buffer ()
   "Kill current buffer unconditionally."
   (interactive)

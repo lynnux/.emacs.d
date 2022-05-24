@@ -3184,33 +3184,26 @@ _q_uit
     (w32-send-sys-command #xf120))
   )
 
-;; 好像会卡死emacs？
-;; (use-package popper
-;;   :load-path "~/.emacs.d/packages/window/popper-master"
-;;   :bind (("C-4"   . popper-toggle-latest)
-;;          ("C-5"   . popper-cycle)
-;;          ;; ("C-M-`" . popper-toggle-type)
-;;          )
-;;   :commands(popper-mode)
-;;   :init
-;;   (setq popper-reference-buffers
-;;         '("\\*Messages\\*"
-;;           "Output\\*$"
-;;           "\\*Async Shell Command\\*"
-;;           help-mode
-;;           compilation-mode))
-;;   :config
-;;   (popper-mode +1)
-;;   (require 'popper-echo)
-;;   (popper-echo-mode +1)
-;;   (defun my-popper-fit-window-height (win)
-;;     "Determine the height of popup window WIN by fitting it to the buffer's content."
-;;     (fit-window-to-buffer
-;;      win
-;;      (floor (frame-height) 3)
-;;      (floor (frame-height) 3)))
-;;   (setq popper-window-height #'my-popper-fit-window-height)
-;;   )
+(use-package popper
+  :defer 1.0
+  ;; 用手撑去按还是很方便的(要机械键盘)，不过按M-C什么就脑火了
+  :bind (("M-`" . popper-toggle-latest)
+         ("M-1" . popper-cycle) 
+         )
+  :commands(popper-mode)
+  :init
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "\\*Backtrace\\*"
+          help-mode
+          compilation-mode
+          shell-mode eshell-mode ;; 初始化还是全屏，但后面切换没事
+          ))
+  :config
+  (popper-mode +1)
+  )
 
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
 (use-package shackle
@@ -3221,11 +3214,10 @@ _q_uit
    shackle-default-rule nil
    shackle-default-alignment 'below
    shackle-rules '( ;; 更多设置参看shackle.el https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
-                   (compilation-mode :noselect t :align 'below :size 0.2);; noselect只是cursor不移动过去
+                   ;; (compilation-mode :noselect t :align 'below :size 0.2);; noselect只是cursor不移动过去
                    (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
                    (magit-status-mode    :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
                    (magit-log-mode       :select t :inhibit-window-quit t :same t)
-                   ("\\*Backtrace\\*" :noselect t :align 'below :size 0.2) ;; C-x C-e执行错误，noselect没效果啊？
                    ))
   :config
   (shackle-mode 1))
