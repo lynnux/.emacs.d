@@ -1399,8 +1399,9 @@ _q_uit
 
            (use-package embark
              :load-path "~/.emacs.d/packages/minibuffer/embark-master"
+             :commands(embark-export embark-act embark-act-with-completing-read)
              :bind
-             (("C-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
+             (("M-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
               ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
               ("<f1> B" . embark-bindings) ;; 列举当前可用的键及其命令
               )
@@ -1409,12 +1410,36 @@ _q_uit
               embark-mixed-indicator-delay 0   ;; 按钮提示菜单延迟，熟练后可以设置长点
               ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
               )
+             (with-eval-after-load 'vertico
+               (define-key vertico-map (kbd "C-c C-o") 'embark-export)
+               (define-key vertico-map (kbd "C-c C-c") 'embark-act)
+               (define-key vertico-map (kbd "<tab>") 'embark-act-with-completing-read)
+               )
              :config
              (setq prefix-help-command #'embark-prefix-help-command)
              ;; C-h可以输入命令，有时候显示不全或许记不住命令行
-             (define-key vertico-map (kbd "C-c C-o") 'embark-export)
-             (define-key vertico-map (kbd "C-c C-c") 'embark-act)
-             )
+             (progn
+               ;; 设置像Helm的TAB一样，vertico的TAB没什么用
+               (defun with-minibuffer-keymap (keymap)
+                 (lambda (fn &rest args)
+                   (minibuffer-with-setup-hook
+                       (lambda ()
+                         (use-local-map
+                          (make-composed-keymap keymap (current-local-map))))
+                     (apply fn args))))
+               (defvar embark-completing-read-prompter-map
+                 (let ((map (make-sparse-keymap)))
+                   (define-key map (kbd "<tab>") 'abort-recursive-edit)
+                   map))
+               (advice-add 'embark-completing-read-prompter :around
+                           (with-minibuffer-keymap embark-completing-read-prompter-map))
+               (defun embark-act-with-completing-read (&optional arg)
+                 (interactive "P")
+                 (let* ((embark-prompter 'embark-completing-read-prompter)
+                        (act (propertize "Act" 'face 'highlight))
+                        (embark-indicator (lambda (_keymap targets) nil)))
+                   (embark-act arg)))
+               ))
            ;; Consult users will also want the embark-consult package.
            (use-package embark-consult
              :after (embark consult)
@@ -1925,8 +1950,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
   ;; (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
-  (global-set-key (kbd "C-.") 'xref-find-definitions)
-  (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)  
   :config
   ;; (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
   ;;   ;; arount设置有问题
@@ -2092,6 +2115,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq xref-search-program 'ripgrep
         xref-auto-jump-to-first-definition 'show ;; 自动跳转到第一个
         xref-auto-jump-to-first-xref 'show)
+  (global-set-key (kbd "C-.") 'xref-find-definitions)
+  (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
   :config
   (define-key xref--xref-buffer-mode-map (kbd "C-n") 'xref-next-line)
   (define-key xref--xref-buffer-mode-map (kbd "C-p") 'xref-prev-line)
