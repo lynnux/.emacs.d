@@ -2166,7 +2166,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 最坑的是eglot定义了个xref-backend-identifier-at-point，却只是用来在找不到时提示找不到"LSP identifier at point."
     ;; 这样传给etags去查找的就是"LSP identifier at point."
     (with-eval-after-load 'eglot
-      ;; 好像没有删除generic的办法，重新定义eglot的xref-backend-identifier-at-point
+      ;; 重新定义eglot的xref-backend-identifier-at-point，避免上面xref--create-fetcher传给etags搜索词错误
       (cl-defmethod xref-backend-identifier-at-point ((_backend (eql eglot)))
         (find-tag--default))
       ;; 在空白处运行M-. eglot提示没实现，那就直接换成etags的了。此功能用consult-eglot也可以(C-,)
@@ -2191,8 +2191,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           tags-revert-without-query t;; 当TAGS更新后不提示是否revert TAGS buffer
           )
     :config
+    ;; 跟citre生成的TAGS兼容(头两行带有更新TAGS的命令)
     (defadvice etags-verify-tags-table (around my-etags-verify-tags-table activate)
-      ;; 判断是否有效是开头是0xC字符
+      ;; 原来的判断是开头0xC字符
       (setq ad-return-value t)
       ))
   :config
