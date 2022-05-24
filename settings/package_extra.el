@@ -1414,6 +1414,7 @@ _q_uit
                (define-key vertico-map (kbd "C-c C-o") 'embark-export)
                (define-key vertico-map (kbd "C-c C-c") 'embark-act)
                (define-key vertico-map (kbd "<tab>") 'embark-act-with-completing-read)
+               (define-key vertico-map (kbd "H-i") 'vertico-insert) ;; 原TAB功能，没必要在vertico里用view mode功能
                )
              :config
              (setq prefix-help-command #'embark-prefix-help-command)
