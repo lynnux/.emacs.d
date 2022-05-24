@@ -1419,6 +1419,7 @@ _q_uit
               ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
               )
              (with-eval-after-load 'vertico
+               (define-key vertico-map (kbd "C-.") 'embark-act)
                (define-key vertico-map (kbd "C-c C-o") 'embark-export)
                (define-key vertico-map (kbd "C-c C-c") 'embark-act)
                (define-key vertico-map (kbd "<tab>") 'embark-act-with-completing-read)
