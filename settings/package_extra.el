@@ -3225,6 +3225,7 @@ _q_uit
         (call-interactively 'keyboard-escape-quit) ;; 关闭minibuffer，关闭其它窗口
         )))
   (global-set-key (kbd "C-1") 'my-C-1)
+  (global-set-key (kbd "M-`") 'popper-toggle-latest)
 
   (setq popper-reference-buffers
         '("\\*Messages\\*"
