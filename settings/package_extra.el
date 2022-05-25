@@ -3237,6 +3237,8 @@ _q_uit
           ))
   :config
   (popper-mode +1)
+  (add-hook 'popper-open-popup-hook (lambda()
+                                      (tab-line-mode -1)))
   (require 'popper-echo)
   (popper-echo-mode +1)
 
