@@ -429,8 +429,8 @@ _c_: hide comment        _q_uit
 (auto-save-visited-mode 1)
 (when auto-save-visited-mode
   ;; 参考super save，对于某些命令立即调用保存，避免save buffer yes no提示
-  (defvar super-save-triggers '(magit project-compile quickrun
-                                    save-buffers-kill-terminal volatile-kill-buffer))
+  (defvar super-save-triggers '(magit my-project-magit project-compile quickrun
+                                      save-buffers-kill-terminal volatile-kill-buffer))
   ;; 调用后立即执行的。eglot只有保存后才会更新code actions
   (defvar super-save-triggers-after '(eglot-code-actions))
   (defun super-save-command-advice (&rest _args) 
@@ -3200,10 +3200,6 @@ _q_uit
 
 (use-package popper
   :defer 1.0
-  ;; 用手撑去按还是很方便的(要机械键盘)，不过按M-C什么就脑火了
-  :bind (("M-`" . popper-toggle-latest)
-         ("M-1" . popper-cycle) 
-         )
   :commands(popper-mode popper-toggle-latest)
   :init
   (defun my-C-1()
@@ -3245,6 +3241,8 @@ _q_uit
           ))
   :config
   (popper-mode +1)
+  (require 'popper-echo)
+  (popper-echo-mode +1)
   )
 
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
