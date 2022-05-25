@@ -1255,9 +1255,6 @@ _q_uit
               (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t)))
   )
 
-;; 关闭minibuffer，关闭其它窗口
-(global-set-key (kbd "C-1") 'keyboard-escape-quit)
-
 ;; 测试leakxxx.db C-s helm直接卡死了，vertio和ivy都是2秒弹出(每次都是)，对app.lua vertico由于创建buffer首次要慢点
 (defconst minibuffer-use-which 1)     ; 1.vertico 2.helm 3.ivy
 (cond ((eq minibuffer-use-which 1)
@@ -3207,8 +3204,36 @@ _q_uit
   :bind (("M-`" . popper-toggle-latest)
          ("M-1" . popper-cycle) 
          )
-  :commands(popper-mode)
+  :commands(popper-mode popper-toggle-latest)
   :init
+  (defun my-C-1()
+    (interactive)
+    ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
+    (let ((show-popper (cond ((eq last-command 'mode-exited) t)
+	                         ((region-active-p)
+	                          'a)
+	                         ((> (minibuffer-depth) 0)
+	                          'b)
+	                         (current-prefix-arg
+	                          t)
+	                         ((> (recursion-depth) 0)
+	                          'c)
+	                         (buffer-quit-function
+	                          'd)
+	                         ((not (one-window-p t))
+	                          'e)
+	                         ((string-match "^ \\*" (buffer-name (current-buffer)))
+	                          'f)
+                             (t t))))
+      ;; 有popper窗口先关闭
+      (when popper-open-popup-alist
+        (call-interactively 'popper-toggle-latest))
+      (if (eq show-popper t)
+          (call-interactively 'popper-toggle-latest)
+        (call-interactively 'keyboard-escape-quit) ;; 关闭minibuffer，关闭其它窗口
+        )))
+  (global-set-key (kbd "C-1") 'my-C-1)
+
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
