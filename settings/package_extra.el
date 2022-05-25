@@ -3239,6 +3239,17 @@ _q_uit
   (popper-mode +1)
   (require 'popper-echo)
   (popper-echo-mode +1)
+
+  (defun popper-close-window-hack (&rest _)
+    "Close popper window via `C-g'."
+    ;; `C-g' can deactivate region
+    (when (and (called-interactively-p 'interactive)
+               (not (region-active-p))
+               popper-open-popup-alist)
+      (let ((window (caar popper-open-popup-alist)))
+        (when (window-live-p window)
+          (delete-window window)))))
+  (advice-add #'keyboard-quit :before #'popper-close-window-hack)
   )
 
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
