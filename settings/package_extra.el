@@ -1419,34 +1419,11 @@ _q_uit
                (define-key vertico-map (kbd "C-.") 'embark-act)
                (define-key vertico-map (kbd "C-c C-o") 'embark-export)
                (define-key vertico-map (kbd "C-c C-c") 'embark-act)
-               (define-key vertico-map (kbd "<tab>") 'embark-act-with-completing-read)
-               (define-key vertico-map (kbd "H-i") 'vertico-insert) ;; 原TAB功能，没必要在vertico里用view mode功能
                )
              :config
              (setq prefix-help-command #'embark-prefix-help-command)
              ;; C-h可以输入命令，有时候显示不全或许记不住命令行
-             (progn
-               ;; 设置像Helm的TAB一样，vertico的TAB没什么用
-               (defun with-minibuffer-keymap (keymap)
-                 (lambda (fn &rest args)
-                   (minibuffer-with-setup-hook
-                       (lambda ()
-                         (use-local-map
-                          (make-composed-keymap keymap (current-local-map))))
-                     (apply fn args))))
-               (defvar embark-completing-read-prompter-map
-                 (let ((map (make-sparse-keymap)))
-                   (define-key map (kbd "<tab>") 'abort-recursive-edit)
-                   map))
-               (advice-add 'embark-completing-read-prompter :around
-                           (with-minibuffer-keymap embark-completing-read-prompter-map))
-               (defun embark-act-with-completing-read (&optional arg)
-                 (interactive "P")
-                 (let* ((embark-prompter 'embark-completing-read-prompter)
-                        (act (propertize "Act" 'face 'highlight))
-                        (embark-indicator (lambda (_keymap targets) nil)))
-                   (embark-act arg)))
-               ))
+             )
            ;; Consult users will also want the embark-consult package.
            (use-package embark-consult
              :after (embark consult)
