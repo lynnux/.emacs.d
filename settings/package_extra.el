@@ -1288,18 +1288,29 @@ _q_uit
 
            (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
            ;; (define-key vertico-map (kbd "C-r") 'vertico-previous) ;; C-r可以复制
+           (defun is-consult-ripgrep()
+             (eq 'consult-grep
+                 (completion-metadata-get
+                  (completion-metadata
+                   (buffer-substring (minibuffer-prompt-end)
+                                     (max (minibuffer-prompt-end) (point)))
+                   minibuffer-completion-table
+                   minibuffer-completion-predicate)
+                  'category)))
+           (defun is-consult-line()
+             (eq 'consult-location ;; 其它有几个也是这个，影响不大
+                 (completion-metadata-get
+                  (completion-metadata
+                   (buffer-substring (minibuffer-prompt-end)
+                                     (max (minibuffer-prompt-end) (point)))
+                   minibuffer-completion-table
+                   minibuffer-completion-predicate)
+                  'category)))
            (defun my/vertico-C-l ()
              "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
 	         (interactive)
              ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
-             (if (eq 'consult-grep
-                     (completion-metadata-get
-                      (completion-metadata
-                       (buffer-substring (minibuffer-prompt-end)
-                                         (max (minibuffer-prompt-end) (point)))
-                       minibuffer-completion-table
-                       minibuffer-completion-predicate)
-                      'category))
+             (if (is-consult-ripgrep)
                  (progn
                    ;; 设置当前目录为父目录
                    (setq default-directory (file-name-directory (directory-file-name default-directory)))
@@ -1308,9 +1319,17 @@ _q_uit
                      (delete-minibuffer-contents) ;; 参考vertico-directory-up
                      (insert text)
                      ))
-               (call-interactively 'vertico-directory-delete-word)
-               ))
-           (define-key vertico-map (kbd "C-l") 'my/vertico-C-l)
+               (call-interactively 'vertico-directory-delete-word)))
+           (defun my/vertico-tab()
+             (interactive)
+             (if (or (is-consult-line) (is-consult-ripgrep))
+                 (progn
+                   (let ((this-command 'end-of-line)) ;; 由于enable-minibuffer-auto-search-at-point的设置，只需要移动到末尾就自动填写搜索词了
+                     (my-ivy-fly-back-to-present) ;; 单纯调用call-interactively C-s还是灰色的
+                     ))
+               (call-interactively 'vertico-insert)))
+           (define-key vertico-map (kbd "C-l") 'my/vertico-C-l) ;; 转上级目录，或者搜索上级目录
+           (define-key vertico-map (kbd "<tab>") 'my/vertico-tab) ;; rg时tab是插入搜索词
            (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
            (define-key vertico-map (kbd "M-o") 'vertico-next-group) ;; 下个组,C-o给avy了
            (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
