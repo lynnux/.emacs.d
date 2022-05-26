@@ -3222,7 +3222,7 @@ _q_uit
 	                          'f)
                              (t t))))
       ;; 有popper窗口先关闭
-      (when popper-open-popup-alist
+      (when (and (boundp 'popper-open-popup-alist) popper-open-popup-alist)
         (call-interactively 'popper-toggle-latest))
       (if (eq show-popper t)
           (call-interactively 'popper-toggle-latest)
