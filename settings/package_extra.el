@@ -2641,7 +2641,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (lsp-ensure)
 	      )))
 (add-hook 'rust-mode-hook 'lsp-ensure)
-(add-hook 'cmake-mode-hook 'lsp-ensure)
+(add-hook 'cmake-mode-hook 'lsp-ensure) ;; pip install cmake-language-server
+
+;; https://github.com/sumneko/lua-language-server 去下载bin
+(defvar lua-server-path (cond ((file-exists-p "~/lua-language-server-3.2.4-win32-x64") "~/lua-language-server-3.2.4-win32-x64")
+                              (t nil)))
+(when lua-server-path
+  (with-eval-after-load 'lua-mode
+    (add-path-to-execute-path (expand-file-name "bin" lua-server-path)))
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
+  (add-hook 'lua-mode-hook 'lsp-ensure) 
+  )
 
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
