@@ -674,28 +674,26 @@ _q_uit
            :init
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
-           ;; company虽然没用，但是use-package会自动设置load-path，所以没问题
            (require 'cape-keyword)
-           (require 'company-yasnippet)
-           ;; (require 'company-etags)
-           ;; (setq company-ctags-support-etags t)
-           ;; (load "corfu/company-ctags.el")
+           (require 'company-yasnippet);; company虽然没用，但是use-package会自动设置load-path，所以没问题
            (defun my/set-cape-hook()
              (interactive)
-             (dolist (c `(
-                          cape-file
+             (dolist (c `(cape-file
                           tags-completion-at-point-function ;; 自带的支持etags!
                           cape-keyword
                           cape-dabbrev
-                          cape-symbol   ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
+                          ;;cape-symbol   
                           ,@(mapcar #'cape-company-to-capf
                                     (list
                                      #'company-yasnippet
-                                     ;; #'company-etags ;; 这个优先级最大比较好，不然除非输够字符才出来
                                      ))
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
+             (when (eq major-mode 'emacs-lisp-mode)
+               ;; 别在其它mode加上cape-symbol
+               ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
+               (add-to-list 'completion-at-point-functions 'cape-symbol))
              )
            ;; 最烦的是eglot和其它会把completion-at-point-functions设为local导致不生效，所以要hook
            (add-hook 'prog-mode-hook 'my/set-cape-hook)
@@ -2620,21 +2618,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 
-;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
-(add-hook 'python-mode-hook (lambda ()
-                              (when (featurep 'lsp-pyright)
-                                (require 'lsp-pyright)
-                                )
-                              (lsp-ensure)))
-
 (defun enable-format-on-save()
   (add-hook 'before-save-hook (lambda()
 				(when (featurep 'eglot)
 				  (eglot-format))
                                 (when (featurep 'lsp-mode)
                                   (lsp-format-buffer))
-				) nil 'local)
-  )
+				) nil 'local))
+;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
+(add-hook 'python-mode-hook (lambda ()
+                              (when (featurep 'lsp-pyright)
+                                (require 'lsp-pyright)
+                                )
+                              (lsp-ensure)))
 ;; cc-mode包含java等
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
@@ -2644,10 +2640,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (my-c-mode-hook-set)
               (lsp-ensure)
 	      )))
-(add-hook 'rust-mode-hook (lambda ()
-			    ;; (enable-format-on-save)
-			    (lsp-ensure)
-			    ))
+(add-hook 'rust-mode-hook 'lsp-ensure)
+(add-hook 'cmake-mode-hook 'lsp-ensure)
 
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
