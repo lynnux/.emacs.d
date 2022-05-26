@@ -2090,11 +2090,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
-  (assq-delete-all ?b easy-kill-alist)  ;; 默认是buffer-file-name，先删除再添加，否则which-key提示不正确
+  (assq-delete-all ?b easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
   (add-to-list 'easy-kill-alist '(?b buffer ""))
   (add-to-list 'easy-kill-alist '(?a buffer-file-name ""))
   (add-to-list 'easy-kill-alist '(?< backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?> forward-line-edge ""))
+  (assq-delete-all ?f easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
   (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?t string-to-char-backward ""))
