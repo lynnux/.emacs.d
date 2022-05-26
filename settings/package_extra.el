@@ -2641,7 +2641,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (lsp-ensure)
 	      )))
 (add-hook 'rust-mode-hook 'lsp-ensure)
-(add-hook 'cmake-mode-hook 'lsp-ensure) ;; pip install cmake-language-server
+
+;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
+(add-hook 'cmake-mode-hook 'lsp-ensure)
 
 ;; https://github.com/sumneko/lua-language-server 去下载bin
 (defvar lua-server-path (cond ((file-exists-p "~/lua-language-server-3.2.4-win32-x64") "~/lua-language-server-3.2.4-win32-x64")
