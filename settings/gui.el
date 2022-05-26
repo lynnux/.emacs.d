@@ -58,9 +58,7 @@
     )
   )
 
-
 ;;窗口按键设置
-(global-set-key (kbd "C-1") 'delete-other-windows) ; Alt-1 关闭其它窗口
 (defun volatile-kill-buffer ()
   "Kill current buffer unconditionally."
   (interactive)
@@ -68,16 +66,9 @@
     (kill-buffer (current-buffer))))
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
 (global-set-key "\M-r" 'replace-string)
-;; (defun display-buffer-name ()
-;;   (interactive)
-;;   (message (buffer-file-name (current-buffer))))
-;; (global-set-key (kbd "C-5") 'display-buffer-name);Alt-5 显示buffer文件名
 
 (setq display-time-24hr-format t) ; 24小时格式
 (setq display-time-day-and-date t) ; 显示日期
-;(mouse-avoidance-mode 'animate) ; 光标移动到鼠标下时，鼠标自动弹开
-;(setq frame-title-format "%f")		; 显示当前编辑的文档
-; toobar-ruler因为24.3是bug对修改的是buffer不加粗显示了
 (setq frame-title-format '("%f" (:eval (if (buffer-modified-p) " *" ""))))
 
 
@@ -102,19 +93,10 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 		    english-font-size))
 	  (zh-font (font-spec :family (find-if #'qiang-font-existsp chinese-fonts)
 			      :size chinese-font-size)))
-
-      ;; Set the default English font
-      ;; 
-      ;; The following 2 method cannot make the font settig work in new frames.
-      ;; (set-default-font "Consolas:pixelsize=18")
-      ;; (add-to-list 'default-frame-alist '(font . "Consolas:pixelsize=18"))
-      ;; We have to use set-face-attribute
       (message "Set English Font to %s" en-font)
       (set-face-attribute
        'default nil :font en-font)
 
-      ;; Set Chinese font 
-      ;; Do not use 'unicode charset, it will cause the english font setting invalid
       (message "Set Chinese Font to %s" zh-font)
       (dolist (charset '(kana han symbol cjk-misc bopomofo))
 	(set-fontset-font (frame-parameter nil 'font)
@@ -132,7 +114,6 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S")
 
-;;; 窗口最大化 24.5没效果？
 (when (display-graphic-p)
   (when (and (>= emacs-major-version 25) (string-equal system-type "windows-nt"))
     (w32-send-sys-command 61488)))
