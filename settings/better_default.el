@@ -9,7 +9,7 @@
 (with-eval-after-load 'server (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; 去掉关闭emacsclientw打开的文件的提示
 (define-key global-map "\C-r" 'kill-ring-save); M-w经常不起作用
 (define-key global-map (kbd "C-x SPC") (lambda () (interactive)
-      (switch-to-buffer (other-buffer (current-buffer) 1)))) ; 最近buffer切换
+                                         (switch-to-buffer (other-buffer (current-buffer) 1)))) ; 最近buffer切换
 (global-set-key (kbd "C-v") 'yank)	; 翻页基本不用
 (delete-selection-mode 1);; 选中替换模式，比较方便，但是据说有副作用，先用用再说
 (global-set-key [?\C-h] 'delete-backward-char) ;C-H当删除很好用！
@@ -231,5 +231,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (defconst dotspacemacs-gc-cons '(100000000 0.1))
 (add-hook 'emacs-startup-hook
           (lambda ()
-	        (setq gc-cons-threshold (car dotspacemacs-gc-cons)
+	    (setq gc-cons-threshold (car dotspacemacs-gc-cons)
                   gc-cons-percentage (cadr dotspacemacs-gc-cons))))

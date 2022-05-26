@@ -9,7 +9,7 @@
   (require 'use-package))
 
 (add-to-list 'load-path
-	         "~/.emacs.d/packages")
+	     "~/.emacs.d/packages")
 
 ;; 用于use-package避免自动设置:laod-path
 (defun my-eval-string (string)
@@ -70,10 +70,10 @@ _q_uit
     ;; 真正实现是在files.el里的insert-directory
     (defadvice dired-insert-directory (around my-dired-insert-directory activate)
       (let ((old coding-system-for-read))
-	    (setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
-	    ad-do-it
-	    (setq coding-system-for-read old)
-	    ))
+	(setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
+	ad-do-it
+	(setq coding-system-for-read old)
+	))
     (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore)
     (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser) ;; 使用explorer打开
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
@@ -137,53 +137,53 @@ _q_uit
       ("L" dired-filter-load-saved-filters nil :color blue) ;; 不懂
       ("S" dired-filter-save-filters nil :color blue)
       ("d" dired-filter-by-directory nil :color blue)
-	  ("e" dired-filter-by-predicate nil :color blue)
-	  ("f" dired-filter-by-file nil :color blue)
-	  ("g" dired-filter-by-garbage nil :color blue)
-	  ("h" dired-filter-by-dot-files nil :color blue)
-	  ("m" dired-filter-by-mode nil :color blue)
-	  ("n" dired-filter-by-name nil :color blue)
-	  ("o" dired-filter-by-omit nil :color blue)
-	  ("p" dired-filter-pop nil :color blue)
-	  ("r" dired-filter-by-regexp nil :color blue)
-	  ("s" dired-filter-by-symlink nil :color blue)
-	  ("x" dired-filter-by-executable nil :color blue)
-	  ("|" dired-filter-or nil :color blue)
-	  ("q" nil "nil" :color blue))
-	
-	(define-key dired-mode-map "f" 'dired-filter-map-select/body)
-	)
+      ("e" dired-filter-by-predicate nil :color blue)
+      ("f" dired-filter-by-file nil :color blue)
+      ("g" dired-filter-by-garbage nil :color blue)
+      ("h" dired-filter-by-dot-files nil :color blue)
+      ("m" dired-filter-by-mode nil :color blue)
+      ("n" dired-filter-by-name nil :color blue)
+      ("o" dired-filter-by-omit nil :color blue)
+      ("p" dired-filter-pop nil :color blue)
+      ("r" dired-filter-by-regexp nil :color blue)
+      ("s" dired-filter-by-symlink nil :color blue)
+      ("x" dired-filter-by-executable nil :color blue)
+      ("|" dired-filter-or nil :color blue)
+      ("q" nil "nil" :color blue))
+    
+    (define-key dired-mode-map "f" 'dired-filter-map-select/body)
+    )
   ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
   ;; 但粘贴时也要一个一个粘贴
   (use-package dired-ranger
-	:config
-	(define-key dired-mode-map "z" 'dired-do-compress-to)
-	(define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
-	(define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
-	(define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
-	(defun dired-ranger-clear()
-	  (interactive)
-	  (let ((count (ring-size dired-ranger-copy-ring))
-		    (s 0))
-	    (while (< s count )
-	      (ring-remove dired-ranger-copy-ring 0)
-	      (setq s (1+ s)))))
-	;; 显示ring里的文件，可惜没有去重复啊
-	(defun dired-ranger-show-ring()
-	  (let ((l (ring-elements dired-ranger-copy-ring))
-		    (s ""))
-	    (dolist (ll l)
-	      (dolist (path (cdr ll))
-		    (setq s (concat s (file-name-nondirectory path) "\n"))
-		    )
-	      )
-	    (message s)
-	    ))
-	(defadvice dired-ranger-paste (after my-dired-ranger-paste activate)
-	  (dired-ranger-show-ring))
-	(defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
-	  (dired-ranger-show-ring))
-	)
+    :config
+    (define-key dired-mode-map "z" 'dired-do-compress-to)
+    (define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
+    (define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
+    (define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
+    (defun dired-ranger-clear()
+      (interactive)
+      (let ((count (ring-size dired-ranger-copy-ring))
+	    (s 0))
+	(while (< s count )
+	  (ring-remove dired-ranger-copy-ring 0)
+	  (setq s (1+ s)))))
+    ;; 显示ring里的文件，可惜没有去重复啊
+    (defun dired-ranger-show-ring()
+      (let ((l (ring-elements dired-ranger-copy-ring))
+	    (s ""))
+	(dolist (ll l)
+	  (dolist (path (cdr ll))
+	    (setq s (concat s (file-name-nondirectory path) "\n"))
+	    )
+	  )
+	(message s)
+	))
+    (defadvice dired-ranger-paste (after my-dired-ranger-paste activate)
+      (dired-ranger-show-ring))
+    (defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
+      (dired-ranger-show-ring))
+    )
   )
 
 (use-package help-mode
@@ -250,8 +250,8 @@ _q_uit
       ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
       (setq session-save-file-coding-system 'utf-8)
       (setq session-globals-include '((kill-ring 50)
-				                      (session-file-alist 100 t)
-				                      (file-name-history 300)))
+				      (session-file-alist 100 t)
+				      (file-name-history 300)))
       
       :config
       (add-hook 'after-init-hook 'session-initialize)
@@ -300,10 +300,10 @@ _q_uit
 (defun files-recent-type (src)
   (interactive)
   (let* ((tocpl src ;; 全路径好些，可以通过项目名搜索，也解决了文件名相同时的bug
-		        ;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
-		        ;; 	src)
-		        )
-	     (fname (completing-read "File name: " tocpl nil nil)))
+		;; (mapcar (lambda (x) (cons (file-name-nondirectory x) x))
+		;; 	src)
+		)
+	 (fname (completing-read "File name: " tocpl nil nil)))
     (when fname
       (find-file ;; (cdr (assoc-string fname tocpl))
        fname
@@ -388,8 +388,8 @@ _c_: hide comment        _q_uit
        (interactive)
        (setq-local my-hs-hide (not my-hs-hide))
        (if my-hs-hide
-	       (hs-hide-all)
-	     (hs-show-all)))
+	   (hs-hide-all)
+	 (hs-show-all)))
 
 ;; display-line-numbers是C实现的，最快！
 (use-package display-line-numbers
@@ -467,9 +467,9 @@ _c_: hide comment        _q_uit
     "Set `yas-indent-line' to `fixed'."
     (set (make-local-variable 'yas-indent-line) 'fixed))
   (setq yas-snippet-dirs
-	    '("~/.emacs.d/packages/yasnippet/mysnippets" ;; 自定义要在前，保存才会默认保存这里
-	      "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
-	      ))
+	'("~/.emacs.d/packages/yasnippet/mysnippets" ;; 自定义要在前，保存才会默认保存这里
+	  "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
+	  ))
   (yas-global-mode 1)
 
   ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
@@ -488,10 +488,10 @@ _c_: hide comment        _q_uit
                     (cond
                      ;; Always include the current buffer.
                      ((eq (current-buffer) b) b)
-		             ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
+		     ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
                      ((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
                      ((buffer-file-name b) b)
-		             ((member (buffer-name b) EmacsPortable-included-buffers) b)
+		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
                      ((buffer-live-p b) b)))
@@ -536,9 +536,9 @@ _c_: hide comment        _q_uit
   (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
   (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
   (defun turn-on-symbol-overlay-mode()
-	(unless (or (memq major-mode '(minibuffer-mode))
-		        nil)
-	  (symbol-overlay-mode)))
+    (unless (or (memq major-mode '(minibuffer-mode))
+		nil)
+      (symbol-overlay-mode)))
   (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode turn-on-symbol-overlay-mode)
   (global-highlight-symbol-mode 1)
   (defhydra symbol-overlay-select ()
@@ -585,7 +585,7 @@ _q_uit
     (global-hl-line-mode t)
     (when use-my-face
       (if (display-graphic-p)
-	      (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
+	  (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
         ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
         ))
     )  
@@ -642,7 +642,7 @@ _q_uit
                ))
            ;; CTRL+数字快速选择
            (dotimes (i 10)
-	         (define-key corfu-map (read-kbd-macro (format "C-%d" i)) 'my/company-complete-number))
+	     (define-key corfu-map (read-kbd-macro (format "C-%d" i)) 'my/company-complete-number))
            (corfu-indexed-mode)
            )
          (use-package corfu-info
@@ -742,7 +742,7 @@ _q_uit
          (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
          ;; CTRL+数字快速选择
          (dotimes (i 10)
-	       (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
+	   (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
 
          ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
          ;; (with-eval-after-load 'dash
@@ -764,8 +764,8 @@ _q_uit
   (wcy-desktop-init)
   (add-hook 'emacs-startup-hook
             (lambda ()
-	          (ignore-errors
-		        (wcy-desktop-open-last-opened-files))))
+	      (ignore-errors
+		(wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
     ;; 修正buffer打开时的point
@@ -794,7 +794,7 @@ _q_uit
 
 (autoload 'protobuf-mode "protobuf-mode" "protobuf mode" t)
 (setq auto-mode-alist (append '(("\\.proto\\'" .
-				                 protobuf-mode)) auto-mode-alist))
+				 protobuf-mode)) auto-mode-alist))
 
 (use-package jumplist
   :defer 0.7
@@ -828,17 +828,17 @@ _q_uit
   ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
   (when (string-equal system-type "windows-nt")
     (global-set-key (kbd "C-x C-d")
-		            (lambda () (interactive)
-		              ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
-		              (w32explore (buffer-file-name (current-buffer)))
-		              )))
+		    (lambda () (interactive)
+		      ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
+		      (w32explore (buffer-file-name (current-buffer)))
+		      )))
   )
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
 (setq auto-mode-alist
       (append '(("CMakeLists\\.txt\\'" . cmake-mode)
-		        ("\\.cmake\\'" . cmake-mode))
-	          auto-mode-alist))
+		("\\.cmake\\'" . cmake-mode))
+	      auto-mode-alist))
 
 (defun my-elisp-hook()
   (make-local-variable 'eldoc-idle-delay)
@@ -859,8 +859,8 @@ _q_uit
     "Returns GTAGS root directory or nil if doesn't exist."
     (with-temp-buffer
       (if (zerop (call-process "global" nil t nil "-pr"))
-	      (buffer-substring (point-min) (1- (point-max)))
-	    nil)))
+	  (buffer-substring (point-min) (1- (point-max)))
+	nil)))
   (defun gtags-update1 ()
     "Make GTAGS incremental update"
     (call-process "global" nil nil nil "-u"))
@@ -883,15 +883,15 @@ _q_uit
   (cl-dolist (buffer (buffer-list))
     (with-current-buffer buffer
       (when (memq major-mode '(c++-mode c-mode objc-mode))
-	    (ggtags-mode enable)))))
+	(ggtags-mode enable)))))
 (defun ggtag-toggle()
   (interactive)
   (if global-ggtags
       (progn
-	    (ggtag-all-buffer -1)
-	    (remove-hook 'c-mode-common-hook 'ggtags-mode)
-	    (setq global-ggtags nil)
-	    )
+	(ggtag-all-buffer -1)
+	(remove-hook 'c-mode-common-hook 'ggtags-mode)
+	(setq global-ggtags nil)
+	)
     (progn
       (ggtag-all-buffer 1)
       (add-hook 'c-mode-common-hook 'ggtags-mode)
@@ -1167,9 +1167,9 @@ _q_uit
   (setq imenu-list-idle-update-delay 0.5)
   (global-set-key [(control f4)] 'imenu-list-smart-toggle)
   :hook(imenu-list-major-mode . (lambda ()
-				                  (when (display-graphic-p)
-				                    ;; 指示当前是在哪个函数里     
-				                    (face-remap-add-relative 'hl-line '(:background "#666"))))))
+				  (when (display-graphic-p)
+				    ;; 指示当前是在哪个函数里     
+				    (face-remap-add-relative 'hl-line '(:background "#666"))))))
 
 (defun chinese-char-p (char)
   (if (string-match "\\cC\\{1\\}" (string char))
@@ -1239,11 +1239,11 @@ _q_uit
       (when (memq this-command my-ivy-fly-commands)
         (insert (propertize
                  (save-excursion
-		           (set-buffer (window-buffer (minibuffer-selected-window)))
+		   (set-buffer (window-buffer (minibuffer-selected-window)))
                    ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
-		           (or (seq-some (lambda (thing) (thing-at-point thing t))
-					             '(region symbol)) ;; url sexp
-			           "")
+		   (or (seq-some (lambda (thing) (thing-at-point thing t))
+				 '(region symbol)) ;; url sexp
+		       "")
                    )
                  'face 'shadow))
         (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
@@ -1309,7 +1309,7 @@ _q_uit
                   'category)))
            (defun my/vertico-C-l ()
              "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
-	         (interactive)
+	     (interactive)
              ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
              (if (is-consult-ripgrep)
                  (progn
@@ -1336,10 +1336,10 @@ _q_uit
            (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
 
            ;; 习惯只要underline，不随主题改变
-	       (custom-set-faces
-	        '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
-	        '(consult-preview-line ((t (:underline t :background nil))))
-	        )
+	   (custom-set-faces
+	    '(vertico-current ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) 
+	    '(consult-preview-line ((t (:underline t :background nil))))
+	    )
 
            ;; 只会恢复关键词
            ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
@@ -1574,7 +1574,7 @@ _q_uit
          (add-to-list 'load-path "~/.emacs.d/packages/helm/helm-master")
          (require 'helm-config)
          (defadvice completing-read (before my-completing-read activate)
-	       (helm-mode 1))
+	   (helm-mode 1))
          (setq
           ;; smart case跟emacs类似，不读gitignore，--colors match:style:nobold是用doom themes时必须的，否则rg无高亮效果
           helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number --no-ignore %s %s %s"
@@ -1615,8 +1615,8 @@ _q_uit
          (global-set-key [(control ?\,)] 'helm-imenu)
          (global-set-key [(control f2)]
                          (lambda () (interactive)
-				           (require 'vc)
-				           (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
+			   (require 'vc)
+			   (helm-fd-1 (or (vc-find-root "." ".git") (helm-current-directory))))) ; 用fd查找文件，有git的话从git根目录查找
          (global-set-key [f2] 'helm-do-grep-ag) ; 使用ripgrep即rg搜索，文档rg --help
          (global-set-key [S-f2]
                          (lambda() (interactive)
@@ -1635,31 +1635,31 @@ _q_uit
                    ad-do-it)
                ad-do-it)
              )
-	       ;; 临时设置cmdproxy编码
+	   ;; 临时设置cmdproxy编码
            (defadvice helm-grep-ag-init (around my-helm-grep-ag-init activate)
-	         (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	           (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	           ad-do-it
-	           (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	           ))
+	     (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+	       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	       ad-do-it
+	       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	       ))
            ;; 这功能不好写，将就用总比没有好吧
            (defun helm-grep-search-parent-directory ()
-	         (interactive)
-	         (helm-run-after-exit (lambda ()
-				                    (let* ((parent (file-name-directory (directory-file-name default-directory)))
-					                       (default-directory parent))
-				                      (helm-grep-ag (expand-file-name parent) nil)))))
+	     (interactive)
+	     (helm-run-after-exit (lambda ()
+				    (let* ((parent (file-name-directory (directory-file-name default-directory)))
+					   (default-directory parent))
+				      (helm-grep-ag (expand-file-name parent) nil)))))
            (defun helm-show-search()
-	         (interactive)
-	         (yank)
-	         )
+	     (interactive)
+	     (yank)
+	     )
            (define-key helm-grep-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
-	       (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
+	   (define-key helm-grep-map (kbd "C-l") 'helm-grep-search-parent-directory)
            )
          (use-package helm-find
            :defer t
            :config
-	       (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
+	   (define-key helm-find-map (kbd "DEL") 'nil) ; helm-delete-backward-no-update有延迟
            )
          (use-package helm-files
            :defer t
@@ -1669,92 +1669,92 @@ _q_uit
          (use-package helm-buffers
            :defer t
            :config
-	       (define-key helm-buffer-map (kbd "C-s") 'helm-next-line)
+	   (define-key helm-buffer-map (kbd "C-s") 'helm-next-line)
            )
          (use-package helm-buffers
            :defer t
            :config
-	       (define-key helm-buffer-map (kbd "C-s") 'helm-next-line))
+	   (define-key helm-buffer-map (kbd "C-s") 'helm-next-line))
          (use-package helm-types
            :defer t
            :config
            ;; helm-locate即everything里打开所在位置
-	       (define-key helm-generic-files-map (kbd "C-x C-d")
-	                   (lambda ()
-	                     (interactive)
-	                     (with-helm-alive-p
-		                  (helm-exit-and-execute-action (lambda (file)
-						                                  (w32explore file)
-						                                  ))))))
+	   (define-key helm-generic-files-map (kbd "C-x C-d")
+	               (lambda ()
+	                 (interactive)
+	                 (with-helm-alive-p
+		          (helm-exit-and-execute-action (lambda (file)
+						          (w32explore file)
+						          ))))))
          
          :diminish
          :config
-	     ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
+	 ;; 调试helm(setq helm-debug t)，然后要调试命令后再run helm-debug-open-last-log(helm-debug会被设为nil)
          ;; describe-current-coding-system 查看当前系统编码
-	     ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
-	     
-	     ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
-	     ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
-	     ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
-	     ;;   ad-do-it
-	     ;;   (let ((fname (car-safe ad-return-value)))
-	     ;;     (when fname
-	     ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
-	     ;;       ))
-	     ;;   )
-	     ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
-	     ;;   (message (ad-get-arg 2)))
-	     
-	     (helm-mode 1)
+	 ;; 设置rg进程编码不起作用，因为win上启动rg用的是cmdproxy，设置cmdproxy才有效果！
+	 
+	 ;; rg输出是utf-8，这个将第1个文件名转换为gbk，关键函数encode-coding-string
+	 ;; 这个方法不太好，emacs是自动识别buffer内容的，所以才能显示中文内容，只单独处理路径虽然界面没问题，但实际有点小问题
+	 ;; (defadvice helm-grep-split-line (around my-helm-grep-split-line activate)
+	 ;;   ad-do-it
+	 ;;   (let ((fname (car-safe ad-return-value)))
+	 ;;     (when fname
+	 ;;       (setq ad-return-value (cons (encode-coding-string fname locale-coding-system) (cdr ad-return-value) ))
+	 ;;       ))
+	 ;;   )
+	 ;; (defadvice start-file-process-shell-command (before my-start-file-process-shell-command activate)
+	 ;;   (message (ad-get-arg 2)))
+	 
+	 (helm-mode 1)
 
-	     ;; 光标移动时也自动定位到所在位置
-	     (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
-	     (push "RG" helm-source-names-using-follow)
+	 ;; 光标移动时也自动定位到所在位置
+	 (push "Occur" helm-source-names-using-follow) ; 需要helm-follow-mode-persistent为t
+	 (push "RG" helm-source-names-using-follow)
 
          (when (display-graphic-p)
-	       ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
+	   ;; 参考swiper设置颜色，这个一改瞬间感觉不一样
            ;; 当前主题背景色(face-attribute 'default :background)
-	       (custom-set-faces
+	   (custom-set-faces
             ;; 对于doom theme, helm-selection要特别留意，去掉多余的东西如:inherit bold等，不然rg选中行没关键词高亮
-	        '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
-	        '(helm-selection-line ((t (:underline t :background nil))))
-	        ;;helm-match-item 
-	        ))
+	    '(helm-selection ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil)))) ; underline好看，去掉背景色
+	    '(helm-selection-line ((t (:underline t :background nil))))
+	    ;;helm-match-item 
+	    ))
 
-	     (define-key helm-map (kbd "<f1>") 'nil)
-	     (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
+	 (define-key helm-map (kbd "<f1>") 'nil)
+	 (define-key helm-map (kbd "C-1") 'keyboard-escape-quit)
 
-	     (define-key helm-map (kbd "C-h") 'nil)
-	     (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
-	     (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
-	     (define-key helm-map (kbd "C-v") 'nil)
-	     (define-key helm-map (kbd "<f4>") 'helm-next-line)
-	     (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
-	     ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
+	 (define-key helm-map (kbd "C-h") 'nil)
+	 (define-key helm-map (kbd "C-t") 'nil) ; c-t是翻转样式
+	 (define-key helm-map (kbd "C-t") 'helm-toggle-visible-mark)
+	 (define-key helm-map (kbd "C-v") 'nil)
+	 (define-key helm-map (kbd "<f4>") 'helm-next-line)
+	 (define-key helm-map (kbd "<S-f4>") 'helm-previous-line)
+	 ;; (define-key helm-map (kbd "C-s") 'helm-next-line) ;; 这个还是留给helm-occur或者helm-ff-run-grep
          ;; rg occur下自动补全搜索词，其它原样
-	     (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
-					                          (let* ((src (helm-get-current-source))
-						                             (name (assoc-default 'name src)))
-					                            (if (or (member name (list "RG" "Occur"))
-						                                (string= name "Helm occur")
-						                                (string= name "RG")) ;; TODO 
-						                            (progn (call-interactively 'next-history-element)
-							                               (move-end-of-line 1)())
-						                          ;; 其它模式还是helm-execute-persistent-action，比如文件补全
-						                          (call-interactively 'helm-execute-persistent-action) 
-						                          )
-					                            )
-					                          ))
-	     
-	     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
-	     (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+	 (define-key helm-map (kbd "<tab>") (lambda ()(interactive)
+					      (let* ((src (helm-get-current-source))
+						     (name (assoc-default 'name src)))
+					        (if (or (member name (list "RG" "Occur"))
+						        (string= name "Helm occur")
+						        (string= name "RG")) ;; TODO 
+						    (progn (call-interactively 'next-history-element)
+							   (move-end-of-line 1)())
+						  ;; 其它模式还是helm-execute-persistent-action，比如文件补全
+						  (call-interactively 'helm-execute-persistent-action) 
+						  )
+					        )
+					      ))
+	 
+	 (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB work in terminal
+	 (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
 
-	     ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
-	     (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
-	     
-	     (when helm-echo-input-in-header-line
-	       (add-hook 'helm-minibuffer-set-up-hook
-		             'helm-hide-minibuffer-maybe))
+	 ;; 还是这样舒服，要使用原来功能请C-z。helm mode太多了，用到哪些再来改
+	 (define-key helm-map (kbd "C-s") 'helm-next-line) ; 原来的是在当前行里查找
+	 
+	 (when helm-echo-input-in-header-line
+	   (add-hook 'helm-minibuffer-set-up-hook
+		     'helm-hide-minibuffer-maybe))
          ))
       ((eq minibuffer-use-which 3)
        (progn
@@ -1798,12 +1798,12 @@ _q_uit
            (defadvice completing-read (before my-completing-read activate)
              (ivy-mode 1))
            (when (display-graphic-p)
-	         (custom-set-faces
+	     (custom-set-faces
               ;; minibuffer里的当前行
-	          '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
+	      '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
               ;; buffer里的当前行
-	          '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-	          ))
+	      '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
+	      ))
            (enable-minibuffer-auto-search-at-point)
            )
          
@@ -1858,7 +1858,7 @@ _q_uit
   :diminish
   :config
   (defun turn-on-indentinator-mode()
-	(unless (or (memq major-mode '(minibuffer-mode
+    (unless (or (memq major-mode '(minibuffer-mode
                                    fundamental-mode
                                    occur-edit-mode
                                    wdired-mode
@@ -1867,7 +1867,7 @@ _q_uit
                                    speedbar-mode
                                    ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
-	  (indentinator-mode)))
+      (indentinator-mode)))
   (define-globalized-minor-mode global-indentinator-mode indentinator-mode turn-on-indentinator-mode)
   (global-indentinator-mode 1)
   )
@@ -1886,34 +1886,34 @@ _q_uit
           (t (message "Quit")))
     (when new-kill-string
       (if use_win_path
-	      (let ((win-path (replace-regexp-in-string "/" "\\\\" new-kill-string)))
-	        (message "%s copied" win-path)
-	        (kill-new win-path))
-	    (message "%s copied" new-kill-string)
-	    (kill-new new-kill-string)))))
+	  (let ((win-path (replace-regexp-in-string "/" "\\\\" new-kill-string)))
+	    (message "%s copied" win-path)
+	    (kill-new win-path))
+	(message "%s copied" new-kill-string)
+	(kill-new new-kill-string)))))
 (defun hydra-copybf4/body()
   (interactive)
   (require 'hydra)
   (funcall (defhydra hydra-copybf4 ()
-	         "
+	     "
 Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 "
-	         ("f" (copy-buffer-name ?f) nil :color blue)
-	         ("d" (copy-buffer-name ?d) nil :color blue)
-	         ("a" (copy-buffer-name ?a) nil :color blue)
-	         ("q" nil "" :color blue))))
+	     ("f" (copy-buffer-name ?f) nil :color blue)
+	     ("d" (copy-buffer-name ?d) nil :color blue)
+	     ("a" (copy-buffer-name ?a) nil :color blue)
+	     ("q" nil "" :color blue))))
 (global-set-key (kbd "C-4") 'hydra-copybf4/body)
 (defun hydra-copybf3/body() ()
        (interactive)
        (require 'hydra)
        (funcall (defhydra hydra-copybf3 ()
-		          "
+		  "
 Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 "
-		          ("f" (copy-buffer-name ?f t) nil :color blue)
-		          ("d" (copy-buffer-name ?d t) nil :color blue)
-		          ("a" (copy-buffer-name ?a t) nil :color blue)
-		          ("q" nil "" :color blue))))
+		  ("f" (copy-buffer-name ?f t) nil :color blue)
+		  ("d" (copy-buffer-name ?d t) nil :color blue)
+		  ("a" (copy-buffer-name ?a t) nil :color blue)
+		  ("q" nil "" :color blue))))
 (global-set-key (kbd "C-3") 'hydra-copybf3/body)
 
 ;; go lang
@@ -1936,7 +1936,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   "Adds (with force) the file from the current buffer to the git repo"
   (interactive)
   (shell-command (concat "git add -f "
-			             (shell-quote-argument buffer-file-name))))
+			 (shell-quote-argument buffer-file-name))))
 (defun git-set-proxy ()
   "Adds (with force) the file from the current buffer to the git repo"
   (interactive)
@@ -1980,10 +1980,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; 有选中或者mark时用expand-region，否则用easy-mark
   ;; 替换expand-region
   (global-set-key "\C-t" (lambda ()(interactive)
-			               (if (region-active-p)
-			                   (call-interactively 'er/expand-region)
-			                 (call-interactively 'easy-mark)
-			                 )))
+			   (if (region-active-p)
+			       (call-interactively 'er/expand-region)
+			     (call-interactively 'easy-mark)
+			     )))
   :config
   (defvar my-easy-kill-map nil)
   (when (functionp 'which-key--show-keymap)
@@ -2025,12 +2025,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
       (let ((string (buffer-substring (line-beginning-position)
-				                      (line-beginning-position 2))))
-	    (when (> (length string) 0)
-	      (put-text-property 0 (length string)
-			                 'yank-handler '(yank-line) string))
-	    (kill-new string nil)
-	    )
+				      (line-beginning-position 2))))
+	(when (> (length string) 0)
+	  (put-text-property 0 (length string)
+			     'yank-handler '(yank-line) string))
+	(kill-new string nil)
+	)
       ))
   
   (require 'easy-kill-er)
@@ -2042,19 +2042,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defun easy-kill-on-my-line (n)
     "copy line添加yank line功能"
     (if (easy-kill-get mark)
-	    (easy-kill-echo "Not supported in `easy-mark'")
+	(easy-kill-echo "Not supported in `easy-mark'")
       ;; 不用判断是否有region，有的话根本不会进来
       (let ((string (buffer-substring (line-beginning-position)
-				                      (line-beginning-position 2))))
-	    ;; 因为easy-kill-adjust-candidate传递的是string，就没有overlay效果了，需要自己加
-	    (setq my-line-ov (make-overlay (line-beginning-position) (line-beginning-position 2)))
-	    (overlay-put my-line-ov 'priority 999) ;; 在hl line之上
-	    (overlay-put my-line-ov 'face 'easy-kill-selection)
-	    (when (> (length string) 0)
-	      (put-text-property 0 (length string)
-			                 'yank-handler '(yank-line) string))
-	    (easy-kill-adjust-candidate 'my-line string) 
-	    )
+				      (line-beginning-position 2))))
+	;; 因为easy-kill-adjust-candidate传递的是string，就没有overlay效果了，需要自己加
+	(setq my-line-ov (make-overlay (line-beginning-position) (line-beginning-position 2)))
+	(overlay-put my-line-ov 'priority 999) ;; 在hl line之上
+	(overlay-put my-line-ov 'face 'easy-kill-selection)
+	(when (> (length string) 0)
+	  (put-text-property 0 (length string)
+			     'yank-handler '(yank-line) string))
+	(easy-kill-adjust-candidate 'my-line string) 
+	)
       ))
   
   (defun kill-my-line-ov(&optional change-key)
@@ -2137,14 +2137,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defadvice xref-matches-in-files (around my-xref-matches-in-files activate)
     (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
       ;; 注意project search是xargs实现的，会向rg先发送文件列表，因此对输入编码有要求
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . utf-8))
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . utf-8))
       ;; 检查是否含中文
-	  (if (chinese-word-chinese-string-p (ad-get-arg 0))
+      (if (chinese-word-chinese-string-p (ad-get-arg 0))
           (let ((xref-search-program-alist (list (cons 'ripgrep (concat (cdr (assoc 'ripgrep xref-search-program-alist)) " --pre rgpre")))))
             ad-do-it
             )
         ad-do-it)
-	  (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
 
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
@@ -2319,9 +2319,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;; 好像自动识别find的输出了(git里的find)
       ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
       ;;   (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	  ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
       ;;     ad-do-it
-	  ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
+      ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
       )
   (use-package projectile
     :disabled ;; 搞不懂为什么load-path会被设置
@@ -2349,10 +2349,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 解决fd乱码及git ls-files乱码
     (defadvice projectile-files-via-ext-command (around my-projectile-files-via-ext-command activate)
       (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	    ad-do-it
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	    ))
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	ad-do-it
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	))
     (when nil
       ;; 强制用fd
       (defadvice projectile-get-ext-command (around my-projectile-get-ext-command activate)
@@ -2382,21 +2382,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 
 (global-set-key [f7] (lambda ()(interactive)
-			           (progn
+		       (progn
                          (if (featurep 'projectile)
                              (call-interactively 'projectile-compile-project)
-			               (call-interactively 'project-compile))
-			             (setq compilation-read-command nil) ;; 不再提示
-			             )))
+			   (call-interactively 'project-compile))
+			 (setq compilation-read-command nil) ;; 不再提示
+			 )))
 (global-set-key [(shift f7)]
-		        (lambda ()(interactive)
-		          (progn
-			        (setq compilation-read-command t)
+		(lambda ()(interactive)
+		  (progn
+		    (setq compilation-read-command t)
                     (if (featurep 'projectile)
                         (call-interactively 'projectile-compile-project)
                       (call-interactively 'project-compile))
-			        (setq compilation-read-command nil) ;; 不再提示
-			        )))
+		    (setq compilation-read-command nil) ;; 不再提示
+		    )))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
@@ -2429,16 +2429,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 临时设置cmdproxy编码
     (defadvice rg-run (around my-run activate)
       (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	    ad-do-it
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	    ))
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	ad-do-it
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	))
     (defadvice rg-recompile (around my-rg-recompile activate)
       (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	    ad-do-it
-	    (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	    ))
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+	ad-do-it
+	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+	))
     ;; 中文
     (defadvice rg-build-command (around my-rg-build-command activate)
       (if (chinese-word-chinese-string-p (ad-get-arg 0))
@@ -2514,10 +2514,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  eglot-ignored-server-capabilities) 
            ;; 临时禁止view-mode，使重命名可用
            (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	         (setq tmp-disable-view-mode t)
-	         ad-do-it
-	         (setq tmp-disable-view-mode nil)
-	         )
+	     (setq tmp-disable-view-mode t)
+	     ad-do-it
+	     (setq tmp-disable-view-mode nil)
+	     )
            ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
            (define-key eglot-mode-map [(meta f8)] 'eglot-format)
            )
@@ -2551,16 +2551,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            :config
            ;; 使重命名可用
            (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
-	         (setq tmp-disable-view-mode t)
-	         ad-do-it
-	         (setq tmp-disable-view-mode nil)
-	         )
+	     (setq tmp-disable-view-mode t)
+	     ad-do-it
+	     (setq tmp-disable-view-mode nil)
+	     )
            (require 'lsp-diagnostics)
            (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
                                                   (if (use-region-p)
                                                       (call-interactively 'lsp-format-region)
                                                     (call-interactively 'lsp-format-buffer))
-			                                      )))
+			                          )))
          (defun lsp-ensure() (lsp-deferred))
 
          ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
@@ -2622,33 +2622,32 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
 (add-hook 'python-mode-hook (lambda ()
-			                  (when (featurep 'lsp-pyright)
+                              (when (featurep 'lsp-pyright)
                                 (require 'lsp-pyright)
                                 )
-			                  (lsp-ensure)
-			                  ))
+                              (lsp-ensure)))
 
 (defun enable-format-on-save()
   (add-hook 'before-save-hook (lambda()
-					            (when (featurep 'eglot)
-					              (eglot-format))
+				(when (featurep 'eglot)
+				  (eglot-format))
                                 (when (featurep 'lsp-mode)
                                   (lsp-format-buffer))
-					            ) nil 'local)
+				) nil 'local)
   )
 ;; cc-mode包含java等
 (add-hook 'c-mode-common-hook 
-	      (lambda ()
-	        (when (derived-mode-p 'c-mode 'c++-mode)
-	          ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
+	  (lambda ()
+	    (when (derived-mode-p 'c-mode 'c++-mode)
+	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
               ;; (enable-format-on-save)
               (my-c-mode-hook-set)
               (lsp-ensure)
-	          )))
+	      )))
 (add-hook 'rust-mode-hook (lambda ()
-			                ;; (enable-format-on-save)
-			                (lsp-ensure)
-			                ))
+			    ;; (enable-format-on-save)
+			    (lsp-ensure)
+			    ))
 
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
@@ -2751,39 +2750,39 @@ _q_uit
   :commands(tree-sitter-hl-mode)
   ;; 来自tree-sitter-major-mode-language-alist
   :hook ((sh-mode
-	      c-mode
-	      csharp-mode
-	      c++-mode 
-	      css-mode 
-	      elm-mode 
-	      emacs-lisp-mode ;; 需要自己编译
-	      go-mode 
-	      hcl-mode
-	      html-mode 
-	      mhtml-mode
-	      java-mode 
-	      javascript-mode
-	      js-mode 
-	      js2-mode
-	      js3-mode
-	      json-mode
-	      jsonc-mode
-	      julia-mode 
-	      ocaml-mode 
-	      php-mode 
-	      python-mode
-	      pygn-mode 
-	      rjsx-mode 
-	      ruby-mode 
-	      rust-mode
-	      rustic-mode
-	      scala-mode
-	      swift-mode
-	      tuareg-mode
-	      typescript-mode) . (lambda ()
-		  (tree-sitter-hl-mode)
-		  (grammatical-edit-mode 1)
-		  ))
+	  c-mode
+	  csharp-mode
+	  c++-mode 
+	  css-mode 
+	  elm-mode 
+	  emacs-lisp-mode ;; 需要自己编译
+	  go-mode 
+	  hcl-mode
+	  html-mode 
+	  mhtml-mode
+	  java-mode 
+	  javascript-mode
+	  js-mode 
+	  js2-mode
+	  js3-mode
+	  json-mode
+	  jsonc-mode
+	  julia-mode 
+	  ocaml-mode 
+	  php-mode 
+	  python-mode
+	  pygn-mode 
+	  rjsx-mode 
+	  ruby-mode 
+	  rust-mode
+	  rustic-mode
+	  scala-mode
+	  swift-mode
+	  tuareg-mode
+	  typescript-mode) . (lambda ()
+	  (tree-sitter-hl-mode)
+	  (grammatical-edit-mode 1)
+	  ))
   :config
   ;; elisp没有高亮
   (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
@@ -2832,22 +2831,22 @@ _q_uit
   (when nil
     ;; 支持hungry delete
     (dolist (key '( [remap delete-char]
-		            [remap delete-forward-char]))
+		    [remap delete-forward-char]))
       (define-key grammatical-edit-mode-map key
                   ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
                   '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		                      :filter (lambda (&optional _)
-			                            (unless (looking-at-p "[[:space:]\n]")
-			                              #'grammatical-edit-forward-delete)))))
+		              :filter (lambda (&optional _)
+			                (unless (looking-at-p "[[:space:]\n]")
+			                  #'grammatical-edit-forward-delete)))))
 
     (dolist (key '([remap backward-delete-char-untabify]
-		           [remap backward-delete-char]
-		           [remap delete-backward-char]))
+		   [remap backward-delete-char]
+		   [remap delete-backward-char]))
       (define-key grammatical-edit-mode-map key
                   '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		                      :filter (lambda (&optional _)
-			                            (unless (looking-back "[[:space:]\n]" 1)
-			                              #'grammatical-edit-backward-delete)))))
+		              :filter (lambda (&optional _)
+			                (unless (looking-back "[[:space:]\n]" 1)
+			                  #'grammatical-edit-backward-delete)))))
     )
   )
 
@@ -2891,7 +2890,7 @@ _q_uit
   (defun my-pop-select(&optional backward)
     (interactive)
     (let* ((myswitch-buffer-list (copy-sequence (ep-tabbar-buffer-list)
-					                            )
+					        )
                                  )  (vec_name [])
                                     sel
                                     )
@@ -2904,16 +2903,16 @@ _q_uit
                                                   )))
       (let ((buf (switch-to-buffer (nth sel myswitch-buffer-list))))
         (when (and (bufferp buf) (featurep 'wcy-desktop))
-	      (with-current-buffer buf
-	        (when (eq major-mode 'not-loaded-yet)
-	          (wcy-desktop-load-file))))
+	  (with-current-buffer buf
+	    (when (eq major-mode 'not-loaded-yet)
+	      (wcy-desktop-load-file))))
         )
       )
     )
   (global-set-key (kbd "<C-tab>") 'my-pop-select)
   (global-set-key (if (string-equal system-type "windows-nt")
-		              (kbd "<C-S-tab>")
-	                (kbd "<C-S-iso-lefttab>"))
+		      (kbd "<C-S-tab>")
+	            (kbd "<C-S-iso-lefttab>"))
                   (lambda ()(interactive)
                     (my-pop-select t)))
   )
@@ -3207,20 +3206,20 @@ _q_uit
     (interactive)
     ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
     (let ((show-popper (cond ((eq last-command 'mode-exited) t)
-	                         ((region-active-p)
-	                          'a)
-	                         ((> (minibuffer-depth) 0)
-	                          'b)
-	                         (current-prefix-arg
-	                          t)
-	                         ((> (recursion-depth) 0)
-	                          'c)
-	                         (buffer-quit-function
-	                          'd)
-	                         ((not (one-window-p t))
-	                          'e)
-	                         ((string-match "^ \\*" (buffer-name (current-buffer)))
-	                          'f)
+	                     ((region-active-p)
+	                      'a)
+	                     ((> (minibuffer-depth) 0)
+	                      'b)
+	                     (current-prefix-arg
+	                      t)
+	                     ((> (recursion-depth) 0)
+	                      'c)
+	                     (buffer-quit-function
+	                      'd)
+	                     ((not (one-window-p t))
+	                      'e)
+	                     ((string-match "^ \\*" (buffer-name (current-buffer)))
+	                      'f)
                              (t t))))
       ;; 有popper窗口先关闭
       (when (and (boundp 'popper-open-popup-alist) popper-open-popup-alist)
