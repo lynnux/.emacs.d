@@ -130,33 +130,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
   )
 ;; 要能区分0O和1lI(光l1就能排除很多了)，单看单词时要好看，--__能区分出来，粗体要好看，()要好看(感觉小点好看)
 
-;; 下面这两个看特殊字符时不卡，按上面的说法`set-default-font'不支持new frames，这个我暂时会用到
-;;(set-default-font "Consolas 11") ;; for 英文     
-;;(set-fontset-font "fontset-default" 'unicode "微软雅黑 11") ;; for 中文
-
-;; ctrl+鼠标滚轮调整文字大小
-(if (string-equal system-type "windows-nt")
-    (progn 
-      ;; For Windows
-      (global-set-key (kbd "<C-wheel-up>") 'text-scale-increase)
-      (global-set-key (kbd "<C-wheel-down>") 'text-scale-decrease))
-  (progn
-    (global-set-key (kbd "<C-mouse-4>") 'text-scale-increase)
-    (global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease)
-    ))
-
-;; 设置颜色，根据theme来设置，M-X list-colors-display 可以显示更多的颜色
-;; (set-face-background 'show-paren-match-face "slate blue") ;; 27无效
-;;(set-face-foreground 'show-paren-match-face "gray15")
-
-;; 当光标位于括号上时，类似选中的效果
-;; (add-hook 'emacs-lisp-mode-hook (lambda ()
-;; 				  (make-local-variable 'show-paren-style)
-;; 				  (setq show-paren-style 'expression)
-;; 				  ;(face-remap-add-relative 'show-paren-match '((:background "#2B2B2B"))) ; elisp单独一个颜色, 为zenburn-bg-1
-;; 				  ))
-
-(setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S lynnux")
+(setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S")
 
 ;;; 窗口最大化 24.5没效果？
 (when (display-graphic-p)

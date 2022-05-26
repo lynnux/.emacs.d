@@ -844,6 +844,7 @@ _q_uit
   (make-local-variable 'eldoc-idle-delay)
   (setq eldoc-idle-delay 0.5) ;; 设置为0会导致鼠标点击时不显示
   (turn-on-eldoc-mode)
+  (setq-local tab-width 8) ;; 官方源码很多TAB，又是按8
   )
 (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
@@ -2008,8 +2009,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                    do (define-key easy-kill-base-map (number-to-string i) nil))
           (setq my-easy-kill-map (easy-kill-map))
           ))
-      (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)
-      )
+      ;; 有popper窗口时不弹出
+      (if (and (functionp 'popper-toggle-latest) (boundp 'popper-open-popup-alist))
+          (unless popper-open-popup-alist 
+            (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging))
+        (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)))
     (defadvice set-transient-map (before my-set-transient-map activate)
       (let ((map (ad-get-arg 0)))
         ;; 判断是否是easy-kill的keymap
