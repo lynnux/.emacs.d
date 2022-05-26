@@ -1545,6 +1545,11 @@ _q_uit
              )
            (use-package consult-project-extra
              :commands(consult-project-extra-find))
+           ;; 正是我需要的，给marginalia添加yas应该不简单，这个能显示按短字符，还能看预览插入效果！
+           (use-package consult-yasnippet
+             :commands(consult-yasnippet
+                       consult-yasnippet-visit-snippet-file ;; 打开编辑snippet文件
+                       ))
            :config
            ;; 禁止某些preview
            (consult-customize
