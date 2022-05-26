@@ -1543,6 +1543,8 @@ _q_uit
              (global-set-key [(control ?\,)] 'my-project-imenu)
              ;; 好像没办法过滤，只有用vertico的f+空格过滤function，其它见`consult-eglot-narrow'
              )
+           (use-package consult-project-extra
+             :commands(consult-project-extra-find))
            :config
            ;; 禁止某些preview
            (consult-customize
@@ -2250,8 +2252,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         ))
 (defun my-project-find-file()
   (interactive)
-  (if (functionp 'consult-project-buffer)
-      (call-interactively 'consult-project-buffer);; buffer+file，还带有排序功能！
+  (if (functionp 'consult-project-extra-find)
+      (call-interactively 'consult-project-extra-find) ;; 
     (call-interactively 'project-find-file))
   )
 (defun my-project-buffer()
