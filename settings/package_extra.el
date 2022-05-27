@@ -759,11 +759,6 @@ _q_uit
 (use-package wcy-desktop
   ;;:defer 0.5
   :config
-  (wcy-desktop-init)
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-	      (ignore-errors
-		(wcy-desktop-open-last-opened-files))))
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
     (setq buffer-undo-list nil) ;; 解决undo-tree冲突
     ;; 修正buffer打开时的point
@@ -771,7 +766,13 @@ _q_uit
       (save-place-find-file-hook))
     (when (featurep 'beacon)
       (beacon-blink))
-    ))
+    )
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+	      (ignore-errors
+                (wcy-desktop-init)
+		(wcy-desktop-open-last-opened-files))))
+  )
 
 (use-package google-c-style
   :commands( google-set-c-style))
@@ -2258,7 +2259,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defun my-project-find-file()
   (interactive)
   (if (functionp 'consult-project-extra-find)
-      (call-interactively 'consult-project-extra-find) ;; 
+      ;; 加速弹出project选择框，不然首次总感觉有点慢
+      (let ((default-directory (project-root (project-current t))))
+        (call-interactively 'consult-project-extra-find))
     (call-interactively 'project-find-file))
   )
 (defun my-project-buffer()
@@ -2271,7 +2274,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 没有cache查找文件也超快！
     (use-package project
       :defer t
-      :commands(project-compile project-find-regexp)
+      :commands(project-compile project-find-regexp project-root)
       :init
       (defun invoke_project ()
         (interactive)
@@ -3132,22 +3135,24 @@ _q_uit
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
   (setq org-roam-database-connector 'sqlite-builtin) ; 使用29版本以上自营的sqlite，但是仍然需要上面的emacsql
-  (setq org-roam-capture-templates
-        '(
-          ("d" "default" plain "%?"
-           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n") :unnarrowed t)
-          ("t" "tech" plain "%?"
-           :target (file+head "tech/%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n") :unnarrowed t)
-          ("w" "work" plain "%?"
-           :target (file+head "work/%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n") :unnarrowed t)
-          ("h" "home" plain "%?"
-           :target (file+head "home/%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n") :unnarrowed t)
-          )
-        )
+  (when nil
+    ;; 暂时不用模式，按目录结构自己创建org文件
+    (setq org-roam-capture-templates
+          '(
+            ("d" "default" plain "%?"
+             :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                                "#+title: ${title}\n") :unnarrowed t)
+            ("t" "tech" plain "%?"
+             :target (file+head "tech/%<%Y%m%d%H%M%S>-${slug}.org"
+                                "#+title: ${title}\n") :unnarrowed t)
+            ("w" "work" plain "%?"
+             :target (file+head "work/%<%Y%m%d%H%M%S>-${slug}.org"
+                                "#+title: ${title}\n") :unnarrowed t)
+            ("h" "home" plain "%?"
+             :target (file+head "home/%<%Y%m%d%H%M%S>-${slug}.org"
+                                "#+title: ${title}\n") :unnarrowed t)
+            )
+          ))
   
   (require 'org-roam-autoloads)
   (defun call-project-find()
@@ -3177,6 +3182,12 @@ _q_uit
   ;; find时列表加入tag，这么好的功能居然不加入默认？
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
+  ;; 屏蔽新建node功能，因为不喜欢capture，还是手动按目录结构创建笔记
+  (defadvice org-roam-capture- (around my-org-roam-capture- activate)
+    (let ((default-directory org-roam-directory))
+      (call-interactively 'find-file)
+      )
+    )
   )
 
 (use-package eww

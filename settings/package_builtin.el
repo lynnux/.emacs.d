@@ -16,10 +16,10 @@
   (define-key bs-mode-map ">"       'end-of-buffer))
 
 ;; org mode
-(setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
+;; (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
 (define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表
 (setq org-log-done 'time) ;给已完成事项打上时间戳。可选 note，附加注释
-(setq org-startup-folded nil) ; 打开时不折叠
+;; (setq org-startup-folded nil) ; 打开时不折叠，默认是showeverything了
 (add-hook 'org-agenda-mode-hook 
 	  (lambda ()
 	    (setq org-agenda-follow-mode t))
@@ -45,6 +45,14 @@
 (with-eval-after-load 'org-capture
   ;; 需要hook三个函数 find-file-noselect get-file-buffer find-buffer-visiting
   (defadvice org-capture-target-buffer (around my-org-capture-target-buffer activate)
+    (setq tmp-disable-view-mode 2);; 2不恢复只读
+    ad-do-it
+    (setq tmp-disable-view-mode nil)
+    )
+  )
+;; 对C-c C-x C-a归档命令处理
+(with-eval-after-load 'org-archive
+  (defadvice org-archive-subtree (around my-org-archive-subtree activate)
     (setq tmp-disable-view-mode 2);; 2不恢复只读
     ad-do-it
     (setq tmp-disable-view-mode nil)
