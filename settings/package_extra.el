@@ -1873,6 +1873,7 @@ _q_uit
                                    grep-mode
                                    dired-mode
                                    speedbar-mode
+                                   markdown-mode ;; 会把代码乱格式化
                                    ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
       (indentinator-mode)))
@@ -2881,7 +2882,6 @@ _q_uit
 (when (functionp 'pop-select/transparent-set-background)
   (defvar cur-transparent 255)
   (defconst step-transparent 20)
-  ;; (pop-select/gui-set-transparent-all-frame cur-transparent)
   (defun dec-transparent()
     (interactive)
     (setq cur-transparent (min 255 (+ cur-transparent step-transparent)))
@@ -3319,8 +3319,8 @@ _q_uit
   :init
   (global-set-key (kbd "C-=") 'evil-numbers/inc-at-pt)
   (global-set-key (kbd "C--") 'evil-numbers/dec-at-pt)
-  (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
-  (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
+  ;; (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
+  ;; (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
   )
 
 (use-package so-long
