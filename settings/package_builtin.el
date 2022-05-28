@@ -244,8 +244,8 @@ Cancels itself, if this buffer was killed."
 
 ;;; occur
 (add-hook 'occur-mode-hook (lambda () 
-			     (local-set-key (kbd "p") 'occur-prev)
-			     (local-set-key (kbd "n") 'occur-next)))
+			     (define-key occur-mode-map (kbd "p") 'occur-prev)
+			     (define-key occur-mode-map (kbd "n") 'occur-next)))
 ;;; from http://www.emacswiki.org/emacs/aok.el
 (defun all-occur (rexp)
   "Search all buffers for REXP."
