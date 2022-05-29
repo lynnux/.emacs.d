@@ -2945,7 +2945,9 @@ _q_uit
     (setq beacon-blink-when-focused t)
     (setq beacon-blink-delay 0.01)
     (setq beacon-blink-duration 0.2)
-    (setq beacon-blink-when-window-scrolls nil) ; 开启了auto save，保存时都会闪故而屏蔽
+    (setq beacon-blink-when-window-scrolls nil ; 开启了auto save，保存时都会闪故而屏蔽
+          beacon-blink-when-buffer-changes nil ; known bug，导致emacsclient打开文件不弹出emacs，原版没问题
+          ) 
     :config
     (beacon-mode 1)
     (defadvice beacon-blink (around my-beacon-blink activate)
