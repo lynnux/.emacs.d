@@ -38,7 +38,7 @@ smex-items
 packages/swiper/swiper-master
 packages/company-mode/*
 recentf
-packages/magit/*
+packages/magit/magit-master/
 transient/*
 /eshell/*
 /eln-cache/*
