@@ -682,11 +682,10 @@ _q_uit
                           tags-completion-at-point-function ;; 自带的支持etags!
                           cape-keyword
                           cape-dabbrev
-                          ;;cape-symbol   
-                          ,@(mapcar #'cape-company-to-capf
-                                    (list
-                                     #'company-yasnippet
-                                     ))
+                          ;; ,@(mapcar #'cape-company-to-capf
+                          ;;           (list
+                          ;;            #'company-yasnippet
+                          ;;            ))
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
@@ -1874,6 +1873,7 @@ _q_uit
                                    dired-mode
                                    speedbar-mode
                                    markdown-mode ;; 会把代码乱格式化
+                                   python-mode   ;; 有时候太烦了
                                    ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
       (indentinator-mode)))
