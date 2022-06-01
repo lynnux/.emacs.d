@@ -1935,7 +1935,35 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
   (add-to-list 'load-path "~/.emacs.d/packages/magit")
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
-  (setq magit-version "3.3.0")
+  (setq magit-version "3.3.0"
+        magit-status-sections-hook
+        '(magit-insert-status-headers
+          ;; magit-insert-merge-log
+          ;; magit-insert-rebase-sequence
+          ;; magit-insert-am-sequence
+          ;; magit-insert-sequencer-sequence
+          ;; magit-insert-bisect-output
+          ;; magit-insert-bisect-rest
+          ;; magit-insert-bisect-log
+          magit-insert-untracked-files
+          magit-insert-unstaged-changes
+          magit-insert-staged-changes
+          magit-insert-stashes
+          ;; magit-insert-unpushed-to-pushremote
+          ;; magit-insert-unpushed-to-upstream-or-recent
+          ;; magit-insert-unpulled-from-pushremote
+          ;; magit-insert-unpulled-from-upstream
+          )
+        )
+  (with-eval-after-load 'magit-git
+    ;; https://github.com/magit/magit/issues/2982#issuecomment-1081204026
+    (defun magit-rev-format (format &optional rev args)
+      (let ((str (magit-git-string "log" "-1" "--no-patch"
+                                   (concat "--format=" format) args
+                                   (if rev (concat rev "^{commit}") "HEAD") "--")))
+        (unless (string-equal str "")
+          str)))
+    )
   :commands (magit magit-status)        ;; magit-status for projectile
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
