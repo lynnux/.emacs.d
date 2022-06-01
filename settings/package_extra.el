@@ -3233,6 +3233,9 @@ _q_uit
   :init
   (defun my-C-1()
     (interactive)
+    ;; 在popper里按C-.转到定义了就无法C-1了，提示"Cannot make side window the only window"。先切换到其它窗口再关闭
+    (when (window-parameter nil 'window-side)
+      (call-interactively 'other-window))
     ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
     (let ((show-popper (cond ((eq last-command 'mode-exited) t)
 	                     ((region-active-p)
