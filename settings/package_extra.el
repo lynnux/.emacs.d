@@ -656,10 +656,7 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-         ;; 拷贝lsp-bridge的这两个设置了
          (load "corfu/corfu-icon")
-         (load "corfu/corfu-orderless")
-         (add-hook 'corfu-mode-hook 'corfu-orderless-setup)
 
          ;; 将补全移动到minibuffer进行，这样就可以用embark了！
          (defun corfu-move-to-minibuffer ()
@@ -1290,20 +1287,16 @@ _q_uit
            (defun is-consult-ripgrep()
              (eq 'consult-grep
                  (completion-metadata-get
-                  (completion-metadata
-                   (buffer-substring (minibuffer-prompt-end)
-                                     (max (minibuffer-prompt-end) (point)))
-                   minibuffer-completion-table
-                   minibuffer-completion-predicate)
+                  (completion-metadata (minibuffer-contents)
+                                       minibuffer-completion-table
+                                       minibuffer-completion-predicate)
                   'category)))
            (defun is-consult-line()
              (eq 'consult-location ;; 其它有几个也是这个，影响不大
                  (completion-metadata-get
-                  (completion-metadata
-                   (buffer-substring (minibuffer-prompt-end)
-                                     (max (minibuffer-prompt-end) (point)))
-                   minibuffer-completion-table
-                   minibuffer-completion-predicate)
+                  (completion-metadata (minibuffer-contents)
+                                       minibuffer-completion-table
+                                       minibuffer-completion-predicate)
                   'category)))
            (defun my/vertico-C-l ()
              "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
@@ -1327,6 +1320,7 @@ _q_uit
                      (my-ivy-fly-back-to-present) ;; 单纯调用call-interactively C-s还是灰色的
                      ))
                (call-interactively 'vertico-insert)))
+           ;; 另一种设置的方法 https://github.com/minad/consult/wiki#add-category-specific-minibuffer-keybindings
            (define-key vertico-map (kbd "C-l") 'my/vertico-C-l) ;; 转上级目录，或者搜索上级目录
            (define-key vertico-map (kbd "<tab>") 'my/vertico-tab) ;; rg时tab是插入搜索词
            (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
@@ -1405,7 +1399,7 @@ _q_uit
              :config
              (setq completion-styles '(orderless basic)
                    completion-category-defaults nil
-                   completion-category-overrides '((file (styles partial-completion))) ; 不是真覆盖，只是优化
+                   completion-category-overrides '((file (basic styles partial-completion))) ; 不是真覆盖，只是优化
                    )
              )
 
