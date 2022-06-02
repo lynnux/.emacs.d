@@ -1451,6 +1451,9 @@ _q_uit
              :init
              (marginalia-mode)
              :config
+             (use-package all-the-icons-completion
+               :config
+               (all-the-icons-completion-mode))
              )
 
            (use-package embark
@@ -2525,6 +2528,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; grep mode里C-c C-p开启编辑，C-c C-c完成，C-c C-k放弃编辑
 (use-package wgrep
   :after(grep)
+  :init
+  (setq wgrep-auto-save-buffer t) ;; 编辑好自动保存
   :config
   ;; 使wrep可编辑
   (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
