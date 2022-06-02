@@ -657,7 +657,7 @@ _q_uit
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
          (load "corfu/corfu-icon")
-
+         
          ;; 将补全移动到minibuffer进行，这样就可以用embark了！
          (defun corfu-move-to-minibuffer ()
            (interactive)
@@ -1397,9 +1397,48 @@ _q_uit
            ;; 启动用无序匹配
            (use-package orderless
              :config
-             (setq completion-styles '(orderless basic)
+             ;; https://github.com/minad/consult/wiki#minads-orderless-configuration
+             (defvar +orderless-dispatch-alist
+               '((?% . char-fold-to-regexp)
+                 (?! . orderless-without-literal) ;; !不要含
+                 (?`. orderless-initialism) ;; 以`开头
+                 (?= . orderless-literal)
+                 (?~ . orderless-flex)) ;; 类似fuzzy，不过还是要按顺序
+               )
+             (defun +orderless-dispatch (pattern index _total)
+               (cond
+                ;; Ensure that $ works with Consult commands, which add disambiguation suffixes
+                ((string-suffix-p "$" pattern)
+                 `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$")))
+                ;; File extensions
+                ((and
+                  ;; Completing filename or eshell
+                  (or minibuffer-completing-file-name
+                      (derived-mode-p 'eshell-mode))
+                  ;; File extension
+                  (string-match-p "\\`\\.." pattern))
+                 `(orderless-regexp . ,(concat "\\." (substring pattern 1) "[\x200000-\x300000]*$")))
+                ;; Ignore single !
+                ((string= "!" pattern) `(orderless-literal . ""))
+                ;; Prefix and suffix
+                ((if-let (x (assq (aref pattern 0) +orderless-dispatch-alist))
+                     (cons (cdr x) (substring pattern 1))
+                   (when-let (x (assq (aref pattern (1- (length pattern))) +orderless-dispatch-alist))
+                     (cons (cdr x) (substring pattern 0 -1)))))))
+             
+             (orderless-define-completion-style +orderless-with-initialism
+               (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
+             (defun my/orderless-dispatch-flex-first (_pattern index _total)
+               "https://github.com/minad/corfu/wiki#advanced-example-configuration-with-orderless"
+               (and (eq index 0) 'orderless-flex))
+             (setq completion-styles '(basic orderless)
                    completion-category-defaults nil
-                   completion-category-overrides '((file (basic styles partial-completion))) ; 不是真覆盖，只是优化
+                   completion-category-overrides '((file (styles flex)) ;; 就flex最好使，其它都有问题(不过还是要按顺序)，如yong/mb/目录搜索py，helm是flex，ivy是substring
+                                                   (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
+                                                   (variable (styles +orderless-with-initialism))
+                                                   (symbol (styles +orderless-with-initialism)))
+                   orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
+                   orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first) ; 按+orderless-dispatch-alist执行相应的筛选
                    )
              )
 
