@@ -15,6 +15,33 @@
 (defun my-eval-string (string)
   (eval (car (read-from-string (format "(progn %s)" string)))))
 
+(defun get-file-time (file)
+  "获取文件的修改时间"
+  (interactive "P")
+  (time-convert (file-attribute-modification-time (file-attributes file)) 'integer))
+
+(defun ensure-latest (zip)
+  "自动更新zip包"
+  (interactive "P")
+  (let* ((check-file (expand-file-name (concat ".cache/" (file-name-nondirectory zip)) user-emacs-directory))
+         (expand-zip (expand-file-name zip))
+         (extdir (file-name-directory expand-zip))
+         (target-dir (concat extdir (file-name-base expand-zip))))
+    (when (file-newer-than-file-p expand-zip check-file)
+      (delete-directory target-dir t nil) ;先删除
+      (call-process-shell-command (concat "unzip " expand-zip " -d " extdir))
+      ;; (call-interactively 'byte-recompile-directory t (vector target-dir 0))
+      (byte-recompile-directory target-dir 0)
+      ;; (message target-dir)
+      ;; 用touch更新check-file的时间
+      (unless (file-exists-p (expand-file-name ".cache" user-emacs-directory))
+        (make-directory (expand-file-name ".cache" user-emacs-directory) t))
+      (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
+      )
+    )
+  )
+
+;; (ensure-latest "~/.emacs.d/settings/settings.zip")
 ;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
