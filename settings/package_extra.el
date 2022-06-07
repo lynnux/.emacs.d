@@ -30,13 +30,21 @@
     (when (file-newer-than-file-p expand-zip check-file)
       (delete-directory target-dir t nil) ;先删除
       (call-process-shell-command (concat "unzip " expand-zip " -d " extdir))
-      ;; (call-interactively 'byte-recompile-directory t (vector target-dir 0))
-      (byte-recompile-directory target-dir 0)
+      (let ((default-directory target-dir))
+        (call-interactively 'byte-recompile-directory nil (read-kbd-macro "C-n")))
+      
+      ;; (byte-recompile-directory target-dir 0)
+      ;; (call-process-shell-command (concat "emacs -Q --batch --eval "
+      ;;                                         (format "(let ((default-directory %S))
+      ;; (normal-top-level-add-subdirs-to-load-path)
+      ;; (byte-recompile-directory %S 0 'force))"
+      ;;                                                 target-dir target-dir)))
+      
       ;; (message target-dir)
       ;; 用touch更新check-file的时间
       (unless (file-exists-p (expand-file-name ".cache" user-emacs-directory))
         (make-directory (expand-file-name ".cache" user-emacs-directory) t))
-      (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
+      ;; (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
       )
     )
   )
@@ -2000,7 +2008,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq magit-version "3.3.0"
         magit-status-sections-hook
-        '(magit-insert-status-headers
+        '(
+          ;; magit-insert-status-headers
           ;; magit-insert-merge-log
           ;; magit-insert-rebase-sequence
           ;; magit-insert-am-sequence
@@ -2031,6 +2040,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
   (define-key magit-status-mode-map (kbd "<C-tab>") nil) ;; 使切换buffer
+  (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
   )
 (defun git-add-file ()
   "Adds (with force) the file from the current buffer to the git repo"
