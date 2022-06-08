@@ -3445,6 +3445,12 @@ _q_uit
   ;; (global-set-key (kbd "C-<right>") 'drag-stuff-right)
   )
 
+;; 删除了csharp-compilation的引用，tree-sister好像没起作用，将就用了
+(use-package csharp-mode
+  :commands(csharp-mode)
+  :init
+  (add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-mode)))
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
