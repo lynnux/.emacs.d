@@ -233,3 +233,4 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
           (lambda ()
 	    (setq gc-cons-threshold (car dotspacemacs-gc-cons)
                   gc-cons-percentage (cadr dotspacemacs-gc-cons))))
+(setq auto-save-list-file-prefix nil)
