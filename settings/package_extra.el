@@ -1430,16 +1430,17 @@ _q_uit
              :config
              (vertico-mouse-mode))
 
-           ;; 启动用无序匹配
+           ;; 启动用无序匹配，本质是一个自动正则生成器，结果给completion-styles用
            (use-package orderless
              :config
              ;; https://github.com/minad/consult/wiki#minads-orderless-configuration
+             ;; 以这些开头或者结尾都是可以的
              (defvar +orderless-dispatch-alist
-               '((?% . char-fold-to-regexp)
-                 (?! . orderless-without-literal) ;; !不要含
-                 (?`. orderless-initialism) ;; 以`开头
-                 (?= . orderless-literal)
-                 (?~ . orderless-flex)) ;; 类似fuzzy，不过还是要按顺序
+               '((?% . char-fold-to-regexp) ;; 默认就是支持regex，这里%可以转换欧州那些字母为英文
+                 (?! . orderless-without-literal) ;; !不包含文本
+                 (?`. orderless-initialism) ;; 每个字母都是一个词的开头，如`or匹配oaaa rbbb
+                 (?= . orderless-literal) ;; 纯文本包含(regexp-quote实现)
+                 (?~ . orderless-flex)) ;; fuzzy，不过是有顺序的
                )
              (defun +orderless-dispatch (pattern index _total)
                (cond
@@ -1461,21 +1462,34 @@ _q_uit
                      (cons (cdr x) (substring pattern 1))
                    (when-let (x (assq (aref pattern (1- (length pattern))) +orderless-dispatch-alist))
                      (cons (cdr x) (substring pattern 0 -1)))))))
-             
+             ;; +orderless-with-initialism直接进completion-styles-alist了
              (orderless-define-completion-style +orderless-with-initialism
                (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
+             ;; 最好用M-空格来分词，好像没有category单独为为corfu设置flex。eglot自动是flex的，只有elisp需要添加这个
              (defun my/orderless-dispatch-flex-first (_pattern index _total)
                "https://github.com/minad/corfu/wiki#advanced-example-configuration-with-orderless"
                (and (eq index 0) 'orderless-flex))
-             (setq completion-styles '(basic orderless)
+             (add-hook 'emacs-lisp-mode-hook (lambda ()
+                                               (make-local-variable 'orderless-style-dispatchers)
+                                               (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
+             (setq completion-styles '(orderless partial-completion)
                    completion-category-defaults nil
-                   completion-category-overrides '((file (styles flex)) ;; 就flex最好使，其它都有问题(不过还是要按顺序)，如yong/mb/目录搜索py，helm是flex，ivy是substring
+                   completion-category-overrides '((file (styles flex)) ;; helm是flex
                                                    (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
                                                    (variable (styles +orderless-with-initialism))
                                                    (symbol (styles +orderless-with-initialism)))
                    orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
-                   orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first) ; 按+orderless-dispatch-alist执行相应的筛选
+                   orderless-style-dispatchers '(+orderless-dispatch) ; 按+orderless-dispatch-alist执行相应的筛选
                    )
+
+             ;; https://github.com/minad/consult/wiki#use-orderless-as-pattern-compiler-for-consult-grepripgrepfind
+             ;; 让rg也用上上面的特殊符号等，这个很爽！
+             (defun consult--orderless-regexp-compiler (input type &rest _config)
+               (setq input (orderless-pattern-compiler input))
+               (cons
+                (mapcar (lambda (r) (consult--convert-regexp r type)) input)
+                (lambda (str) (orderless--highlight input str))))
+             (setq consult--regexp-compiler #'consult--orderless-regexp-compiler)
              )
 
            ;; 美化
