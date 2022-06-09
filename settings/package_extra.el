@@ -707,17 +707,12 @@ _q_uit
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
            (require 'cape-keyword)
-           (require 'company-yasnippet);; company虽然没用，但是use-package会自动设置load-path，所以没问题
            (defun my/set-cape-hook()
              (interactive)
              (dolist (c `(cape-file
                           tags-completion-at-point-function ;; 自带的支持etags!
                           cape-keyword
                           cape-dabbrev
-                          ;; ,@(mapcar #'cape-company-to-capf
-                          ;;           (list
-                          ;;            #'company-yasnippet
-                          ;;            ))
                           ))
                ;; 注意优先级越高越后
                (add-to-list 'completion-at-point-functions c))
@@ -1465,10 +1460,10 @@ _q_uit
              ;; +orderless-with-initialism直接进completion-styles-alist了
              (orderless-define-completion-style +orderless-with-initialism
                (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
-             ;; 最好用M-空格来分词，好像没有category单独为为corfu设置flex。eglot自动是flex的，只有elisp需要添加这个
              (defun my/orderless-dispatch-flex-first (_pattern index _total)
                "https://github.com/minad/corfu/wiki#advanced-example-configuration-with-orderless"
                (and (eq index 0) 'orderless-flex))
+             ;; eglot本身就是flex的，只需要设置elisp就行了，可以用M-空格来分词
              (add-hook 'emacs-lisp-mode-hook (lambda ()
                                                (make-local-variable 'orderless-style-dispatchers)
                                                (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
