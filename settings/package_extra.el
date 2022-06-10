@@ -707,27 +707,27 @@ _q_uit
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
            (require 'cape-keyword)
-           (defun my/set-cape-hook()
-             (interactive)
-             (dolist (c `(cape-file
-                          tags-completion-at-point-function ;; 自带的支持etags!
-                          cape-keyword
-                          cape-dabbrev
-                          ))
-               ;; 注意优先级越高越后
-               (add-to-list 'completion-at-point-functions c))
-             (when (eq major-mode 'emacs-lisp-mode)
-               ;; 别在其它mode加上cape-symbol
-               ;; elisp symbol，这个一定要比dabbrev优先级高，不然M-h M-l不能用
-               (add-to-list 'completion-at-point-functions 'cape-symbol))
-             )
-           ;; 最烦的是eglot和其它会把completion-at-point-functions设为local导致不生效，所以要hook
-           (add-hook 'prog-mode-hook 'my/set-cape-hook)
+           (add-to-list 'completion-at-point-functions #'cape-file)
+           (add-to-list 'completion-at-point-functions #'tags-completion-at-point-function)
+           (add-to-list 'completion-at-point-functions #'cape-keyword)
+           (add-to-list 'completion-at-point-functions #'cape-dabbrev)
            (when (functionp 'eglot-ensure)
-             ;; eglot貌似会覆盖之前的，所以在要它之前设置completion-at-point-functions
-             ;; eglot的capf没有:exclusive标识，所以是独占的？把其它capf排它前面应该就OK
-             ;; 参看讨论 https://github.com/joaotavora/eglot/issues/812
-             (add-hook 'eglot-managed-mode-hook 'my/set-cape-hook))
+             ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
+             ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
+             (defun lsp-other-capf-function ()
+               (let ((lsp-result (eglot-completion-at-point)))
+                 (if (and lsp-result
+                          (try-completion
+                           (buffer-substring (nth 0 lsp-result)
+                                             (nth 1 lsp-result))
+                           (nth 2 lsp-result)))
+                     lsp-result
+                   ;; TODO: 添加其它后端
+                   (tags-completion-at-point-function))))
+             (defun enable-eglot-other-backend()
+               ;; 后加优先级比eglot的高
+               (add-hook 'completion-at-point-functions #'lsp-other-capf-function nil t))
+             (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
            )
          )
        )
@@ -1955,6 +1955,7 @@ _q_uit
                                    speedbar-mode
                                    markdown-mode ;; 会把代码乱格式化
                                    python-mode   ;; 有时候太烦了
+                                   org-mode ;; src支持不好
                                    ));;(derived-mode-p 'c-mode 'c++-mode)
                 )
       (indentinator-mode)))
@@ -2781,6 +2782,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
   (add-hook 'lua-mode-hook 'lsp-ensure) 
   )
+
+;; https://github.com/OmniSharp/omnisharp-roslyn 本身就是net core编译的，不需要net6.0体积还小点
+(defvar c-sharp-server-path (cond ((file-exists-p "H:/green/omnisharp-win-x64") "H:/green/omnisharp-win-x64")
+                                  (t nil)))
+(when c-sharp-server-path
+  (with-eval-after-load 'csharp-mode
+    (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
+  (add-hook 'csharp-mode-hook 'lsp-ensure)
+  )
+
 
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
