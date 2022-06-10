@@ -725,8 +725,11 @@ _q_uit
                    ;; TODO: 添加其它后端
                    (tags-completion-at-point-function))))
              (defun enable-eglot-other-backend()
-               ;; 后加优先级比eglot的高
-               (add-hook 'completion-at-point-functions #'lsp-other-capf-function nil t))
+               "替换eglot的补全"
+               (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
+			                                            'eglot-completion-at-point
+			                                            completion-at-point-functions))
+               )
              (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
            )
          )
