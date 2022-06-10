@@ -640,6 +640,8 @@ _q_uit
                corfu-auto-prefix 1
                corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
                corfu-auto-delay 0.5 ;; 避免输完后马上C-n/C-p也补全
+               corfu-quit-at-boundary nil ;; 可以用M-空格来分词
+               corfu-quit-no-match nil ;; 没有match时不退，这样可以C-h回退修改
                )
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
@@ -1466,7 +1468,7 @@ _q_uit
              (defun my/orderless-dispatch-flex-first (_pattern index _total)
                "https://github.com/minad/corfu/wiki#advanced-example-configuration-with-orderless"
                (and (eq index 0) 'orderless-flex))
-             ;; eglot本身就是flex的，只需要设置elisp就行了，可以用M-空格来分词
+             ;; eglot本身就是flex的，只需要设置elisp就行了，也可以用空格分词(需要设置 corfu-quit-at-boundary)
              (add-hook 'emacs-lisp-mode-hook (lambda ()
                                                (make-local-variable 'orderless-style-dispatchers)
                                                (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
