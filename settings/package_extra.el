@@ -710,7 +710,6 @@ _q_uit
            :config
            (require 'cape-keyword)
            (add-to-list 'completion-at-point-functions #'cape-file)
-           (add-to-list 'completion-at-point-functions #'tags-completion-at-point-function)
            (add-to-list 'completion-at-point-functions #'cape-keyword)
            (add-to-list 'completion-at-point-functions #'cape-dabbrev)
            (when (functionp 'eglot-ensure)
