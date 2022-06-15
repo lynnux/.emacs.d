@@ -2622,7 +2622,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            :init
            (unless (functionp 'lsp-bridge-mode)
              (defun lsp-ensure() (eglot-ensure)))
-           (setq eglot-confirm-server-initiated-edits nil) ; 避免code action的提示
+           (setq eglot-confirm-server-initiated-edits nil  ; 避免code action的yes/no提示
+                 eglot-send-changes-idle-time 0.2          ; 可以加rust的code action更新
+                 )
            :commands (eglot eglot-ensure eglot-rename)
            :config
            (advice-add 'jsonrpc--log-event :around
