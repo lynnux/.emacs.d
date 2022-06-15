@@ -641,7 +641,7 @@ _q_uit
                corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
                corfu-auto-delay 0.5 ;; 避免输完后马上C-n/C-p也补全
                corfu-quit-at-boundary nil ;; 可以用M-空格来分词
-               corfu-quit-no-match nil ;; 没有match时不退，这样可以C-h回退修改
+               corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
                )
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
          :config
@@ -686,7 +686,7 @@ _q_uit
            :commands(corfu-info-documentation corfu-info-location)
            :init
            ;; 对于elisp-completion-at-point后端，这两个是可以用的，但是提示是Dabbrev的话就无法用了
-           (define-key corfu-map (kbd "M-h") 'corfu-info-documentation)
+           (define-key corfu-map (kbd "<f1>") 'corfu-info-documentation)
            (define-key corfu-map "\M-l" 'corfu-info-location)
            )
          
