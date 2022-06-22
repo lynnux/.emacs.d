@@ -694,6 +694,8 @@ _q_uit
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
          (load "corfu/corfu-icon")
+         (load "corfu/corfu-doc")
+         (add-hook 'corfu-mode-hook #'corfu-doc-mode)
          
          ;; 将补全移动到minibuffer进行，这样就可以用embark了！
          (defun corfu-move-to-minibuffer ()
