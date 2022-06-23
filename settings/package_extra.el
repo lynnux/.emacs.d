@@ -1340,12 +1340,18 @@ _q_uit
              ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
              (if (is-consult-ripgrep)
                  (progn
-                   ;; 设置当前目录为父目录
-                   (setq default-directory (file-name-directory (directory-file-name default-directory)))
                    ;; 参考enable-minibuffer-auto-search-at-point获取当前输入
-                   (let ((text (substring-no-properties (or (car-safe vertico--input) ""))))
-                     (delete-minibuffer-contents) ;; 参考vertico-directory-up
-                     (insert text)
+                   (let ((text (substring-no-properties (or (car-safe vertico--input) ""))
+                               )
+                         (dir (file-name-directory (directory-file-name default-directory))))
+                     ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
+                     ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
+                     (run-with-timer 0.1 nil (lambda ()
+                                               (let ((this-command 'my-consult-ripgrep) ;; 以consult-buffer形式查看
+                                                     (disable-for-vertico-repeat t))
+                                                 (my-consult-ripgrep dir text))
+                                               ))
+                     (minibuffer-keyboard-quit);; 用vertio-exit C-g就不能回到原来位置
                      ))
                (call-interactively 'vertico-directory-delete-word)))
            (defun my/vertico-tab()
@@ -1405,6 +1411,9 @@ _q_uit
            (use-package vertico-multiform
              :init
              ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
+             ;; (defadvice vertico-multiform--setup (before my-vertico-multiform--setup activate)
+             ;;   (message (concat "last command:" (symbol-name this-command)))
+             ;;   )
              (setq vertico-multiform-commands
                    '(
                      (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
@@ -1577,12 +1586,12 @@ _q_uit
              :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
              )
            
-           (defun my-consult-ripgrep(&optional dir)
+           (defun my-consult-ripgrep(&optional dir initial)
              (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
              (require 'consult)
              ;; 不忽略ignore
              (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
-               (consult-ripgrep (or dir default-directory)))
+               (consult-ripgrep (or dir default-directory) initial))
              )
            (defun my-consult-ripgrep-only-current-dir(&optional dir)
              (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
