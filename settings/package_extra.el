@@ -1503,7 +1503,13 @@ _q_uit
                (cons
                 (mapcar (lambda (r) (consult--convert-regexp r type)) input)
                 (lambda (str) (orderless--highlight input str))))
-             (setq consult--regexp-compiler #'consult--orderless-regexp-compiler)
+             (defun consult--with-orderless (&rest args)
+               (minibuffer-with-setup-hook
+                   (lambda ()
+                     (setq-local consult--regexp-compiler #'consult--orderless-regexp-compiler))
+                 (apply args)))
+             (advice-add #'consult-ripgrep :around #'consult--with-orderless)
+             ;; (setq consult--regexp-compiler #'consult--orderless-regexp-compiler) ;; consult-find有问题
              )
 
            ;; 美化
@@ -1569,6 +1575,7 @@ _q_uit
                      consult-completion-in-region ;; 将补全移动到minibuffer进行
                      consult-project-buffer;; buffer+file
                      consult-locate ;; everything!
+                     consult-find ;; minad说fd不太成熟，就用find吧
                      )
            :init
            (setq
@@ -1579,11 +1586,12 @@ _q_uit
             consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
             consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
             consult-locate-args (encode-coding-string "es.exe -i -p -r" 'gbk)
+            consult-find-args "find . " ;;  windows这样用才行
             )
-           ;; consult的异步是直接调用rg进程的，没有通过cmdproxy，所以直接设置就好了
-           (add-to-list 'process-coding-system-alist 
-                        '("[rR][gG]" . (utf-8 . gbk-dos)))
+           ;; consult的异步没有通过cmd proxy，这点很棒！
+           (add-to-list 'process-coding-system-alist '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
            (add-to-list 'process-coding-system-alist '("es" gbk . gbk))
+           (add-to-list 'process-coding-system-alist '("[fF][iI][nN][dD]" . (utf-8 . gbk-dos))) ;; find支持中文
            ;; https://github.com/phikal/compat.el
            (use-package compat
              :defer t
@@ -1615,6 +1623,7 @@ _q_uit
            (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
            (global-set-key [remap goto-line] 'consult-goto-line)
            (global-set-key [remap bookmark-jump] 'consult-bookmark)
+           (global-set-key [(control f2)] 'consult-find)
            
            (defun my-project-imenu()
              (interactive)
