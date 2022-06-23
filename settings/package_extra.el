@@ -694,6 +694,9 @@ _q_uit
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
          (load "corfu/corfu-icon")
+         (setq corfu-doc-delay 0.6 ;; 要延迟下不然会有点卡
+               corfu-doc-transition 'hide ;; 切换到下一个时上个隐藏
+               )
          (load "corfu/corfu-doc")
          (add-hook 'corfu-mode-hook #'corfu-doc-mode)
          
