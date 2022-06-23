@@ -1503,13 +1503,7 @@ _q_uit
                (cons
                 (mapcar (lambda (r) (consult--convert-regexp r type)) input)
                 (lambda (str) (orderless--highlight input str))))
-             (defun consult--with-orderless (&rest args)
-               (minibuffer-with-setup-hook
-                   (lambda ()
-                     (setq-local consult--regexp-compiler #'consult--orderless-regexp-compiler))
-                 (apply args)))
-             (advice-add #'consult-ripgrep :around #'consult--with-orderless)
-             ;; (setq consult--regexp-compiler #'consult--orderless-regexp-compiler) ;; consult-find有问题
+             (setq consult--regexp-compiler #'consult--orderless-regexp-compiler)
              )
 
            ;; 美化
@@ -1586,7 +1580,6 @@ _q_uit
             consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
             consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
             consult-locate-args (encode-coding-string "es.exe -i -p -r" 'gbk)
-            consult-find-args "find . " ;;  windows这样用才行
             )
            ;; consult的异步没有通过cmd proxy，这点很棒！
            (add-to-list 'process-coding-system-alist '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
@@ -1623,7 +1616,13 @@ _q_uit
            (global-set-key [remap switch-to-buffer-other-frame] 'consult-buffer-other-frame)
            (global-set-key [remap goto-line] 'consult-goto-line)
            (global-set-key [remap bookmark-jump] 'consult-bookmark)
-           (global-set-key [(control f2)] 'consult-find)
+           ;; 默认有点问题，解决办法来自 https://github.com/minad/consult/issues/317#issuecomment-980797343，
+           ;; 处理w32-quote-process-args后，上面consult--regexp-compiler设置为orderless也有效了！
+           (global-set-key [(control f2)] (lambda ()
+                                            (interactive)
+                                            (let ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
+                                                  )
+                                              (call-interactively 'consult-find))))
            
            (defun my-project-imenu()
              (interactive)
