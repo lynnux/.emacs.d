@@ -1346,12 +1346,13 @@ _q_uit
                          (dir (file-name-directory (directory-file-name default-directory))))
                      ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
                      ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
-                     (run-with-timer 0.1 nil (lambda ()
-                                               (let ((this-command 'my-consult-ripgrep) ;; 以consult-buffer形式查看
-                                                     (disable-for-vertico-repeat t))
-                                                 (my-consult-ripgrep dir text))
-                                               ))
-                     (minibuffer-keyboard-quit);; 用vertio-exit C-g就不能回到原来位置
+                     ;; minad大佬的解决办法跟我的一样 https://github.com/minad/consult/issues/596
+                     (run-at-time 0 nil (lambda ()
+                                          (let ((this-command 'my-consult-ripgrep) ;; 以consult-buffer形式查看
+                                                (disable-for-vertico-repeat t))
+                                            (my-consult-ripgrep dir text))
+                                          ))
+                     (minibuffer-quit-recursive-edit);; 用vertio-exit C-g就不能回到原来位置
                      ))
                (call-interactively 'vertico-directory-delete-word)))
            (defun my/vertico-tab()
