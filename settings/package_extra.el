@@ -3505,6 +3505,7 @@ _q_uit
    elfeed-feeds
    '("http://tttang.com/rss.xml"
      "https://xz.aliyun.com/feed"
+     "https://paper.seebug.org/rss"
      )
    elfeed-search-filter "@6-months-ago" ;; 默认不显示已经read了的，设置为都显示
    )
