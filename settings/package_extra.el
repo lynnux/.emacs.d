@@ -365,11 +365,13 @@ _q_uit
     (defhydra hydra-find-file ()
       "
 _c_: file changed  _v_: file visited
-_a_: file at point _e_: helm locate
+_a_: file at point _e_: consult-everything
 _r_: file visited  _p_: file in project
+_f_: consult-find
 _q_uit
 "
-      ("e" helm-locate nil :color blue)
+      ("f" consult-find nil :color blue)
+      ("e" consult-everything nil :color blue)
       ("c" files-recent-changed nil :color blue) ;; 这个只有session才有的，recentf没有
       ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
@@ -1660,6 +1662,20 @@ _q_uit
              :commands(consult-yasnippet
                        consult-yasnippet-visit-snippet-file ;; 打开编辑snippet文件
                        ))
+           ;; 目前仅能用简单的orderless，不支持上面的~=等，将就用吧
+           (use-package consult-everything
+             :commands(consult-everything)
+             :init
+             (setq consult-everything-args "es -p -r") ;; -i是区分大小写
+             ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
+             (defun consult--with-orderless (&rest args)
+               (minibuffer-with-setup-hook
+                   (lambda ()
+                     (setq-local consult--regexp-compiler #'consult--default-regexp-compiler))
+                 (apply args)))
+             (advice-add #'consult-everything :around #'consult--with-orderless)
+             :config
+             )
            :config
            ;; 禁止某些preview
            (consult-customize
