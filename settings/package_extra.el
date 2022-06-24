@@ -2045,6 +2045,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'load-path "~/.emacs.d/packages/magit")
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq magit-version "3.3.0"
+        magit-commit-show-diff nil ;; commit时不用显示diff，在stage时一般就检查了
         magit-status-sections-hook
         '(
           ;; magit-insert-status-headers
