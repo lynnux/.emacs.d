@@ -516,7 +516,7 @@ _c_: hide comment        _q_uit
 
 ;; from tabbar-ruler
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*rg*"
-                                       "*eww*" "*xref*" "*org-roam*"))
+                                       "*eww*" "*xref*" "*org-roam*" "*elfeed-entry*" "*elfeed-search*"))
 (defun ep-tabbar-buffer-list ()
   (delq nil
         (mapcar #'(lambda (b)
@@ -3493,6 +3493,23 @@ _q_uit
   (global-set-key (kbd "C-<down>") 'drag-stuff-down)
   ;; (global-set-key (kbd "C-<left>") 'drag-stuff-left) ;; 左右移动貌似没什么用，还是留给winner-mode
   ;; (global-set-key (kbd "C-<right>") 'drag-stuff-right)
+  )
+
+(use-package elfeed
+  :load-path "~/.emacs.d/packages/tools/elfeed-master"
+  :commands(elfeed)
+  :init
+  (setq
+   elfeed-use-curl t ;; win10好像自带curl
+   ;; elfeed-curl-program-name "curl"
+   elfeed-feeds
+   '("http://tttang.com/rss.xml"
+     "https://xz.aliyun.com/feed"
+     )
+   elfeed-search-filter "@6-months-ago" ;; 默认不显示已经read了的，设置为都显示
+   )
+  :config
+  (define-key elfeed-search-mode-map (kbd "RET") 'elfeed-search-browse-url) ; 不需要查看简介什么的，直接打开浏览器就行了
   )
 
 ;; 删除了csharp-compilation的引用，tree-sister好像没起作用，将就用了
