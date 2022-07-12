@@ -716,7 +716,7 @@ _q_uit
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
            (require 'cape-keyword)
-           (add-to-list 'completion-at-point-functions #'cape-file)
+           ;; (add-to-list 'completion-at-point-functions #'cape-file)
            (add-to-list 'completion-at-point-functions #'cape-keyword)
            (add-to-list 'completion-at-point-functions #'cape-dabbrev)
            (when (functionp 'eglot-ensure)
@@ -2151,7 +2151,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			     )))
   :config
   (defvar my-easy-kill-map nil)
-  (when (functionp 'which-key--show-keymap)
+  (when (and nil (functionp 'which-key--show-keymap)) ;; 还是有效率影响的，尤其win10上面
     ;; 简化which-key提示
     (with-eval-after-load 'which-key
       ;; 去掉easy-kill-前辍
