@@ -3209,64 +3209,81 @@ _q_uit
   (nyan-mode)
   )
 
-(use-package diff-hl
-  :load-path "~/.emacs.d/themes/diff-hl-master"
-  :defer 1.4
-  :config
-  (global-diff-hl-mode)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-  ;; 默认修改时会去掉高亮，这个让它保留
-  (use-package diff-hl-flydiff
-    :disabled ;; auto save设置为1秒就不需要了
-    :config
-    (diff-hl-flydiff-mode)
-    )
+(defconst diff-hl-use 2) ;; 1.diff-hl 2.gutter
+(if (eq diff-hl-use 1)
+    ;; diff-hl有点卡输入啊，貌似是同步的，而gutter介绍是异步的
+    (use-package diff-hl
+      :load-path "~/.emacs.d/themes/diff-hl-master"
+      :defer 1.4
+      :config
+      (global-diff-hl-mode)
+      (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+      ;; 默认修改时会去掉高亮，这个让它保留
+      (use-package diff-hl-flydiff
+        :disabled ;; auto save设置为1秒就不需要了
+        :config
+        (diff-hl-flydiff-mode)
+        )
 
-  (use-package diff-hl-margin
-    :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
-    :config
-    ;; (diff-hl-margin-mode) 这个会遍历buffer-list导致启动卡一下，所以我们手动hook
-    (progn
-      (add-hook 'diff-hl-mode-on-hook 'diff-hl-margin-local-mode)
-      (add-hook 'diff-hl-mode-off-hook 'diff-hl-margin-local-mode-off)
-      (add-hook 'diff-hl-dired-mode-on-hook 'diff-hl-margin-local-mode)
-      (add-hook 'diff-hl-dired-mode-off-hook 'diff-hl-margin-local-mode-off))
-    )
-  
-  (use-package diff-hl-dired
-    :config
-    (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
-    )
+      (use-package diff-hl-margin
+        :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
+        :config
+        ;; (diff-hl-margin-mode) 这个会遍历buffer-list导致启动卡一下，所以我们手动hook
+        (progn
+          (add-hook 'diff-hl-mode-on-hook 'diff-hl-margin-local-mode)
+          (add-hook 'diff-hl-mode-off-hook 'diff-hl-margin-local-mode-off)
+          (add-hook 'diff-hl-dired-mode-on-hook 'diff-hl-margin-local-mode)
+          (add-hook 'diff-hl-dired-mode-off-hook 'diff-hl-margin-local-mode-off))
+        )
+      
+      (use-package diff-hl-dired
+        :config
+        (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+        )
 
-  ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
-  (use-package diff-hl-show-hunk
+      ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
+      (use-package diff-hl-show-hunk
+        :config
+        (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
+        (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk);; 目前还没有绑定这个的
+        (global-diff-hl-show-hunk-mouse-mode)
+        ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
+        (defvar set-transient-map-exit-func nil)
+        (defun my-diff-hl-inline-popup-hide()
+          (interactive)
+          (diff-hl-inline-popup-hide)
+          (when (functionp set-transient-map-exit-func)
+            (funcall set-transient-map-exit-func))
+          )
+        (defvar diff-hl-inline-popup-transient-mode-map1
+          (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
+            (define-key map [escape] #'my-diff-hl-inline-popup-hide)
+            (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
+            (define-key map (kbd "RET") #'my-diff-hl-inline-popup-hide)
+            map)
+          )
+        (set-keymap-parent diff-hl-inline-popup-transient-mode-map1
+                           diff-hl-show-hunk-map)
+        (setq diff-hl-show-hunk-function (lambda (buffer &optional _ignored-line)
+                                           (funcall 'diff-hl-show-hunk-inline-popup buffer _ignored-line)
+                                           (setq set-transient-map-exit-func (set-transient-map diff-hl-inline-popup-transient-mode-map1 t 'diff-hl-inline-popup-hide))
+                                           )))
+      )
+  (use-package git-gutter
+    :defer 1.4
     :config
-    (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
-    (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk);; 目前还没有绑定这个的
-    (global-diff-hl-show-hunk-mouse-mode)
-    ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
-    (defvar set-transient-map-exit-func nil)
-    (defun my-diff-hl-inline-popup-hide()
-      (interactive)
-      (diff-hl-inline-popup-hide)
-      (when (functionp set-transient-map-exit-func)
-        (funcall set-transient-map-exit-func))
-      )
-    (defvar diff-hl-inline-popup-transient-mode-map1
-      (let ((map (make-sparse-keymap)))
-        (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
-        (define-key map [escape] #'my-diff-hl-inline-popup-hide)
-        (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
-        (define-key map (kbd "RET") #'my-diff-hl-inline-popup-hide)
-        map)
-      )
-    (set-keymap-parent diff-hl-inline-popup-transient-mode-map1
-                       diff-hl-show-hunk-map)
-    (setq diff-hl-show-hunk-function (lambda (buffer &optional _ignored-line)
-                                       (funcall 'diff-hl-show-hunk-inline-popup buffer _ignored-line)
-                                       (setq set-transient-map-exit-func (set-transient-map diff-hl-inline-popup-transient-mode-map1 t 'diff-hl-inline-popup-hide))
-                                       )))
+    (global-git-gutter-mode +1)
+    (defhydra hydra-zoom ()
+      "goto hunk"
+      ("p" git-gutter:previous-hunk "prev")
+      ("n" git-gutter:next-hunk "next")
+      ("q" nil "quit" :color blue))
+    (global-set-key (kbd "C-c h") 'hydra-zoom/body)
+    (global-set-key (kbd "C-c C-h") 'hydra-zoom/body)
+    )
   )
+
 
 (use-package maple-preview
   :load-path "~/.emacs.d/packages/org"
