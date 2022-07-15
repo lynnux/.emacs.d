@@ -367,16 +367,17 @@ _q_uit
 _c_: file changed  _v_: file visited
 _a_: file at point _e_: consult-everything
 _r_: file visited  _p_: file in project
-_f_: consult-find
+_f_: consult-find  _d_: dired recent
 _q_uit
 "
       ("f" consult-find nil :color blue)
       ("e" consult-everything nil :color blue)
       ("c" files-recent-changed nil :color blue) ;; 这个只有session才有的，recentf没有
-      ("v" files-recent-visited nil :color blue)
+      ("v" files-recent-visited nil :color blue)
       ("a" find-file-at-point nil :color blue)
       ("r" files-recent-visited nil :color blue)
       ("p" prj-find-file nil :color blue)
+      ("d" dired-recent-open nil :color blue)
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-find-file/body)
@@ -1556,7 +1557,20 @@ _q_uit
            (use-package consult-dir
              :commands(consult-dir)
              :init
-             (define-key vertico-map "\M-D" 'consult-dir))
+             (define-key vertico-map "\M-D" 'consult-dir)
+             (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
+             :config
+             (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
+               (setq ad-return-value dired-recent-directories)
+               )
+             )
+           (use-package dired-recent
+             :defer 1.8
+             :init
+             (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
+             :config
+             (dired-recent-mode 1)
+             )
            )
 
          ;; 预览功能很快！好像不是真的加载
@@ -1985,6 +1999,7 @@ _q_uit
 
 ;; 自动indent，indentinator有肉眼可见的闪动，但执行良好，aggressive-indent经常不起作用
 (use-package indentinator
+  :disabled
   :defer 1
   :diminish
   :config

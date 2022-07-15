@@ -99,3 +99,4 @@ packages/minibuffer/compat.el-master/*
 /.tags/
 /packages/citre/citre-master
 /packages/tools/elfeed-master/
+/dired-history
