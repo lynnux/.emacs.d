@@ -1997,7 +1997,7 @@ _q_uit
   (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
   )
 
-(if t
+(when nil
     (use-package aggressive-indent
       :defer 1
       :diminish
