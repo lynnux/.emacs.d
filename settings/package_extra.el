@@ -2702,6 +2702,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
              (defun lsp-ensure() (eglot-ensure)))
            (setq eglot-confirm-server-initiated-edits nil  ; 避免code action的yes/no提示
                  eglot-send-changes-idle-time 0.2          ; 可以加rust的code action更新
+                 eglot-sync-connect 0 ;; 打开新文件就不卡了，貌似没有副作用？
                  )
            :commands (eglot eglot-ensure eglot-rename)
            :config
