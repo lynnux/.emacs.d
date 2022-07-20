@@ -212,7 +212,21 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (setq-default tab-width 4
 	      indent-tabs-mode nil)
 
-(global-set-key (kbd "RET") 'newline-and-indent)
+;; newline-and-indent对{|RET}的}没有处理到
+;; https://github.com/magnars/.emacs.d/blob/cbc1c97756a5bdc19bb386c3de904e83b7be7406/defuns/editing-defuns.el#L24-L35
+(defun new-line-dwim ()
+  (interactive)
+  (let ((break-open-pair (or (and (looking-back "{" 1) (looking-at "}"))
+                             (and (looking-back ">" 1) (looking-at "<"))
+                             (and (looking-back "(" 1) (looking-at ")"))
+                             (and (looking-back "\\[" 1) (looking-at "\\]")))))
+    (newline)
+    (when break-open-pair
+      (save-excursion
+        (newline)
+        (indent-for-tab-command)))
+    (indent-for-tab-command)))
+(global-set-key (kbd "RET") 'new-line-dwim)
 (defun sanityinc/newline-at-end-of-line ()
   "Move to end of line, enter a newline, and reindent."
   (interactive)
