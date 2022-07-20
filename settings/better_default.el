@@ -107,7 +107,9 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
     (let ((beg (point-marker)))
       (insert string)
       ;; 必须要删除yank-handler，不然还会遗留在string里 
-      (remove-yank-excluded-properties beg (point)))
+      (remove-yank-excluded-properties beg (point))
+      (yank-advised-indent-function beg (point))   ; 顺便indent一下
+      )
     ))
 
 ;; 不要agressive之类的auto indent了，但是yank还是需要自动indent的
