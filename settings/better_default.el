@@ -1,4 +1,4 @@
-;; gui相关设置在set_gui.el中
+;; gui相关设置在set_gui.el中 -*- lexical-binding: t -*-
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
 (require 'server)
@@ -109,6 +109,33 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
       ;; 必须要删除yank-handler，不然还会遗留在string里 
       (remove-yank-excluded-properties beg (point)))
     ))
+
+;; 不要agressive之类的auto indent了，但是yank还是需要自动indent的
+;; https://github.com/magnars/.emacs.d/blob/cbc1c97756a5bdc19bb386c3de904e83b7be7406/defuns/editing-defuns.el#L99-L124
+(defvar yank-indent-modes '(prog-mode
+                            sgml-mode
+                            js2-mode)
+  "Modes in which to indent regions that are yanked (or yank-popped)")
+(defvar yank-advised-indent-threshold 1000
+  "Threshold (# chars) over which indentation does not automatically occur.")
+(defun yank-advised-indent-function (beg end)
+  "Do indentation, as long as the region isn't too large."
+  ;; (if (<= (- end beg) yank-advised-indent-threshold)
+  ;;     (indent-region beg end nil))
+  (indent-region beg end nil)
+  )
+(defadvice yank (after yank-indent activate)
+  "If current mode is one of 'yank-indent-modes, indent yanked text (with prefix arg don't indent)."
+  (if (and (not (ad-get-arg 0))
+           (cl-find-if 'derived-mode-p yank-indent-modes))
+      (let ((transient-mark-mode nil))
+        (yank-advised-indent-function (region-beginning) (region-end)))))
+(defadvice yank-pop (after yank-pop-indent activate)
+  "If current mode is one of 'yank-indent-modes, indent yanked text (with prefix arg don't indent)."
+  (if (and (not (ad-get-arg 0))
+           (cl-find-if 'derived-mode-p yank-indent-modes))
+      (let ((transient-mark-mode nil))
+        (yank-advised-indent-function (region-beginning) (region-end)))))
 
 ;; Copy line from point to the end, exclude the line break
 (defun qiang-copy-line (arg)
