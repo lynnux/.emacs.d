@@ -802,8 +802,6 @@ _q_uit
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
-    (when (featurep 'beacon)
-      (beacon-blink))
     )
   (add-hook 'emacs-startup-hook
             (lambda ()
@@ -3125,32 +3123,6 @@ _q_uit
                     (my-pop-select t)))
   )
 
-(when (fboundp 'pop-select/beacon-set-parameters)
-  ;; 51afef
-  (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
-  (use-package beacon
-    :defer 1.5
-    :init
-    (setq beacon-blink-when-focused t)
-    (setq beacon-blink-delay 0.01)
-    (setq beacon-blink-duration 0.2)
-    (setq beacon-blink-when-window-scrolls nil ; 开启了auto save，保存时都会闪故而屏蔽
-          beacon-blink-when-buffer-changes nil ; known bug，导致emacsclient打开文件不弹出emacs，原版没问题
-          ) 
-    :config
-    (beacon-mode 1)
-    (defadvice beacon-blink (around my-beacon-blink activate)
-      ;; 目前偶尔不是emacs时也弹窗
-      ;; (message (concat (symbol-name this-command) " " (symbol-name last-command)))
-      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
-        (let ((p (window-absolute-pixel-position)))
-          (when p
-            (pop-select/beacon-blink (car p) ; x
-                                     (cdr p) ; y
-                                     (truncate (* beacon-blink-duration 1000)) ; timer
-                                     (truncate (* beacon-blink-delay 1000)) ; delay
-                                     ))))))
-  )
 
 ;; jump后自动把屏幕居中
 (use-package scroll-on-jump
