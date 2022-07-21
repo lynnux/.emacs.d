@@ -2002,50 +2002,25 @@ _q_uit
   (global-set-key [remap backward-delete-char-untabify] 'smart-hungry-delete-backward-char)
   )
 
-(when nil
-    (use-package aggressive-indent
-      :defer 1
-      :diminish
-      :hook(
-            ;; 大文件有性能问题，禁止使用
-            (find-file . (lambda ()
-                           (if (> (buffer-size) (* 3000 80))
-                               (aggressive-indent-mode -1)))))
-      :config
-      (global-aggressive-indent-mode 1)
-      (dolist (mode '(gitconfig-mode asm-mode web-mode html-mode css-mode go-mode scala-mode prolog-inferior-mode))
-        (push mode aggressive-indent-excluded-modes))
-      (add-to-list 'aggressive-indent-protected-commands #'delete-trailing-whitespace t)
-      (add-to-list 'aggressive-indent-dont-indent-if
-                   '(and (derived-mode-p 'c-mode 'c++-mode 'csharp-mode
-                                         'java-mode 'go-mode 'swift-mode)
-                         (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-                                             (thing-at-point 'line)))))
-      )
-
-  ;;  执行良好，但是会卡输入(win10很严重)
-  (use-package indentinator
-    :disabled
-    :defer 1
-    :diminish
-    :config
-    (defun turn-on-indentinator-mode()
-      (unless (or (memq major-mode '(minibuffer-mode
-                                     fundamental-mode
-                                     occur-edit-mode
-                                     wdired-mode
-                                     grep-mode
-                                     dired-mode
-                                     speedbar-mode
-                                     markdown-mode ;; 会把代码乱格式化
-                                     python-mode   ;; 有时候太烦了
-                                     org-mode ;; src支持不好
-                                     ));;(derived-mode-p 'c-mode 'c++-mode)
-                  )
-        (indentinator-mode)))
-    (define-globalized-minor-mode global-indentinator-mode indentinator-mode turn-on-indentinator-mode)
-    (global-indentinator-mode 1)
-    )
+(use-package aggressive-indent
+  :disabled
+  :defer 1
+  :diminish
+  :hook(
+        ;; 大文件有性能问题，禁止使用
+        (find-file . (lambda ()
+                       (if (> (buffer-size) (* 3000 80))
+                           (aggressive-indent-mode -1)))))
+  :config
+  (global-aggressive-indent-mode 1)
+  (dolist (mode '(gitconfig-mode asm-mode web-mode html-mode css-mode go-mode scala-mode prolog-inferior-mode))
+    (push mode aggressive-indent-excluded-modes))
+  (add-to-list 'aggressive-indent-protected-commands #'delete-trailing-whitespace t)
+  (add-to-list 'aggressive-indent-dont-indent-if
+               '(and (derived-mode-p 'c-mode 'c++-mode 'csharp-mode
+                                     'java-mode 'go-mode 'swift-mode)
+                     (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+                                         (thing-at-point 'line)))))
   )
 
 
@@ -3244,13 +3219,6 @@ _q_uit
                 eaf-open-browser-other-window
                 eaf-search-it ;; 打开浏览器搜索
                 )))
-  )
-
-(use-package nyan-mode
-  :load-path "~/.emacs.d/themes/nyan-mode-master"
-  :defer 1.5
-  :config
-  (nyan-mode)
   )
 
 (defconst diff-hl-use 2) ;; 1.diff-hl 2.gutter
