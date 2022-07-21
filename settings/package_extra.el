@@ -864,11 +864,12 @@ _q_uit
   :init
   ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
   (when (string-equal system-type "windows-nt")
-    (global-set-key (kbd "C-x C-d")
-		    (lambda () (interactive)
-		      ;; (shell-command (format "explorer.exe /n,/select, \"%s\"" (replace-regexp-in-string "/" "\\\\" (buffer-file-name (current-buffer)))))
-		      (w32explore (buffer-file-name (current-buffer)))
-		      )))
+    (defun browse-file-in-explorer (&optional file)
+      "browse file in windows explorer"
+      (interactive)
+      (w32explore (or file (buffer-file-name (current-buffer))))
+      )
+    (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
   )
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
@@ -1547,8 +1548,7 @@ _q_uit
                (define-key vertico-map (kbd "C-c C-c") 'embark-act)
                )
              :config
-             (setq prefix-help-command #'embark-prefix-help-command)
-             ;; C-h可以输入命令，有时候显示不全或许记不住命令行
+             (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
              )
            ;; Consult users will also want the embark-consult package.
            (use-package embark-consult
@@ -1563,7 +1563,7 @@ _q_uit
              :commands(consult-dir)
              :init
              (define-key vertico-map "\M-D" 'consult-dir)
-             (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
+             ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
              :config
              (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
                (setq ad-return-value dired-recent-directories)
