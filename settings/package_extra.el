@@ -1073,6 +1073,11 @@ _q_uit
           )
     ))
 
+;; 删除当前位置到某个位置，要学会常用啊，比选中再删除快多了
+(use-package avy-zap
+  :bind (("M-z" . avy-zap-to-char-dwim)
+         ("M-Z" . avy-zap-up-to-char-dwim)))
+
 ;;; autohotkey文件编辑
 (autoload 'xahk-mode "xahk-mode"
   "Major mode for editing Markdown files" t)
