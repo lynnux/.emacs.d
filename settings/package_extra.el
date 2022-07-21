@@ -636,7 +636,7 @@ _q_uit
        (use-package corfu
          :defer 1
          :load-path "~/.emacs.d/packages/corfu/corfu-main"
-         :commands(global-corfu-mode)
+         :commands(global-corfu-mode corfu-mode)
          :init
          (setq corfu-cycle t
                corfu-auto t
@@ -2652,67 +2652,58 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
 (defconst lsp-use-which 3) ;; 1.eglot 2.lsp mode 3.lsp bridge
 (cond ((eq lsp-use-which 3)
-       (progn
-         (use-package lsp-bridge
-           :disabled
-           :load-path "C:/Users/Administrator/Desktop/lsp-bridge"
-           :commands(lsp-bridge-mode)
-           :init
-           (defun lsp-ensure()
-             (setq-local corfu-auto nil)  ;; let lsp-bridge control when popup completion frame    
-             (lsp-bridge-mode 1)
-             (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
-             (when (functionp 'eglot-ensure)
-               (eglot-ensure)
-               )
-             )
-           :config
-           ;; 解决上下键容易跟corfu上下键混起的问题，但这样某些地方需要自己C-return了
-           ;; (defadvice lsp-bridge--enable (after my-lsp-bridge--enable activate)
-           ;;   (setq-local corfu-auto-prefix 1)
-           ;;   )
+       (use-package lsp-bridge
+         :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+         :commands(lsp-bridge-mode)
+         :init
+         (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
+         (defun lsp-ensure()
+           (corfu-mode -1) ;; 自带acm补全
+           (lsp-bridge-mode 1)
+           (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
            )
-         
-         (use-package eglot
-           :load-path "~/.emacs.d/packages/lsp"
-           :init
-           (unless (functionp 'lsp-bridge-mode)
-             (defun lsp-ensure() (eglot-ensure)))
-           (setq eglot-confirm-server-initiated-edits nil  ; 避免code action的yes/no提示
-                 eglot-send-changes-idle-time 0.2          ; 可以加rust的code action更新
-                 eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
-                 )
-           :commands (eglot eglot-ensure eglot-rename)
-           :config
-           (advice-add 'jsonrpc--log-event :around
-                       (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
-           ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-           ;; (add-to-list 'eglot-stay-out-of 'flymake)
-           (when (functionp 'lsp-bridge-mode)   ;; 用lsp-bridge时，eglot只开启部分功能
-             (add-to-list 'eglot-stay-out-of 'xref)
-             (add-to-list 'eglot-stay-out-of 'company) ;; 它还会用原生的，所以要remove-hook completion-at-point-functions
-             (add-hook 'eglot-managed-mode-hook
-                       (lambda ()
-                         (remove-hook 'completion-at-point-functions #'eglot-completion-at-point t)
-                         (remove-hook 'xref-backend-functions 'eglot-xref-backend t)
-                         ))
-             )
-           (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
-           (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-                 eglot-ignored-server-capabilities) 
-           ;; 临时禁止view-mode，使重命名可用
-           (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-	     (setq tmp-disable-view-mode t)
-	     ad-do-it
-	     (setq tmp-disable-view-mode nil)
-	     )
-           ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-           (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-           )
+         :config
          )
+       
        )
       ((eq lsp-use-which 1)
-       ())
+       (use-package eglot
+         :disabled
+         :load-path "~/.emacs.d/packages/lsp"
+         :init
+         (unless (functionp 'lsp-bridge-mode)
+           (defun lsp-ensure() (eglot-ensure)))
+         (setq eglot-confirm-server-initiated-edits nil  ; 避免code action的yes/no提示
+               eglot-send-changes-idle-time 0.2          ; 可以加rust的code action更新
+               eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+               )
+         :commands (eglot eglot-ensure eglot-rename)
+         :config
+         (advice-add 'jsonrpc--log-event :around
+                     (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
+         ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+         ;; (add-to-list 'eglot-stay-out-of 'flymake)
+         (when (functionp 'lsp-bridge-mode)   ;; 用lsp-bridge时，eglot只开启部分功能
+           (add-to-list 'eglot-stay-out-of 'xref)
+           (add-to-list 'eglot-stay-out-of 'company) ;; 它还会用原生的，所以要remove-hook completion-at-point-functions
+           (add-hook 'eglot-managed-mode-hook
+                     (lambda ()
+                       (remove-hook 'completion-at-point-functions #'eglot-completion-at-point t)
+                       (remove-hook 'xref-backend-functions 'eglot-xref-backend t)
+                       ))
+           )
+         (setq eglot-autoshutdown t)      ;; 不关退出emacs会卡死
+         (push :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+               eglot-ignored-server-capabilities) 
+         ;; 临时禁止view-mode，使重命名可用
+         (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+	   (setq tmp-disable-view-mode t)
+	   ad-do-it
+	   (setq tmp-disable-view-mode nil)
+	   )
+         ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+         (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+         ))
       ((eq lsp-use-which 2)
        (progn
          (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
