@@ -865,7 +865,7 @@ _q_uit
     (defun browse-file-in-explorer (&optional file)
       "browse file in windows explorer"
       (interactive)
-      (w32explore (or file (buffer-file-name (current-buffer))))
+      (w32explore (or file (buffer-file-name (current-buffer)) default-directory))
       )
     (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
   )
@@ -1547,6 +1547,9 @@ _q_uit
                )
              :config
              (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
+             (define-key embark-file-map (kbd "C-x C-d") (lambda (file)
+                                                           (interactive "f")
+                                                           (browse-file-in-explorer file)))
              )
            ;; Consult users will also want the embark-consult package.
            (use-package embark-consult
