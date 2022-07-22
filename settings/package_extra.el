@@ -842,6 +842,7 @@ _q_uit
                     "session-jump-to-last-change" "org-roam-preview-visit" "counsel-rg"
                     "swiper" "consult-line""consult-ripgrep" "avy-goto-word-1"
                     "my-consult-ripgrep" "embark-act" "consult-imenu-multi" "keyboard-escape-quit"
+                    "lsp-bridge-find-define" "lsp-bridge-find-def"
                     ))
     (add-to-list 'jl-insert-marker-funcs one)
     )
