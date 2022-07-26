@@ -2657,6 +2657,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defconst lsp-use-which 3) ;; 1.eglot 2.lsp mode 3.lsp bridge
 (cond ((eq lsp-use-which 3)
        (use-package lsp-bridge
+         :diminish
          :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
          :commands(lsp-bridge-mode)
          :init
@@ -3251,6 +3252,7 @@ _q_uit
       )
   (use-package git-gutter
     :defer 1.4
+    :diminish
     :config
     (global-git-gutter-mode +1)
     (defhydra hydra-zoom ()
