@@ -696,7 +696,7 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-         (load "corfu/corfu-icon")
+         ;; (load "corfu/corfu-icon")
          (setq corfu-doc-delay 0.6 ;; 要延迟下不然会有点卡
                corfu-doc-transition 'hide ;; 切换到下一个时上个隐藏
                )
@@ -3551,6 +3551,7 @@ _q_uit
 
       ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
       (use-package all-the-icons
+        :disabled
         :load-path "~/.emacs.d/themes/all-the-icons.el-master"
         :commands(all-the-icons-octicon
                   all-the-icons-faicon
@@ -3559,6 +3560,7 @@ _q_uit
         )
       ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
       (use-package all-the-icons-dired
+        :disabled
         :hook(dired-mode . all-the-icons-dired-mode))
       
       ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
