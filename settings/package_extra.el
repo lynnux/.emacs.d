@@ -2666,8 +2666,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            (corfu-mode -1) ;; 自带acm补全
            (lsp-bridge-mode 1)
            (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
+           (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
            )
          :config
+         (use-package acm
+           :config
+           (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
+           )
          )
        
        )
@@ -2856,7 +2861,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :commands(quickrun quickrun-shell helm-quickrun)
   :init
   (global-set-key (kbd "<f5>") 'quickrun)
-  (setq quickrun-option-shebang nil)    ;; windows没有这东西
+  (setq quickrun-option-shebang nil     ;; windows没有这东西
+        quickrun-timeout-seconds 20 ;; 超过10秒不结束进程
+        )
   :config
   ;; 添加额外消息，不然执行了都不知道
   (defun my/quickrun-after-run-hook ()
