@@ -1523,9 +1523,6 @@ _q_uit
              :init
              (marginalia-mode)
              :config
-             (use-package all-the-icons-completion
-               :config
-               (all-the-icons-completion-mode))
              )
 
            (use-package embark
