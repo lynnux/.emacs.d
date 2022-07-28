@@ -316,15 +316,7 @@ _q_uit
       ;; Save search entries as well.
       ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
       (setq savehist-save-minibuffer-history t)
-      (savehist-mode t))
-
-    ;; 跟indentinator有冲突，会跳到indentinator修改的地方
-    (use-package goto-chg
-      :commands(goto-last-change)
-      :init
-      (define-key ctl-x-map [(control ?\/)] 'goto-last-change)
-      ;;   (global-set-key [(control ?,)] 'goto-last-change-reverse)
-      )
+      (savehist-mode t))    
     ))
 
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
@@ -359,9 +351,7 @@ _q_uit
   (unless (functionp 'hydra-find-file/body)
     (defun prj-find-file()
       (interactive)
-      (if (featurep 'projectile)
-          (call-interactively 'projectile-find-file)
-        (call-interactively 'project-find-file)))
+      (call-interactively 'project-find-file))
     (defhydra hydra-find-file ()
       "
 _c_: file changed  _v_: file visited
@@ -696,7 +686,6 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-         ;; (load "corfu/corfu-icon")
          (setq corfu-doc-delay 0.6 ;; 要延迟下不然会有点卡
                corfu-doc-transition 'hide ;; 切换到下一个时上个隐藏
                )
@@ -1135,73 +1124,6 @@ _q_uit
     )
   )
 
-;; dap-mode的依赖
-(use-package treemacs
-  :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
-  :init
-  (use-package treemacs-projectile
-    :after (treemacs projectile)
-    )
-  ;; magit更新时也刷新treemacs
-  (use-package treemacs-magit
-    :after (treemacs magit)
-    )
-  (use-package cfrs
-    :commands(cfrs-read))
-  
-  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/")
-  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/elisp")
-  (add-to-list 'load-path "~/.emacs.d/packages/treemacs/src/extra")
-  (require 'treemacs-autoloads)
-  (unless (eq filetree-use-which 1)
-    ;; 习惯打开时浏览目录，只能调用treemacs-add-and-display-current-project了
-    (global-set-key (kbd "<C-f1>") 
-                    (lambda ()(interactive)
-                      (let ((buf (current-buffer)))
-                        (pcase (treemacs-current-visibility)
-                          ('visible (treemacs)) ;; 已展示就隐藏
-                          ('exists  (call-interactively 'treemacs-add-and-display-current-project))
-                          ('none    (call-interactively 'treemacs-add-and-display-current-project)))
-                        ;; (switch-to-buffer buf) ;; focus切换回buffer里
-                        ))))
-  :config
-  (with-eval-after-load 'treemacs-mode
-    (define-key treemacs-mode-map "l" 'treemacs-goto-parent-node)
-    (define-key treemacs-mode-map "D" 'treemacs-remove-project-from-workspace)
-    (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action) ;; 默认鼠标双击
-
-    (define-key treemacs-mode-map (kbd "C-x C-d")
-                ;; 抄自treemacs-visit-node-in-external-application
-                (lambda () (interactive
-                            (-if-let (path (treemacs--prop-at-point :path))
-                                (w32explore path)
-                              (treemacs-pulse-on-failure "Nothing to open here."))
-                            )))
-    
-    (when (display-graphic-p)
-      ;; 改变高亮行背景色
-      (add-hook 'treemacs-mode-hook
-                (lambda ()
-                  (face-remap-add-relative 'hl-line '(:background "#666")))))
-    )
-  
-  ;; 避免treemacs persistence文件变成只读
-  (with-eval-after-load 'treemacs-persistence
-    (defadvice treemacs--persist (around my-treemacs--persist activate)
-      (setq tmp-disable-view-mode 2);; 2不恢复只读
-      ad-do-it
-      (setq tmp-disable-view-mode nil)
-      )
-    )
-  (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
-  (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
-  (treemacs-filewatch-mode t)          ; 监视系统文件变化
-  (setq treemacs-recenter-after-file-follow t ;好像没效果啊
-        treemacs-recenter-after-tag-follow t
-        treemacs-recenter-distance 0.5
-        ;; treemacs-no-png-images t
-        )
-  )
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
@@ -1907,87 +1829,6 @@ _q_uit
          ))
       ((eq minibuffer-use-which 3)
        (progn
-         ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
-         ;; ivy启动稍快，但使用原生minibuffer失去焦点时强迫症不舒服，按C-g还会回到启动minibuffer的buffer，用ivy-posframe可避免但不太喜欢
-         ;; minibuffer也不能用鼠标
-         (use-package ivy
-           :load-path "~/.emacs.d/packages/swiper/swiper-master"
-           :commands(ivy-switch-buffer ivy-resume ivy-mode)
-           :diminish
-           :init
-           (setq enable-recursive-minibuffers t ;; minibuffer可以再起如F1 f等命令
-                 ivy-use-selectable-prompt t
-                 ivy-wrap t ;; 可以loop选择
-                 ivy-count-format "(%d/%d) "
-                 ivy-height 12
-                 ivy-fixed-height-minibuffer t
-                 ivy-on-del-error-function #'ignore
-                 ivy-initial-inputs-alist nil ;; 去掉开头的^
-                 ;; ivy-use-virtual-buffers t，这个会get-file-buffer导致wcy自动加载
-                 )
-           ;; Better performance on Windows
-           (setq ivy-dynamic-exhibit-delay-ms 200)
-           
-           (global-set-key (kbd "C-x C-b") 'ivy-switch-buffer)
-           (global-set-key (kbd "C-c C-r") 'ivy-resume)
-           (global-set-key (kbd "<f6>") 'ivy-resume)
-           :config
-           (ivy-mode 1)
-           (define-key ivy-minibuffer-map (kbd "C-r") 'ivy-previous-line)
-           (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-next-history-element) ; 这其实是M-n的功能
-           (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-previous-line)
-           (define-key ivy-minibuffer-map (kbd "C-w") 'ivy-yank-word) ; 居然不默认
-           (define-key ivy-minibuffer-map (kbd "C-v") 'nil)
-           (setq ivy-more-chars-alist '((counsel-rg . 1) (t . 3)))
-           ;; 设置follow mode in swiper/rg，不过感觉ivy的follow有性能问题
-           (push (cons #'swiper (lambda () (setq ivy-calling t)))
-                 ivy-hooks-alist)
-           (push (cons #'counsel-rg (lambda () (setq ivy-calling t)))
-                 ivy-hooks-alist)
-           (defadvice completing-read (before my-completing-read activate)
-             (ivy-mode 1))
-           (when (display-graphic-p)
-	     (custom-set-faces
-              ;; minibuffer里的当前行
-	      '(ivy-current-match ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-              ;; buffer里的当前行
-	      '(swiper-line-face ((t (:inherit unspecified :underline t :background nil :distant-foreground nil :foreground nil))))
-	      ))
-           (enable-minibuffer-auto-search-at-point)
-           )
-         
-         (use-package counsel
-           :commands(counsel-rg
-                     counsel-M-x counsel-find-file
-                     counsel-describe-function
-                     counsel-describe-variable counsel-find-library
-                     counsel-imenu)
-           :init
-           (global-set-key (kbd "M-x") 'counsel-M-x)
-           (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-           (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-           (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-           (global-set-key (kbd "<f1> l") 'counsel-find-library)
-           (global-set-key (kbd "M-m") 'counsel-imenu)
-           (global-set-key [(control ?\,)] 'counsel-imenu)
-           ;; ivy的rg貌似是解决了rg卡死的问题https://github.com/abo-abo/swiper/pull/2552
-           (defun my-counsel-rg()
-             (interactive)
-             (require 'counsel)
-             ;; 不忽略ignore，要忽略ignore请用project search
-             (let ((counsel-rg-base-command (append counsel-rg-base-command '("--no-ignore"))))
-               (counsel-rg nil default-directory) ; 从当前目录开始搜索
-               ))
-           (global-set-key [f2] 'my-counsel-rg)
-           :config
-           )
-         (use-package swiper
-           :commands(swiper swiper-isearch)
-           :init
-           (global-set-key "\C-s" 'swiper)
-           :config
-           (define-key swiper-map (kbd "C-s") 'swiper) ;; 结果里二次搜索，不过前两个字符输入有bug？
-           )
          ))
       )
 
@@ -2108,7 +1949,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (unless (string-equal str "")
           str)))
     )
-  :commands (magit magit-status)        ;; magit-status for projectile
+  :commands (magit magit-status)        ;; magit-status
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
   (define-key magit-status-mode-map (kbd "<C-tab>") nil) ;; 使切换buffer
@@ -2507,78 +2348,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;;     ad-do-it
       ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
       )
-  (use-package projectile
-    :disabled ;; 搞不懂为什么load-path会被设置
-    :load-path "~/.emacs.d/packages/projectile"
-    :commands(projectile-compile-project)
-    :init
-    (defun invoke_projectile ()
-      (interactive)
-      (require 'projectile)
-      (projectile-mode +1)
-      (set-transient-map projectile-command-map) ; 继续后面的key，缺点是首次的?不能用
-      )
-    (global-set-key (kbd "C-;") 'invoke_projectile)
-    (setq projectile-enable-caching t)    ;; 公司这台win10不cache特别慢
-    ;; 默认native查找文件没有按.gitignore。hybrid基于native但枚举目录时调用alien所以支持ignore，并支持sort，唯一缺点不过滤recent
-    (setq projectile-indexing-method 'hybrid)
-    (setq projectile-require-project-root nil) ; 如果没找到prj root，就用当前目录。用了helm-projectile无效
-    (setq projectile-sort-order 'recently-active) ; 先buffer，再文件
-    ;; (setq projectile-switch-project-action #'projectile-dired) ; 切换到prj后的操作
-    (use-package helm-projectile
-      :commands(helm-projectile helm-projectile-on)
-      :config
-      )                           ; C-; h调用helm-projectile多功能集合！
-    :config
-    ;; 解决fd乱码及git ls-files乱码
-    (defadvice projectile-files-via-ext-command (around my-projectile-files-via-ext-command activate)
-      (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-	ad-do-it
-	(modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-	))
-    (when nil
-      ;; 强制用fd
-      (defadvice projectile-get-ext-command (around my-projectile-get-ext-command activate)
-        (setq ad-return-value projectile-generic-command)
-        ))
-    
-    ;; remap key，这样就可以用C-z actions了
-    ;; (helm-projectile-on)
-    ;; (define-key projectile-mode-map [remap projectile-ripgrep] #'projectile-ripgrep) ; 不要用helm-rg
-    
-    ;; 不用recentf，替换成session用的file-name-history
-    (defadvice projectile-recentf-files (around my-projectile-recentf-files activate) 
-      (setq ad-return-value (let ((project-root (projectile-acquire-root)))
-                              (mapcar
-                               (lambda (f) (file-relative-name f project-root))
-                               (cl-remove-if-not
-                                (lambda (f) (string-prefix-p project-root (expand-file-name f)))
-                                file-name-history))))
-      )
-    
-    (define-key projectile-mode-map (kbd "C-;") 'projectile-command-map)
-    ;; 去掉多种搜索方法，只用一种
-    (define-key projectile-mode-map (kbd "C-; s-") nil) ; Undefine prefix binding https://emacs.stackexchange.com/questions/3706/undefine-prefix-binding
-    (define-key projectile-mode-map (kbd "C-; s") #'my-project-search) ; 对C-; s同样生效
-    (define-key projectile-mode-map (kbd "C-; m") #'magit)
-    )
   )
 
 (global-set-key [f7] (lambda ()(interactive)
 		       (progn
-                         (if (featurep 'projectile)
-                             (call-interactively 'projectile-compile-project)
-			   (call-interactively 'project-compile))
+			 (call-interactively 'project-compile)
 			 (setq compilation-read-command nil) ;; 不再提示
 			 )))
 (global-set-key [(shift f7)]
 		(lambda ()(interactive)
 		  (progn
 		    (setq compilation-read-command t)
-                    (if (featurep 'projectile)
-                        (call-interactively 'projectile-compile-project)
-                      (call-interactively 'project-compile))
+                    (call-interactively 'project-compile)
 		    (setq compilation-read-command nil) ;; 不再提示
 		    )))
 
@@ -2712,95 +2493,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (define-key eglot-mode-map [(meta f8)] 'eglot-format)
          ))
       ((eq lsp-use-which 2)
-       (progn
-         (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
-         (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
-         (use-package lsp-mode
-           :init
-           ;; lens和modeline没效果？好像要配合lsp ui用
-           (setq lsp-lens-enable nil
-                 lsp-modeline-code-actions-enable nil
-                 lsp-modeline-diagnostics-enable nil
-                 lsp-modeline-workspace-status-enable nil
-                 lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
-                 lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
-                 lsp-enable-folding nil
-                 lsp-semantic-tokens-enable nil
-                 lsp-enable-links nil
-                 lsp-enable-text-document-color nil
-                 )
-           (use-package lsp-pyright
-             :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
-             :defer t
-             )
-           :commands (lsp lsp-deferred)
-           :config
-           ;; 使重命名可用
-           (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
-	     (setq tmp-disable-view-mode t)
-	     ad-do-it
-	     (setq tmp-disable-view-mode nil)
-	     )
-           (require 'lsp-diagnostics)
-           (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
-                                                  (if (use-region-p)
-                                                      (call-interactively 'lsp-format-region)
-                                                    (call-interactively 'lsp-format-buffer))
-			                          )))
-         (defun lsp-ensure() (lsp-deferred))
-
-         ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe
-         (use-package dap-mode
-           :load-path "~/.emacs.d/packages/lsp/dap-mode-master"
-           :after(lsp-mode)
-           :init
-           (use-package bui
-             :load-path "~/.emacs.d/packages/lsp/bui.el-master"
-             :defer t
-             )
-           (use-package lsp-treemacs
-             :load-path "~/.emacs.d/packages/lsp/lsp-treemacs-master"
-             :defer t)
-           (require 'dap-autoloads) ;; 通过dap-autoloads.txt里的命令自己生成的，没有包管理器不好办啊。注册了命令lsp会自动显示breakpoint(需要fringe)
-           ;; controls目前有bug
-           (setq dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
-           :config
-           ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
-           (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
-                                                   (let ((cs (dap--cur-session)))
-                                                     (if cs
-                                                         (if (dap--session-running cs)
-                                                             (call-interactively 'dap-continue)
-                                                           (call-interactively 'dap-debug-restart))
-                                                       (call-interactively 'dap-debug))
-                                                     )))
-           (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
-           (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
-           (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
-           (define-key dap-mode-map (kbd "<f10>") 'dap-next)
-
-           ;; 解决hl line不及时更新问题
-           (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
-                                                     (when global-hl-line-mode
-                                                       (global-hl-line-highlight))
-                                                     ))
-           (use-package dap-python
-             :after (dap-mode python))
-
-           ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
-           (use-package dap-cpptools
-             :after (dap-mode cc-mode))
-           
-           (use-package dap-hydra
-             :commands(dap-hydra)
-             :init
-             (add-hook 'dap-stopped-hook
-                       (lambda (arg)
-                         (call-interactively #'dap-hydra)))
-             )
-           ;; TODO: Locals里的icon显示不正常
-           )
-         )
        )
       )
 
@@ -3549,19 +3241,7 @@ _q_uit
 
       (add-to-list 'load-path "~/.emacs.d/themes")
 
-      ;; 需要手动安装all-the-icons.el-master/fonts里的ttf
-      (use-package all-the-icons
-        :disabled
-        :load-path "~/.emacs.d/themes/all-the-icons.el-master"
-        :commands(all-the-icons-octicon
-                  all-the-icons-faicon
-                  all-the-icons-material
-                  )
-        )
       ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
-      (use-package all-the-icons-dired
-        :disabled
-        :hook(dired-mode . all-the-icons-dired-mode))
       
       ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
