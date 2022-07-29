@@ -637,9 +637,8 @@ _q_uit
                corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
                )
          (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
+         (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
          :config
-         (global-corfu-mode)
-
          ;; 历史输入排前！
          (use-package corfu-history
            :init
@@ -2413,7 +2412,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          :init
          (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
          (defun lsp-ensure()
-           (corfu-mode -1) ;; 自带acm补全
            (lsp-bridge-mode 1)
            (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
            (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
@@ -2652,7 +2650,7 @@ _q_uit
 	  swift-mode
 	  tuareg-mode
 	  typescript-mode) . (lambda ()
-	  (tree-sitter-hl-mode)
+	  ;; (tree-sitter-hl-mode)
 	  (grammatical-edit-mode 1)
 	  ))
   :config
