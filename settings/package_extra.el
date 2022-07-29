@@ -654,27 +654,6 @@ _q_uit
                  corfu-quick2 "ioh")
            (define-key corfu-map (kbd "C-o") 'corfu-quick-insert) ; corfu-quick-complete 效果是一样的，分不清
            )
-         (use-package corfu-indexed
-           :config
-           ;; 参考company-complete-number写的
-           (defun my/company-complete-number (number)
-             (interactive
-              (list (let* ((type (event-basic-type last-command-event))
-                           (char (if (characterp type)
-                                     ;; Number on the main row.
-                                     type
-                                   ;; Keypad number, if bound directly.
-                                   (car (last (string-to-list (symbol-name type))))))
-                           (number (- char ?0)))
-                      (if (zerop number) 0 number))))
-             (let ((current-prefix-arg `(,number)))
-               (call-interactively 'corfu-complete)  
-               ))
-           ;; CTRL+数字快速选择
-           (dotimes (i 10)
-	     (define-key corfu-map (read-kbd-macro (format "C-%d" i)) 'my/company-complete-number))
-           (corfu-indexed-mode)
-           )
          (use-package corfu-info
            :commands(corfu-info-documentation corfu-info-location)
            :init
@@ -686,11 +665,6 @@ _q_uit
          (global-set-key (kbd "<C-return>") 'completion-at-point)
          (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
          (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-         (setq corfu-doc-delay 0.6 ;; 要延迟下不然会有点卡
-               corfu-doc-transition 'hide ;; 切换到下一个时上个隐藏
-               )
-         (load "corfu/corfu-doc")
-         (add-hook 'corfu-mode-hook #'corfu-doc-mode)
          
          ;; 将补全移动到minibuffer进行，这样就可以用embark了！
          (defun corfu-move-to-minibuffer ()
@@ -705,9 +679,7 @@ _q_uit
            :init
            (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
            :config
-           (require 'cape-keyword)
            ;; (add-to-list 'completion-at-point-functions #'cape-file)
-           (add-to-list 'completion-at-point-functions #'cape-keyword)
            (add-to-list 'completion-at-point-functions #'cape-dabbrev)
            (when (functionp 'eglot-ensure)
              ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
@@ -2606,6 +2578,7 @@ _q_uit
 
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
+  :disabled
   :commands
   (rainbow-delimiters-mode)
   :hook
