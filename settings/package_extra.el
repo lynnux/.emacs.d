@@ -3144,6 +3144,44 @@ _q_uit
   :init
   (add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-mode)))
 
+;; text object，一直想要的东西
+(use-package objed
+  :defer 1
+  :config
+  (setcdr objed-mode-map nil) ;; 默认绑定不需要，只需要objed-mode的hook就够了
+  (add-to-list 'objed-keeper-commands 'undo-fu-only-undo)
+  (add-to-list 'objed-keeper-commands 'undo-fu-only-redo)  
+  (add-to-list 'objed-cmd-alist '(mwim-beginning-of-code-or-line . line))
+  (add-to-list 'objed-cmd-alist '(mwim-end-of-code-or-line . line))
+  ;; objed使用的是hl-line的overlay，这里解决overlay被symbol-overlay覆盖的问题
+  (add-to-list 'objed-init-hook (lambda ()
+                                  (when (overlayp hl-line-overlay)
+                                    (overlay-put hl-line-overlay 'priority 999))
+                                  ))
+  (add-to-list 'objed-exit-hook (lambda ()
+                                  (when (overlayp hl-line-overlay)
+                                    (overlay-put hl-line-overlay 'priority -50))
+                                  ))
+  (objed-mode +1);; hook一些操作如next-line，并自动activate objed模式，用得很爽！
+  (define-key objed-map "l" 'objed-del-insert) ;; l和i互换
+  (define-key objed-map "i" (objed--call-and-switch right-char char))
+  (define-key objed-map (kbd "C-h") nil)
+  (define-key objed-map "x" 'objed-toggle-side) ;; x和j互换
+  (define-key objed-map "j" 'objed-op-map) ;; x和j互换
+  (define-key objed-map "q" 'objed-quit) ;; 这个q有点理解不了
+  (with-eval-after-load 'view
+    (define-key view-mode-map "t" 'objed-activate)) ;; 暂时没有全局的激活，方便view-mode
+  ;; 默认要which-key mode才显示，这里让
+  (when (functionp 'which-key--show-keymap)
+    ;; TODO: 需要第2次调用，它才会修改which-key-replacement-alist 显示短名。暂时不管了
+    (define-key objed-map "c"
+                (lambda () (interactive)
+                  (which-key--show-keymap "keymap" objed-object-map nil nil 'no-paging)
+                  (set-transient-map objed-object-map nil 'which-key--hide-popup)
+                  )))
+  )
+
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
