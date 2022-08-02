@@ -2417,6 +2417,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
            )
          :config
+         ;; 添加csharp，目前json里的路径是写死的，自己改改
+         (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
+         (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
          (use-package acm
            :config
            (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
