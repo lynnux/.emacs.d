@@ -3149,7 +3149,9 @@ _q_uit
 
 ;; text object，一直想要的东西
 (use-package objed
-  :defer 1
+  :commands(objed-activate)
+  :init
+  (global-set-key (kbd "M-t") 'objed-activate)
   :config
   (setcdr objed-mode-map nil) ;; 默认绑定不需要，只需要objed-mode的hook就够了
   (add-to-list 'objed-keeper-commands 'undo-fu-only-undo)
@@ -3165,7 +3167,7 @@ _q_uit
                                   (when (overlayp hl-line-overlay)
                                     (overlay-put hl-line-overlay 'priority -50))
                                   ))
-  (objed-mode +1);; hook一些操作如next-line，并自动activate objed模式，用得很爽！
+  ;; (objed-mode +1);; hook一些操作如next-line，并自动activate objed模式，用得很爽！
   (define-key objed-map "l" 'objed-del-insert) ;; l和i互换
   (define-key objed-map "i" (objed--call-and-switch right-char char))
   (define-key objed-map (kbd "C-h") nil)
