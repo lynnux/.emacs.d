@@ -2403,52 +2403,55 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
 
 (add-to-list 'load-path "~/.emacs.d/packages/lsp")
-(defconst lsp-use-which 3) ;; 1.eglot 2.lsp mode 3.lsp bridge
- (use-package lsp-bridge
-   :diminish
-   :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
-   :commands(lsp-bridge-mode)
-   :init
-   (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
-   (defun lsp-ensure()
-     (lsp-bridge-mode 1)
-     (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
-     (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
-     )
-   :config
-   ;; 添加csharp，目前json里的路径是写死的，自己改改
-   (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
-   (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
-   (use-package acm
-     :config
-     (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
-     )
-   )
- (use-package eglot
-   :load-path "~/.emacs.d/packages/lsp"
-   :init
-   (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
-         eglot-send-changes-idle-time 0.2 ; 可以加rust的code action更新
-         eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
-         )
-   :commands (eglot eglot-ensure eglot-rename)
-   :config
-   (advice-add 'jsonrpc--log-event :around
-               (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
-   ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-   ;; (add-to-list 'eglot-stay-out-of 'flymake)
-   (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
-   (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
-         eglot-ignored-server-capabilities) 
-   ;; 临时禁止view-mode，使重命名可用
-   (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-     (setq tmp-disable-view-mode t)
-     ad-do-it
-     (setq tmp-disable-view-mode nil)
-     )
-   ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-   (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-   )
+(use-package lsp-bridge
+  :diminish
+  :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+  :commands(lsp-bridge-mode)
+  :init
+  (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
+  (defun lsp-ensure()
+    (lsp-bridge-mode 1)
+    (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
+    (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
+    )
+  :config
+  ;; 添加csharp，目前json里的路径是写死的，自己改改
+  (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
+  (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
+  (use-package acm
+    :config
+    (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
+    )
+  )
+(use-package eglot
+  :load-path "~/.emacs.d/packages/lsp"
+  :init
+  (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
+        eglot-send-changes-idle-time 0.2 ; 可以加rust的code action更新
+        eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+        )
+  (defun my-eglot-ensure()
+    (corfu-mode)
+    (eglot-ensure)
+    )
+  :commands (eglot eglot-ensure eglot-rename)
+  :config
+  (advice-add 'jsonrpc--log-event :around
+              (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
+  ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+  ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
+  (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
+        eglot-ignored-server-capabilities) 
+  ;; 临时禁止view-mode，使重命名可用
+  (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+    (setq tmp-disable-view-mode t)
+    ad-do-it
+    (setq tmp-disable-view-mode nil)
+    )
+  ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+  (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+  )
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 
@@ -2496,7 +2499,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (when c-sharp-server-path
   (with-eval-after-load 'csharp-mode
     (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
-  (add-hook 'csharp-mode-hook 'eglot-ensure) ;; lsp-bridge这个有bug，还是用eglot的
+  (add-hook 'csharp-mode-hook 'my-eglot-ensure) ;; lsp-bridge这个有bug，还是用eglot的
   )
 
 (use-package quickrun
