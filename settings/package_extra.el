@@ -121,8 +121,6 @@ _q_uit
   (setq dired-dwim-target t  ;; 开两个dired的话会自动识别other dired为target
         dired-kill-when-opening-new-dired-buffer t ; 28.1新加的
         )
-  ;; 不新开buf打开文件和目录，还有个效果是打开文件后自动关闭了dired buffer
-  (define-key dired-mode-map [remap dired-find-file] 'dired-find-alternate-file)
   (define-key dired-mode-map (kbd "C-l") (lambda () (interactive) (find-alternate-file ".."))) ;; C-l上级目录
   (define-key dired-mode-map (kbd "l") (lambda () (interactive) (find-alternate-file ".."))) ;; l上级目录
   (define-key dired-mode-map (kbd "C-o") 'avy-goto-word-1)
