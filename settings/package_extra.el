@@ -1489,7 +1489,7 @@ _q_uit
             ;; consult-fontify-max-size 1024 ;; 不设置的话大文件第1次用consult-line会卡几秒，设置consult-fontify-preserve就不需要设置这个了
             consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
             consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
-            consult-locate-args (encode-coding-string "es.exe -i -p -r" 'gbk)
+            consult-locate-args (encode-coding-string "es.exe -n 30 -p -r" 'gbk)
             )
            ;; consult的异步没有通过cmd proxy，这点很棒！
            (add-to-list 'process-coding-system-alist '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
@@ -1574,7 +1574,7 @@ _q_uit
            (use-package consult-everything
              :commands(consult-everything)
              :init
-             (setq consult-everything-args "es -p -r") ;; -i是区分大小写
+             (setq consult-everything-args "es -p -n 30 -r") ;; -i是区分大小写
              ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
              (defun consult--with-orderless (&rest args)
                (minibuffer-with-setup-hook
