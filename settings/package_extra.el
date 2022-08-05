@@ -2507,7 +2507,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                               ;;     ))
                                               )))
         (if override
-            (list 'vc 'nil override) ;; 最新版本这样可以
+            (if (version< emacs-version "29")
+                (cons 'vc override)
+              (list 'vc 'nil override)
+              )
           nil)))
     (add-hook 'project-find-functions 'project-find-csharp-root nil t) ;; local
     )
