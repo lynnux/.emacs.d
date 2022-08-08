@@ -16,9 +16,10 @@
  )
 
 (setq confirm-nonexistent-file-or-buffer nil)
-(setq blink-matching-paren nil)
-(setq show-paren-when-point-inside-paren t)
-(setq show-paren-when-point-in-periphery t)
+(setq show-paren-when-point-inside-paren t
+      show-paren-when-point-in-periphery t
+      show-paren-context-when-offscreen t ;; 29新功能，显示屏幕外的匹配项
+      )
 (setq indicate-buffer-boundaries nil
       indicate-empty-lines nil)
 (setq frame-resize-pixelwise t)
