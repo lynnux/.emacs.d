@@ -545,52 +545,24 @@ _c_: hide comment        _q_uit
     (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
     ))
 
-;; highlight-symbol下岗啦，font lock速度慢，现在都是overlay。ahs范围小，还跟输入
-(use-package symbol-overlay
+;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
+(use-package idle-highlight-mode
   :defer 1.1
   :init
-  :diminish
+  (setq idle-highlight-idle-time 0.1
+        idle-highlight-exclude-point nil ;; 可以设置不高亮光标下
+        ;;idle-highlight-ignore-modes (list 'minibuffer-mode)
+        idle-highlight-exceptions-syntax nil ;; 默认光标在单词末尾是不高亮的，有点不习惯
+        )
+  ;; 没什么功能，还好embark有实现
+  (global-set-key [f3] 'embark-next-symbol)
+  (global-set-key [(shift f3)] 'embark-previous-symbol)
+  (global-set-key [(control f3)] 'embark-toggle-highlight)
   :config
-  (setq symbol-overlay-idle-time 0.1)
-  (when use-my-face
-    (if (display-graphic-p)
-        (set-face-attribute 'symbol-overlay-default-face nil :background "#666") ;; zenburn里取色(开启rainbow-mode)
-      (set-face-attribute 'symbol-overlay-default-face nil :background "#666" :foreground "Black")
-      ))
-  
-  (global-set-key [f3] 'symbol-overlay-jump-next)
-  (global-set-key [(shift f3)] 'symbol-overlay-jump-prev)
-  (global-set-key [(meta f3)] 'symbol-overlay-query-replace) ;; symbol-overlay-rename
-  (defun turn-on-symbol-overlay-mode()
-    (unless (or (memq major-mode '(minibuffer-mode))
-		nil)
-      (symbol-overlay-mode)))
-  (define-globalized-minor-mode global-highlight-symbol-mode symbol-overlay-mode turn-on-symbol-overlay-mode)
-  (global-highlight-symbol-mode 1)
-  (defhydra symbol-overlay-select ()
-    "
-_p_: put      _t_: toggle
-_r_: rename   _s_: save name
-_h_: help     _c_: count
-_R_: remove all _m_: jump mark
-_f_: jump first _l_: jump last
-_d_: jump definition _%_: query-replace
-_q_uit
-"
-    ("p" symbol-overlay-put nil :color blue)
-    ("t" symbol-overlay-toggle-in-scope nil :color blue) ;; 配合rename是真牛B啊！
-    ("r" symbol-overlay-rename nil :color blue)
-    ("s" symbol-overlay-save-symbol nil :color blue)
-    ("h" symbol-overlay-map-help nil :color blue)
-    ("c" symbol-overlay-count nil :color blue) ;; 显示不了？
-    ("R" symbol-overlay-remove-all nil :color blue)
-    ("m" symbol-overlay-echo-mark nil :color blue) ;; 不懂
-    ("f" symbol-overlay-jump-first nil :color blue)
-    ("l" symbol-overlay-jump-last nil :color blue)
-    ("d" symbol-overlay-jump-to-definition nil :color blue)
-    ("%" symbol-overlay-query-replace nil :color blue)
-    ("q" nil "nil" :color blue))
-  (global-set-key [(control f3)] 'symbol-overlay-select/body)
+  (global-idle-highlight-mode)
+  (custom-set-faces
+   '(idle-highlight ((t (:inherit highlight))))
+   )
   )
 
 (use-package cursor-chg
@@ -1418,7 +1390,12 @@ _q_uit
 
            (use-package embark
              :load-path "~/.emacs.d/packages/minibuffer/embark-master"
-             :commands(embark-export embark-act embark-act-with-completing-read)
+             :commands(embark-export
+                       embark-act
+                       embark-act-with-completing-read 
+                       embark-next-symbol 
+                       embark-previous-symbol 
+                       embark-toggle-highlight)
              :bind
              (("M-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
               ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
