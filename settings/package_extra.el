@@ -3184,6 +3184,48 @@ _q_uit
                   )))
   )
 
+(use-package posframe
+  :commands(posframe-hide posframe-show)
+  )
+
+;; from https://github.com/seagle0128/.emacs.d/blob/4d0a1f0f0f6ed99e6cf9c0e0888c4e323ce2ca3a/lisp/init-highlight.el#L43
+;; 显示屏幕外的匹配行了，29自带，但是滚动时不显示，参考上面修改成posframe显示，并且不是光标附近更友好
+(use-package paren
+  :init (setq show-paren-when-point-inside-paren t
+              show-paren-when-point-in-periphery t
+              blink-matching-paren t ;; 不然blink-matching-open不显示
+              )
+  :config
+  (with-no-warnings
+    (defun show-paren-off-screen (&rest _args)
+      (posframe-hide " *my-posframe-buffer*")
+      (when (and (not (or cursor-in-echo-area
+                          executing-kbd-macro
+                          noninteractive
+                          (minibufferp)
+                          this-command))
+                 (and (not (bobp))
+                      (memq (char-syntax (char-before)) '(?\) ?\$)))
+                 (= 1 (logand 1 (- (point)
+                                   (save-excursion
+                                     (forward-char -1)
+                                     (skip-syntax-backward "/\\")
+                                     (point))))))
+        ;; 屏蔽substring-no-properties的调用，有颜色好区分一些
+        (cl-letf (((symbol-function #'substring-no-properties)
+                   (lambda (msg &rest args)
+                     (posframe-show " *my-posframe-buffer*"
+                                    :string msg
+                                    :position (point)
+                                    :border-width 1
+                                    :border-color "red"
+                                    )
+                     msg
+                     )))
+          (blink-matching-open))
+        ))
+    (advice-add #'show-paren-function :after #'show-paren-off-screen)))
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，

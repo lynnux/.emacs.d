@@ -18,7 +18,7 @@
 (setq confirm-nonexistent-file-or-buffer nil)
 (setq show-paren-when-point-inside-paren t
       show-paren-when-point-in-periphery t
-      show-paren-context-when-offscreen t ;; 29新功能，显示屏幕外的匹配项
+      ;;show-paren-context-when-offscreen t ;; 29新功能，显示屏幕外的匹配项
       )
 (setq indicate-buffer-boundaries nil
       indicate-empty-lines nil)
