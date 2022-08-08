@@ -2302,6 +2302,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (define-key project-prefix-map "b" 'my-project-buffer)
       
       :config
+      ;; 子目录有.project就以子目录为prj root
+      (defun my-project-find-functions (dir)
+        (let ((override (locate-dominating-file dir ".project"
+                                                )))
+          (if override
+              (if (version< emacs-version "29")
+                  (cons 'vc override)
+                (list 'vc 'nil override)
+                )
+            nil)))
+      (add-to-list 'project-find-functions 'my-project-find-functions)
       (when (functionp 'which-key--show-keymap)
         (defadvice project--switch-project-command (around my-project--switch-project-command activate)
           (which-key--show-keymap "keymap" project-prefix-map nil nil 'no-paging)
@@ -2496,25 +2507,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (when c-sharp-server-path
   (with-eval-after-load 'csharp-mode
     (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
-  (defun my-charp-hook ()
-    (my-eglot-ensure)
-    (defun project-find-csharp-root (dir)
-      (let ((override (locate-dominating-file dir ".project"
-                                              ;; f-glob会造成too many open files
-                                              ;; (lambda (dir)
-                                              ;;   (when (f-glob "*.csproj" dir)
-                                              ;;     dir
-                                              ;;     ))
-                                              )))
-        (if override
-            (if (version< emacs-version "29")
-                (cons 'vc override)
-              (list 'vc 'nil override)
-              )
-          nil)))
-    (add-hook 'project-find-functions 'project-find-csharp-root nil t) ;; local
-    )
-  (add-hook 'csharp-mode-hook 'my-charp-hook) ;; lsp-bridge这个有bug，还是用eglot的
+  (add-hook 'csharp-mode-hook 'my-eglot-ensure) ;; lsp-bridge这个有bug，还是用eglot的
   )
 
 (use-package quickrun
