@@ -3231,8 +3231,6 @@ _q_uit
 
       (add-to-list 'load-path "~/.emacs.d/themes")
 
-      ;; treemacs-icons-dired那个当设置doom-colors时有时不显示
-      
       ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
       (doom-themes-visual-bell-config)
@@ -3255,7 +3253,7 @@ _q_uit
           (interactive)
           (let* ((th (nth (mod (random t) (length tl)) tl))
                  )
-            (message "load-doom-theme: %s" (symbol-name th))
+            ;; (message "load-doom-theme: %s" (symbol-name th))
 
             ;; before load
             (cond ((eq th 'spacemacs-dark)
@@ -3287,16 +3285,6 @@ _q_uit
                    ;; 参考的spacemacs
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold))
                   )
-
-            (when t
-              (setq doom-themes-treemacs-enable-variable-pitch t) 
-              ;; treemacs的字体会变小，但风格跟doom的统一了
-              ;; doom-clors在打开dired时可能没有图标
-              (setq doom-themes-treemacs-theme "doom-colors") ; "doom-colors" doom-atom，
-              (autoload 'doom-themes-treemacs-config "extensions/doom-themes-ext-treemacs" "" nil nil)
-              (with-eval-after-load 'treemacs
-                (doom-themes-treemacs-config))
-              )
             )
           )
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
