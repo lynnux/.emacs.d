@@ -2792,7 +2792,8 @@ _q_uit
   (scroll-on-jump-advice-add jl-jump-backward) ; 有效
   (scroll-on-jump-advice-add jl-jump-forward) ; 有效
   (scroll-on-jump-advice-add push-button) ; 有效
-  
+  (scroll-on-jump-advice-add git-gutter:previous-hunk)
+  (scroll-on-jump-advice-add git-gutter:next-hunk)
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
 
