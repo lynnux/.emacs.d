@@ -3280,11 +3280,14 @@ _q_uit
                    )
                   ((not (string-prefix-p "doom" (symbol-name th)))
                    (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b")
-                   
                    )
                   (t
                    ;; 参考的spacemacs
-                   (set-face-attribute 'show-paren-match nil :underline t :weight 'bold))
+                   (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
+                   (custom-set-faces
+	            '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
+	            )
+                   )
                   )
             )
           )
