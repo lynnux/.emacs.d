@@ -764,19 +764,41 @@ _c_: hide comment        _q_uit
 (use-package jumplist
   :defer 0.7
   :config
+  (remove-hook 'pre-command-hook 'jl-pre-command-check) ;; 影响效率，用advice替代
   (global-set-key (kbd "M-n") 'jl-jump-forward)
   (global-set-key (kbd "M-p") 'jl-jump-backward)
-  (cl-dolist (one '("xref-find-definitions"
-                    "ggtags-find-tag-dwim"  "ggtags-find-reference" "ggtags-find-file"
-                    "helm-occur" "helm-imenu-in-all-buffers"  
-                    "session-jump-to-last-change" "org-roam-preview-visit" "counsel-rg"
-                    "swiper" "consult-line""consult-ripgrep" "avy-goto-word-1"
-                    "my-consult-ripgrep" "embark-act" "consult-imenu-multi" "keyboard-escape-quit"
-                    "lsp-bridge-find-define" "lsp-bridge-find-def"
-                    ))
-    (add-to-list 'jl-insert-marker-funcs one)
-    )
-  )
+  (defun my-push-mark-wrapper (&rest args)
+    (jl-insert-marker))
+  (defvar jump-commands '(
+                          jl-jump-backward 
+                          jl-jump-forward
+                          beginning-of-buffer
+                          end-of-buffer
+                          jump-to-register
+                          mark-whole-buffer
+                          next-buffer
+                          previous-buffer
+                          switch-to-buffer
+                          describe-function
+                          describe-variable
+                          find-file-at-point
+                          xref-find-definitions
+                          ggtags-find-tag-dwim ;
+                          ggtags-find-reference
+                          ggtags-find-file
+                          session-jump-to-last-change
+                          org-roam-preview-visit
+                          counsel-rg consult-ripgrep consult-line
+                          avy-goto-word-1
+                          my-consult-ripgrep embark-act consult-imenu-multi keyboard-escape-quit
+                          lsp-bridge-find-define lsp-bridge-find-def
+                          embark-next-symbol embark-previous-symbol
+                          my-pop-select
+                          ))
+  (cl-dolist (jc jump-commands)
+    (advice-add jc :before #'my-push-mark-wrapper)
+    )  
+)
 
 (use-package iss-mode
   :init
