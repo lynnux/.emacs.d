@@ -2507,7 +2507,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (when c-sharp-server-path
   (with-eval-after-load 'csharp-mode
     (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
-  (add-hook 'csharp-mode-hook 'my-eglot-ensure) ;; lsp-bridge这个有bug，还是用eglot的
+  (defun my-csharp-hook()
+    (my-eglot-ensure)
+    (define-key csharp-mode-map "\C-d" nil) ;; 使用我们自己的hungry delete(cc自带hungry不好用)
+    )
+  (add-hook 'csharp-mode-hook 'my-csharp-hook) ;; lsp-bridge这个有bug，还是用eglot的
   )
 
 (use-package quickrun
