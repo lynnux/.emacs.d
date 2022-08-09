@@ -553,6 +553,7 @@ _c_: hide comment        _q_uit
         idle-highlight-exclude-point nil ;; 可以设置不高亮光标下
         ;;idle-highlight-ignore-modes (list 'minibuffer-mode)
         idle-highlight-exceptions-syntax nil ;; 默认光标在单词末尾是不高亮的，有点不习惯
+        idle-highlight-exceptions-face nil ;; 高亮全部
         )
   ;; 没什么功能，还好embark有实现
   (global-set-key [f3] 'embark-next-symbol)
