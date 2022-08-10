@@ -272,5 +272,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (add-hook 'emacs-startup-hook
           (lambda ()
 	    (setq gc-cons-threshold (car dotspacemacs-gc-cons)
-                  gc-cons-percentage (cadr dotspacemacs-gc-cons))))
+                  gc-cons-percentage (cadr dotspacemacs-gc-cons)
+                  file-name-handler-alist default-file-name-handler-alist)
+            (makunbound 'default-file-name-handler-alist)))
 (setq auto-save-list-file-prefix nil)
