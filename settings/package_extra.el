@@ -550,7 +550,7 @@ _c_: hide comment        _q_uit
   :defer 1.1
   :init
   (setq idle-highlight-idle-time 0.1
-        idle-highlight-exclude-point nil ;; 可以设置不高亮光标下
+        idle-highlight-exclude-point t ;; 可以设置不高亮光标下
         ;;idle-highlight-ignore-modes (list 'minibuffer-mode)
         idle-highlight-exceptions-syntax nil ;; 默认光标在单词末尾是不高亮的，有点不习惯
         idle-highlight-exceptions-face nil ;; 高亮全部
@@ -560,6 +560,12 @@ _c_: hide comment        _q_uit
   (global-set-key [(shift f3)] 'embark-previous-symbol)
   (global-set-key [(control f3)] 'embark-toggle-highlight)
   :config
+  ;; 输入时高亮效果不是那么好，这里设置鼠标点击时高亮点击处
+  (defadvice idle-highlight--highlight (around my-idle-highlight--highlight activate)
+    (if (eq last-command 'mouse-set-point) ;; this-command是nil
+        (let ((idle-highlight-exclude-point nil))
+          ad-do-it)
+      ad-do-it))
   (global-idle-highlight-mode)
   (custom-set-faces
    '(idle-highlight ((t (:inherit highlight))))
