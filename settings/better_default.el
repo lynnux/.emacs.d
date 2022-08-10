@@ -156,9 +156,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-q") 'set-mark-command)
 ;;(global-set-key (kbd "\C-xt") 'transpose-chars)
 
-;; 时间戳用法：Time-stamp: <>或者Time-stamp: " "，只会更新第一个时间戳
-(add-hook 'before-save-hook 'time-stamp)
-
 (setq user-full-name "lynnux")
 (setq user-mail-address "lynnux@qq.com")
 
