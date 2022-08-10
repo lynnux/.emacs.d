@@ -2543,6 +2543,9 @@ _q_uit
   (scroll-on-jump-advice-add push-button)
   (scroll-on-jump-advice-add git-gutter:previous-hunk)
   (scroll-on-jump-advice-add git-gutter:next-hunk)
+  (scroll-on-jump-advice-add embark-next-symbol)
+  (scroll-on-jump-advice-add embark-previous-symbol)
+  
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
 
