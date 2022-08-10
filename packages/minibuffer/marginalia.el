@@ -426,8 +426,8 @@ FACE is the name of the face, with which the field should be propertized."
   (let ((flist (indirect-function fun)))
     (advice--p (if (eq 'macro (car-safe flist)) (cdr flist) flist))))
 
-;; Symbol class characters from Emacs 28 `help--symbol-completion-table-affixation'
-;; ! and * are our additions
+;; Symbol class characters from Emacs 28 `help--symbol-class'
+;; ! and & are our additions
 (defun marginalia--symbol-class (s)
   "Return symbol class characters for symbol S.
 
@@ -443,12 +443,14 @@ s side-effect-free
 @ autoloaded
 ! advised
 - obsolete
+& alias
 
 Variable:
 u custom (U modified compared to global value)
 v variable
 l local (L modified compared to default value)
 - obsolete
+& alias
 
 Other:
 a face
@@ -469,6 +471,7 @@ t cl-type"
         (t "f"))
        (and (autoloadp (symbol-function s)) "@")
        (and (marginalia--advised s) "!")
+       (and (symbolp (symbol-function s)) "&")
        (and (get s 'byte-obsolete-info) "-")))
     (when (boundp s)
       (concat
@@ -484,6 +487,7 @@ t cl-type"
                        (eval (car (get s 'standard-value))))))
                "U" "u")
          "v")
+       (ignore-errors (and (not (eq (indirect-variable s) s)) "&"))
        (and (get s 'byte-obsolete-variable) "-")))
     (and (facep s) "a")
     (and (fboundp 'cl-find-class) (cl-find-class s) "t"))))
@@ -599,17 +603,22 @@ keybinding since CAND includes it."
           ((pred numberp) (propertize (number-to-string val) 'face 'marginalia-number))
           (_ (let ((print-escape-newlines t)
                    (print-escape-control-characters t)
-                   (print-escape-multibyte t)
-                   (print-level 10)
+                   ;;(print-escape-multibyte t)
+                   (print-level 3)
                    (print-length marginalia-field-width))
                (propertize
-                (prin1-to-string
-                 (if (stringp val)
-                     ;; Get rid of string properties to save some of the precious space
-                     (substring-no-properties
-                      val 0
-                      (min (length val) marginalia-field-width))
-                   val))
+                (replace-regexp-in-string
+                 ;; `print-escape-control-characters' does not escape Unicode control characters.
+                 "[\x0-\x1F\x7f-\x9f\x061c\x200e\x200f\x202a-\x202e\x2066-\x2069]"
+                 (lambda (x) (format "\\x%x" (string-to-char x)))
+                 (prin1-to-string
+                  (if (stringp val)
+                      ;; Get rid of string properties to save some of the precious space
+                      (substring-no-properties
+                       val 0
+                       (min (length val) marginalia-field-width))
+                    val))
+                 'fixedcase 'literal)
                 'face
                 (cond
                  ((listp val) 'marginalia-list)
@@ -704,10 +713,10 @@ keybinding since CAND includes it."
                             (package--from-builtin built-in)
                           (car (alist-get pkg package-archive-contents))))))
     (marginalia--fields
-     ((package-version-join (package-desc-version desc)) :width 16 :face 'marginalia-version)
+     ((package-version-join (package-desc-version desc)) :truncate 16 :face 'marginalia-version)
      ((cond
        ((package-desc-archive desc) (propertize (package-desc-archive desc) 'face 'marginalia-archive))
-       (t (propertize (or (package-desc-status desc) "orphan") 'face 'marginalia-installed))) :width 10)
+       (t (propertize (or (package-desc-status desc) "orphan") 'face 'marginalia-installed))) :truncate 12)
      ((package-desc-summary desc) :truncate 1.0 :face 'marginalia-documentation))))
 
 (defun marginalia--bookmark-type (bm)
@@ -987,11 +996,13 @@ These annotations are skipped for remote paths."
       ;; Extract documentation string. We cannot use `lm-summary' here,
       ;; since it decompresses the whole file, which is slower.
       (setq doc (or (ignore-errors
-                      (shell-command-to-string
-                       (format (if (string-suffix-p ".gz" file)
-                                   "gzip -c -q -d %s | head -n1"
-                                 "head -n1 %s")
-                               (shell-quote-argument file))))
+                      (let ((shell-file-name "sh")
+                            (shell-command-switch "-c"))
+                        (shell-command-to-string
+                         (format (if (string-suffix-p ".gz" file)
+                                     "gzip -c -q -d %s | head -n1"
+                                   "head -n1 %s")
+                                 (shell-quote-argument file)))))
                  ""))
       (cond
        ((string-match "\\`(define-package\\s-+\"\\([^\"]+\\)\"" doc)

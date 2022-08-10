@@ -769,7 +769,9 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-n") 'jl-jump-forward)
   (global-set-key (kbd "M-p") 'jl-jump-backward)
   (defun my-push-mark-wrapper (&rest args)
-    (jl-insert-marker))
+    (when (symbolp this-command)
+      (jl-insert-marker))
+    )
   (defvar jump-commands '(
                           jl-jump-backward 
                           jl-jump-forward
