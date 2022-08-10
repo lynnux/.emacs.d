@@ -549,7 +549,7 @@ _c_: hide comment        _q_uit
 (use-package idle-highlight-mode
   :defer 1.1
   :init
-  (setq idle-highlight-idle-time 0.1
+  (setq idle-highlight-idle-time 0.35 ;; 别太小，同一位置它会一直调用高亮显示
         idle-highlight-exclude-point t ;; 可以设置不高亮光标下
         ;;idle-highlight-ignore-modes (list 'minibuffer-mode)
         idle-highlight-exceptions-syntax nil ;; 默认光标在单词末尾是不高亮的，有点不习惯
