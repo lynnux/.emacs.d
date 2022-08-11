@@ -293,7 +293,6 @@ _q_uit
       (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
       (add-to-list 'session-globals-exclude 'helm-grep-history)
       (add-to-list 'session-globals-exclude 'helm-occur-history)
-      (add-to-list 'session-globals-exclude 'ggtags-global-search-history)
       (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
       (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
       (add-to-list 'session-globals-exclude 'kmacro-ring)
@@ -383,7 +382,7 @@ _q_uit
       ("a" all-occur nil :color blue)
       ("t" type-occur nil :color blue)
       ("m" mode-occur nil :color blue)
-      ("RET" occur nil :color blue)
+      ("RET" occur nil :color blue) 
       ("q" nil "nil" :color blue))
     )
   (funcall 'hydra-occur/body)
@@ -572,12 +571,28 @@ _c_: hide comment        _q_uit
    )
   )
 
-(use-package cursor-chg
-  :defer 0.5
-  :config
-  (change-cursor-mode)
-  (setq curchg-default-cursor-color "red3") ; 无法设置cursor的foreground
+
+(add-hook 'after-init-hook (lambda ()
+                             (set-cursor-color "red3")
+                             ))
+(defvar last-readonly-state nil)
+(defun my-cursor-chg()
+  (when (not (eq last-readonly-state  buffer-read-only))
+    (setq last-readonly-state buffer-read-only)
+    (let ((cursor-type (if last-readonly-state
+                           'box
+                         'bar)))
+      (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
+    )
   )
+(add-hook 'view-mode-hook 'my-cursor-chg)
+(add-hook 'buffer-list-update-hook (lambda()
+                                     (when (and
+                                            (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
+                                            )
+                                       ;;(message (buffer-name))
+                                       (my-cursor-chg)
+                                       )))
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
@@ -585,6 +600,7 @@ _c_: hide comment        _q_uit
 
 (when (display-graphic-p)
   (use-package hl-line
+    :disabled
     :defer 0.6
     :config
     (global-hl-line-mode t)
@@ -596,139 +612,89 @@ _c_: hide comment        _q_uit
     )  
   )
 
-(defconst completion-use-which 1); 1 corfu 2.company
-(cond ((eq completion-use-which 1)
-       ;; corfu的原理是添加completion-at-point-functions，很标准的做法
-       ;; company机制不清楚。eglot+ctags用corfu好配一点
-       (use-package corfu
-         :defer 1
-         :load-path "~/.emacs.d/packages/corfu/corfu-main"
-         :commands(global-corfu-mode corfu-mode)
-         :init
-         (setq corfu-cycle t
-               corfu-auto t
-               corfu-auto-prefix 1
-               corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
-               corfu-auto-delay 0.5 ;; 避免输完后马上C-n/C-p也补全
-               corfu-quit-at-boundary nil ;; 可以用M-空格来分词
-               corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
-               )
-         (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
-         (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
-         :config
-         ;; 历史输入排前！
-         (use-package corfu-history
-           :init
-           ;; session自己就记录了corfu-history了，savehist需要配置
-           :config
-           (corfu-history-mode 1)
-           )
-         (use-package corfu-quick
-           :commands(corfu-quick-insert corfu-quick-complete)
-           :init
-           (setq corfu-quick1 "arstne"
-                 corfu-quick2 "ioh")
-           (define-key corfu-map (kbd "C-o") 'corfu-quick-insert) ; corfu-quick-complete 效果是一样的，分不清
-           )
-         (use-package corfu-info
-           :commands(corfu-info-documentation corfu-info-location)
-           :init
-           ;; 对于elisp-completion-at-point后端，这两个是可以用的，但是提示是Dabbrev的话就无法用了
-           (define-key corfu-map (kbd "<f1>") 'corfu-info-documentation)
-           (define-key corfu-map "\M-l" 'corfu-info-location)
-           )
-         
-         (global-set-key (kbd "<C-return>") 'completion-at-point)
-         (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
-         (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
-         
-         ;; 将补全移动到minibuffer进行，这样就可以用embark了！
-         (defun corfu-move-to-minibuffer ()
-           (interactive)
-           (let ((completion-extra-properties corfu--extra)
-                 completion-cycle-threshold completion-cycling)
-             (apply #'consult-completion-in-region completion-in-region--data)))
-         (define-key corfu-map "\M-m" #'corfu-move-to-minibuffer)
-         
-         (use-package cape
-           :load-path "~/.emacs.d/packages/corfu/cape-main"
-           :init
-           (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
-           :config
-           ;; (add-to-list 'completion-at-point-functions #'cape-file)
-           (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-           (when (functionp 'eglot-ensure)
-             ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
-             ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
-             (defun lsp-other-capf-function ()
-               (let ((lsp-result (eglot-completion-at-point)))
-                 (if (and lsp-result
-                          (try-completion
-                           (buffer-substring (nth 0 lsp-result)
-                                             (nth 1 lsp-result))
-                           (nth 2 lsp-result)))
-                     lsp-result
-                   ;; TODO: 添加其它后端
-                   (tags-completion-at-point-function))))
-             (defun enable-eglot-other-backend()
-               "替换eglot的补全"
-               (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
-			                                            'eglot-completion-at-point
-			                                            completion-at-point-functions))
-               )
-             (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
-           )
-         )
-       )
-      ((eq completion-use-which 2)
-       ;; company mode，这个支持comment中文，但不支持补全history
-       (use-package company
-         :defer 1
-         :load-path "~/.emacs.d/packages/company-mode"
-         :diminish
-         :init
-         (setq-default company-dabbrev-other-buffers 'all
-                       company-tooltip-align-annotations t)
-         (setq ;company-idle-delay 0.5 ; 为0的话太卡了，输入就会卡住，默认就行了
-          company-minimum-prefix-length 2
-          company-require-match nil
-          company-dabbrev-ignore-case nil
-          company-dabbrev-downcase nil
-          company-show-numbers t)
-         :config
-         (global-company-mode)
-         (when use-my-face
-           (set-face-attribute 'company-tooltip-selection nil :background "#666"))
-         
-         ;; 句尾TAB就很烦了。。
-         ;;(setq tab-always-indent 'complete) ;; 当已经格式好后就是补全，配合indent-for-tab-command使用
-         ;;(define-key company-mode-map [remap indent-for-tab-command] 'company-indent-or-complete-common)
-         (define-key company-mode-map [remap completion-at-point] 'company-complete)
-         (define-key company-active-map (kbd "M-/") 'company-other-backend)
-         (define-key company-active-map (kbd "C-n") 'company-select-next)
-         (define-key company-active-map (kbd "C-p") 'company-select-previous)
-         (define-key company-active-map (kbd "M-n") 'company-next-page)
-         (define-key company-active-map (kbd "M-p") 'company-previous-page)
-         ;; 这就是我想要的啊！跟bash里的tab类似
-         (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle) 
-         (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
-         (define-key company-active-map (kbd "C-h") nil) ; 取消绑定，按f1代替。c-w直接看源码
-         ;; CTRL+数字快速选择
-         (dotimes (i 10)
-	   (define-key company-active-map (read-kbd-macro (format "C-%d" i)) 'company-complete-number))
-
-         ;; 下载TabNine.exe拷贝到~\.TabNine\2.2.2\x86_64-pc-windows-gnu
-         ;; (with-eval-after-load 'dash
-         ;;   (add-to-list 'load-path "~/.emacs.d/packages/company-mode/company-tabnine")
-         ;;   (require 'company-tabnine)
-         ;;   (add-to-list 'company-backends #'company-tabnine)
-         ;;   )
-         
-         (global-set-key (kbd "<C-return>") 'company-indent-or-complete-common)
-         (global-set-key (kbd "<M-return>") 'company-indent-or-complete-common)
-         ;; eglot默认设置为company-capf，要添加etags补全还挺困难的！
-         )
-       ))
+;; corfu的原理是添加completion-at-point-functions，很标准的做法
+;; company机制不清楚。eglot+ctags用corfu好配一点
+(use-package corfu
+  :defer 1
+  :load-path "~/.emacs.d/packages/corfu/corfu-main"
+  :commands(global-corfu-mode corfu-mode)
+  :init
+  (setq corfu-cycle t
+        corfu-auto t
+        corfu-auto-prefix 1
+        corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
+        corfu-auto-delay 0.5      ;; 避免输完后马上C-n/C-p也补全
+        corfu-quit-at-boundary nil ;; 可以用M-空格来分词
+        corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
+        )
+  (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
+  (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
+  :config
+  ;; 历史输入排前！
+  (use-package corfu-history
+    :init
+    ;; session自己就记录了corfu-history了，savehist需要配置
+    :config
+    (corfu-history-mode 1)
+    )
+  (use-package corfu-quick
+    :commands(corfu-quick-insert corfu-quick-complete)
+    :init
+    (setq corfu-quick1 "arstne"
+          corfu-quick2 "ioh")
+    (define-key corfu-map (kbd "C-o") 'corfu-quick-insert) ; corfu-quick-complete 效果是一样的，分不清
+    )
+  (use-package corfu-info
+    :commands(corfu-info-documentation corfu-info-location)
+    :init
+    ;; 对于elisp-completion-at-point后端，这两个是可以用的，但是提示是Dabbrev的话就无法用了
+    (define-key corfu-map (kbd "<f1>") 'corfu-info-documentation)
+    (define-key corfu-map "\M-l" 'corfu-info-location)
+    )
+  
+  (global-set-key (kbd "<C-return>") 'completion-at-point)
+  (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
+  (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
+  
+  ;; 将补全移动到minibuffer进行，这样就可以用embark了！
+  (defun corfu-move-to-minibuffer ()
+    (interactive)
+    (let ((completion-extra-properties corfu--extra)
+          completion-cycle-threshold completion-cycling)
+      (apply #'consult-completion-in-region completion-in-region--data)))
+  (define-key corfu-map "\M-m" #'corfu-move-to-minibuffer)
+  
+  (use-package cape
+    :load-path "~/.emacs.d/packages/corfu/cape-main"
+    :init
+    (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
+    :config
+    ;; (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (when (functionp 'eglot-ensure)
+      ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
+      ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
+      (defun lsp-other-capf-function ()
+        (let ((lsp-result (eglot-completion-at-point)))
+          (if (and lsp-result
+                   (try-completion
+                    (buffer-substring (nth 0 lsp-result)
+                                      (nth 1 lsp-result))
+                    (nth 2 lsp-result)))
+              lsp-result
+            ;; TODO: 添加其它后端
+            (tags-completion-at-point-function))))
+      (defun enable-eglot-other-backend()
+        "替换eglot的补全"
+        (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
+			                                     'eglot-completion-at-point
+			                                     completion-at-point-functions))
+        )
+      (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
+    )
+  )
+       
+ 
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (use-package wcy-desktop
@@ -792,9 +758,6 @@ _c_: hide comment        _q_uit
                           describe-variable
                           find-file-at-point
                           xref-find-definitions
-                          ggtags-find-tag-dwim ;
-                          ggtags-find-reference
-                          ggtags-find-file
                           session-jump-to-last-change
                           org-roam-preview-visit
                           counsel-rg consult-ripgrep consult-line
@@ -847,54 +810,6 @@ _c_: hide comment        _q_uit
 (find-function-setup-keys)  ;直接定位函数变量定义位置的快捷键，C-x F/K/V，注意是大写的
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
-
-;;; 当lsp不能用时，用ggtag
-(use-package ggtags
-  :commands(ggtags-mode)
-  :config
-  ;;; gtags 自动更新当文件保存时
-  (defun gtags-root-dir ()
-    "Returns GTAGS root directory or nil if doesn't exist."
-    (with-temp-buffer
-      (if (zerop (call-process "global" nil t nil "-pr"))
-	  (buffer-substring (point-min) (1- (point-max)))
-	nil)))
-  (defun gtags-update1 ()
-    "Make GTAGS incremental update"
-    (call-process "global" nil nil nil "-u"))
-  (defun gtags-update ()
-    (interactive)
-    (when (gtags-root-dir)		;没有多余的副作用
-      (gtags-update1)))
-  (define-key ggtags-global-mode-map "n" 'next-line)
-  (define-key ggtags-global-mode-map "p" 'previous-line)
-  
-  ;; ggtags给xref添加了backend的，但是提示找不到global
-  (define-key ggtags-mode-map [remap xref-find-definitions] 'ggtags-find-tag-dwim)
-  (setq ggtags-global-abbreviate-filename nil) ; 不缩写路径
-  ;;(defadvice ggtags-eldoc-function (around my-ggtags-eldoc-function activate)); eldoc没有开关，只有重写它的函数了
-  ;; (customize-set-variable 'ggtags-highlight-tag nil) ; 禁止下划线 setq对defcustom无效！ 测试是eldoc导致提示process sentinel的
-  ;;(turn-on-eldoc-mode) ; 会卡
-  )
-(defvar global-ggtags nil)
-(defun ggtag-all-buffer (enable)
-  (cl-dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (when (memq major-mode '(c++-mode c-mode objc-mode))
-	(ggtags-mode enable)))))
-(defun ggtag-toggle()
-  (interactive)
-  (if global-ggtags
-      (progn
-	(ggtag-all-buffer -1)
-	(remove-hook 'c-mode-common-hook 'ggtags-mode)
-	(setq global-ggtags nil)
-	)
-    (progn
-      (ggtag-all-buffer 1)
-      (add-hook 'c-mode-common-hook 'ggtags-mode)
-      (setq global-ggtags t)
-      )))
 
 
 ;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
@@ -2559,24 +2474,60 @@ _q_uit
   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))  
   )
 
+(use-package diff-hl
+  :load-path "~/.emacs.d/themes/diff-hl-master"
+  :defer 1.4
+  :config
+  (global-diff-hl-mode)
+  ;; 去掉一些hook，避免卡顿
+  (add-hook 'diff-hl-mode-hook (lambda()
+                                 (remove-hook 'after-change-functions 'diff-hl-edit t)))
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
 
-(defconst diff-hl-use 2) ;; 1.diff-hl 2.gutter
-(if (eq diff-hl-use 1)
-    ;; diff-hl有点卡输入啊，貌似是同步的，而gutter介绍是异步的
-    ()
-  (use-package git-gutter
-    :defer 1.4
-    :diminish
+  (use-package diff-hl-margin
+    :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
     :config
-    (global-git-gutter-mode +1)
-    (defhydra hydra-zoom ()
-      "goto hunk"
-      ("p" git-gutter:previous-hunk "prev")
-      ("n" git-gutter:next-hunk "next")
-      ("q" nil "quit" :color blue))
-    (global-set-key (kbd "C-c h") 'hydra-zoom/body)
-    (global-set-key (kbd "C-c C-h") 'hydra-zoom/body)
+    ;; (diff-hl-margin-mode) 这个会遍历buffer-list导致启动卡一下，所以我们手动hook
+    (progn
+      (add-hook 'diff-hl-mode-on-hook 'diff-hl-margin-local-mode)
+      (add-hook 'diff-hl-mode-off-hook 'diff-hl-margin-local-mode-off)
+      (add-hook 'diff-hl-dired-mode-on-hook 'diff-hl-margin-local-mode)
+      (add-hook 'diff-hl-dired-mode-off-hook 'diff-hl-margin-local-mode-off))
     )
+
+  (use-package diff-hl-dired
+    :config
+    (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+    )
+
+  ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
+  (use-package diff-hl-show-hunk
+    :config
+    (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
+    (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk);; 目前还没有绑定这个的
+    (global-diff-hl-show-hunk-mouse-mode)
+    ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
+    (defvar set-transient-map-exit-func nil)
+    (defun my-diff-hl-inline-popup-hide()
+      (interactive)
+      (diff-hl-inline-popup-hide)
+      (when (functionp set-transient-map-exit-func)
+        (funcall set-transient-map-exit-func))
+      )
+    (defvar diff-hl-inline-popup-transient-mode-map1
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
+        (define-key map [escape] #'my-diff-hl-inline-popup-hide)
+        (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
+        (define-key map (kbd "RET") #'my-diff-hl-inline-popup-hide)
+        map)
+      )
+    (set-keymap-parent diff-hl-inline-popup-transient-mode-map1
+                       diff-hl-show-hunk-map)
+    (setq diff-hl-show-hunk-function (lambda (buffer &optional _ignored-line)
+                                       (funcall 'diff-hl-show-hunk-inline-popup buffer _ignored-line)
+                                       (setq set-transient-map-exit-func (set-transient-map diff-hl-inline-popup-transient-mode-map1 t 'diff-hl-inline-popup-hide))
+                                       )))
   )
 
 
@@ -2603,6 +2554,7 @@ _q_uit
   )
 
 (use-package winner
+  :disabled
   :defer 1.2
   :config
   (winner-mode +1)

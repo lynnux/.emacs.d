@@ -10,8 +10,6 @@
  file-name-handler-alist nil)
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
-(push '(left-fringe . 0) default-frame-alist)
-(push '(right-fringe . 0) default-frame-alist)
 
 ;; 参考doom屏蔽启动时的ugly flash并加快一点速度
 (setq-default

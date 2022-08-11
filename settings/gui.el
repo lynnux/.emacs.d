@@ -125,4 +125,3 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 (setq scroll-preserve-screen-position t) ;; 滚动时鼠标保持位置，聊胜于无吧，原来是直接到行首
 
-(set-fringe-mode 0)
