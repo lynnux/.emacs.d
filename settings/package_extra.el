@@ -68,10 +68,14 @@
 
 ;; 消除mode line上的minor提示字符
 (use-package diminish
-  :init
-  (with-eval-after-load 'eldoc
-    (diminish 'eldoc-mode))
   :commands(diminish))
+
+(use-package eldoc
+  :defer t
+  :diminish(eldoc-mode)
+  :init
+  (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
+  )
 
 (autoload 'defhydra "hydra" nil t)
 
@@ -963,53 +967,42 @@ _c_: hide comment        _q_uit
 (autoload 'rust-mode "rust-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 (modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; 带中文必须这个编码，干脆就默认
-(with-eval-after-load 'rust-mode
-  (when (featurep 'company)
-    ;; (make-local-variable 'company-idle-delay)
-    ;; (setq company-idle-delay nil) 	; 不自动补全
-    ;; (define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
-    (setq company-tooltip-align-0annotations t))
-  (setq-local eldoc-documentation-function #'ignore) ; eldoc严重影响输入！
-  )
 
-(defconst filetree-use-which 1) ; 1.speedbar 2.treemacs
-(when (eq filetree-use-which 1)
-  ;; treemacs bug太多了，还经常create pipe fail: too many open，project递归稍微深点切换文件还卡
-  (use-package sr-speedbar
-    :commands(sr-speedbar-toggle)
-    :init
-    (setq sr-speedbar-right-side nil
-          sr-speedbar-auto-refresh t
-          dframe-update-speed 0.2   ;; 自动刷新时间
-          speedbar-show-unknown-files t ;; 我去rust文件都不认识？
-          speedbar-obj-do-check nil ;; 默认检查如c文件的obj文件是否更新
-          speedbar-vc-do-check nil ;; 好像不支持git吧
-          speedbar-directory-unshown-regexp "^\(\.\.*$\)\'" ;; 显示unkown dir
-          ;; speedbar-hide-button-brackets-flag t
-          speedbar-use-images t ;; 图标太丑了，或许可以用all-the-icon?
-          ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
-          )
-    (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
-    :config
-    (unless sr-speedbar-auto-refresh
-      ;; 重新打开时更新目录
-      (defadvice sr-speedbar-toggle (before my-sr-speedbar-toggle activate)
-        (unless (sr-speedbar-exist-p)
-          (message default-directory)
-          (sr-speedbar-refresh)
-          t)
-        ))
-    (define-key speedbar-mode-map (kbd "q") 'sr-speedbar-close)
-    (define-key speedbar-mode-map (kbd "l") 'speedbar-up-directory)
-    (define-key speedbar-mode-map (kbd "w") 'speedbar-scroll-down)
-    (define-key speedbar-mode-map (kbd "SPC") 'speedbar-scroll-up)
-    (define-key speedbar-file-key-map (kbd "<") 'beginning-of-buffer)
-    (define-key speedbar-file-key-map (kbd ">") 'end-of-buffer)
-    (define-key speedbar-file-key-map (kbd "SPC") 'speedbar-scroll-up)
-    (define-key speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
-    (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
-    )
+(use-package sr-speedbar
+  :commands(sr-speedbar-toggle)
+  :init
+  (setq sr-speedbar-right-side nil
+        sr-speedbar-auto-refresh t
+        dframe-update-speed 0.2   ;; 自动刷新时间
+        speedbar-show-unknown-files t ;; 我去rust文件都不认识？
+        speedbar-obj-do-check nil ;; 默认检查如c文件的obj文件是否更新
+        speedbar-vc-do-check nil ;; 好像不支持git吧
+        speedbar-directory-unshown-regexp "^\(\.\.*$\)\'" ;; 显示unkown dir
+        ;; speedbar-hide-button-brackets-flag t
+        speedbar-use-images t ;; 图标太丑了，或许可以用all-the-icon?
+        ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
+        )
+  (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
+  :config
+  (unless sr-speedbar-auto-refresh
+    ;; 重新打开时更新目录
+    (defadvice sr-speedbar-toggle (before my-sr-speedbar-toggle activate)
+      (unless (sr-speedbar-exist-p)
+        (message default-directory)
+        (sr-speedbar-refresh)
+        t)
+      ))
+  (define-key speedbar-mode-map (kbd "q") 'sr-speedbar-close)
+  (define-key speedbar-mode-map (kbd "l") 'speedbar-up-directory)
+  (define-key speedbar-mode-map (kbd "w") 'speedbar-scroll-down)
+  (define-key speedbar-mode-map (kbd "SPC") 'speedbar-scroll-up)
+  (define-key speedbar-file-key-map (kbd "<") 'beginning-of-buffer)
+  (define-key speedbar-file-key-map (kbd ">") 'end-of-buffer)
+  (define-key speedbar-file-key-map (kbd "SPC") 'speedbar-scroll-up)
+  (define-key speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
+  (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
   )
+  
 
 
 (use-package imenu-list 
