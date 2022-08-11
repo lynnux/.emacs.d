@@ -2469,15 +2469,8 @@ _q_uit
 
 (use-package diff-hl
   :load-path "~/.emacs.d/themes/diff-hl-master"
-  :defer 1.4
-  :config
-  ;; 用timer避免各种hook
-  (defvar diff-hl-update-timer nil)
-  (defun diff-hl-update-timer-function()
-    (diff-hl-update)
-    (setq diff-hl-update-timer nil)
-    )
-  (defun diff-hl-update-manual()(interactive) (diff-hl-update))
+  :commands(diff-hl-maybe-define-bitmaps diff-hl-update)
+  :init
   (add-hook 'prog-mode-hook (lambda()
                               (diff-hl-maybe-define-bitmaps)
                               (diff-hl-update)
@@ -2488,6 +2481,15 @@ _q_uit
                                                   (run-with-idle-timer 2 nil #'diff-hl-update-timer-function) ))
                                           ) nil t)
                               ))
+  :config
+  ;; 用timer避免各种hook
+  (defvar diff-hl-update-timer nil)
+  (defun diff-hl-update-timer-function()
+    (diff-hl-update)
+    (setq diff-hl-update-timer nil)
+    )
+  (defun diff-hl-update-manual()(interactive) (diff-hl-update))
+  
   (use-package diff-hl-margin
     :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
     :config
@@ -2500,16 +2502,18 @@ _q_uit
     )
 
   (use-package diff-hl-dired
-    :config
+    :commands(diff-hl-dired-mode)
+    :init
     (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
     )
 
   ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
   (use-package diff-hl-show-hunk
-    :config
+    :commands(diff-hl-show-hunk)
+    :init
     (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
     (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk);; 目前还没有绑定这个的
-    (global-diff-hl-show-hunk-mouse-mode)
+    :config
     ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
     (defvar set-transient-map-exit-func nil)
     (defun my-diff-hl-inline-popup-hide()
