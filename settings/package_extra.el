@@ -2478,12 +2478,22 @@ _q_uit
   :load-path "~/.emacs.d/themes/diff-hl-master"
   :defer 1.4
   :config
-  (global-diff-hl-mode)
-  ;; 去掉一些hook，避免卡顿
-  (add-hook 'diff-hl-mode-hook (lambda()
-                                 (remove-hook 'after-change-functions 'diff-hl-edit t)))
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-
+  ;; 用timer避免各种hook
+  (defvar diff-hl-update-timer nil)
+  (defun diff-hl-update-timer-function()
+    (diff-hl-update)
+    (setq diff-hl-update-timer nil)
+    )
+  (add-hook 'prog-mode-hook (lambda()
+                              (diff-hl-maybe-define-bitmaps)
+                              (diff-hl-update)
+                              (add-hook 'after-save-hook
+                                        (lambda()
+                                          (unless diff-hl-update-timer
+                                            (setq diff-hl-update-timer
+                                                  (run-with-idle-timer 2 nil #'diff-hl-update-timer-function) ))
+                                          ) nil t)
+                              ))
   (use-package diff-hl-margin
     :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
     :config
