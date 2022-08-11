@@ -2484,6 +2484,7 @@ _q_uit
     (diff-hl-update)
     (setq diff-hl-update-timer nil)
     )
+  (defun diff-hl-update-manual()(interactive) (diff-hl-update))
   (add-hook 'prog-mode-hook (lambda()
                               (diff-hl-maybe-define-bitmaps)
                               (diff-hl-update)
