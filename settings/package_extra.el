@@ -602,11 +602,7 @@ _c_: hide comment        _q_uit
                                               )
                                          ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
                                          (my-cursor-chg)
-                                         )))
-  (defadvice dabbrev-capf (around my-dabbrev-capf activate)
-    (let ((disable-cursor-chg t))
-      ad-do-it
-      ))
+                                         )))  
   )
 
 ;;crosshairs不好用，只要vline就行了		
@@ -681,12 +677,16 @@ _c_: hide comment        _q_uit
   
   ;; from https://eshelyaron.com/esy.html
   ;; 直接用dabbrev-capf有问题，cape的dabbrev也有问题(如它忽略了dabbrev-abbrev-char-regexp导致中文设置不生效，另外补全项好像没有dabbrev-completion多？)
-  (defun esy/dabbrev-capf ()
+  (defun my-dabbrev-capf ()
     "Workaround for issue with `dabbrev-capf'."
-    (dabbrev--reset-global-variables)
-    (setq dabbrev-case-fold-search nil)
-    (dabbrev-capf))
-  (add-to-list 'completion-at-point-functions #'esy/dabbrev-capf) 
+    (let ((disable-cursor-chg t) ;; dabbrev会扫描其它buffer导致光标变只读
+          (inhibit-message t)) ;; 屏蔽dabbrev和corfu的消息
+      (dabbrev--reset-global-variables)  
+      (setq dabbrev-case-fold-search nil)
+      (dabbrev-capf)
+      ))
+  
+  (add-to-list 'completion-at-point-functions 'my-dabbrev-capf) 
   (defun esy/file-capf ()
     "File completion at point function."
     (let ((bs (bounds-of-thing-at-point 'filename)))
