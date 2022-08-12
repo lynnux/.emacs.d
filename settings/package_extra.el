@@ -77,10 +77,6 @@
   (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
   )
 
-(use-package dabbrev
-  :commands(dabbrev-capf dabbrev--reset-global-variables)
-  )
-
 (autoload 'defhydra "hydra" nil t)
 
 (defhydra hydra-bookmark ()
@@ -385,7 +381,7 @@ _q_uit
       "
 _a_: all   _t_: type
 _m_: mode  _RET_: this buffer
-_q_uit
+_q_uit
 "
       ("a" all-occur nil :color blue)
       ("t" type-occur nil :color blue)
@@ -675,18 +671,22 @@ _c_: hide comment        _q_uit
       (apply #'consult-completion-in-region completion-in-region--data)))
   (define-key corfu-map "\M-m" #'corfu-move-to-minibuffer)
   
-  ;; from https://eshelyaron.com/esy.html
-  ;; 直接用dabbrev-capf有问题，cape的dabbrev也有问题(如它忽略了dabbrev-abbrev-char-regexp导致中文设置不生效，另外补全项好像没有dabbrev-completion多？)
-  (defun my-dabbrev-capf ()
-    "Workaround for issue with `dabbrev-capf'."
-    (let ((disable-cursor-chg t) ;; dabbrev会扫描其它buffer导致光标变只读
-          (inhibit-message t)) ;; 屏蔽dabbrev和corfu的消息
-      (dabbrev--reset-global-variables)  
-      (setq dabbrev-case-fold-search nil)
-      (dabbrev-capf)
-      ))
+  (use-package dabbrev
+    :commands(dabbrev-capf dabbrev--reset-global-variables)
+    :init
+    ;; from https://eshelyaron.com/esy.html
+    ;; 直接用dabbrev-capf有问题，cape的dabbrev也有问题(如它忽略了dabbrev-abbrev-char-regexp导致中文设置不生效，另外补全项好像没有dabbrev-completion多？)
+    (defun my-dabbrev-capf ()
+      "Workaround for issue with `dabbrev-capf'."
+      (let ((disable-cursor-chg t) ;; dabbrev会扫描其它buffer导致光标变只读
+            (inhibit-message t)) ;; 屏蔽dabbrev和corfu的消息
+        (dabbrev--reset-global-variables)  
+        (setq dabbrev-case-fold-search nil)
+        (dabbrev-capf)
+        ))
+    (add-to-list 'completion-at-point-functions 'my-dabbrev-capf)
+    )
   
-  (add-to-list 'completion-at-point-functions 'my-dabbrev-capf) 
   (defun esy/file-capf ()
     "File completion at point function."
     (let ((bs (bounds-of-thing-at-point 'filename)))
