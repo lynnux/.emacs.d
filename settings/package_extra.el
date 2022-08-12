@@ -103,7 +103,18 @@ _q_uit
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   :commands(dired dired-jump)
   :config
-
+  (use-package dired-recent
+    :init
+    (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
+    :config
+    (dired-recent-mode 1)
+    )
+  (use-package dired-hist
+    :config
+    (define-key dired-mode-map (kbd "M-p") #'dired-hist-go-back)
+    (define-key dired-mode-map (kbd "M-n") #'dired-hist-go-forward)
+    (dired-hist-mode 1)
+    )
   (when (string-equal system-type "windows-nt")
     (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
     ;; 真正实现是在files.el里的insert-directory
@@ -1389,13 +1400,6 @@ _c_: hide comment        _q_uit
       (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
         (setq ad-return-value dired-recent-directories)
         )
-      )
-    (use-package dired-recent
-      :defer 1.8
-      :init
-      (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
-      :config
-      (dired-recent-mode 1)
       )
     )
 
