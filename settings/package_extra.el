@@ -77,6 +77,10 @@
   (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
   )
 
+(use-package dabbrev
+  :commands(dabbrev-capf dabbrev--reset-global-variables)
+  )
+
 (autoload 'defhydra "hydra" nil t)
 
 (defhydra hydra-bookmark ()
@@ -575,28 +579,35 @@ _c_: hide comment        _q_uit
    )
   )
 
-
-(add-hook 'after-init-hook (lambda ()
-                             (set-cursor-color "red3")
-                             ))
-(defvar last-readonly-state nil)
-(defun my-cursor-chg()
-  (when (not (eq last-readonly-state  buffer-read-only))
-    (setq last-readonly-state buffer-read-only)
-    (let ((cursor-type (if last-readonly-state
-                           'box
-                         'bar)))
-      (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
+(progn
+  (add-hook 'after-init-hook (lambda ()
+                               (set-cursor-color "red3")
+                               ))
+  (defvar last-readonly-state nil)
+  (defun my-cursor-chg()
+    (when (not (eq last-readonly-state  buffer-read-only))
+      (setq last-readonly-state buffer-read-only)
+      (let ((cursor-type (if last-readonly-state
+                             'box
+                           'bar)))
+        (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
+      )
     )
+  (add-hook 'view-mode-hook 'my-cursor-chg)
+  (defvar disable-cursor-chg nil)
+  (add-hook 'buffer-list-update-hook (lambda()
+                                       (when (and
+                                              (not disable-cursor-chg)
+                                              (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
+                                              )
+                                         ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
+                                         (my-cursor-chg)
+                                         )))
+  (defadvice dabbrev-capf (around my-dabbrev-capf activate)
+    (let ((disable-cursor-chg t))
+      ad-do-it
+      ))
   )
-(add-hook 'view-mode-hook 'my-cursor-chg)
-(add-hook 'buffer-list-update-hook (lambda()
-                                     (when (and
-                                            (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
-                                            )
-                                       ;;(message (buffer-name));; 
-                                       (my-cursor-chg)
-                                       )))
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
@@ -668,34 +679,43 @@ _c_: hide comment        _q_uit
       (apply #'consult-completion-in-region completion-in-region--data)))
   (define-key corfu-map "\M-m" #'corfu-move-to-minibuffer)
   
-  (use-package cape
-    :load-path "~/.emacs.d/packages/corfu/cape-main"
-    :init
-    (setq company-dabbrev-downcase nil) ; 解决dabbrev是小写的问题
-    :config
-    ;; (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (when (functionp 'eglot-ensure)
-      ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
-      ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
-      (defun lsp-other-capf-function ()
-        (let ((lsp-result (eglot-completion-at-point)))
-          (if (and lsp-result
-                   (try-completion
-                    (buffer-substring (nth 0 lsp-result)
-                                      (nth 1 lsp-result))
-                    (nth 2 lsp-result)))
-              lsp-result
-            ;; TODO: 添加其它后端
-            (tags-completion-at-point-function))))
-      (defun enable-eglot-other-backend()
-        "替换eglot的补全"
-        (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
-			                                     'eglot-completion-at-point
-			                                     completion-at-point-functions))
-        )
-      (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
-    )
+  ;; from https://eshelyaron.com/esy.html
+  ;; 直接用dabbrev-capf有问题，cape的dabbrev也有问题(如它忽略了dabbrev-abbrev-char-regexp导致中文设置不生效，另外补全项好像没有dabbrev-completion多？)
+  (defun esy/dabbrev-capf ()
+    "Workaround for issue with `dabbrev-capf'."
+    (dabbrev--reset-global-variables)
+    (setq dabbrev-case-fold-search nil)
+    (dabbrev-capf))
+  (add-to-list 'completion-at-point-functions #'esy/dabbrev-capf) 
+  (defun esy/file-capf ()
+    "File completion at point function."
+    (let ((bs (bounds-of-thing-at-point 'filename)))
+      (when bs
+        (let* ((start (car bs))
+               (end   (cdr bs)))
+          `(,start ,end completion--file-name-table . (:exclusive no))))))
+  (add-to-list 'completion-at-point-functions 'esy/file-capf)
+  
+  (when (functionp 'eglot-ensure)
+    ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
+    ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
+    (defun lsp-other-capf-function ()
+      (let ((lsp-result (eglot-completion-at-point)))
+        (if (and lsp-result
+                 (try-completion
+                  (buffer-substring (nth 0 lsp-result)
+                                    (nth 1 lsp-result))
+                  (nth 2 lsp-result)))
+            lsp-result
+          ;; TODO: 添加其它后端
+          (tags-completion-at-point-function))))
+    (defun enable-eglot-other-backend()
+      "替换eglot的补全"
+      (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
+			                                   'eglot-completion-at-point
+			                                   completion-at-point-functions))
+      )
+    (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
   )
        
  
@@ -2455,6 +2475,11 @@ _q_uit
   (scroll-on-jump-advice-add embark-previous-symbol)
   
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
+  
+  ;; 添加beacon效果
+  (defadvice scroll-on-jump-auto-center (after my-scroll-on-jump-auto-center activate)
+    (pulse-momentary-highlight-one-line)
+    )
   )
 
 ;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
