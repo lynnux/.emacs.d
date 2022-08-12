@@ -2475,11 +2475,6 @@ _q_uit
   (scroll-on-jump-advice-add embark-previous-symbol)
   
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
-  
-  ;; 添加beacon效果
-  (defadvice scroll-on-jump-auto-center (after my-scroll-on-jump-auto-center activate)
-    (pulse-momentary-highlight-one-line)
-    )
   )
 
 ;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
