@@ -153,10 +153,11 @@ _q_uit
   
   ;; dired-quick-sort
   ;;  (setq dired-quick-sort-suppress-setup-warning t)
-  (require 'dired-quick-sort)
-  (dired-quick-sort-setup)
-  (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
-
+  (use-package dired-quick-sort
+    :config
+    (dired-quick-sort-setup)  
+    (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
+    )
   ;; dired-hacks功能很多
   (use-package dired-filter
     :config
@@ -585,6 +586,8 @@ _c_: hide comment        _q_uit
    '(idle-highlight ((t (:inherit highlight))))
    )
   )
+
+
 
 (progn
   (add-hook 'after-init-hook (lambda ()
