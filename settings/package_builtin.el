@@ -272,6 +272,8 @@ Run occur in all buffers whose names match this type for REXP."
 
 (setq completion-ignore-case t)
 
+(setq dabbrev-abbrev-char-regexp "[A-Za-z-_]") ;; 不补全中文
+
 (global-set-key (kbd "C-'") 'hippie-expand)
 (defun try-zwz-expand-dabbrev-visible (old)
   (save-excursion (try-expand-dabbrev-visible old)))
