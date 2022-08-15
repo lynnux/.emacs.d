@@ -2509,6 +2509,7 @@ _q_uit
   (add-hook 'prog-mode-hook (lambda()
                               (diff-hl-maybe-define-bitmaps)
                               (diff-hl-update)
+                              (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
                               (add-hook 'after-save-hook
                                         (lambda()
                                           (unless diff-hl-update-timer
@@ -2518,7 +2519,7 @@ _q_uit
                               ))
   :config
   (with-eval-after-load 'magit
-    (add-hook 'magit-post-refresh-hook 'my-diff-hl-magit-post-refresh)
+    (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
     ;; 貌似只有这个处理buffer-list，patch去掉(buffer-local-value 'diff-hl-mode buf)检查
     (defun my-diff-hl-magit-post-refresh ()
       (unless (and diff-hl-disable-on-remote
