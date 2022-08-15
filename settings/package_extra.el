@@ -2841,6 +2841,8 @@ _q_uit
   :commands(objed-activate)
   :init
   (global-set-key (kbd "M-t") 'objed-activate)
+  (with-eval-after-load 'view
+    (define-key view-mode-map "t" 'objed-activate)) ;; 暂时没有全局的激活，方便view-mode
   :config
   (setcdr objed-mode-map nil) ;; 默认绑定不需要，只需要objed-mode的hook就够了
   (add-to-list 'objed-keeper-commands 'undo-fu-only-undo)
@@ -2863,8 +2865,6 @@ _q_uit
   (define-key objed-map "x" 'objed-toggle-side) ;; x和j互换
   (define-key objed-map "j" 'objed-op-map) ;; x和j互换
   (define-key objed-map "q" 'objed-quit) ;; 这个q有点理解不了
-  (with-eval-after-load 'view
-    (define-key view-mode-map "t" 'objed-activate)) ;; 暂时没有全局的激活，方便view-mode
   ;; 默认要which-key mode才显示，这里让
   (when (functionp 'which-key--show-keymap)
     ;; TODO: 需要第2次调用，它才会修改which-key-replacement-alist 显示短名。暂时不管了
