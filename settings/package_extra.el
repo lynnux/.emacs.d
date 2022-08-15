@@ -577,7 +577,7 @@ _c_: hide comment        _q_uit
   :config
   ;; 输入时高亮效果不是那么好，这里设置鼠标点击时高亮点击处
   (defadvice idle-highlight--highlight (around my-idle-highlight--highlight activate)
-    (if (memq last-command '(mouse-set-point embark-next-symbol embark-previous-symbol)) ;; this-command是nil
+    (if (memq last-command '(mouse-set-point embark-next-symbol embark-previous-symbol up-slightly down-slightly)) ;; this-command是nil
         (let ((idle-highlight-exclude-point nil))
           ad-do-it)
       ad-do-it))
@@ -593,7 +593,7 @@ _c_: hide comment        _q_uit
   (add-hook 'after-init-hook (lambda ()
                                (set-cursor-color "red3")
                                ))
-  (defvar last-readonly-state nil)
+  (defvar last-readonly-state t) ;; 设为t让*scratch*可以正常显示
   (defun my-cursor-chg()
     (when (not (eq last-readonly-state  buffer-read-only))
       (setq last-readonly-state buffer-read-only)
@@ -605,14 +605,22 @@ _c_: hide comment        _q_uit
     )
   (add-hook 'view-mode-hook 'my-cursor-chg)
   (defvar disable-cursor-chg nil)
+  (defvar cursor-chg-timer nil)
+  (defun cursor-chg-timer-function()
+    (when (and
+           (not disable-cursor-chg)
+           (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
+           )
+      ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
+      (my-cursor-chg)
+      )
+    (setq cursor-chg-timer nil)
+    )
   (add-hook 'buffer-list-update-hook (lambda()
-                                       (when (and
-                                              (not disable-cursor-chg)
-                                              (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
-                                              )
-                                         ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
-                                         (my-cursor-chg)
-                                         )))  
+                                       (unless cursor-chg-timer
+                                         (setq cursor-chg-timer
+                                               (run-with-idle-timer 0.5 nil 'cursor-chg-timer-function)))
+                                       ))
   )
 
 ;;crosshairs不好用，只要vline就行了		
