@@ -2517,6 +2517,7 @@ _q_uit
                                           ) nil t)
                               ))
   :config
+  (add-hook 'magit-post-refresh-hook 'diff-hl-update)
   ;; 用timer避免各种hook
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function()
