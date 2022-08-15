@@ -2518,7 +2518,7 @@ _q_uit
                               ))
   :config
   (with-eval-after-load 'magit
-    (add-hook 'magit-post-commit-hook 'my-diff-hl-magit-post-refresh)
+    (add-hook 'magit-post-refresh-hook 'my-diff-hl-magit-post-refresh)
     ;; 貌似只有这个处理buffer-list
     (defun my-diff-hl-magit-post-refresh ()
       (unless (and diff-hl-disable-on-remote
