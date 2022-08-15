@@ -2515,7 +2515,7 @@ _q_uit
                                             (setq diff-hl-update-timer
                                                   (run-with-idle-timer 2 nil #'diff-hl-update-timer-function) ))
                                           ) nil t)
-                              (add-hook 'magit-post-commit-hook 'diff-hl-update)
+                              (add-hook 'magit-post-commit-hook 'diff-hl-magit-post-refresh)
                               ))
   :config
   ;; 用timer避免各种hook
