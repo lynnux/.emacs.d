@@ -531,7 +531,7 @@ _c_: hide comment        _q_uit
                      ((eq (current-buffer) b) b)
 		     ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
                      ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
-                     ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil)
+                     ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil);; 排除magit-process
                      ((buffer-file-name b) b)
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
@@ -752,6 +752,12 @@ _c_: hide comment        _q_uit
     ;; 修正buffer打开时的point
     (when (featurep 'saveplace)
       (save-place-find-file-hook))
+    ;; win10莫名其妙鼠标指针变圆圈，不变回来了，这个trick可以让它变回来
+    (run-with-idle-timer 0.1 nil (lambda ()
+                                 (let ((f (selected-frame)))
+                                   (set-mouse-position f (car (cdr (mouse-position))) (cdr (cdr (mouse-position))))
+                                   t)
+                                 )) 
     )
   (add-hook 'emacs-startup-hook
             (lambda ()
@@ -2461,7 +2467,9 @@ _q_uit
         (when (and (bufferp buf) (featurep 'wcy-desktop))
 	  (with-current-buffer buf
 	    (when (eq major-mode 'not-loaded-yet)
-	      (wcy-desktop-load-file))))
+              (let ((inhibit-message t))
+                (wcy-desktop-load-file))
+	      )))
         )
       )
     )
