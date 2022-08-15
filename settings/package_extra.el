@@ -531,6 +531,7 @@ _c_: hide comment        _q_uit
                      ((eq (current-buffer) b) b)
 		     ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
                      ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
+                     ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil)
                      ((buffer-file-name b) b)
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
