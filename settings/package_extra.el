@@ -2519,7 +2519,7 @@ _q_uit
   :config
   (with-eval-after-load 'magit
     (add-hook 'magit-post-refresh-hook 'my-diff-hl-magit-post-refresh)
-    ;; 貌似只有这个处理buffer-list
+    ;; 貌似只有这个处理buffer-list，patch去掉(buffer-local-value 'diff-hl-mode buf)检查
     (defun my-diff-hl-magit-post-refresh ()
       (unless (and diff-hl-disable-on-remote
                    (file-remote-p default-directory))
