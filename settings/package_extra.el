@@ -2161,6 +2161,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
     )
   :config
+  ;; 显示project名
   (defadvice lsp-bridge--mode-line-format (after my-lsp-bridge--mode-line-format activate)
     (setq ad-return-value 
           (propertize (concat "lsp-bridge:" (file-name-base (directory-file-name  
@@ -2170,6 +2171,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                                           default-directory))))) 'face mode-face)  
           )
     )
+  ;; 找不到定义就fallback to xref
+  (defadvice lsp-bridge--eval-in-emacs-func (after my-lsp-bridge--eval-in-emacs-func activate)
+    ;;(message (ad-get-arg 0))
+    (when (string-match "No definition found" (ad-get-arg 0))
+      (xref-find-definitions (find-tag--default))
+      ))
   ;; 添加csharp，目前json里的路径是写死的，自己改改
   (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
   (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
