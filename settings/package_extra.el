@@ -578,7 +578,10 @@ _c_: hide comment        _q_uit
   :config
   ;; 输入时高亮效果不是那么好，这里设置鼠标点击时高亮点击处
   (defadvice idle-highlight--highlight (around my-idle-highlight--highlight activate)
-    (if (memq last-command '(mouse-set-point embark-next-symbol embark-previous-symbol up-slightly down-slightly)) ;; this-command是nil
+    (if (memq last-command '(mouse-set-point 
+                             embark-next-symbol embark-previous-symbol 
+                             up-slightly down-slightly
+                             next-line previous-line forward-char backward-char)) ;; this-command是nil
         (let ((idle-highlight-exclude-point nil))
           ad-do-it)
       ad-do-it))
