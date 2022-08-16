@@ -614,12 +614,12 @@ _c_: hide comment        _q_uit
     (when (and
            (not disable-cursor-chg)
            (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
+           (not (minibufferp)) ;; minibuffer有bug没有变，但C-s回来又变了
            )
       ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
       (my-cursor-chg)
       )
-    (setq cursor-chg-timer nil)
-    )
+    (setq cursor-chg-timer nil))
   (add-hook 'buffer-list-update-hook (lambda()
                                        (unless cursor-chg-timer
                                          (setq cursor-chg-timer
