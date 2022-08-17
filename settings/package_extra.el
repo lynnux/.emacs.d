@@ -2647,6 +2647,7 @@ _q_uit
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
+  :defer t
   :load-path "~/.emacs.d/packages/org/org-roam"
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
@@ -2681,18 +2682,31 @@ _q_uit
     (let ((default-directory org-roam-directory))
       (call-interactively 'my-project-search)
       ))
-  ;; TODO: 设置buffer里RET打开other buffer
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c n f" . org-roam-node-find)
-         ("C-c n p" . call-project-find)  ;; 文件查找
-         ("C-c n s" . call-project-search) ;; 内容搜索
-         ("C-c n g" . org-roam-graph)
-         ("C-c n i" . org-roam-node-insert)
-         ("C-c n t" . org-roam-tag-add); C-c C-q用org自带的添加tag好像也是可以用的
-         ("C-c n c" . org-roam-capture)
-         ("C-c n h" . org-id-get-create) ; 给子标题添加id，这样才可以索引
-         ;; Dailies
-         ("C-c n j" . org-roam-dailies-capture-today))
+  
+  ;; 一些org命令也放这里，太实用了
+  (defhydra hydra-org-roam ()
+    "
+_f_: find        _t_: add tag
+_i_: add id      _n_: add node
+_g_: get link    _l_: add link
+_s_: rg search   _p_: find file
+_c_: capture
+_G_: graph       _L_: buffer toggle
+_q_uit
+"
+    ("f" org-roam-node-find nil :color blue)
+    ("t" org-roam-tag-add nil :color blue)
+    ("i" org-id-get-create nil :color blue)
+    ("n" org-roam-node-insert nil :color blue)
+    ("g" org-store-link nil :color blue)
+    ("l" org-insert-link nil :color blue)
+    ("p" call-project-find nil :color blue)
+    ("s" call-project-search nil :color blue)
+    ("c" org-roam-capture nil :color blue)
+    ("G" org-roam-graph nil :color blue)
+    ("L" org-roam-buffer-toggle nil :color blue)
+    ("q" nil "nil" :color blue))
+  (global-set-key (kbd "C-c n") 'hydra-org-roam/body)
   :config
   (use-package emacsql-sqlite-builtin)
   ;; find时列表加入tag，这么好的功能居然不加入默认？
