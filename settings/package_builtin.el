@@ -64,6 +64,10 @@
 (defvar website-org-publish-path nil)
 (add-hook 'org-mode-hook
 	  (lambda()
+            ;; 禁止<>自动，因为<src什么的还是很常用的
+            (setq-local electric-pair-inhibit-predicate
+                        `(lambda (c)
+                           (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))
 	    (setq truncate-lines nil)
 					;(define-key org-mode-map  [(control ?\,)] 'ska-point-to-register)
 	    ;; 建站专用
