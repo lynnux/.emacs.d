@@ -313,6 +313,9 @@ _q_uit
       (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
       (add-to-list 'session-globals-exclude 'kmacro-ring)
       (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
+      (add-to-list 'session-globals-exclude 'vertico-repeat-history)
+      (add-to-list 'session-globals-exclude 'org-roam-node-history)
+      (add-to-list 'session-globals-exclude 'consult--buffer-history)
       )
   (progn
     ;; Save minibuffer history. 不仅仅是minibuffer!
