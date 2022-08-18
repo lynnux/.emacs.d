@@ -2920,8 +2920,15 @@ _q_uit
 (use-package paren
   :init (setq show-paren-when-point-inside-paren t
               show-paren-when-point-in-periphery t
-              blink-matching-paren t ;; 不然blink-matching-open不显示
               )
+  (use-package simple
+    :defer t
+    :init
+    (setq blink-matching-paren nil) ;; 不然blink-matching-open不显示
+    :config
+    ;; blink-matching-paren为nil的话顺便把这个hook给去掉
+    (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
+    )
   :config
   (with-no-warnings
     (defun show-paren-off-screen (&rest _args)
@@ -2951,7 +2958,8 @@ _q_uit
                      )))
           (blink-matching-open))
         ))
-    (advice-add #'show-paren-function :after #'show-paren-off-screen)))
+    ;;(advice-add #'show-paren-function :after #'show-paren-off-screen)
+    ))
 
 
 ;; 好的theme特点:
