@@ -626,7 +626,7 @@ _c_: hide comment        _q_uit
   (add-hook 'buffer-list-update-hook (lambda()
                                        (unless cursor-chg-timer
                                          (setq cursor-chg-timer
-                                               (run-with-idle-timer 0.5 nil 'cursor-chg-timer-function)))
+                                               (run-with-idle-timer 0.125 nil 'cursor-chg-timer-function)))
                                        ))
   )
 
