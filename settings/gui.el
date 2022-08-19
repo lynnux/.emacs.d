@@ -37,8 +37,8 @@
 ;; 抄doom的，感觉没多大作用
 (setq hscroll-margin 2
       hscroll-step 1
-      scroll-conservatively 101
-      scroll-margin 0
+      scroll-margin 2 ;; 最高/低总是保留几层光标碰不到
+      scroll-conservatively 0 ;; 当光标移动到未显示区域时recenter，好像除了0其它没什么效果？
       scroll-preserve-screen-position t
       auto-window-vscroll nil
       mouse-wheel-scroll-amount '(2 ((shift) . hscroll))

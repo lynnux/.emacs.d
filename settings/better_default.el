@@ -276,3 +276,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
                   file-name-handler-alist default-file-name-handler-alist)
             (makunbound 'default-file-name-handler-alist)))
 (setq auto-save-list-file-prefix nil)
+
+(setq next-error-recenter (quote (4)))
