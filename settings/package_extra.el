@@ -2160,7 +2160,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
   (defun lsp-ensure()
     (lsp-bridge-mode 1)
-    (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-define)
+    (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
     (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
     )
   :config
