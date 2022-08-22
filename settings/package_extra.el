@@ -1460,7 +1460,7 @@ _c_: hide comment        _q_uit
       :defer t
       :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
       :init
-      (when (version= "28.0.50" emacs-version)
+      (unless (boundp 'ensure-list) 
         (defun ensure-list (object)
           (if (listp object)
               object
