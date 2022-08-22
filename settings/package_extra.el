@@ -2445,6 +2445,8 @@ _q_uit
 (ignore-errors (module-load "H:/prj/rust/pop-select/target/release/pop_select.dll"))
 
 (when (functionp 'pop-select/transparent-set-background)
+  (when (version< emacs-version "29")
+    (pop-select/ensure-all-window-dark-mode))
   (defvar cur-transparent 255)
   (defconst step-transparent 20)
   (defun dec-transparent()
@@ -2469,6 +2471,7 @@ _q_uit
   (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
   (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
   )
+(w32-send-sys-command #xf030) ;; 放大窗口，pop-select/ensure-all-window-dark-mode还有bug就是caption不能重绘，这里放大就OK了
 
 (when (fboundp 'pop-select/pop-select)
   (defun my-pop-select(&optional backward)

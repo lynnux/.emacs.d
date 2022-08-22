@@ -10,7 +10,7 @@
  file-name-handler-alist nil)
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
-(add-to-list 'initial-frame-alist '(fullscreen . maximized)) ; 窗口最大化
+;; (add-to-list 'initial-frame-alist '(fullscreen . maximized)) ; 窗口最大化，由于pop-select/ensure-all-window-dark-mode那里发送最大化让caption redraw
 
 ;; 参考doom屏蔽启动时的ugly flash并加快一点速度
 (setq-default
