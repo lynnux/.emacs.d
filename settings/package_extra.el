@@ -1459,6 +1459,13 @@ _c_: hide comment        _q_uit
     (use-package compat
       :defer t
       :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
+      :init
+      (when (version= "28.0.50" emacs-version)
+        (defun ensure-list (object)
+          (if (listp object)
+              object
+            (list object)))
+        )
       )
     
     (defun my-consult-ripgrep(&optional dir initial)
@@ -2654,7 +2661,9 @@ _q_uit
   :load-path "~/.emacs.d/packages/org/org-roam"
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
-  (setq org-roam-database-connector 'sqlite-builtin) ; 使用29版本以上自营的sqlite，但是仍然需要上面的emacsql
+  (setq org-roam-database-connector (if (version< emacs-version "29")
+                                        'sqlite
+                                      'sqlite-builtin)) ; 使用29版本以上自营的sqlite，但是仍然需要上面的emacsql
   (when nil
     ;; 暂时不用模式，按目录结构自己创建org文件
     (setq org-roam-capture-templates
@@ -2711,7 +2720,8 @@ _q_uit
     ("q" nil "nil" :color blue))
   (global-set-key (kbd "C-c n") 'hydra-org-roam/body)
   :config
-  (use-package emacsql-sqlite-builtin)
+  (unless (version< emacs-version "29")
+    (use-package emacsql-sqlite-builtin))
   ;; find时列表加入tag，这么好的功能居然不加入默认？
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
