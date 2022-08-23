@@ -223,8 +223,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
     (when break-open-pair
       (save-excursion
         (newline)
-        (indent-for-tab-command)))
-    (indent-for-tab-command)))
+        (indent-according-to-mode)))
+    (indent-according-to-mode))) ;; indent-for-tab-command在Text Mode有问题
 (global-set-key (kbd "RET") 'new-line-dwim)
 (defun sanityinc/newline-at-end-of-line ()
   "Move to end of line, enter a newline, and reindent."
