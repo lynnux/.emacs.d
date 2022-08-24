@@ -1850,7 +1850,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
   (add-to-list 'easy-kill-alist '(?= my-line ""))
 
-  (setq easy-mark-try-things '(sexp)) ; word优先，特别是有横杠什么都时候
+  (setq easy-mark-try-things '(symbol)) ; word优先，特别是有横杠什么都时候
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
   (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
