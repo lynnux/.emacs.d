@@ -1233,7 +1233,7 @@ _c_: hide comment        _q_uit
                                          (disable-for-vertico-repeat t))
                                      (my-consult-ripgrep dir text))
                                    ))
-              (minibuffer-quit-recursive-edit);; 用vertio-exit C-g就不能回到原来位置
+              (minibuffer-quit-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
               ))
         (call-interactively 'vertico-directory-delete-word)))
     (defun my/vertico-tab()
@@ -1479,11 +1479,21 @@ _c_: hide comment        _q_uit
       :defer t
       :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
       :init
-      (unless (boundp 'ensure-list) 
+      (unless (functionp 'ensure-list)
         (defun ensure-list (object)
+          ;; for 28.0.5
           (if (listp object)
               object
             (list object)))
+        )
+      (unless (functionp 'minibuffer-quit-recursive-edit)
+        (defun minibuffer-quit-recursive-edit (&optional levels)
+          ;; for 28.0.5
+          (unless levels
+            (setq levels 1))
+          (if (> levels 1)
+              (throw 'exit (lambda () (minibuffer-quit-recursive-edit (1- levels))))
+            (throw 'exit (lambda () (signal 'minibuffer-quit nil)))))
         )
       )
     
