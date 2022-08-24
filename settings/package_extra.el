@@ -588,6 +588,13 @@ _c_: hide comment        _q_uit
         (let ((idle-highlight-exclude-point nil))
           ad-do-it)
       ad-do-it))
+  ;; 避免在cursor位置不变时仍然高亮
+  (defvar-local idle-highlight-last-point nil)
+  (defadvice idle-highlight--time-callback-or-disable (around my-idle-highlight--time-callback-or-disable activate)
+    (unless (eq (point) idle-highlight-last-point)
+      ad-do-it
+      (setq idle-highlight-last-point (point))
+      ))
   (global-idle-highlight-mode)
   (custom-set-faces
    '(idle-highlight ((t (:inherit highlight))))
