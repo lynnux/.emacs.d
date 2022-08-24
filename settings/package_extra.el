@@ -1294,6 +1294,7 @@ _c_: hide comment        _q_uit
               (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
               (my-consult-ripgrep buffer)
               (my-project-search buffer)
+              (dired-do-find-regexp buffer) ;; dired里的A，可以只搜索mark了的文件
               (my-consult-ripgrep-only-current-dir buffer)
               (consult-ripgrep buffer) 
               (execute-extended-command grid) ; M-x
