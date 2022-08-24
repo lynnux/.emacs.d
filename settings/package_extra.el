@@ -2200,6 +2200,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
     )
   :config
+  ;; 在minbuffer时不显示
+  (setq lsp-bridge-signature-function (lambda(msg)
+                                        (unless (minibufferp)
+                                          (message msg))
+                                        ))
   ;; 显示project名
   (defadvice lsp-bridge--mode-line-format (after my-lsp-bridge--mode-line-format activate)
     (setq ad-return-value 
