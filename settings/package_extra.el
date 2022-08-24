@@ -1294,6 +1294,7 @@ _c_: hide comment        _q_uit
               (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
               (my-consult-ripgrep buffer)
               (my-project-search buffer)
+              (project-find-regexp buffer) ;; project内置搜索，xarg发送files给rg可以搜索被ignore目录里的force add文件
               (dired-do-find-regexp buffer) ;; dired里的A，可以只搜索mark了的文件
               (my-consult-ripgrep-only-current-dir buffer)
               (consult-ripgrep buffer) 
