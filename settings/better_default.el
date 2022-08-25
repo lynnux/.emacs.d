@@ -278,3 +278,4 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (setq auto-save-list-file-prefix nil)
 
 (setq next-error-recenter (quote (4)))
+(setq w32-ignore-modifiers-on-IME-input nil) ;; 有输入法时屏幕C M等

@@ -597,7 +597,7 @@ _c_: hide comment        _q_uit
       ))
   (global-idle-highlight-mode)
   (custom-set-faces
-   '(idle-highlight ((t (:inherit highlight))))
+   '(idle-highlight ((t (:inherit isearch)))) ;; 参见https://gitee.com/advanceflow/elisp/blob/main/40-Emacs%E6%98%BE%E7%A4%BA.org#40128-%E5%9F%BA%E6%9C%AC%E9%9D%A2
    )
   )
 
@@ -2864,7 +2864,7 @@ _q_uit
 ;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
 ;; 按两下就会跳到行尾， C-u开头会对齐注释 
 (use-package comment-dwim-2
-  :commands(comment-dwim-2)
+  :defer 1.1 ;; 经常首次使用时卡住，故而不要用延迟加载了
   :bind ([remap comment-dwim] . comment-dwim-2)
   :init
   ;; (setq cd2/region-command 'cd2/comment-or-uncomment-region) ;; comment-dwim那种模式，多行需要全部选中
