@@ -4,6 +4,10 @@
 
 ;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度
 ;; :load-path不是延迟设置
+
+;; 使用老版本提示
+;; 28.0.50，1.查看eln-cache，会有几个文件的TMP一直生成，找到删除对应elc就可以了，不然每次emacs启动都会去编译 2.删除自带的python不然lsp有问题
+
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/packages/use-package")
   (require 'use-package))
@@ -1791,6 +1795,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           )))
     )
   
+  ;; 添加yank-handler让粘贴时含换行
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
       (let ((string (buffer-substring (line-beginning-position)
@@ -1861,9 +1866,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
   (assq-delete-all ?b easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
   (add-to-list 'easy-kill-alist '(?b buffer ""))
-  (add-to-list 'easy-kill-alist '(?a buffer-file-name ""))
-  (add-to-list 'easy-kill-alist '(?< backward-line-edge ""))
-  (add-to-list 'easy-kill-alist '(?> forward-line-edge ""))
+  ;; (add-to-list 'easy-kill-alist '(?a buffer-file-name ""))
+  (add-to-list 'easy-kill-alist '(?a backward-line-edge ""))
+  (assq-delete-all ?e easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
+  (add-to-list 'easy-kill-alist '(?e forward-line-edge ""))
   (assq-delete-all ?f easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
   (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
@@ -1881,8 +1887,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?\[ brackets-pair "\n") t)
   (add-to-list 'easy-kill-alist '(?}  curlies-pair-content "\n") t)
   (add-to-list 'easy-kill-alist '(?{  curlies-pair "\n") t)
-  ;; (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
-  ;; (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
+  (assq-delete-all ?s easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
+  (add-to-list 'easy-kill-alist '(?s symbol ""))
+  (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
   )
 
 ;; project内置查找会用到，支持ripgrep了！
