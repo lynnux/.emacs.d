@@ -1327,9 +1327,10 @@ _c_: hide comment        _q_uit
     (use-package vertico-mouse
       :config
       (vertico-mouse-mode))
-
-    ;; 启动用无序匹配，本质是一个自动正则生成器，结果给completion-styles用
+    )
+  (with-eval-after-load 'vertico
     (use-package orderless
+      ;; 启动用无序匹配，本质是一个自动正则生成器，结果给completion-styles用
       :config
       ;; https://github.com/minad/consult/wiki#minads-orderless-configuration
       ;; 以这些开头或者结尾都是可以的
@@ -1389,7 +1390,7 @@ _c_: hide comment        _q_uit
          (lambda (str) (orderless--highlight input str))))
       (setq consult--regexp-compiler #'consult--orderless-regexp-compiler)
       )
-
+    
     ;; 美化
     (use-package marginalia
       :commands(marginalia-mode)
@@ -1400,7 +1401,6 @@ _c_: hide comment        _q_uit
       (marginalia-mode)
       :config
       )
-
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :commands(embark-export
@@ -1430,26 +1430,7 @@ _c_: hide comment        _q_uit
                                                     (interactive "f")
                                                     (browse-file-in-explorer file)))
       )
-    
-    ;; 会绑定consult-file-externally到embark里
-    (use-package embark-consult
-      :after (embark)
-      :demand t
-      :hook
-      (embark-collect-mode . consult-preview-at-point-mode))
-    ;; 随时选择路径
-    (use-package consult-dir
-      :commands(consult-dir)
-      :init
-      (define-key vertico-map "\M-D" 'consult-dir)
-      ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
-      :config
-      (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
-        (setq ad-return-value dired-recent-directories)
-        )
-      )
     )
-
   ;; 预览功能很快！好像不是真的加载
   (use-package consult
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
@@ -1583,6 +1564,24 @@ _c_: hide comment        _q_uit
           (apply args)))
       (advice-add #'consult-everything :around #'consult--with-orderless)
       :config
+      )
+    ;; 会绑定consult-file-externally到embark里
+    (use-package embark-consult
+      :after (embark)
+      :demand t
+      :hook
+      (embark-collect-mode . consult-preview-at-point-mode))
+    ;; 随时选择路径
+    (use-package consult-dir
+      :commands(consult-dir)
+      :init
+      (with-eval-after-load 'vertico
+        (define-key vertico-map "\M-D" 'consult-dir))
+      ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
+      :config
+      (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
+        (setq ad-return-value dired-recent-directories)
+        )
       )
     :config
     ;; 禁止某些preview

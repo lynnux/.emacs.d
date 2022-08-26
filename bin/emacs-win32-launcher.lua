@@ -9,8 +9,8 @@ if "WIN-6PRFQIFSB6O" == utils.system_name()
    and MinorVersion == 1
    and BuildNumber == 7601
 then
-   emacsclientw = "C:\\green\\emacs\\gccemacs\\bin\\emacsclientw.exe"
-   runemacs = "C:\\green\\emacs\\gccemacs\\bin\\runemacs.exe"
+   emacsclientw = "C:\\green\\emacs\\gccemacs_210515\\bin\\emacsclientw.exe"
+   runemacs = "C:\\green\\emacs\\gccemacs_210515\\bin\\runemacs.exe"
 end
 
 -- work pc
