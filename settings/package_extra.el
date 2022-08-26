@@ -7,7 +7,9 @@
 
 ;; 使用老版本提示
 ;; 28.0.50，1.查看eln-cache，会有几个文件的TMP一直生成，找到删除对应elc就可以了，不然每次emacs启动都会去编译 2.删除自带的python不然lsp有问题
-
+;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
+;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
+ 
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/packages/use-package")
   (require 'use-package))
