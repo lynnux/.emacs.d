@@ -1,11 +1,11 @@
 ;;; easy-kill.el --- kill & mark things easily       -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2018  Free Software Foundation, Inc.
+;; Copyright (C) 2013-2022  Free Software Foundation, Inc.
 
 ;; Author: Leo Liu <sdl.web@gmail.com>
-;; Version: 0.9.4
+;; Version: 0.9.5
 ;; Package-Type: simple
-;; Package-Requires: ((emacs "24") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "25") (cl-lib "0.5"))
 ;; Keywords: killing, convenience
 ;; Created: 2013-08-12
 ;; URL: https://github.com/leoliu/easy-kill
@@ -27,13 +27,13 @@
 
 ;; `easy-kill' aims to be a drop-in replacement for `kill-ring-save'.
 ;;
-;; To use: (global-set-key [remap kill-ring-save] 'easy-kill)
+;; To use: (global-set-key [remap kill-ring-save] #'easy-kill)
 
 ;; `easy-mark' is similar to `easy-kill' but marks the region
 ;; immediately. It can be a handy replacement for `mark-sexp' allowing
 ;; `+'/`-' to do list-wise expanding/shrinking.
 ;;
-;; To use: (global-set-key [remap mark-sexp] 'easy-mark)
+;; To use: (global-set-key [remap mark-sexp] #'easy-mark)
 
 ;; Please send bug reports or feature requests to:
 ;;      https://github.com/leoliu/easy-kill/issues
@@ -42,35 +42,6 @@
 
 (require 'cl-lib)
 (require 'thingatpt)
-(require 'gv nil t)                     ;For `defsetf'.
-(eval-when-compile (require 'cl))       ;For `defsetf'.
-
-(eval-and-compile
-  (cond
-   ((fboundp 'set-transient-map) nil)
-   ((fboundp 'set-temporary-overlay-map) ; new in 24.3
-    (defalias 'set-transient-map 'set-temporary-overlay-map))
-   (t
-    (defun set-transient-map (map &optional keep-pred)
-      (let* ((clearfunsym (make-symbol "clear-temporary-overlay-map"))
-             (overlaysym (make-symbol "t"))
-             (alist (list (cons overlaysym map)))
-             (clearfun
-              `(lambda ()
-                 (unless ,(cond ((null keep-pred) nil)
-                                ((eq t keep-pred)
-                                 `(eq this-command
-                                      (lookup-key ',map
-                                                  (this-command-keys-vector))))
-                                (t `(funcall ',keep-pred)))
-                   (set ',overlaysym nil) ;Just in case.
-                   (remove-hook 'pre-command-hook ',clearfunsym)
-                   (setq emulation-mode-map-alists
-                         (delq ',alist emulation-mode-map-alists))))))
-        (set overlaysym overlaysym)
-        (fset clearfunsym clearfun)
-        (add-hook 'pre-command-hook clearfunsym)
-        (push alist emulation-mode-map-alists))))))
 
 (defcustom easy-kill-alist '((?w word           " ")
                              (?s sexp           "\n")
@@ -83,10 +54,7 @@
   "A list of (CHAR THING APPEND).
 CHAR is used immediately following `easy-kill' to select THING.
 APPEND is optional and if non-nil specifies the separator (a
-string) for appending current selection to previous kill.
-
-Note: each element can also be (CHAR . THING) but this is
-deprecated."
+string) for appending current selection to previous kill."
   :type '(repeat (list character symbol
                        (choice string (const :tag "None" nil))))
   :group 'killing)
@@ -101,12 +69,12 @@ deprecated."
   :type '(choice (const :tag "None" nil) key-sequence)
   :group 'killing)
 
-(defcustom easy-kill-try-things '(url email line)
+(defcustom easy-kill-try-things '(url email uuid line)
   "A list of things for `easy-kill' to try."
   :type '(repeat symbol)
   :group 'killing)
 
-(defcustom easy-mark-try-things '(url email sexp)
+(defcustom easy-mark-try-things '(url email uuid sexp)
   "A list of things for `easy-mark' to try."
   :type '(repeat symbol)
   :group 'killing)
@@ -121,21 +89,21 @@ deprecated."
 
 (defvar easy-kill-base-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "-" 'easy-kill-shrink)
-    (define-key map "+" 'easy-kill-expand)
-    (define-key map "=" 'easy-kill-expand)
-    (define-key map " " 'easy-kill-cycle)
-    (define-key map "@" 'easy-kill-append)
+    (define-key map "-" #'easy-kill-shrink)
+    (define-key map "+" #'easy-kill-expand)
+    (define-key map "=" #'easy-kill-expand)
+    (define-key map " " #'easy-kill-cycle)
+    (define-key map "@" #'easy-kill-append)
     ;; Note: didn't pick C-h because it is a very useful prefix key.
-    (define-key map "?" 'easy-kill-help)
-    (define-key map [remap set-mark-command] 'easy-kill-mark-region)
-    (define-key map [remap kill-region] 'easy-kill-region)
-    (define-key map [remap delete-region] 'easy-kill-delete-region)
-    (define-key map [remap keyboard-quit] 'easy-kill-abort)
+    (define-key map "?" #'easy-kill-help)
+    (define-key map [remap set-mark-command] #'easy-kill-mark-region)
+    (define-key map [remap kill-region] #'easy-kill-region)
+    (define-key map [remap delete-region] #'easy-kill-delete-region)
+    (define-key map [remap keyboard-quit] #'easy-kill-abort)
     (define-key map [remap exchange-point-and-mark]
-      'easy-kill-exchange-point-and-mark)
+      #'easy-kill-exchange-point-and-mark)
     (mapc (lambda (d)
-            (define-key map (number-to-string d) 'easy-kill-digit-argument))
+            (define-key map (number-to-string d) #'easy-kill-digit-argument))
           (number-sequence 0 9))
     map))
 
@@ -153,7 +121,7 @@ deprecated."
 Do nothing if `easy-kill-inhibit-message' is non-nil."
   (unless easy-kill-inhibit-message
     (let (message-log-max)
-      (apply 'message format-string args))))
+      (apply #'message format-string args))))
 
 (defun easy-kill-trim (s &optional how)
   (let ((wchars "[ \t\n\r\f\v]*"))
@@ -195,11 +163,10 @@ The value is the function's symbol if non-nil."
     (set-keymap-parent map easy-kill-base-map)
     (when easy-kill-unhighlight-key
       (with-demoted-errors "easy-kill-unhighlight-key: %S"
-        (define-key map easy-kill-unhighlight-key 'easy-kill-unhighlight)))
-    (mapc (lambda (c)
-            ;; (define-key map (vector meta-prefix-char c) 'easy-kill-select)
-            (define-key map (char-to-string c) 'easy-kill-thing))
-          (mapcar 'car easy-kill-alist))
+        (define-key map easy-kill-unhighlight-key #'easy-kill-unhighlight)))
+    (dolist (c easy-kill-alist)
+      ;; (define-key map (vector meta-prefix-char (car c)) #'easy-kill-select)
+      (define-key map (char-to-string (car c)) #'easy-kill-thing))
     map))
 
 (defun easy-kill--fmt (x y &optional z)
@@ -228,11 +195,8 @@ The value is the function's symbol if non-nil."
     (princ "\n")
     (princ (easy-kill--fmt "---" "-----" "---------"))
     (princ "\n\n")
-    (princ (mapconcat (lambda (x) (pcase x
-                                    (`(,c ,thing ,sep)
-                                     (easy-kill--fmt c thing sep))
-                                    ((or `(,c ,thing) `(,c . ,thing))
-                                     (easy-kill--fmt c thing))))
+    (princ (mapconcat (pcase-lambda (`(,c ,thing ,sep))
+                        (easy-kill--fmt c thing sep))
                       easy-kill-alist "\n"))
     (princ "\n\n")
     (princ (substitute-command-keys "\\{easy-kill-base-map}"))))
@@ -243,14 +207,9 @@ The value is the function's symbol if non-nil."
   (cons (overlay-start easy-kill-candidate)
         (overlay-end easy-kill-candidate)))
 
-;;; Note: gv-define-setter not available in 24.1 and 24.2
-;; (gv-define-setter easy-kill--bounds (val)
-;;   (macroexp-let2 macroexp-copyable-p v val
-;;     `(move-overlay easy-kill-candidate (car ,v) (cdr ,v))))
-
-(defsetf easy-kill--bounds () (v)
-  `(let ((tmp ,v))
-     (move-overlay easy-kill-candidate (car tmp) (cdr tmp))))
+(gv-define-setter easy-kill--bounds (val)
+  (macroexp-let2 macroexp-copyable-p v val
+    `(move-overlay easy-kill-candidate (car ,v) (cdr ,v))))
 
 (defmacro easy-kill-get (prop)
   "Get the value of the kill candidate's property PROP.
@@ -286,9 +245,6 @@ Use `setf' to change property value."
         (overlay-put o 'origin-indicator i)))
     (setq easy-kill-candidate o)
     (save-restriction
-      ;; Work around http://debbugs.gnu.org/15808; not needed in 24.4.
-      (narrow-to-region (max (point-min) (- (point) 1000))
-                        (min (point-max) (+ (point) 1000)))
       (let ((easy-kill-inhibit-message t))
         (cl-dolist (thing easy-kill-try-things)
           (easy-kill-thing thing n)
@@ -315,7 +271,7 @@ non-zero length, it is the string covered by the overlay.
 Otherwise, it is the value of the overlay's candidate property."
   (with-current-buffer (easy-kill-get buffer)
     (or (pcase (easy-kill-get bounds)
-          (`(,_x . ,_x) (easy-kill-get candidate))
+          (`(,x . ,x) (ignore x) (easy-kill-get candidate))
           (`(,beg . ,end) (filter-buffer-substring beg end)))
         "")))
 
@@ -406,16 +362,14 @@ A thing is opted out of cycling if in `easy-kill-cycle-ignored'."
       (easy-kill-cycle next))))
 
 (defun easy-kill-cycle-next (thing depth)
-  (cl-flet ((thing-name (thing)
-              (if (symbolp (cdr thing)) (cdr thing) (cl-second thing))))
-    (let ((next (thing-name
-                 (car (or (cl-loop for (head . tail) on easy-kill-alist
-                                   when (eq thing (thing-name head))
-                                   return tail)
-                          easy-kill-alist)))))
-      (cond ((not (memq next easy-kill-cycle-ignored)) next)
-            ((> depth 0) (easy-kill-cycle-next next (1- depth)))
-            (t (user-error "Nothing to cycle"))))))
+  (let ((next (cl-second
+               (car (or (cl-loop for (head . tail) on easy-kill-alist
+                                 when (eq thing (cl-second head))
+                                 return tail)
+                        easy-kill-alist)))))
+    (cond ((not (memq next easy-kill-cycle-ignored)) next)
+          ((> depth 0) (easy-kill-cycle-next next (1- depth)))
+          (t (user-error "Nothing to cycle")))))
 
 (defun easy-kill-digit-argument (n)
   "Expand selection by N number of things.
@@ -489,7 +443,7 @@ checked."
                         (`1 end))))
            (new-front (save-excursion
                         (goto-char front)
-                        (with-demoted-errors
+                        (with-demoted-errors "%S"
                           (dotimes (_ (abs n))
                             (easy-kill-thing-forward-1 thing step)))
                         (point))))
@@ -502,9 +456,7 @@ checked."
 (defun easy-kill-thing (&optional thing n inhibit-handler)
   ;; N can be -, + and digits
   (interactive
-   (list (pcase (assq last-command-event easy-kill-alist)
-           (`(,_ ,th . ,_) th)
-           (`(,_ . ,th) th))
+   (list (cl-second (assq last-command-event easy-kill-alist))
          (prefix-numeric-value current-prefix-arg)))
   (let* ((thing (or thing (easy-kill-get thing)))
          (n (or n 1))
@@ -544,14 +496,13 @@ checked."
   "Kill current selection and exit."
   (interactive "*")
   (pcase (easy-kill-get bounds)
-    (`(,_x . ,_x) (easy-kill-echo "Empty region"))
+    (`(,x . ,x) (ignore x) (easy-kill-echo "Empty region"))
     (`(,beg . ,end) (kill-region beg end))))
 
 (easy-kill-defun easy-kill-mark-region ()
   (interactive)
   (pcase (easy-kill-get bounds)
-    (`(,_x . ,_x)
-     (easy-kill-echo "Empty region"))
+    (`(,x . ,x) (ignore x) (easy-kill-echo "Empty region"))
     (`(,beg . ,end)
      (pcase (if (eq (easy-kill-get mark) 'end)
                 (list end beg) (list beg end))
@@ -638,7 +589,7 @@ Temporally activate additional key bindings as follows:
     (easy-kill-activate-keymap)))
 
 ;;;###autoload
-(defalias 'easy-mark-sexp 'easy-mark
+(defalias 'easy-mark-sexp #'easy-mark
   "Use `easy-mark' instead. The alias may be removed in future.")
 
 ;;;###autoload
@@ -834,8 +785,8 @@ inspected."
     (n (ignore-errors
          (dotimes (_ (abs n))
            (pcase (list (point) (easy-kill-bounds-of-thing-at-point 'list))
-             (`(,_beg (,_beg . ,_)) (org-up-element))
-             (`(,_ (,beg . ,_))     (goto-char beg)))))
+             (`(,beg (,beg . ,_)) (ignore beg) (org-up-element))
+             (`(,_ (,beg . ,_))   (goto-char beg)))))
        (when (cl-plusp n)
          (goto-char (cdr (easy-kill-bounds-of-thing-at-point 'list)))))))
 

@@ -1856,11 +1856,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
   (add-to-list 'easy-kill-alist '(?= my-line ""))
 
-  (setq easy-mark-try-things '(symbol)) ; word优先，特别是有横杠什么都时候
+  (setq easy-mark-try-things '(symbol sexp)) ; 要加sexp，不然在)处expand会有bug
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
   (define-key easy-kill-base-map (kbd "C-t") 'easy-kill-er-expand)
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
-  (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand)
+  (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand) ;; 有bug，只有mark时有用
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
