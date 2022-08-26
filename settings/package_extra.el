@@ -306,7 +306,8 @@ _q_uit
       (setq session-save-file-coding-system 'utf-8)
       (setq session-globals-include '((kill-ring 50)
 				      (session-file-alist 100 t)
-				      (file-name-history 300)))
+				      (file-name-history 300))
+            session-locals-include nil)
       
       :config
       (add-hook 'after-init-hook 'session-initialize)
@@ -324,7 +325,7 @@ _q_uit
       (add-to-list 'session-globals-exclude 'consult--buffer-history)
       )
   (progn
-    ;; Save minibuffer history. 不仅仅是minibuffer!
+    ;; 相比session，可以保存非consp的值。但session的C-x C-/好用，而且可以保存最后一次的记录
     (use-package savehist
       :defer 0.4
       :config
