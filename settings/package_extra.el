@@ -290,57 +290,58 @@ _q_uit
   (after-init . recentf-mode)
   )
 
-(if t
-    ;; session的C-x C-/貌似好用一点？
-    (use-package session
-      ;; session只保存了修改文件的point
-      ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
-      ;; C-x C-/可以跳到最近的修改处
-      :init
-      ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
-      ;; menus需要保留，不然file-name-history即recent files列表不对
-      (setq session-initialize (list 'session 'keys)) ; 如果要重新打开文件也可以jump to last，那么就需要'session
-      ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
-      (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
-      ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
-      (setq session-save-file-coding-system 'utf-8)
-      (setq session-globals-include '((kill-ring 50)
-				      (session-file-alist 100 t)
-				      (file-name-history 300))
-            session-locals-include nil)
-      
-      :config
-      (add-hook 'after-init-hook 'session-initialize)
-      ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
-      (add-to-list 'session-globals-exclude 'rg-history)
-      (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
-      (add-to-list 'session-globals-exclude 'helm-grep-history)
-      (add-to-list 'session-globals-exclude 'helm-occur-history)
-      (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
-      (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
-      (add-to-list 'session-globals-exclude 'kmacro-ring)
-      (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
-      (add-to-list 'session-globals-exclude 'vertico-repeat-history)
-      (add-to-list 'session-globals-exclude 'org-roam-node-history)
-      (add-to-list 'session-globals-exclude 'consult--buffer-history)
-      )
-  (progn
-    ;; 相比session，可以保存非consp的值。但session的C-x C-/好用，而且可以保存最后一次的记录
-    (use-package savehist
-      :defer 0.4
-      :config
-      (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
-      ;; The maximum length of a minibuffer history list. Once reached, the oldest
-      ;; entries get deleted.
-      (setq history-length 10000)
-      ;; Keep duplicates in the history.
-      (setq history-delete-duplicates nil)
-      (setq savehist-autosave-interval nil); save on kill only
-      ;; Save search entries as well.
-      ;; (setq savehist-additional-variables '(search-ring regexp-search-ring))
-      (setq savehist-save-minibuffer-history t)
-      (savehist-mode t))    
-    ))
+;; session的C-x C-/貌似好用一点？
+(use-package session
+  ;; session只保存了修改文件的point
+  ;; 搜索"Open...Recently Changed"可以确定session-file-alist只保存了修改过的文件列表
+  ;; C-x C-/可以跳到最近的修改处
+  :init
+  ;; 不要禁用saveplace hook，不要保存places功能(session只保存了修改文件的point，用saveplace)
+  ;; menus需要保留，不然file-name-history即recent files列表不对
+  (setq session-initialize (list 'session 'keys)) ; 如果要重新打开文件也可以jump to last，那么就需要'session
+  ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
+  (setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
+  ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
+  (setq session-save-file-coding-system 'utf-8)
+  (setq session-globals-include '(
+                                  ;;(kill-ring 50) ;; 用ditto就行了
+				  (session-file-alist 100 t)
+				  (file-name-history 300))
+        session-locals-include nil)
+  
+  :config
+  (add-hook 'after-init-hook 'session-initialize)
+  ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
+  (add-to-list 'session-globals-exclude 'rg-history)
+  (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
+  (add-to-list 'session-globals-exclude 'helm-grep-history)
+  (add-to-list 'session-globals-exclude 'helm-occur-history)
+  (add-to-list 'session-globals-exclude 'log-edit-comment-ring)
+  (add-to-list 'session-globals-exclude 'helm-source-complex-command-history)
+  (add-to-list 'session-globals-exclude 'kmacro-ring)
+  (add-to-list 'session-globals-exclude 'file-name-history) ;; recentf记录了
+  (add-to-list 'session-globals-exclude 'vertico-repeat-history)
+  (add-to-list 'session-globals-exclude 'org-roam-node-history)
+  (add-to-list 'session-globals-exclude 'consult--buffer-history)
+  (add-to-list 'session-globals-exclude 'buffer-name-history) ;; 这个wcy已经记录了
+  )
+
+;; 目前只给dired-quick-sort用，因为session不能保存非consp的变量
+(use-package savehist
+  :after(dired)
+  :init
+  (setq savehist-file (expand-file-name ".savehist" user-emacs-directory))
+  ;;(setq history-delete-duplicates nil)
+  (setq savehist-autosave-interval nil); 只emacs退出时保存，不要timer
+  (setq savehist-save-minibuffer-history nil) ;; 我们只给dired的sort用
+  :config
+  (defun my-init-savehist()
+    (savehist-mode +1)
+    (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)
+    )
+  (add-to-list 'dired-mode-hook 'my-init-savehist)
+)
+
 
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
 (global-set-key (kbd "C-x C-r") 'files-recent-visited)
@@ -2972,20 +2973,21 @@ _q_uit
   :commands(posframe-hide posframe-show)
   )
 
+(use-package simple
+  :defer t
+  :init
+  (setq blink-matching-paren nil) ;; 不然blink-matching-open不显示
+  :config
+  ;; blink-matching-paren为nil的话顺便把这个hook给去掉
+  (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
+  (remove-hook 'minibuffer-setup-hook #'minibuffer-history-isearch-setup) ;; isarch不需要？
+  )
 ;; from https://github.com/seagle0128/.emacs.d/blob/4d0a1f0f0f6ed99e6cf9c0e0888c4e323ce2ca3a/lisp/init-highlight.el#L43
 ;; 显示屏幕外的匹配行了，29自带，但是滚动时不显示，参考上面修改成posframe显示，并且不是光标附近更友好
 (use-package paren
   :init (setq show-paren-when-point-inside-paren t
               show-paren-when-point-in-periphery t
               )
-  (use-package simple
-    :defer t
-    :init
-    (setq blink-matching-paren nil) ;; 不然blink-matching-open不显示
-    :config
-    ;; blink-matching-paren为nil的话顺便把这个hook给去掉
-    (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
-    )
   :config
   (with-no-warnings
     (defun show-paren-off-screen (&rest _args)
