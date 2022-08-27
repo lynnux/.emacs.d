@@ -155,12 +155,14 @@ _q_uit
     (remove-hook 'dired-mode-hook 'delay-dired-relate-init)
     
     (dired-recent-mode 1)
+    (dired-recent-path-save) ;; 调用一次修复延迟加载导致的问题
     
     (use-package dired-hist
       :config
       (define-key dired-mode-map (kbd "M-p") #'dired-hist-go-back)
       (define-key dired-mode-map (kbd "M-n") #'dired-hist-go-forward)
       (dired-hist-mode 1)
+      (dired-hist--update) ;; 调用一次修复延迟加载导致的问题
       )
     ;; dired-quick-sort
     ;;  (setq dired-quick-sort-suppress-setup-warning t)
@@ -168,6 +170,7 @@ _q_uit
       :config
       (dired-quick-sort-setup)
       (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
+      (dired-quick-sort-set-switches) ;; 调用一次修复延迟加载导致的问题
       )
     
     ;; dired-hacks功能很多
