@@ -245,7 +245,14 @@ _q_uit
         (dired-ranger-show-ring))
       (defadvice dired-ranger-copy (after my-dired-ranger-copy activate)
         (dired-ranger-show-ring))
-      )  
+      )
+    
+    (use-package diredful
+      :init
+      (setq diredful-init-file "~/.emacs.d/packages/dired/diredful-conf.el")
+      :config
+      (diredful-mode 1)
+      )
     )
   (add-hook 'dired-mode-hook 'delay-dired-relate-init)
   )
