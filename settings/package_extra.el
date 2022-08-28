@@ -820,13 +820,26 @@ _c_: hide comment        _q_uit
 (use-package google-c-style
   :commands( google-set-c-style))
 
+(use-package cc-mode
+  :defer t
+  :config
+  ;; 自带的key基本没什么用
+  (setq c-mode-base-map (make-sparse-keymap)
+        c-mode-map (make-sparse-keymap)
+        c++-mode-map (make-sparse-keymap)
+        objc-mode-map (make-sparse-keymap)
+        java-mode-map (make-sparse-keymap)
+        idl-mode-map (make-sparse-keymap)
+        pike-mode-map (make-sparse-keymap)
+        awk-mode-map (make-sparse-keymap)
+        ))
+
 (defun my-c-mode-hook-set()
   (google-set-c-style)
   (setq c-basic-offset 4) ;; tab4个空格习惯了
   (abbrev-mode -1) ;; 有yas就够了
-  (define-key c-mode-base-map "\C-d" nil) ;; 干扰其他parens处理了
-  (define-key c-mode-base-map "\177" nil) ;; backspack
   )
+
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist (append '(("\\.\\([Nn][Ss][Ii]\\)$" .

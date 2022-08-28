@@ -279,3 +279,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 (setq next-error-recenter (quote (4)))
 (setq w32-ignore-modifiers-on-IME-input nil) ;; 有输入法时屏幕C M等
+;; revert-buffer不提示，因为有auto save
+(setq-default revert-buffer-function (lambda (ignore-auto noconfirm)
+                                       (revert-buffer--default ignore-auto t)))
