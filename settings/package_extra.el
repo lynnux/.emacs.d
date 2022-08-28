@@ -1794,43 +1794,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			     (call-interactively 'easy-mark)
 			     )))
   :config
-  (defvar my-easy-kill-map nil)
-  (when (and nil (functionp 'which-key--show-keymap)) ;; 还是有效率影响的，尤其win10上面
-    ;; 简化which-key提示
-    (with-eval-after-load 'which-key
-      ;; 去掉easy-kill-前辍
-      ;; (push '((nil . "easy-kill-digit-argument") . (nil . "")) which-key-replacement-alist)
-      (push '((nil . "easy-kill-") . (nil . "")) which-key-replacement-alist)
-      
-      ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
-      ;; easy-kill-help 可以显示所有功能
-      ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
-      (cl-dolist (one easy-kill-alist)
-        (push `((,(regexp-quote (char-to-string (car one))) . "easy-kill-thing") . (nil . ,(symbol-name (nth 1 one)))) which-key-replacement-alist)
-        )
-      )
-    
-    (defadvice easy-kill-activate-keymap (before my-easy-kill-activate-keymap activate)
-      (unless my-easy-kill-map
-        (let ((easy-kill-base-map easy-kill-base-map))
-          ;; remove number keys
-          (cl-loop for i from 0 to 9
-                   do (define-key easy-kill-base-map (number-to-string i) nil))
-          (setq my-easy-kill-map (easy-kill-map))
-          ))
-      ;; 有popper窗口时不弹出
-      (if (and (functionp 'popper-toggle-latest) (boundp 'popper-open-popup-alist))
-          (unless popper-open-popup-alist 
-            (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging))
-        (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)))
-    (defadvice set-transient-map (before my-set-transient-map activate)
-      (let ((map (ad-get-arg 0)))
-        ;; 判断是否是easy-kill的keymap
-        (when (eq (lookup-key map "?") 'easy-kill-help)
-          (ad-set-arg 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
-          )))
-    )
-  
   ;; 添加yank-handler让粘贴时含换行
   (defadvice easy-kill (after my-easy-kill activate)
     (unless (or (use-region-p) (not (called-interactively-p 'any)))
@@ -1927,6 +1890,58 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?s symbol ""))
   (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
+  
+  (when (functionp 'which-key--show-keymap)
+    ;; 简化which-key提示
+    (with-eval-after-load 'which-key
+      ;; 去掉easy-kill-前辍
+      ;; (push '((nil . "easy-kill-digit-argument") . (nil . "")) which-key-replacement-alist)
+      (push '((nil . "easy-kill-") . (nil . "")) which-key-replacement-alist)
+      
+      ;; 额外居然都显示easy-kill-thing，这里替换它们的显示
+      ;; easy-kill-help 可以显示所有功能
+      ;; (push '(("s" . "easy-kill-thing") . (nil . "symbol")) which-key-replacement-alist)
+      (cl-dolist (one easy-kill-alist)
+        (push `((,(regexp-quote (char-to-string (car one))) . "easy-kill-thing") . (nil . ,(symbol-name (nth 1 one)))) which-key-replacement-alist)
+        )
+      )
+    (defvar my-easy-kill-map nil)
+    (unless my-easy-kill-map
+      (let ((easy-kill-base-map easy-kill-base-map))
+        ;; remove number keys
+        (cl-loop for i from 0 to 9
+                 do (define-key easy-kill-base-map (number-to-string i) nil))
+        (setq my-easy-kill-map (easy-kill-map))
+        ))
+    (if t ;; 有两种显示方式1.按?显示 2.一直显示。2会影响性能不用
+        (define-key easy-kill-base-map "?"
+          (lambda () (interactive)
+            (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)
+            (set-transient-map my-easy-kill-map nil 'which-key--hide-popup)
+            ))
+      (progn
+        (defadvice easy-kill-activate-keymap (before my-easy-kill-activate-keymap activate)
+          (unless my-easy-kill-map
+            (let ((easy-kill-base-map easy-kill-base-map))
+              ;; remove number keys
+              (cl-loop for i from 0 to 9
+                       do (define-key easy-kill-base-map (number-to-string i) nil))
+              (setq my-easy-kill-map (easy-kill-map))
+              ))
+          ;; 有popper窗口时不弹出
+          (if (and (functionp 'popper-toggle-latest) (boundp 'popper-open-popup-alist))
+              (unless popper-open-popup-alist 
+                (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging))
+            (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)))
+        (defadvice set-transient-map (before my-set-transient-map activate)
+          (let ((map (ad-get-arg 0)))
+            ;; 判断是否是easy-kill的keymap
+            (when (eq (lookup-key map "?") 'easy-kill-help)
+              (ad-set-arg 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
+              )))
+        )
+      )
+    )
   )
 
 ;; project内置查找会用到，支持ripgrep了！
