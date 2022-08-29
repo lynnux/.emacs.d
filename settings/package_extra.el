@@ -632,9 +632,6 @@ _c_: hide comment        _q_uit
 
 
 (progn
-  (add-hook 'after-init-hook (lambda ()
-                               (set-cursor-color "red3")
-                               ))
   (defvar last-readonly-state t) ;; 设为t让*scratch*可以正常显示
   (defun my-cursor-chg()
     (when (not (eq last-readonly-state  buffer-read-only))
