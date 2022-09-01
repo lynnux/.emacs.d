@@ -282,3 +282,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; revert-buffer不提示，因为有auto save
 (setq-default revert-buffer-function (lambda (ignore-auto noconfirm)
                                        (revert-buffer--default ignore-auto t)))
+
+(setq large-file-warning-threshold 100000000) ; 大文件询问，原来10M左右，调整为100M，避免加载TAGS时询问

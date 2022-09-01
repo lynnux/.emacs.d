@@ -366,7 +366,7 @@ _q_uit
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
 (global-set-key (kbd "C-x C-r") 'files-recent-visited)
 (global-set-key (kbd "C-c o") 'hydra-occur-select)
-(global-set-key (kbd "C-c m") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示
+(global-set-key (kbd "C-c m") 'hydra-hideshow-select) ; bug:最后一个第3参数必须带名字，否则上面最后一行不显示  
 
 (defun files-recent-type (src)
   (interactive)
@@ -1566,6 +1566,7 @@ _c_: hide comment        _q_uit
       :commands(consult-org-agenda) ; 这个很卡啊，还是不替换C-c a了(C-c a再按t也比较卡，应该是org mode问题)
       )
     (use-package consult-xref
+      :after(xref) ;; 有时候显示结果为0，但只要一输入或者移动就有结果了
       :commands(consult-xref)
       :init
       (setq xref-show-xrefs-function #'consult-xref
@@ -2249,13 +2250,37 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
   :commands(lsp-bridge-mode)
   :init
-  (setq acm-enable-english-helper nil) ;; english字典太大已经删除了
+  (setq acm-enable-english-helper nil  ;; english字典太大已经删除了
+        )
   (defun lsp-ensure()
     (lsp-bridge-mode 1)
-    (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
-    (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
+    )
+  (use-package acm-backend-citre
+    :defer t
+    :init
+    (setq acm-enable-citre t)
+    :config
+    (defun acm-backend-citre-candidates (keyword)
+      "原函数去重，二次fuzzy，排序什么的都不需要"
+      (when (and acm-enable-citre (>= (length keyword) 3)) ;; 必须设置长度，1会卡死，2有时会卡
+        (let* ((candidates (list))
+               (collection (all-completions keyword (tags-lazy-completion-table))))
+          (when collection
+            (dolist (candidate collection)
+              (add-to-list 'candidates (list :key candidate
+                                             :icon "tabnine"
+                                             :label candidate
+                                             :display-label candidate
+                                             :annotation "tabnine" 
+                                             :backend "citre")
+                           t))
+            candidates))))
     )
   :config
+  (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
+  (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
+  (define-key lsp-bridge-mode-map [(meta f8)] 'lsp-bridge-code-format)
+
   ;; 在minbuffer时不显示
   (setq lsp-bridge-signature-function (lambda(msg)
                                         (unless (minibufferp)
@@ -2281,6 +2306,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
   (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
   (use-package acm
+    :init
+    ;; (setq acm-candidate-match-function 'orderless-flex) ;; flex有奇怪问题，如createprocessw，输入到w就卡死了
     :config
     (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
     )
