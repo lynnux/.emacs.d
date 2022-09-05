@@ -564,6 +564,7 @@ _c_: hide comment        _q_uit
                      ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
                      ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil);; 排除magit-process
                      ((buffer-file-name b) b)
+                     ((string-match "*gud-.*" (format "%s" (buffer-name b))) b) ;; gud buffer
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
@@ -894,19 +895,6 @@ _c_: hide comment        _q_uit
   :config
   (define-key iss-mode-map [f6] 'iss-compile)
   (define-key iss-mode-map [(meta f6)] 'iss-run-installer)
-  )
-
-(use-package w32-browser
-  :commands (w32explore dired-mouse-w32-browser dired-w32-browser dired-multiple-w32-browser dired-w32explore)
-  :init
-  ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
-  (when (string-equal system-type "windows-nt")
-    (defun browse-file-in-explorer (&optional file)
-      "browse file in windows explorer"
-      (interactive)
-      (w32explore (or file (buffer-file-name (current-buffer)) default-directory))
-      )
-    (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
   )
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
@@ -2364,7 +2352,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
               ;; (enable-format-on-save)
               (my-c-mode-hook-set)
-              (lsp-ensure)
+              (my-eglot-ensure) ;; lsp bridge配合clangd很容易遇到问题还没法解决。。
 	      )))
 (add-hook 'rust-mode-hook 'lsp-ensure)
 
@@ -2398,7 +2386,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package quickrun
   :commands(quickrun quickrun-shell helm-quickrun)
   :init
-  (global-set-key (kbd "<f5>") 'quickrun)
+  (with-eval-after-load 'python
+    (define-key python-mode-map (kbd "<f5>") 'quickrun))
   (setq quickrun-option-shebang nil     ;; windows没有这东西
         quickrun-timeout-seconds 20 ;; 超过10秒不结束进程
         )
@@ -3091,6 +3080,44 @@ _q_uit
         ))
     ;;(advice-add #'show-paren-function :after #'show-paren-off-screen)
     ))
+
+(when (string-equal system-type "windows-nt")
+  (use-package w32-browser
+    :commands (w32explore dired-mouse-w32-browser dired-w32-browser dired-multiple-w32-browser dired-w32explore)
+    :init
+    ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
+    (defun browse-file-in-explorer (&optional file)
+      "browse file in windows explorer"
+      (interactive)
+      (w32explore (or file (buffer-file-name (current-buffer)) default-directory))
+      )
+    (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer)
+    )
+  (use-package cdb-gud
+    :commands(cdb cdb-pidFromExe cdb-promptPidAndExe cdbAttach cdbDebugChoice)
+    :init
+    ;; speedbar获取stackframe还有问题，需要再分析下
+    )
+)
+(use-package gud
+  :defer t
+  :init
+  (global-set-key (kbd "<f5>") (lambda()
+                                 (interactive)
+                                 (if (functionp 'gud-cont)
+                                     (call-interactively 'gud-cont)
+                                     (call-interactively 'cdb))))
+  (global-set-key (kbd "<f9>") 'gud-break)
+  (global-set-key (kbd "C-<f9>") 'gud-tbreak) ;; tempory breakpoint
+  ;; (global-set-key (kbd "C-<f9>") 'gud-remove)
+  (global-set-key (kbd "<f10>") 'gud-next)
+  (global-set-key (kbd "<f11>") 'gud-step)
+  (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点
+  :config
+  (add-hook 'gud-mode-hook (lambda()
+                             (corfu-mode) ;; gud有capf可用
+                             ))
+  )
 
 
 ;; 好的theme特点:

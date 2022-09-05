@@ -27,7 +27,8 @@
    org-default-notes-file "D:/autosync/autosync/ts/org/default.org"
    org-roam-directory (file-truename "F:/doc/mynote")
    )
-  (add-path-to-execute-path "C:/Git/usr/bin"))
+  (add-path-to-execute-path "C:/Git/usr/bin")
+  (add-path-to-execute-path "C:/Program Files (x86)/Windows Kits/10/Debuggers/x64"))
  
  ;; work
  ((and 
