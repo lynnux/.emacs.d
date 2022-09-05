@@ -564,7 +564,8 @@ _c_: hide comment        _q_uit
                      ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
                      ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil);; 排除magit-process
                      ((buffer-file-name b) b)
-                     ((string-match "*gud-.*" (format "%s" (buffer-name b))) b) ;; gud buffer
+                     ((string-match "^\*gud-.*" (format "%s" (buffer-name b))) b) ;; gud buffer
+                     ((string-match "^\*Embark .*" (format "%s" (buffer-name b))) b)
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
