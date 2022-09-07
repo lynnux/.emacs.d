@@ -3186,7 +3186,12 @@ _q_uit
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
                    (custom-set-faces
 	            '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
-	            )
+	            '(corfu-current ((t (:foreground "#c678dd"))))
+                    )
+                   (when nil
+                     ;; region有点看不清，单独设置
+                     (set-face-attribute 'region nil :background "#4C7073")
+                     )
                    )
                   )
             )
@@ -3197,11 +3202,6 @@ _q_uit
                                  ;; 'spacemacs-dark
                                  ;; 'modus-vivendi
                                  ))
-        )
-      
-      (when nil
-        ;; region有点看不清，单独设置
-        (set-face-attribute 'region nil :background "#4C7073")
         )
       )
   (progn

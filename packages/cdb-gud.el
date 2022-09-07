@@ -383,6 +383,7 @@ and source-file directory for your debugger."
   (gud-def gud-next   "p "            "\C-n" "Step one line (skip functions).")
   (gud-def gud-cont   "g "            "\C-r" "Continue with display.")
   (gud-def gud-finish "g @$ra "       "\C-f" "Finish executing current function.")
+  (gud-def gud-jump "g `%d%f:%l` " "\C-j" "Set execution address to current line.")
   (gud-def gud-print  "?? %e "        "\C-p" "Evaluate C expression at point.")
 
   (setq comint-prompt-regexp "^[0-9a-f]:[0-9a-f][0-9a-f][0-9a-f]> ")
@@ -419,7 +420,7 @@ and source-file directory for your debugger."
       (while gud-cdb-fetched-stack-frame-list
         (let ((e (car gud-cdb-fetched-stack-frame-list))
               (name nil) (num nil))
-          (if (not (string-match "^\\([0-9a-f]+\\) [0-9a-f]* [0-9a-f]* \\([[a-zA-Z_0-9:$~!+]*\\).*$" e))
+          (if (not (string-match "^\\([0-9a-f]+\\) [0-9a-f`]* [0-9a-f`]* \\([[a-zA-Z_0-9:$~!+]*\\).*$" e))
               nil
             (setq num (match-string 1 e)
                   name (match-string 2 e))
