@@ -647,20 +647,22 @@ _c_: hide comment        _q_uit
   (add-hook 'view-mode-hook 'my-cursor-chg)
   (defvar disable-cursor-chg nil)
   (defvar cursor-chg-timer nil)
-  (defun cursor-chg-timer-function()
+  (defun cursor-chg-function()
     (when (and
            (not disable-cursor-chg)
-           (not (memq major-mode '(special-mode))) ;; 排除eldoc buffer
-           (not (minibufferp)) ;; minibuffer有bug没有变，但C-s回来又变了
+           ;; (not (minibufferp)) ;; minibuffer有bug没有变，但C-s回来又变了
+           (not (eq (current-buffer) eldoc--doc-buffer)) ;; 排除eldoc
            )
-      ;;(message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
-      (my-cursor-chg)
-      )
+      ;; (when buffer-read-only
+      ;;   (message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
+      ;;   )
+      (my-cursor-chg))
     (setq cursor-chg-timer nil))
+  
   (add-hook 'buffer-list-update-hook (lambda()
                                        (unless cursor-chg-timer
                                          (setq cursor-chg-timer
-                                               (run-with-idle-timer 0.125 nil 'cursor-chg-timer-function)))
+                                               (run-with-idle-timer 0.1 nil 'cursor-chg-function)))
                                        ))
   )
 
@@ -743,25 +745,26 @@ _c_: hide comment        _q_uit
     :init
     ;; from https://eshelyaron.com/esy.html
     ;; 直接用dabbrev-capf有问题，cape的dabbrev也有问题(如它忽略了dabbrev-abbrev-char-regexp导致中文设置不生效，另外补全项好像没有dabbrev-completion多？)
-    (unless (version< emacs-version "29")
-        (autoload 'dabbrev-capf "dabbrev" nil t)
-        )
-    
+    (defvar has-dabbrev-capf nil)
     (defun my-dabbrev-capf ()
       "Workaround for issue with `dabbrev-capf'."
-      (let ((disable-cursor-chg t) ;; dabbrev会扫描其它buffer导致光标变只读
-            (inhibit-message t)) ;; 屏蔽dabbrev和corfu的消息
+      (let ((inhibit-message t)
+            (disable-cursor-chg t)
+            ) ;; 屏蔽dabbrev和corfu的消息
         (dabbrev--reset-global-variables)  
         (setq dabbrev-case-fold-search nil)
-        (if (version< emacs-version "29")
-            (cl-letf (((symbol-function #'completion-in-region)
-                       (lambda (beg end table &rest args)
-                         (list beg end table)
-                         )))
-              (dabbrev-completion)) ;; hack dabbrev-completion to return list
-          (dabbrev-capf))
+        (if has-dabbrev-capf
+            (dabbrev-capf)
+          (cl-letf (((symbol-function #'completion-in-region)
+                     (lambda (beg end table &rest args)
+                       (list beg end table)
+                       )))
+            (dabbrev-completion)) ;; hack dabbrev-completion to return list
+          )
         ))
     (add-to-list 'completion-at-point-functions 'my-dabbrev-capf)
+    :config
+    (setq has-dabbrev-capf (functionp 'dabbrev-capf))
     )
   
   (defun esy/file-capf ()
