@@ -700,6 +700,10 @@ _c_: hide comment        _q_uit
   (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
   (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
   :config
+  (defadvice corfu--update (around my-corfu--update activate)
+    (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
+      ad-do-it))
+  
   ;; 历史输入排前！
   (use-package corfu-history
     :init
