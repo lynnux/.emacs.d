@@ -560,7 +560,7 @@ _c_: hide comment        _q_uit
                     (cond
                      ;; Always include the current buffer.
                      ((eq (current-buffer) b) b)
-		     ((string-match "^TAGS\\(<[0-9]+>\\)?$" (format "%s" (buffer-name b))) nil)
+		     ((string-match "^TAGS\\(<.*>\\)?$" (format "%s" (buffer-name b))) nil)
                      ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
                      ((string-match "^magit-.*:.*" (format "%s" (buffer-name b))) nil);; 排除magit-process
                      ((buffer-file-name b) b)
@@ -2517,6 +2517,9 @@ _q_uit
 (use-package elec-pair
   :config
   (electric-pair-mode 1)
+  ;; c++换行时输入{}自动indent
+  (defadvice electric-pair--insert (after my-electric-pair--insert activate)
+    (indent-according-to-mode))
   )
 
 (use-package grammatical-edit
