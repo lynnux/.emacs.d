@@ -2149,6 +2149,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
   
 
+(use-package compile
+  :defer t
+  :config
+  (when compile-history
+    ;; 自动使用最近的历史记录
+    (setq compile-command (car compile-history))))
+
 (global-set-key [f7] (lambda ()(interactive)
 		       (progn
 			 (call-interactively 'project-compile)
