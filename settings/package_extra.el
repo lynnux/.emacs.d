@@ -2298,6 +2298,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
     )
   )
+(use-package flymake
+  :defer t
+  :config
+  ;; fixed for eglot with emacs 28.0.50，就kill-buffer时有提示，实际好像没什么问题
+  (unless (boundp 'flymake-list-only-diagnostics)
+    (defvar flymake-list-only-diagnostics nil)
+    ))
 (use-package eglot
   :load-path "~/.emacs.d/packages/lsp"
   :init
