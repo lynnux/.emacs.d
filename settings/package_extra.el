@@ -3142,6 +3142,11 @@ _q_uit
     (defun gud-kill-buffer ()
       (if (eq major-mode 'gud-mode)
           (delete-overlay gud-overlay)))
+    (add-hook 'gud-cdb-mode-hook (lambda()
+                                   (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
+                                   (gud-def gud-quit "q " "\C-q" "Quit Debug")
+                                   ))
+    (global-set-key (kbd "S-<f5>") 'gud-quit)
     ))
 
 (use-package gud
@@ -3161,8 +3166,14 @@ _q_uit
   :config
   (add-hook 'gud-mode-hook (lambda()
                              (corfu-mode) ;; gud有capf可用
-                             (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
                              ))
+  (defadvice gud-sentinel (after my-gud-sentinel activate)
+    "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
+    (let ((process (ad-get-arg 0)))
+      (unless (process-live-p process)
+        (kill-buffer (process-buffer process))
+        (delete-other-windows)))
+    )
   )
 
 
