@@ -3061,6 +3061,7 @@ _q_uit
 ;; from https://github.com/seagle0128/.emacs.d/blob/4d0a1f0f0f6ed99e6cf9c0e0888c4e323ce2ca3a/lisp/init-highlight.el#L43
 ;; 显示屏幕外的匹配行了，29自带，但是滚动时不显示，参考上面修改成posframe显示，并且不是光标附近更友好
 (use-package paren
+  :defer t
   :init (setq show-paren-when-point-inside-paren t
               show-paren-when-point-in-periphery t
               )
@@ -3108,10 +3109,12 @@ _q_uit
       )
     (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer)
     )
-    
+  
   (use-package gud-cdb
     ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
-    ;; 唯一不足的是不支持speedbar，还有attach
+    ;; 唯一不足的是不支持speedbar，还有attach    
+    :commands(cdb)
+    :defer t
     :init
     (defmacro defcustom% (symbol standard doc &rest args)
       "Declare SYMBOL as a customizable variable with the STANDARD value.
@@ -3143,9 +3146,9 @@ Else return BODY sexp."
       "If Emacs supports lexical binding do THEN, otherwise do ELSE..."
       (declare (indent 1))
       `(if-version%
-        <= 24.1
-        ,then
-        (progn% ,@else)))
+           <= 24.1
+           ,then
+         (progn% ,@else)))
 
     (defmacro when-lexical% (&rest body)
       "When Emacs supports lexical binding do BODY."
@@ -3155,8 +3158,8 @@ Else return BODY sexp."
       "Return nil, list VARS at compile time if in lexical context."
       (declare (indent 0))
       (when-lexical%
-       `(when% lexical-binding
-               (progn% ,@vars nil))))
+        `(when% lexical-binding
+           (progn% ,@vars nil))))
     (defmacro if-version% (cmp version then &rest else)
       "If VERSION CMP with variable `emacs-version' is t, do THEN, else do ELSE...
 Return the value of THEN or the value of the last of the ELSE’s.
@@ -3179,9 +3182,9 @@ Optional argument CLAUSE such as for clause, iteration clause,
 accumulate clause and Miscellaneous clause."
       (if-fn% 'cl-loop 'cl-lib
               `(cl-loop ,@clause)
-              (when-fn% 'loop 'cl
-                        `(with-no-warnings
-                           (loop ,@clause)))))
+        (when-fn% 'loop 'cl
+          `(with-no-warnings
+             (loop ,@clause)))))
     (defmacro if-fn% (fn feature then &rest else)
       "If FN is bounded yield non-nil, do THEN, else do ELSE...
 Argument FEATURE that FN dependent on, be loaded at compile time."
@@ -3195,27 +3198,27 @@ Argument FEATURE that FN dependent on, be loaded at compile time."
 Argument FEATURE that FN dependent on, be loaded at compile time."
       (declare (indent 2))
       `(if-fn% ,fn ,feature (progn% ,@body)))
+    :config
+    ;; 清楚显示当前行 from cdb-gud
+    (defvar gud-overlay
+      (let* ((ov (make-overlay (point-min) (point-min))))
+        (overlay-put ov 'face 'secondary-selection)
+        ov)
+      "Overlay variable for GUD highlighting.")
+    (defadvice gud-display-line (after my-gud-highlight act)
+      "Highlight current line."
+      (let* ((ov gud-overlay)
+             (bf (gud-find-file true-file)))
+        (if bf
+	    (save-excursion
+	      (set-buffer bf)
+	      (move-overlay ov (line-beginning-position) (line-end-position) (current-buffer))))))
+    (defun gud-kill-buffer ()
+      (if (eq major-mode 'gud-mode)
+          (delete-overlay gud-overlay)))
+    (add-hook 'kill-buffer-hook 'gud-kill-buffer)
     )
-  :config
-  ;; 清楚显示当前行 from cdb-gud
-  (defvar gud-overlay
-    (let* ((ov (make-overlay (point-min) (point-min))))
-      (overlay-put ov 'face 'secondary-selection)
-      ov)
-    "Overlay variable for GUD highlighting.")
-  (defadvice gud-display-line (after my-gud-highlight act)
-    "Highlight current line."
-    (let* ((ov gud-overlay)
-           (bf (gud-find-file true-file)))
-      (if bf
-	  (save-excursion
-	    (set-buffer bf)
-	    (move-overlay ov (line-beginning-position) (line-end-position) (current-buffer))))))
-  (defun gud-kill-buffer ()
-    (if (eq major-mode 'gud-mode)
-        (delete-overlay gud-overlay)))
-  (add-hook 'kill-buffer-hook 'gud-kill-buffer)
-)
+  )
 (use-package gud
   :defer t
   :init
