@@ -3172,7 +3172,8 @@ _q_uit
     (let ((process (ad-get-arg 0)))
       (unless (process-live-p process)
         (kill-buffer (process-buffer process))
-        (delete-other-windows)))
+        (delete-other-windows)
+        (message "Debugger finished")))
     )
   )
 
