@@ -3119,7 +3119,10 @@ _q_uit
     (defalias 'ignore* 'ignore)
     (defalias 'loop* 'loop)
     :config
-    ;; 清楚显示当前行 from cdb-gud
+    (defadvice cdb-command-line-list-source (after my-cdb-command-line-list-source activate)
+      "追加-2参数让启动后新开一个命令窗口"
+      (setq ad-return-value (append ad-return-value '("-2"))))
+      ;; 清楚显示当前行 from cdb-gud
     (defvar gud-overlay
       (let* ((ov (make-overlay (point-min) (point-min))))
         (overlay-put ov 'face 'secondary-selection)
