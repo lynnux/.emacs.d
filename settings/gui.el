@@ -121,3 +121,8 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 (setq scroll-preserve-screen-position t) ;; 滚动时鼠标保持位置，聊胜于无吧，原来是直接到行首
 
+;; 目标是本窗口，将就用。也可以用鼠标去调整split
+(global-set-key (kbd "C-S-<up>") 'enlarge-window)
+(global-set-key (kbd "C-S-<down>") 'shrink-window)
+(global-set-key (kbd "C-S-<left>") 'shrink-window-horizontally)
+(global-set-key (kbd "C-S-<right>") 'enlarge-window-horizontally)
