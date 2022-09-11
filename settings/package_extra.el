@@ -3120,8 +3120,9 @@ _q_uit
     (defalias 'loop* 'loop)
     :config
     (defadvice cdb-command-line-list-source (after my-cdb-command-line-list-source activate)
-      "追加-2参数让启动后新开一个命令窗口"
-      (setq ad-return-value (append ad-return-value '("-2"))))
+      "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
+      ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
+      (setq ad-return-value (append ad-return-value '("-2" "-G" "-netsymsno")))) ;; cdb /?不对啦(跟.netsyms命令对得上)
       ;; 清楚显示当前行 from cdb-gud
     (defvar gud-overlay
       (let* ((ov (make-overlay (point-min) (point-min))))
