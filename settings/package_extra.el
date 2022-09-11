@@ -3152,6 +3152,14 @@ _q_uit
 (use-package gud
   :defer t
   :init
+  (global-set-key (kbd "<f4>") (lambda()
+                                 (interactive)
+                                 (if (and (boundp 'gud-comint-buffer)
+                                          gud-comint-buffer (buffer-name gud-comint-buffer))
+                                     (call-interactively 'gud-jump)
+                                   (call-interactively 'next-error)
+                                   )))
+  
   (global-set-key (kbd "<f5>") (lambda()
                                  (interactive)
                                  (condition-case nil

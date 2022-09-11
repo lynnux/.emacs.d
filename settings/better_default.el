@@ -194,7 +194,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;;; m-o切换h/cpp文件
 (global-set-key (kbd "M-o") 'ff-find-other-file)
 
-(global-set-key (kbd "<f4>") 'next-error)
+;; (global-set-key (kbd "<f4>") 'next-error)
 (global-set-key (kbd "S-<f4>") 'previous-error)
 
 ;; 禁止narrow功能
