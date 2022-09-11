@@ -3108,26 +3108,128 @@ _q_uit
       )
     (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer)
     )
-  (use-package cdb-gud
-    :commands(cdb cdb-pidFromExe cdb-promptPidAndExe cdbAttach cdbDebugChoice)
+    
+  (use-package gud-cdb
+    ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
+    ;; 唯一不足的是不支持speedbar，还有attach
     :init
-    ;; speedbar获取stackframe还有问题，需要再分析下
+    (defmacro defcustom% (symbol standard doc &rest args)
+      "Declare SYMBOL as a customizable variable with the STANDARD value.
+STANDARD should be computed at compile-time. In `defcustom'
+STANDARD always be computed at runtime whatever the current
+`lexical-binding' is."
+      (declare (doc-string 3) (debug (name body)))
+      (let ((-standard- (funcall `(lambda () ,standard))))
+        `(custom-declare-variable
+          ',symbol
+          ',-standard-
+          ,doc
+          ,@args)))
+    (defmacro progn% (&rest body)
+      "Return an `progn'ed form if BODY has more than one sexp.
+Else return BODY sexp."
+      (if (cdr body) `(progn ,@body) (car body)))
+    (defmacro if% (cond then &rest else)
+      "If COND yields non-nil, do THEN, else do ELSE..."
+      (declare (indent 2))
+      (if (funcall `(lambda () ,cond))
+          `,then
+        `(progn% ,@else)))
+    (defmacro when% (cond &rest body)
+      "When COND yields non-nil, do BODY."
+      (declare (indent 1))
+      `(if% ,cond (progn% ,@body)))
+    (defmacro if-lexical% (then &rest else)
+      "If Emacs supports lexical binding do THEN, otherwise do ELSE..."
+      (declare (indent 1))
+      `(if-version%
+        <= 24.1
+        ,then
+        (progn% ,@else)))
+
+    (defmacro when-lexical% (&rest body)
+      "When Emacs supports lexical binding do BODY."
+      (declare (indent 0))
+      `(if-lexical% (progn% ,@body)))
+    (defmacro ignore* (&rest vars)
+      "Return nil, list VARS at compile time if in lexical context."
+      (declare (indent 0))
+      (when-lexical%
+       `(when% lexical-binding
+               (progn% ,@vars nil))))
+    (defmacro if-version% (cmp version then &rest else)
+      "If VERSION CMP with variable `emacs-version' is t, do THEN, else do ELSE...
+Return the value of THEN or the value of the last of the ELSE’s.
+THEN must be one expression, but ELSE... can be zero or more expressions.
+If (COND VERSION EMACS-VERSION) yield nil, and there are no ELSE’s, the value is nil."
+      (declare (indent 3))
+      (let ((ver (cond ((numberp version) (number-to-string version))
+                       ((stringp version) version)
+                       (t (format "%s" (funcall `(lambda () ,version)))))))
+        `(if% (cond ((eq '< ',cmp) (version< ,ver emacs-version))
+                    ((eq '<= ',cmp) (version<= ,ver emacs-version))
+                    ((eq '> ',cmp) (not (version<= ,ver emacs-version)))
+                    ((eq '>= ',cmp) (not (version< ,ver emacs-version)))
+                    (t nil))
+             ,then
+           (progn% ,@else))))
+    (defmacro loop* (&rest clause)
+      "The Common Lisp `loop' macro.
+Optional argument CLAUSE such as for clause, iteration clause,
+accumulate clause and Miscellaneous clause."
+      (if-fn% 'cl-loop 'cl-lib
+              `(cl-loop ,@clause)
+              (when-fn% 'loop 'cl
+                        `(with-no-warnings
+                           (loop ,@clause)))))
+    (defmacro if-fn% (fn feature then &rest else)
+      "If FN is bounded yield non-nil, do THEN, else do ELSE...
+Argument FEATURE that FN dependent on, be loaded at compile time."
+      (declare (indent 3))
+      `(if% (or (and ,feature (require ,feature nil t) (fboundp ,fn))
+                (fboundp ,fn))
+           ,then
+         (progn% ,@else)))
+    (defmacro when-fn% (fn feature &rest body)
+      "When FN is bounded yield non-nil, do BODY.
+Argument FEATURE that FN dependent on, be loaded at compile time."
+      (declare (indent 2))
+      `(if-fn% ,fn ,feature (progn% ,@body)))
     )
+  :config
+  ;; 清楚显示当前行 from cdb-gud
+  (defvar gud-overlay
+    (let* ((ov (make-overlay (point-min) (point-min))))
+      (overlay-put ov 'face 'secondary-selection)
+      ov)
+    "Overlay variable for GUD highlighting.")
+  (defadvice gud-display-line (after my-gud-highlight act)
+    "Highlight current line."
+    (let* ((ov gud-overlay)
+           (bf (gud-find-file true-file)))
+      (if bf
+	  (save-excursion
+	    (set-buffer bf)
+	    (move-overlay ov (line-beginning-position) (line-end-position) (current-buffer))))))
+  (defun gud-kill-buffer ()
+    (if (eq major-mode 'gud-mode)
+        (delete-overlay gud-overlay)))
+  (add-hook 'kill-buffer-hook 'gud-kill-buffer)
 )
 (use-package gud
   :defer t
   :init
   (global-set-key (kbd "<f5>") (lambda()
                                  (interactive)
-                                 (if (functionp 'gud-cont)
+                                 (condition-case nil
                                      (call-interactively 'gud-cont)
-                                     (call-interactively 'cdb))))
+                                   (error (call-interactively 'cdb)))))
   (global-set-key (kbd "<f9>") 'gud-break)
   (global-set-key (kbd "C-<f9>") 'gud-tbreak) ;; tempory breakpoint
   ;; (global-set-key (kbd "C-<f9>") 'gud-remove)
   (global-set-key (kbd "<f10>") 'gud-next)
   (global-set-key (kbd "<f11>") 'gud-step)
-  (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点
+  (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点。支持region
   :config
   (add-hook 'gud-mode-hook (lambda()
                              (corfu-mode) ;; gud有capf可用
