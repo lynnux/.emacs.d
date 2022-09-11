@@ -3113,7 +3113,7 @@ _q_uit
   (use-package gud-cdb
     ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
     ;; 唯一不足的是不支持speedbar，还有attach    
-    :commands(cdb)
+    :commands(cdb gud-kill-buffer)
     :init
     (defalias 'defcustom% 'defcustom)
     (defalias 'ignore* 'ignore)
@@ -3141,9 +3141,8 @@ _q_uit
     (defun gud-kill-buffer ()
       (if (eq major-mode 'gud-mode)
           (delete-overlay gud-overlay)))
-    (add-hook 'kill-buffer-hook 'gud-kill-buffer)
-    )
-  )
+    ))
+
 (use-package gud
   :defer t
   :init
@@ -3161,6 +3160,7 @@ _q_uit
   :config
   (add-hook 'gud-mode-hook (lambda()
                              (corfu-mode) ;; gud有capf可用
+                             (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
                              ))
   )
 
