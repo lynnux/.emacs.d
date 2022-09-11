@@ -3118,6 +3118,7 @@ _q_uit
     (defalias 'defcustom% 'defcustom)
     (defalias 'ignore* 'ignore)
     (defalias 'loop* 'loop)
+    (defalias 'assoc** 'assoc)
     :config
     (defadvice cdb-command-line-list-source (after my-cdb-command-line-list-source activate)
       "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
