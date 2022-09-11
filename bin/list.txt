@@ -2,12 +2,7 @@
  emacs-win32-launcher.exe
  es.exe  (Everything的命令接口，还支持中文!)
  fd.exe
- global.exe
- gozilla.exe
- gtags-cscope.exe
- gtags.exe
- htags.exe
- pop_select.dll (ctrl-tab实现，rust牛逼！)
+ pop_select.dll
  readtags.exe (ctags)
  rg.exe
 

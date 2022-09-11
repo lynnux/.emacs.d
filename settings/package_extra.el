@@ -1,4 +1,4 @@
-;; 非官方自带packages的设置 -*- lexical-binding: t -*-
+﻿;; 非官方自带packages的设置 -*- lexical-binding: t -*-
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
 
@@ -11,7 +11,7 @@
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
  
 (eval-when-compile
-  (add-to-list 'load-path "~/.emacs.d/packages/use-package")
+  (add-to-list 'load-path "~/.emacs.d/packages/use-package/use-package-master")
   (require 'use-package))
 
 (add-to-list 'load-path
@@ -26,36 +26,71 @@
   (interactive "P")
   (time-convert (file-attribute-modification-time (file-attributes file)) 'integer))
 
-(defun ensure-latest (zip)
-  "自动更新zip包"
+(defun straight--build-compile (dir)
+  "核心就是调用byte-recompile-directory，但只有跨进程才不报错"
+  (let* (
+         (emacs (concat invocation-directory invocation-name))
+         (program (format "(let ((default-directory %S))
+  (normal-top-level-add-subdirs-to-load-path)
+  (byte-recompile-directory %S 0 'force))"
+                          dir dir))
+         (args (list "-Q" "-L" dir "--batch" "--eval" program)))
+    (with-current-buffer (get-buffer-create "*straight-byte-compilation*")
+      (insert (format "\n$ %s %s %s \\\n %S\n" emacs
+                      (string-join (cl-subseq args 0 3) " ")
+                      (string-join (cl-subseq args 3 5) " ")
+                      program)))
+    (apply #'call-process
+           `(,emacs nil "*straight-byte-compilation*" nil ,@args))))
+(defun ensure-latest (zip &optional no-compile)
+  "自动更新zip包，zip里的目录组织有格式要求，直接用git下载的zip就可以了"
   (interactive "P")
   (let* ((check-file (expand-file-name (concat ".cache/" (file-name-nondirectory zip)) user-emacs-directory))
          (expand-zip (expand-file-name zip))
          (extdir (file-name-directory expand-zip))
          (target-dir (concat extdir (file-name-base expand-zip))))
     (when (file-newer-than-file-p expand-zip check-file)
-      (delete-directory target-dir t nil) ;先删除
+      (delete-directory target-dir t nil) ;先删除目录
       (call-process-shell-command (concat "unzip " expand-zip " -d " extdir))
-      (let ((default-directory target-dir))
-        (call-interactively 'byte-recompile-directory nil (read-kbd-macro "C-n")))
-      
-      ;; (byte-recompile-directory target-dir 0)
-      ;; (call-process-shell-command (concat "emacs -Q --batch --eval "
-      ;;                                         (format "(let ((default-directory %S))
-      ;; (normal-top-level-add-subdirs-to-load-path)
-      ;; (byte-recompile-directory %S 0 'force))"
-      ;;                                                 target-dir target-dir)))
-      
-      ;; (message target-dir)
-      ;; 用touch更新check-file的时间
+      (unless no-compile
+        (message (format "Building %s ..." target-dir))
+        (straight--build-compile target-dir))
+      ;; 创建空的时间戳文件
       (unless (file-exists-p (expand-file-name ".cache" user-emacs-directory))
         (make-directory (expand-file-name ".cache" user-emacs-directory) t))
-      ;; (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
-      )
+      (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
+      )))
+
+(when nil
+  ;; 测试发现对启动速度还是有影响的，这里手动执行更新就可以了
+  ;; tree-sistter那个用根目录的setup.py下载bin和解压
+  (progn 
+    (ensure-latest "~/.emacs.d/themes/diff-hl-master.zip")
+    (ensure-latest "~/.emacs.d/themes/themes-master.zip")
+    (ensure-latest "~/.emacs.d/packages/citre/citre-master.zip")
+    (ensure-latest "~/.emacs.d/packages/corfu/corfu-main.zip")
+    (ensure-latest "~/.emacs.d/packages/dired/dired-hacks-master.zip")
+    (ensure-latest "~/.emacs.d/packages/expand-region/expand-region.el-master.zip")
+    (ensure-latest "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip" t)
+    (ensure-latest "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master.zip")
+    (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
+    (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
+    (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
+    (ensure-latest "~/.emacs.d/packages/minibuffer/compat.el-master.zip")
+    (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
+    (ensure-latest "~/.emacs.d/packages/lsp/lsp-bridge-master.zip")
+    (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
+    (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
+    (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
+    (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
+    (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
+    (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
+    (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
+    
     )
   )
 
-;; (ensure-latest "~/.emacs.d/settings/settings.zip")
+;; (ensure-latest "~/.emacs.d/settings/test.zip")
 ;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
@@ -108,6 +143,7 @@ _q_uit
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   (use-package dired-recent
+    :load-path "~/.emacs.d/packages/dired/dired-hacks-master"
     :commands(dired-recent-mode dired-recent-open)
     :init
     (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
@@ -407,8 +443,7 @@ _q_uit
       ("f" consult-find nil :color blue)
       ("e" consult-everything nil :color blue)
       ("c" files-recent-changed nil :color blue) ;; 这个只有session才有的，recentf没有
-      ("v" files-recent-visited nil :color blue)
-      ("a" find-file-at-point nil :color blue)
+      ("v" files-recent-visited nil :color blue)      ("a" find-file-at-point nil :color blue)
       ("r" files-recent-visited nil :color blue)
       ("p" prj-find-file nil :color blue)
       ("d" dired-recent-open nil :color blue)
@@ -424,8 +459,7 @@ _q_uit
       "
 _a_: all   _t_: type
 _m_: mode  _RET_: this buffer
-_q_uit
-"
+_q_uit"
       ("a" all-occur nil :color blue)
       ("t" type-occur nil :color blue)
       ("m" mode-occur nil :color blue)
@@ -691,6 +725,7 @@ _c_: hide comment        _q_uit
   :load-path "~/.emacs.d/packages/corfu/corfu-main"
   :commands(global-corfu-mode corfu-mode)
   :init
+  
   (setq corfu-cycle t
         corfu-auto t
         corfu-auto-prefix 1
@@ -929,7 +964,7 @@ _c_: hide comment        _q_uit
 
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (use-package expand-region
-  :load-path "~/.emacs.d/packages/expand-region"
+  :load-path "~/.emacs.d/packages/expand-region/expand-region.el-master"
   :commands(er/expand-region er/contract-region)
   :init
   (global-set-key (kbd "C-S-t") 'er/contract-region)
@@ -972,7 +1007,7 @@ _c_: hide comment        _q_uit
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
 (use-package multiple-cursors
-  :load-path "~/.emacs.d/packages/multiple-cursors"
+  :load-path "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master"
   :init
   ;; mc询问你的命令都保存在这里面了
   (setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el")
@@ -1476,6 +1511,7 @@ _c_: hide comment        _q_uit
               consult-find ;; minad说fd不太成熟，就用find吧
               )
     :init
+    
     (setq
      consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
      consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
@@ -1489,6 +1525,7 @@ _c_: hide comment        _q_uit
     (add-to-list 'process-coding-system-alist '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
     (add-to-list 'process-coding-system-alist '("es" gbk . gbk))
     (add-to-list 'process-coding-system-alist '("[fF][iI][nN][dD]" . (utf-8 . gbk-dos))) ;; find支持中文
+    
     ;; https://github.com/phikal/compat.el
     (use-package compat
       :defer t
@@ -1790,6 +1827,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	)
       ))
   
+  (add-to-list 'load-path "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master")
   (require 'easy-kill-er)
   (require 'extra-things)
   (require 'easy-kill-extras)
@@ -1958,6 +1996,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         ad-do-it)
       (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
 
+
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
 ;; 所以目前仅用它来创建TAGS文件
@@ -1967,6 +2006,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/citre/citre-master"
   :commands(citre-create-tags-file citre-update-this-tags-file)
   :init
+  
   (setq citre-default-create-tags-file-location 'project-cache
         citre-use-project-root-when-creating-tags t
         citre-tags-file-per-project-cache-dir "" ;; 强制tag放到根目录，需配合后面设置
@@ -2174,6 +2214,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/projectile"
   :commands(rg-define-search)
   :init
+  (add-to-list 'load-path "~/.emacs.d/packages/projectile/rg.el-master")
   (defun my/rg-dwim()
     (interactive)
     ;; type为all，不然h就会当成c从而忽略了cpp文件。要指定类型可以在rg buffer按f修改
@@ -2243,6 +2284,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
   :commands(lsp-bridge-mode)
   :init
+  
   (setq acm-enable-english-helper nil  ;; english字典太大已经删除了
         )
   (defun lsp-ensure()

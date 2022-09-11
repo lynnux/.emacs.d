@@ -14,35 +14,9 @@ import tarfile
 zip_list = [
     # http开头的排前面如果有问题就终止了
     ("https://ghproxy.com/https://github.com/emacs-tree-sitter/tree-sitter-langs/releases/download/0.11.3/tree-sitter-grammars.x86_64-pc-windows-msvc.v0.11.3.tar.gz", "packages/tree-sitter/langs/bin"),
-    ("packages/company-mode/company-mode-master.zip", "packages/company-mode", True),
-    ("packages/dired/dired-hacks-master.zip", "packages/dired", True),
-    ("packages/easy-kill/easy-kill-extras.el-master.zip", "packages/easy-kill", True),
-    ("packages/expand-region/expand-region.el-master.zip", "packages/expand-region", True),
-    ("packages/helm/emacs-async-master.zip", "packages/helm"),
-    ("packages/helm/helm-master.zip", "packages/helm"),
-    ("packages/lsp/bui.el-master.zip", "packages/lsp"),
-    ("packages/lsp/dap-mode-master.zip", "packages/lsp"),
-    ("packages/lsp/eglot-master.zip", "packages/lsp", True),
-    ("packages/lsp/lsp-mode-master.zip", "packages/lsp"),
-    ("packages/lsp/lsp-pyright-master.zip", "packages/lsp"),
-    ("packages/lsp/lsp-treemacs-master.zip", "packages/lsp"),
-    ("packages/magit/magit-master.zip", "packages/magit"),
-    ("packages/multiple-cursors/multiple-cursors.el-master.zip", "packages/multiple-cursors", True),
-    ("packages/projectile/rg.el-master.zip", "packages/projectile", True),
-    ("packages/treemacs/treemacs-master.zip", "packages/treemacs", True),
     ("packages/tree-sitter/elisp-tree-sitter-master.zip", "packages/tree-sitter", True),
     ("packages/tree-sitter/langs/tree-sitter-langs-master.zip", "packages/tree-sitter/langs", True),
     ("packages/tree-sitter/langs/elisp.zip", "packages/tree-sitter/langs", True),
-    ("packages/use-package/use-package-master.zip", "packages/use-package", True),
-    ("packages/yasnippet/yasnippet-snippets-master.zip", "packages/yasnippet"),
-    ("themes/all-the-icons.el-master.zip", "themes"),
-    ("themes/themes-master.zip", "themes"),
-    ("themes/nyan-mode-master.zip", "themes"),
-    ("themes/diff-hl-master.zip", "themes"),
-    ("packages/org/emacs-maple-preview-master.zip", "packages/org"),
-    ("packages/org/org-roam.zip", "packages/org"),
-    ("packages/org/emacsql-master.zip", "packages/org"),
-    
 ] 
 class ZipTar():
     def __init__(self, path):
@@ -117,12 +91,6 @@ def unzip(zf):
     zip_file.close()
 
 bin_list = [
-    ("http://adoxa.altervista.org/global/glo668wb.zip",[("bin/global.exe", "bin/global.exe"),
-                                                        ("bin/gozilla.exe","bin/gozilla.exe"),
-                                                        ("bin/gtags-cscope.exe","bin/gtags-cscope.exe"),
-                                                        ("bin/gtags.exe","bin/gtags.exe"),
-                                                        ("bin/htags.exe","bin/htags.exe"),
-                                                        ]),
     ("https://ghproxy.com/https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep-13.0.0-x86_64-pc-windows-msvc.zip", [("ripgrep-13.0.0-x86_64-pc-windows-msvc/rg.exe", "bin/rg.exe")]),
     ("https://ghproxy.com/https://github.com/universal-ctags/ctags-win32/releases/download/2022-03-16%2Fp5.9.20220306.0-11-g4492555f/ctags-2022-03-16_p5.9.20220306.0-11-g4492555f-x64.zip", [
         ("ctags.exe", "bin/ctags.exe"),
@@ -134,7 +102,7 @@ bin_list = [
     ("https://ghproxy.com/https://github.com/lynnux/.emacs.d/releases/download/20220501/winbin64.zip",
      [("emacs-win32-launcher.exe", "bin/emacs-win32-launcher.exe"),
       ("pop_select.dll", "bin/pop_select.dll"),
-      ("emacs_beacon.dll", "bin/emacs_beacon.dll")
+      ("es.exe", "bin/es.exe")
       ]),
     ("https://ghproxy.com/https://github.com/lynnux/rgpre/releases/download/2022.03.22/rgpre-windows-x86_64.zip",
      [("rgpre.exe", "bin/rgpre.exe")])
@@ -178,9 +146,8 @@ def main():
     unzip_el()
     print('''
     操作完成，还有以下工作:
-    1.安装字体：themes/all-the-icons.el-master/fonts
-    2.编译elc，打开init.el执行C-u 0 M-x byte-recompile-directory，
-       完成后删除packages\tabbar\tabbar.elc，删除packages\easy-kill下除easy-kill.elc外的elc文件
+    1.编译elc，打开init.el执行C-u 0 M-x byte-recompile-directory
+    2.打开
     ''')
     os.system("pause")
 

@@ -67,7 +67,6 @@ packages/tree-sitter/lisp/*
 /.dap-breakpoints
 /packages/lsp/dap-mode-master/*
 /packages/lsp/lsp-mode-master/*
-/packages/lsp/eglot.el
 /packages/lsp/bui.el-master/*
 /packages/lsp/lsp-treemacs-master/*
 /.extension/
@@ -100,3 +99,5 @@ packages/minibuffer/compat.el-master/*
 /packages/citre/citre-master
 /packages/tools/elfeed-master/
 /dired-history
+/packages/dired/dired-hacks-master/
+/packages/projectile/rg.el-master/
