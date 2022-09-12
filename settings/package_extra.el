@@ -655,13 +655,17 @@ _c_: hide comment        _q_uit
   ;; 避免在cursor位置不变时仍然高亮
   (defvar-local idle-highlight-last-point nil)
   (defadvice idle-highlight--time-callback-or-disable (around my-idle-highlight--time-callback-or-disable activate)
-    (unless (eq (point) idle-highlight-last-point)
-      (if (and (boundp 'multiple-cursors-mode) multiple-cursors-mode)
-          ;; 排除mc执行时并删除高亮
-          (idle-highlight--unhighlight)
-        ad-do-it)
+    (unless (or (eq (point) idle-highlight-last-point) 
+                (and (boundp 'multiple-cursors-mode) multiple-cursors-mode))
+      ad-do-it
       (setq idle-highlight-last-point (point))
-      )
+      ))
+  (with-eval-after-load 'multiple-cursors-core
+    (add-hook 'multiple-cursors-mode-enabled-hook 'idle-highlight--unhighlight)
+    (add-hook 'multiple-cursors-mode-disabled-hook (lambda()
+                                                     (setq idle-highlight-last-point nil);; 确实刷新
+                                                     (idle-highlight--time-callback-or-disable)
+                                                     ))
     )
   (global-idle-highlight-mode)
   (custom-set-faces
