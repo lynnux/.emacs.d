@@ -656,9 +656,13 @@ _c_: hide comment        _q_uit
   (defvar-local idle-highlight-last-point nil)
   (defadvice idle-highlight--time-callback-or-disable (around my-idle-highlight--time-callback-or-disable activate)
     (unless (eq (point) idle-highlight-last-point)
-      ad-do-it
+      (if (and (boundp 'multiple-cursors-mode) multiple-cursors-mode)
+          ;; 排除mc执行时并删除高亮
+          (idle-highlight--unhighlight)
+        ad-do-it)
       (setq idle-highlight-last-point (point))
-      ))
+      )
+    )
   (global-idle-highlight-mode)
   (custom-set-faces
    '(idle-highlight ((t (:inherit isearch)))) ;; 参见https://gitee.com/advanceflow/elisp/blob/main/40-Emacs%E6%98%BE%E7%A4%BA.org#40128-%E5%9F%BA%E6%9C%AC%E9%9D%A2
@@ -1010,7 +1014,9 @@ _c_: hide comment        _q_uit
   :load-path "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master"
   :init
   ;; mc询问你的命令都保存在这里面了
-  (setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el")
+  (setq mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el"
+        mc/always-run-for-all t ;; 禁止提示，需要run once的在my-cmds.el里加
+        )
   (global-unset-key (kbd "<M-down-mouse-1>"))
   (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
   (global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
@@ -1020,8 +1026,11 @@ _c_: hide comment        _q_uit
   ;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<f8>") 'mc/mark-all-dwim) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
+  (global-set-key (kbd "S-<f8>") 'mc/skip-to-next-like-this) ;; 跳过当前选中
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this-dwim) ;; dwim的更智能
+  ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
   :commands(multiple-cursors-mode
             mc/add-cursor-on-click
             mc/unmark-next-like-this
@@ -1029,10 +1038,13 @@ _c_: hide comment        _q_uit
             mc/mark-previous-like-this
             mc/mark-next-like-this
             mc/edit-lines
+            mc/mark-all-dwim
+            mc/skip-to-next-like-this
+            mc/mark-all-like-this-dwim
             )
   :config
   (define-key mc/keymap (kbd "C-v") nil)
-  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode)
+  (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode) ;; 退出，C-J输入换行
   )
 
 ;; avy可以配得跟ace jump完全一样，就没必要保留ace jump了
@@ -3237,7 +3249,7 @@ _q_uit
 (if (display-graphic-p)
     (progn
 
-      (add-to-list 'load-path "~/.emacs.d/themes")
+      ;;(add-to-list 'load-path "~/.emacs.d/themes")
 
       ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
       (autoload 'doom-themes-visual-bell-config "extensions/doom-themes-ext-visual-bell" "" nil nil)
