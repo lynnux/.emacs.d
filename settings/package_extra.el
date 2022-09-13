@@ -1054,9 +1054,11 @@ _c_: hide comment        _q_uit
   (add-hook 'multiple-cursors-mode-enabled-hook (lambda()
                                                   (unless last-cursor-color
                                                     (setq last-cursor-color (frame-parameter nil 'cursor-color)))
-                                                  (set-cursor-color "orange")))
+                                                  (set-cursor-color "yellow")))
   (add-hook 'multiple-cursors-mode-disabled-hook (lambda()
-                                                   (set-cursor-color last-cursor-color)))
+                                                   (when last-cursor-color
+                                                     (set-cursor-color last-cursor-color))
+                                                   ))
   )
 
 ;; avy可以配得跟ace jump完全一样，就没必要保留ace jump了
