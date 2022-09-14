@@ -656,7 +656,7 @@ _c_: hide comment        _q_uit
   (defvar-local idle-highlight-last-point nil)
   (defadvice idle-highlight--time-callback-or-disable (around my-idle-highlight--time-callback-or-disable activate)
     (unless (or (eq (point) idle-highlight-last-point) 
-                (and (boundp 'multiple-cursors-mode) multiple-cursors-mode))
+                (bound-and-true-p multiple-cursors-mode))
       ad-do-it
       (setq idle-highlight-last-point (point))
       ))
@@ -1600,7 +1600,7 @@ _c_: hide comment        _q_uit
     
     (defun my-project-imenu()
       (interactive)
-      (if (and (boundp 'eglot--managed-mode) eglot--managed-mode)
+      (if (bound-and-true-p eglot--managed-mode)
           (call-interactively 'consult-eglot-symbols)
         (call-interactively 'consult-imenu-multi)))
     
@@ -2962,7 +2962,7 @@ _q_uit
 	                      'f)
                              (t t))))
       ;; 有popper窗口先关闭
-      (when (and (boundp 'popper-open-popup-alist) popper-open-popup-alist)
+      (when (bound-and-true-p popper-open-popup-alist)
         (call-interactively 'popper-toggle-latest))
       (if (eq show-popper t)
           (call-interactively 'popper-toggle-latest)
@@ -3222,8 +3222,7 @@ _q_uit
   :init
   (global-set-key (kbd "<f4>") (lambda()
                                  (interactive)
-                                 (if (and (boundp 'gud-comint-buffer)
-                                          gud-comint-buffer (buffer-name gud-comint-buffer))
+                                 (if (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
                                      (call-interactively 'gud-jump)
                                    (call-interactively 'next-error)
                                    )))
