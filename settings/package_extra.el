@@ -3220,18 +3220,27 @@ _q_uit
 (use-package gud
   :defer t
   :init
+  (defvar f5-read-command t)
+  (defun my-f5()
+    (interactive)
+    (condition-case nil
+        (call-interactively 'gud-cont)
+      (error (if f5-read-command
+                 (progn (setq f5-read-command nil)
+                        (call-interactively 'cdb))
+               (cdb (car gud-cdb-history))))))
   (global-set-key (kbd "<f4>") (lambda()
                                  (interactive)
                                  (if (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
                                      (call-interactively 'gud-jump)
                                    (call-interactively 'next-error)
                                    )))
-  
-  (global-set-key (kbd "<f5>") (lambda()
-                                 (interactive)
-                                 (condition-case nil
-                                     (call-interactively 'gud-cont)
-                                   (error (call-interactively 'cdb)))))
+  (global-set-key (kbd "<f5>") 'my-f5)
+  (global-set-key (kbd "C-<f5>") (lambda()
+                                   (interactive)
+                                   (setq f5-read-command t)
+                                   (call-interactively 'my-f5)
+                                   ))
   (global-set-key (kbd "<f9>") 'gud-break)
   (global-set-key (kbd "C-<f9>") 'gud-tbreak) ;; tempory breakpoint
   ;; (global-set-key (kbd "C-<f9>") 'gud-remove)
