@@ -3262,7 +3262,7 @@ _q_uit
   )
 
 (use-package god-mode
-  :diminish
+  :diminish(god-local-mode)
   :commands(god-local-mode)
   :init
   (setq god-mode-enable-function-key-translation nil ;; 禁止F1等
