@@ -3261,6 +3261,23 @@ _q_uit
     )
   )
 
+(use-package god-mode
+  :diminish
+  :commands(god-local-mode)
+  :init
+  (setq god-mode-enable-function-key-translation nil ;; 禁止F1等
+        god-mode-alist '((nil . "C-")
+                         ("m" . "M-") ;; g代表C-g，但是一但进入命令还是要C-g取消了
+                         ("M" . "C-M-"))
+        )
+  (with-eval-after-load 'view
+    (setq view-mode-map (make-sparse-keymap)))
+  (add-hook 'view-mode-hook (lambda()
+                              (god-local-mode (if buffer-read-only +1 -1))
+                              ))
+  :config
+  (define-key god-local-mode-map (kbd "i") 'view-mode)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
