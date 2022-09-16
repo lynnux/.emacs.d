@@ -1838,66 +1838,36 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 			     (call-interactively 'easy-mark)
 			     )))
   :config
-  ;; 添加yank-handler让粘贴时含换行
-  (defadvice easy-kill (after my-easy-kill activate)
-    (unless (or (use-region-p) (not (called-interactively-p 'any)))
-      (let ((string (buffer-substring (line-beginning-position)
-				      (line-beginning-position 2))))
-	(when (> (length string) 0)
-	  (put-text-property 0 (length string)
-			     'yank-handler '(yank-line) string))
-	(kill-new string nil)
-	)
-      ))
-  
   (add-to-list 'load-path "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master")
   (require 'easy-kill-er)
   (require 'extra-things)
   (require 'easy-kill-extras)
-  (setq easy-kill-try-things '(my-line)) ; 只复制line
-  ;; 参考easy-kill-on-buffer-file-name
-  (defvar my-line-ov nil)
-  (defun easy-kill-on-my-line (n)
-    "copy line添加yank line功能"
-    (if (easy-kill-get mark)
-	(easy-kill-echo "Not supported in `easy-mark'")
-      ;; 不用判断是否有region，有的话根本不会进来
-      (let ((string (buffer-substring (line-beginning-position)
-				      (line-beginning-position 2))))
-	;; 因为easy-kill-adjust-candidate传递的是string，就没有overlay效果了，需要自己加
-	(setq my-line-ov (make-overlay (line-beginning-position) (line-beginning-position 2)))
-	(overlay-put my-line-ov 'priority 999) ;; 在hl line之上
-	(overlay-put my-line-ov 'face 'easy-kill-selection)
-	(when (> (length string) 0)
-	  (put-text-property 0 (length string)
-			     'yank-handler '(yank-line) string))
-	(easy-kill-adjust-candidate 'my-line string) 
-	)
-      ))
-  
-  (defun kill-my-line-ov(&optional change-key)
-    (when my-line-ov
-      (delete-overlay my-line-ov)
-      (setq my-line-ov nil)))
-  ;; easy kill退出清除我们的overlay
-  (defadvice easy-kill-destroy-candidate (after my-easy-kill-destroy-candidate activate)
-    (kill-my-line-ov))
-  ;; easy按其它键时会调用move-overlay，这个时候也需要清除我们的overlay
-  (defadvice easy-kill-adjust-candidate (after my-easy-kill-adjust-candidate activate)
-    ;; 参考easy-kill-candidate
+  ;; (setq easy-kill-try-things '(my-line)) ; 只复制line
+  (setq easy-kill-try-things '(line-with-yank-handler)) ; 只复制line
+  (defun easy-kill-on-line-with-yank-handler(n)
+    "必须以easy-kill-on-开头，easy-kill-adjust-candidate可以设置位置，或者直接传string"
+    (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
+    )
+  (defadvice easy-kill-candidate (after my-easy-kill-candidate activate)
+    "获取所选文字最关键的函数，这里判断是beg end位置方式，再判断是否是自定义thing，就给返回字符追yank-handler"
     (with-current-buffer (easy-kill-get buffer)
       (pcase (easy-kill-get bounds)
         (`(,_x . ,_x) ();; 这就是字符串形式
          )
-        (`(,beg . ,end) (kill-my-line-ov t)
-         ))))
+        (`(,beg . ,end) ;; begin end位置模式 
+         (when (eq (easy-kill-get thing) 'line-with-yank-handler)
+           (let ((string ad-return-value))
+             (when (> (length string) 0)
+	       (put-text-property 0 (length string)
+			          'yank-handler '(yank-line) string))
+             (setq ad-return-value string)))))))
   
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
   ;; 测试带汉字也会。。所以屏蔽echo
   (defun easy-kill-echo-around (orig-fun format-string &rest args)
     )
   (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
-  (add-to-list 'easy-kill-alist '(?= my-line ""))
+  (add-to-list 'easy-kill-alist '(?= line-with-yank-handler ""))
 
   (setq easy-mark-try-things '(symbol sexp)) ; 要加sexp，不然在)处expand会有bug
   ;; (define-key easy-kill-base-map (kbd "C-r") 'easy-kill-er-expand) ; 不要再定义了，避免mark时不能复制
