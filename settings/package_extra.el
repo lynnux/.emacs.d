@@ -10,6 +10,32 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
  
+(defun update-all-packages()
+  (interactive)
+  "测试发现对启动速度还是有影响的，这里手动执行更新就可以了，tree-sistter那个用根目录的setup.py下载bin和解压"
+  (ensure-latest "~/.emacs.d/themes/diff-hl-master.zip")
+  (ensure-latest "~/.emacs.d/themes/themes-master.zip")
+  (ensure-latest "~/.emacs.d/packages/citre/citre-master.zip")
+  (ensure-latest "~/.emacs.d/packages/corfu/corfu-main.zip")
+  (ensure-latest "~/.emacs.d/packages/dired/dired-hacks-master.zip")
+  (ensure-latest "~/.emacs.d/packages/expand-region/expand-region.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip" t)
+  (ensure-latest "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/compat.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
+  (ensure-latest "~/.emacs.d/packages/lsp/lsp-bridge-master.zip")
+  (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
+  (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
+  (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
+  (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
+  (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
+  (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
+  )
+
 (eval-when-compile
   (add-to-list 'load-path "~/.emacs.d/packages/use-package/use-package-master")
   (require 'use-package))
@@ -60,35 +86,6 @@
         (make-directory (expand-file-name ".cache" user-emacs-directory) t))
       (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
       )))
-
-(when nil
-  ;; 测试发现对启动速度还是有影响的，这里手动执行更新就可以了
-  ;; tree-sistter那个用根目录的setup.py下载bin和解压
-  (progn 
-    (ensure-latest "~/.emacs.d/themes/diff-hl-master.zip")
-    (ensure-latest "~/.emacs.d/themes/themes-master.zip")
-    (ensure-latest "~/.emacs.d/packages/citre/citre-master.zip")
-    (ensure-latest "~/.emacs.d/packages/corfu/corfu-main.zip")
-    (ensure-latest "~/.emacs.d/packages/dired/dired-hacks-master.zip")
-    (ensure-latest "~/.emacs.d/packages/expand-region/expand-region.el-master.zip")
-    (ensure-latest "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip" t)
-    (ensure-latest "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master.zip")
-    (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
-    (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
-    (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
-    (ensure-latest "~/.emacs.d/packages/minibuffer/compat.el-master.zip")
-    (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
-    (ensure-latest "~/.emacs.d/packages/lsp/lsp-bridge-master.zip")
-    (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
-    (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
-    (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
-    (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
-    (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
-    (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
-    (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
-    
-    )
-  )
 
 ;; (ensure-latest "~/.emacs.d/settings/test.zip")
 ;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
