@@ -1845,8 +1845,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; (setq easy-kill-try-things '(my-line)) ; 只复制line
   (setq easy-kill-try-things '(line-with-yank-handler)) ; 只复制line
   (defun easy-kill-on-line-with-yank-handler(n)
-    "必须以easy-kill-on-开头，easy-kill-adjust-candidate可以设置位置，或者直接传string"
-    (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
+    "必须以easy-kill-on-开头，easy-kill-adjust-candidate可以设置位置并正确添加overlay，或者直接传string"
+    (let ((beg (easy-kill-get start)) (end (easy-kill-get end)))
+      (save-excursion 
+        (pcase n 
+          (`+ (goto-char end)
+              (setq end (line-beginning-position 2)))
+          (`- (goto-char beg)
+              (previous-line)
+              (setq beg (line-beginning-position)))
+          (1 (setq beg (line-beginning-position)
+                   end (line-beginning-position 2)))))
+      (easy-kill-adjust-candidate 'line-with-yank-handler beg end)
+      )
+    ;; (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
     )
   (defadvice easy-kill-candidate (after my-easy-kill-candidate activate)
     "获取所选文字最关键的函数，这里判断是beg end位置方式，再判断是否是自定义thing，就给返回字符追yank-handler"
@@ -1875,6 +1887,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key easy-kill-base-map (kbd "C-S-t") 'easy-kill-er-unexpand)
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand) ;; 有bug，只有mark时有用
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
+  (define-key easy-kill-base-map (kbd "g") 'easy-kill-abort)
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
