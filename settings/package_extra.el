@@ -1849,15 +1849,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (let ((beg (easy-kill-get start)) (end (easy-kill-get end)))
       (save-excursion 
         (pcase n 
-          (`+ (goto-char end)
+          (`+ (goto-char end) ;; easy-kill-expand
               (setq end (line-beginning-position 2)))
-          (`- (goto-char beg)
+          (`- (goto-char beg) ;; easy-kill-shrink
               (previous-line)
               (setq beg (line-beginning-position)))
           (1 (setq beg (line-beginning-position)
                    end (line-beginning-position 2)))))
-      (easy-kill-adjust-candidate 'line-with-yank-handler beg end)
-      )
+      (easy-kill-adjust-candidate 'line-with-yank-handler beg end))
     ;; (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
     )
   (defadvice easy-kill-candidate (after my-easy-kill-candidate activate)
@@ -1873,6 +1872,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	       (put-text-property 0 (length string)
 			          'yank-handler '(yank-line) string))
              (setq ad-return-value string)))))))
+  
+  (defun easy-kill-on-forward-word(n)
+    (let ((beg (easy-kill-get start)) (end (easy-kill-get end)))
+      (save-excursion 
+        (goto-char end)
+        (forward-word)
+        (setq end (point)))
+      (easy-kill-adjust-candidate 'line-with-yank-handler beg end)))
+  (defun easy-kill-on-backward-word(n)
+    (let ((beg (easy-kill-get start)) (end (easy-kill-get end)))
+      (save-excursion 
+        (goto-char beg)
+        (backward-word)
+        (setq beg (point)))
+      (easy-kill-adjust-candidate 'line-with-yank-handler beg end)))
   
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
   ;; 测试带汉字也会。。所以屏蔽echo
@@ -1892,13 +1906,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
   (assq-delete-all ?b easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
-  (add-to-list 'easy-kill-alist '(?b buffer ""))
+  ;;(add-to-list 'easy-kill-alist '(?b buffer ""))
+  (add-to-list 'easy-kill-alist '(?b backward-word ""))
   ;; (add-to-list 'easy-kill-alist '(?a buffer-file-name ""))
   (add-to-list 'easy-kill-alist '(?a backward-line-edge ""))
   (assq-delete-all ?e easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
   (add-to-list 'easy-kill-alist '(?e forward-line-edge ""))
   (assq-delete-all ?f easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
-  (add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
+  (add-to-list 'easy-kill-alist '(?f forward-word ""))
+  ;;(add-to-list 'easy-kill-alist '(?f string-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?F string-up-to-char-forward ""))
   (add-to-list 'easy-kill-alist '(?t string-to-char-backward ""))
   (add-to-list 'easy-kill-alist '(?T string-up-to-char-backward ""))
