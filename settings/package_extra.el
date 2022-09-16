@@ -1902,6 +1902,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand) ;; 有bug，只有mark时有用
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
   (define-key easy-kill-base-map (kbd "g") 'easy-kill-abort)
+  (define-key easy-kill-base-map (kbd "x") 'exchange-point-and-mark)
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
   (add-to-list 'easy-kill-alist '(?$ forward-line-edge ""))
