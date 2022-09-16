@@ -1902,6 +1902,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key easy-kill-base-map (kbd "n") 'easy-kill-expand) ;; 有bug，只有mark时有用
   (define-key easy-kill-base-map (kbd "p") 'easy-kill-shrink)
   (define-key easy-kill-base-map (kbd "g") 'easy-kill-abort)
+  (define-key easy-kill-base-map (kbd "q") 'easy-kill-abort)
   (define-key easy-kill-base-map (kbd "x") 'exchange-point-and-mark)
   (autoload 'er--expand-region-1 "expand-region" nil t)
   (add-to-list 'easy-kill-alist '(?^ backward-line-edge ""))
@@ -1923,18 +1924,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'easy-kill-alist '(?\' squoted-string "") t)
   (add-to-list 'easy-kill-alist '(?\" dquoted-string "") t)
   (add-to-list 'easy-kill-alist '(?\` bquoted-string "") t)
-  (add-to-list 'easy-kill-alist '(?q  quoted-string "") t)
-  (add-to-list 'easy-kill-alist '(?Q  quoted-string-universal "") t)
-  (add-to-list 'easy-kill-alist '(?\) parentheses-pair-content "\n") t)
-  (add-to-list 'easy-kill-alist '(?\( parentheses-pair "\n") t)
-  (add-to-list 'easy-kill-alist '(?\] brackets-pair-content "\n") t)
-  (add-to-list 'easy-kill-alist '(?\[ brackets-pair "\n") t)
-  (add-to-list 'easy-kill-alist '(?}  curlies-pair-content "\n") t)
-  (add-to-list 'easy-kill-alist '(?{  curlies-pair "\n") t)
   (assq-delete-all ?s easy-kill-alist)  ;; 删除内置的，否则which-key提示不正确
-  (add-to-list 'easy-kill-alist '(?s symbol ""))
-  (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
-  (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?s  quoted-string "") t) ;; 选择string，支持上面\'\"\`三种
+  ;;(add-to-list 'easy-kill-alist '(?s symbol "")) ;; 初始就是symbol了
+  (add-to-list 'easy-kill-alist '(?Q  quoted-string-universal "") t)
+  (add-to-list 'easy-kill-alist '(?\( parentheses-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?\) parentheses-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?\[ brackets-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?\] brackets-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?{  curlies-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?}  curlies-pair "\n") t)
+  (add-to-list 'easy-kill-alist '(?<  angles-pair-content "\n") t)
+  (add-to-list 'easy-kill-alist '(?>  angles-pair "\n") t)
   
   (when (functionp 'which-key--show-keymap)
     ;; 简化which-key提示
