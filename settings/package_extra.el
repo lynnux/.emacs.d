@@ -3270,6 +3270,8 @@ _q_uit
                          ("m" . "M-") ;; g代表C-g，但是一但进入命令还是要C-g取消了
                          ("M" . "C-M-"))
         )
+  ;; ESC代替C-g
+  (define-key key-translation-map (kbd "ESC") (kbd "C-g")) ;; 普通方法还不行
   (with-eval-after-load 'view
     (setq view-mode-map (make-sparse-keymap)))
   (add-hook 'view-mode-hook (lambda()
