@@ -3186,11 +3186,15 @@ _q_uit
     (defalias 'ignore* 'ignore)
     (defalias 'loop* 'loop)
     (defalias 'assoc** 'assoc)
+    (defvar cdb-add-g nil)
     :config
     (defadvice cdb-command-line-list-source (after my-cdb-command-line-list-source activate)
       "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
       ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
-      (setq ad-return-value (append ad-return-value '("-2" "-G" "-netsymsno")))) ;; cdb /?不对啦(跟.netsyms命令对得上)
+      (setq ad-return-value (append ad-return-value 
+                                    (if cdb-add-g
+                                        '("-2" "-G" "-netsymsno" "-g")
+                                      '("-2" "-G" "-netsymsno"))))) ;; cdb /?不对啦(跟.netsyms命令对得上)
       ;; 清楚显示当前行 from cdb-gud
     (defvar gud-overlay
       (let* ((ov (make-overlay (point-min) (point-min))))
@@ -3221,6 +3225,8 @@ _q_uit
   (defvar f5-read-command t)
   (defun my-f5()
     (interactive)
+    (when current-prefix-arg
+      (setq f5-read-command t))
     (condition-case nil
         (call-interactively 'gud-cont)
       (error (if f5-read-command
@@ -3233,12 +3239,11 @@ _q_uit
                                      (call-interactively 'gud-jump)
                                    (call-interactively 'next-error)
                                    )))
-  (global-set-key (kbd "<f5>") 'my-f5)
-  (global-set-key (kbd "C-<f5>") (lambda()
+  (global-set-key (kbd "<f5>") 'my-f5) ;; C-u F5改变命令行
+  (global-set-key (kbd "C-<f5>") (lambda() ;; cdb添加-g参数直接运行，不能下断点
                                    (interactive)
-                                   (setq f5-read-command t)
-                                   (call-interactively 'my-f5)
-                                   ))
+                                   (let ((cdb-add-g t))
+                                     (call-interactively 'my-f5))))
   (global-set-key (kbd "<f9>") 'gud-break)
   (global-set-key (kbd "C-<f9>") 'gud-tbreak) ;; tempory breakpoint
   ;; (global-set-key (kbd "C-<f9>") 'gud-remove)
