@@ -113,6 +113,8 @@
   :diminish(eldoc-mode)
   :init
   (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
+  :config
+  (advice-add 'eldoc-pre-command-refresh-echo-area :override #'ignore) ;; 在pre-command-hook里影响性能
   )
 
 (autoload 'defhydra "hydra" nil t)
