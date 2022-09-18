@@ -2382,7 +2382,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/lsp"
   :init
   (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
-        eglot-send-changes-idle-time 0.2 ; 可以加rust的code action更新
+        eglot-send-changes-idle-time 0.01 ; 可以加rust的code action更新
         eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
         )
   (defun my-eglot-ensure()
