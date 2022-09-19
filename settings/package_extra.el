@@ -3230,6 +3230,7 @@ _q_uit
 (use-package gud
   :defer t
   :init
+  (setq gud-chdir-before-run nil) ;; 避免gud自动设置运行目录为exe所在目录
   (defvar f5-read-command t)
   (defun my-f5()
     (interactive)
