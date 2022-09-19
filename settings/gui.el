@@ -128,3 +128,9 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 (global-set-key (kbd "C-S-<down>") 'shrink-window)
 (global-set-key (kbd "C-S-<left>") 'shrink-window-horizontally)
 (global-set-key (kbd "C-S-<right>") 'enlarge-window-horizontally)
+
+;; 高亮TODO等
+(add-hook 'prog-mode-hook (lambda()
+                            (font-lock-add-keywords
+                             nil '(("\\<\\(FIXME\\|BUG\\|XXX\\|TODO\\|NOCOMMIT\\)\\>"
+                                    1 '((:foreground "#cc6666") ) t)))))
