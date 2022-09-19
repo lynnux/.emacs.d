@@ -36,13 +36,6 @@
   (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
   )
 
-(eval-when-compile
-  (add-to-list 'load-path "~/.emacs.d/packages/use-package/use-package-master")
-  (require 'use-package))
-
-(add-to-list 'load-path
-	     "~/.emacs.d/packages")
-
 ;; 用于use-package避免自动设置:laod-path
 (defun my-eval-string (string)
   (eval (car (read-from-string (format "(progn %s)" string)))))
@@ -86,6 +79,16 @@
         (make-directory (expand-file-name ".cache" user-emacs-directory) t))
       (call-process-shell-command (concat "touch " check-file " -r " expand-zip))
       )))
+
+(eval-when-compile
+  (add-to-list 'load-path "~/.emacs.d/packages/use-package/use-package-master")
+  (condition-case nil
+      (require 'use-package)
+    (error (update-all-packages))) ;; 首次检查是否解压，之后还是手动更新包吧
+  )
+
+(add-to-list 'load-path
+	     "~/.emacs.d/packages")
 
 ;; (ensure-latest "~/.emacs.d/settings/test.zip")
 ;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
