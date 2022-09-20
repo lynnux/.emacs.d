@@ -284,3 +284,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
                                        (revert-buffer--default ignore-auto t)))
 
 (setq large-file-warning-threshold 100000000) ; 大文件询问，原来10M左右，调整为100M，避免加载TAGS时询问
+
+;; 鼠标+Shift选中文字可以用啦！emacs默认鼠标右键是选中，但不习惯。 https://superuser.com/questions/521223/shift-click-to-extend-marked-region
+(define-key global-map (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
+(define-key global-map (kbd "<S-mouse-1>") 'ignore)
