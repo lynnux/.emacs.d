@@ -381,6 +381,8 @@ _q_uit
   (add-to-list 'session-globals-exclude 'org-roam-node-history)
   (add-to-list 'session-globals-exclude 'consult--buffer-history)
   (add-to-list 'session-globals-exclude 'buffer-name-history) ;; 这个wcy已经记录了
+  (add-to-list 'session-globals-exclude 'consult-xref--history)
+  (add-to-list 'session-globals-exclude 'kill-ring)
   )
 
 ;; 目前只给dired-quick-sort用，因为session不能保存非consp的变量
