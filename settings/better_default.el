@@ -288,3 +288,16 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; 鼠标+Shift选中文字可以用啦！emacs默认鼠标右键是选中，但不习惯。 https://superuser.com/questions/521223/shift-click-to-extend-marked-region
 (define-key global-map (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
 (define-key global-map (kbd "<S-mouse-1>") 'ignore)
+
+(defun my/find-file-at-point ()
+  "Enhanced version of `find-file-at-point'.
+First attempt to open file specified by `symbol-at-point', and fallback to normal one."
+  (interactive)
+  (condition-case nil
+      (thread-last (thing-at-point 'symbol t)
+        (intern)
+        (symbol-value)
+        (find-file-noselect)
+        (switch-to-buffer))
+    (t (call-interactively 'find-file-at-point))))
+(global-set-key (kbd "C-x C-f") 'my/find-file-at-point)
