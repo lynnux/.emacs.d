@@ -2027,7 +2027,44 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             ad-do-it
             )
         ad-do-it)
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding))))
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
+  
+  ;; 修复xref只调用一个backend的问题
+  (defun my/xref-find-backends()
+    (let (backends)
+      ;; 好像没有办法获取全局变量，但run hook是可以遍历local和全局的
+      (run-hook-wrapped 'xref-backend-functions
+                        (lambda (f)
+                          (when (functionp f)
+                            (setq backend (funcall f))
+                            (when backend
+                              (cl-pushnew backend backends)))
+                          nil
+                          ))
+      (reverse backends))
+    )
+  (defun zjy/xref--create-fetcher (input kind arg)
+    "参考原版`xref--create-fetcher'改写的"
+    (let* ((orig-buffer (current-buffer))
+           (orig-position (point))
+           (backends (my/xref-find-backends))
+           (method (intern (format "xref-backend-%s" kind))))
+      (lambda ()
+        (save-excursion
+          (when (buffer-live-p orig-buffer)
+            (set-buffer orig-buffer)
+            (ignore-errors (goto-char orig-position)))
+          (let (xrefs)
+            (cl-dolist (backend backends)
+              (ignore-errors
+                (setq xrefs (funcall method backend arg))
+                (when xrefs
+                  (cl-return))))
+            (unless xrefs
+              (xref--not-found-error kind input))
+            xrefs)))))
+  (advice-add #'xref--create-fetcher :override #'zjy/xref--create-fetcher)
+  )
 
 
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
@@ -2069,18 +2106,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :init
     ;; xref有bug，`xref-backend-functions'只支持一个backend(无论local hook或者全局)
     ;; https://github.com/seagle0128/.emacs.d/blob/3eabad00e75605ad1277fb37ebc1bf0619e44180/lisp/init-ctags.el#L62
-    (define-advice xref--create-fetcher (:around (fn &rest args) fallback)
-      (let ((fetcher (apply fn args))
-            (etag-fetcher
-             (let ((xref-backend-functions '(etags--xref-backend t)))
-               (ignore xref-backend-functions)
-               (apply fn args))))
-        ;; 这个需要开启-*- lexical-binding: t -*-，写在开头就可以了
-        (lambda ()
-          (or (with-demoted-errors "%s, fallback to etag"
-                (funcall fetcher))
-              (funcall etag-fetcher)
-              ))))
+    ;; (define-advice xref--create-fetcher (:around (fn &rest args) fallback)
+    ;;   (let ((fetcher (apply fn args))
+    ;;         (etag-fetcher
+    ;;          (let ((xref-backend-functions '(etags--xref-backend t)))
+    ;;            (ignore xref-backend-functions)
+    ;;            (apply fn args))))
+    ;;     ;; 这个需要开启-*- lexical-binding: t -*-，写在开头就可以了
+    ;;     (lambda ()
+    ;;       (or (with-demoted-errors "%s, fallback to etag"
+    ;;             (funcall fetcher))
+    ;;           (funcall etag-fetcher)
+    ;;           ))))
     ;; 最坑的是eglot定义了个xref-backend-identifier-at-point，却只是用来在找不到时提示找不到"LSP identifier at point."
     ;; 这样传给etags去查找的就是"LSP identifier at point."
     (with-eval-after-load 'eglot
