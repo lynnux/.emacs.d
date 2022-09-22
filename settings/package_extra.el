@@ -890,7 +890,6 @@ _c_: hide comment        _q_uit
 (defun my-c-mode-hook-set()
   (google-set-c-style)
   (setq c-basic-offset 4) ;; tab4个空格习惯了
-  (abbrev-mode -1) ;; 有yas就够了
   )
 
 
@@ -2441,7 +2440,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               ;; (enable-format-on-save)
               (my-c-mode-hook-set)
               (my-eglot-ensure) ;; lsp bridge配合clangd很容易遇到问题还没法解决。。
-	      )))
+	      )
+            (abbrev-mode -1) ;; 有yas就够了
+            (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
+            (remove-hook 'after-change-functions 'c-after-change t)            
+            ))
 (add-hook 'rust-mode-hook 'lsp-ensure)
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
