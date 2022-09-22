@@ -1,7 +1,7 @@
 ﻿;; 非官方自带packages的设置 -*- lexical-binding: t -*-
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
-
+;; 参考https://gitee.com/advanceflow/elisp/blob/main/%E9%99%84%E5%BD%95H-%E6%A0%87%E5%87%86%E9%92%A9%E5%AD%90.org 查看各种hook，能去掉就去掉
 ;; use-package的好处之一是defer可以设置延迟几秒加载！光yas一项就提升了启动速度
 ;; :load-path不是延迟设置
 
@@ -1032,11 +1032,9 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
   (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
   ;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
-  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<f8>") 'mc/mark-all-dwim) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
   (global-set-key (kbd "S-<f8>") 'mc/skip-to-next-like-this) ;; 跳过当前选中
-  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this-dwim) ;; dwim的更智能
   ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
   :commands(multiple-cursors-mode
@@ -3286,6 +3284,7 @@ _q_uit
                          ("m" . "M-") ;; g代表C-g，但是一但进入命令还是要C-g取消了
                          ("M" . "C-M-"))
         )
+
   ;; ESC代替C-g
   (define-key key-translation-map (kbd "ESC") (kbd "C-g")) ;; 普通方法还不行
   (with-eval-after-load 'view
@@ -3293,6 +3292,11 @@ _q_uit
   (add-hook 'view-mode-hook (lambda()
                               (god-local-mode (if buffer-read-only +1 -1))
                               ))
+  ;; 方便god mode的键绑定
+  (global-set-key (kbd "C-<") 'beginning-of-buffer)
+  (global-set-key (kbd "C->") 'end-of-buffer)
+  (global-set-key (kbd "C-x C-2") 'split-window-below)
+  (global-set-key (kbd "C-x C-3") 'split-window-right)
   :config
   (define-key god-local-mode-map (kbd "i") 'view-mode)
   )

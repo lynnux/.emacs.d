@@ -66,8 +66,6 @@
   (let ((buffer-modified-p nil))
     (kill-buffer (current-buffer))))
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
-(global-set-key (kbd "C-x C-2") 'split-window-below) ;; for god-mode
-(global-set-key (kbd "C-x C-3") 'split-window-right) ;; for god-mode
 (global-set-key "\M-r" 'replace-string)
 
 (setq display-time-24hr-format t) ; 24小时格式
