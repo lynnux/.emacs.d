@@ -821,7 +821,7 @@ _c_: hide comment        _q_uit
         (let* ((start (car bs))
                (end   (cdr bs)))
           `(,start ,end completion--file-name-table . (:exclusive no))))))
-  (add-to-list 'completion-at-point-functions 'esy/file-capf)
+  (add-to-list 'completion-at-point-functions 'esy/file-capf t)
   
   (when (functionp 'eglot-ensure)
     ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
@@ -2058,8 +2058,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             (cl-dolist (backend backends)
               (ignore-errors
                 (setq xrefs (funcall method backend arg))
-                (when xrefs
-                  (cl-return))))
+                (if xrefs
+                    (cl-return)
+                  (message (format "Xref backend: %s failed to find definition." (symbol-name backend))))))
             (unless xrefs
               (xref--not-found-error kind input))
             xrefs)))))
@@ -2479,8 +2480,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (my-eglot-ensure) ;; lsp bridge配合clangd很容易遇到问题还没法解决。。
 	      )
             (abbrev-mode -1) ;; 有yas就够了
-            (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
-            (remove-hook 'after-change-functions 'c-after-change t)            
+            ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
+            ;; (remove-hook 'after-change-functions 'c-after-change t)            
             ))
 (add-hook 'rust-mode-hook 'lsp-ensure)
 
