@@ -2146,6 +2146,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (setq tags-add-tables nil  ;; 打开其它工程时保留tag提示，不保留，否则会混起
           tags-revert-without-query t;; 当TAGS更新后不提示是否revert TAGS buffer
           )
+    (defun tag-find-definition(identifier)
+      "有时如duilib的头文件里eglot就不行，用tag还行"
+      (interactive (list (xref--read-identifier "Find definitions of: ")))
+      (let ((xref-backend-functions '(etags--xref-backend)))
+        (xref--find-definitions identifier nil)))
     :config
     ;; 跟citre生成的TAGS兼容(头两行带有更新TAGS的命令)
     (defadvice etags-verify-tags-table (around my-etags-verify-tags-table activate)
