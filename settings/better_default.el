@@ -289,15 +289,4 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (define-key global-map (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
 (define-key global-map (kbd "<S-mouse-1>") 'ignore)
 
-(defun my/find-file-at-point ()
-  "Enhanced version of `find-file-at-point'.
-First attempt to open file specified by `symbol-at-point', and fallback to normal one."
-  (interactive)
-  (condition-case nil
-      (thread-last (thing-at-point 'symbol t)
-        (intern)
-        (symbol-value)
-        (find-file-noselect)
-        (switch-to-buffer))
-    (t (call-interactively 'find-file-at-point))))
-(global-set-key (kbd "C-x C-f") 'my/find-file-at-point)
+(global-set-key (kbd "C-x C-f") 'find-file-at-point)

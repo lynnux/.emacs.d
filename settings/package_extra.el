@@ -2718,8 +2718,8 @@ _q_uit
            (b (round (*(nth 2 rgb) 255))))
       (pop-select/transparent-set-background cur-transparent r g b)
       ))
-  (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
-  (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
+  ;; (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
+  ;; (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
   )
 (w32-send-sys-command #xf030) ;; 放大窗口，pop-select/ensure-all-window-dark-mode还有bug就是caption不能重绘，这里放大就OK了
 
@@ -3087,8 +3087,8 @@ _q_uit
   :init
   (global-set-key (kbd "C-=") 'evil-numbers/inc-at-pt)
   (global-set-key (kbd "C--") 'evil-numbers/dec-at-pt)
-  ;; (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
-  ;; (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
+  (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
+  (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt)
   )
 
 (use-package so-long
