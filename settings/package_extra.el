@@ -2443,6 +2443,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   :commands (eglot eglot-ensure eglot-rename)
   :config
+  (add-to-list 'eglot-server-programs '(simpc-mode . ("clangd")))
   (advice-add 'jsonrpc--log-event :around
               (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
   ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
@@ -2475,6 +2476,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                 (require 'lsp-pyright)
                                 )
                               (lsp-ensure)))
+(use-package simpc-mode
+  ;; cc-mode因为历史原因，很多功能都不是必须的，如mode-map和after/before change hook，但去掉hook的话有时候font lock会不正常，所以干脆换个major-mode
+  ;; 还有个类似的https://github.com/veera-sivarajan/minc-mode/blob/master/highlight.el
+  :commands(simpc-mode)
+  :init
+  (add-to-list 'auto-mode-alist '("\\.c\\'" . simpc-mode))
+  (add-to-list 'auto-mode-alist '("\\.h\\'" . simpc-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . simpc-mode))
+  (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . simpc-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . simpc-mode))
+  )
+(add-hook 'simpc-mode-hook 'my-eglot-ensure)
 ;; cc-mode包含java等
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
@@ -2629,13 +2642,16 @@ _q_uit
 	  scala-mode
 	  swift-mode
 	  tuareg-mode
-	  typescript-mode) . (lambda ()
+          typescript-mode
+          simpc-mode
+          ) . (lambda ()
 	  ;; (tree-sitter-hl-mode)
 	  (grammatical-edit-mode 1)
 	  ))
   :config
   ;; elisp没有高亮
   (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
+  (add-to-list 'tree-sitter-major-mode-language-alist '(simpc-mode . cpp))
   (use-package tree-sitter-langs)
   )
 
