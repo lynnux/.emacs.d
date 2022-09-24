@@ -770,7 +770,7 @@ _c_: hide comment        _q_uit
         corfu-auto t
         corfu-auto-prefix 1
         corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
-        corfu-auto-delay 0.5      ;; 避免输完后马上C-n/C-p也补全
+        ;; corfu-auto-delay 0.5      ;; 避免输完后马上C-n/C-p也补全
         corfu-quit-at-boundary nil ;; 可以用M-空格来分词
         corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
         )
@@ -2462,7 +2462,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :load-path "~/.emacs.d/packages/lsp"
   :init
   (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
-        eglot-send-changes-idle-time 0.01 ; 可以加rust的code action更新
+        eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
         eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
         )
   (defun my-eglot-ensure()
