@@ -340,3 +340,4 @@ Run occur in all buffers whose names match this type for REXP."
 (global-auto-revert-mode)
 
 (setq-default compilation-scroll-output 'first-error)
+(electric-indent-mode -1) ;; 貌似没什么用也没有，还占了post-self-insert-hook一席
