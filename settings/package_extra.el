@@ -564,10 +564,43 @@ _c_: hide comment        _q_uit
   (super-save-advise-trigger-commands)
   )
 
+(use-package tempel
+  :bind (;; ("M-+" . tempel-complete)
+         ("M-<return>" . tempel-insert)
+         :map tempel-map
+         ("<tab>" . tempel-next)
+         ("<backtab>" . tempel-previous)
+         )
+  :commands(tempel-insert tempel--templates tempel-expand)
+  :init
+  (setq tempel-path (expand-file-name "packages/tempel_templates" user-emacs-directory))
+  (defun my-tempel-expandable-p ()
+    "from https://gitlab.com/daanturo/e/-/blob/main/autoload/16-my-functions-snippet.el#L47"
+    (when (and t;; (memq (char-after) '(?\C-j ?  nil)) ;; 位置必须是最后或者后面有空格
+               (require 'tempel nil 'noerror))
+      (let ((s (thing-at-point 'symbol)))
+        (when (and s (assoc (intern s)
+                            (tempel--templates)))
+          t))))
+  (global-set-key [remap indent-for-tab-command] 
+                  (lambda()
+                    (interactive)
+                    (if (my-tempel-expandable-p)
+                        (call-interactively 'tempel-expand)
+                      (call-interactively 'indent-for-tab-command)
+                      )))
+  )
 (use-package yasnippet
-  :defer 1
+  :disabled
+  :defer t
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
+  ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
+  (autoload 'aya-create "auto-yasnippet" nil t)
+  (autoload 'aya-expand "auto-yasnippet" nil t)
+  (global-set-key (kbd "C-c y") #'aya-create)
+  (global-set-key (kbd "C-c e") #'aya-expand)
+  
   :diminish(yas-minor-mode)
   :config
   ;; copy from yasnippet-snippets.el，fix for eglot
@@ -582,12 +615,6 @@ _c_: hide comment        _q_uit
 	  "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
 	  ))
   (yas-global-mode 1)
-
-  ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
-  (autoload 'aya-create "auto-yasnippet" nil t)
-  (autoload 'aya-expand "auto-yasnippet" nil t)
-  (global-set-key (kbd "C-c y") #'aya-create)
-  (global-set-key (kbd "C-c e") #'aya-expand)
   )
 
 ;; from tabbar-ruler
@@ -2765,7 +2792,7 @@ _q_uit
   (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
   (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
 
-  (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+  ;; (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
 
   (when nil
     ;; 支持hungry delete
