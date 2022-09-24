@@ -101,3 +101,4 @@ packages/minibuffer/compat.el-master/*
 /dired-history
 /packages/dired/dired-hacks-master/
 /packages/projectile/rg.el-master/
+/packages/tree-sitter/evil-textobj-tree-sitter-master/

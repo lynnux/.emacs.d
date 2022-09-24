@@ -34,6 +34,7 @@
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
+  (ensure-latest "~/.emacs.d/packages/tree-sitter/evil-textobj-tree-sitter-master.zip")
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -702,13 +703,13 @@ _c_: hide comment        _q_uit
       ;; (when buffer-read-only
       ;;   (message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
       ;;   )
-      (my-cursor-chg))
-    (setq cursor-chg-timer nil))
+      (my-cursor-chg)))
   
   (add-hook 'buffer-list-update-hook (lambda()
-                                       (unless cursor-chg-timer
-                                         (setq cursor-chg-timer
-                                               (run-with-idle-timer 0.1 nil 'cursor-chg-function)))
+                                       (when cursor-chg-timer
+                                         (cancel-timer cursor-chg-timer))
+                                       (setq cursor-chg-timer
+                                             (run-with-idle-timer 0.1 nil 'cursor-chg-function))
                                        ))
   )
 
@@ -2486,6 +2487,39 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . simpc-mode))
   (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . simpc-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . simpc-mode))
+  :config
+  ;; 实现defun范围获取，速度稍微比cc-mode慢了点
+  (defun simpc-mode-beginning-of-defun(&optional arg)
+    (interactive)
+    (unless tree-sitter-mode
+      (tree-sitter-mode +1))
+    (tree-sitter-force-update)
+    (if (re-search-backward "{" nil t) ;;粗暴解决end-of-defun的问题，但M-x beginning-of-defun有点问题
+        (goto-char (match-beginning 0)))
+    (let* ((inhibit-message t)
+          (range (evil-textobj-tree-sitter-function--function\.outer arg))
+          )
+      (when (consp range)
+        (goto-char (car range))
+        t)))
+  (defun simpc-mode-end-of-defun()
+    "有个问题end-of-defun老是定位到你给的end位置的下一行，这时再beginning-of-defun就失败了"
+    (interactive)
+    (unless tree-sitter-mode
+      (tree-sitter-mode +1))
+    (tree-sitter-force-update)
+    (let* ((inhibit-message t)
+          (range (evil-textobj-tree-sitter-function--function\.outer 1))
+          )
+      (when (consp range)
+        (goto-char (cdr range))
+        t)))
+  (add-hook 'simpc-mode-hook (lambda()
+                               ;; 能成功实现defun的thing at point的要素是两次手动M-x beginning-of-defun和end-of-defun依然在函数边界上
+                               ;; 不然就不会成功
+                               (setq-local beginning-of-defun-function #'simpc-mode-beginning-of-defun)
+                               (setq-local end-of-defun-function #'simpc-mode-end-of-defun)
+                               ))
   )
 (add-hook 'simpc-mode-hook 'my-eglot-ensure)
 ;; cc-mode包含java等
@@ -2607,6 +2641,33 @@ _q_uit
 (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
 (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
 (setq tree-sitter-langs--testing t) ;; 静止联网check bin
+(use-package tree-sitter
+  :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
+  :defer t
+  :config
+  ;; elisp没有高亮
+  (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
+  (add-to-list 'tree-sitter-major-mode-language-alist '(simpc-mode . cpp))
+  (use-package tree-sitter-langs)
+  
+  (defvar tree-sitter-idle-timer nil
+    "如果不需要hl功能，只需要按需调用tree-sitter-force-update即可，如defun范围功能")
+  (defun my/tree-sitter--after-change(beg new-end old-len)
+    (when tree-sitter-idle-timer
+      (cancel-timer tree-sitter-idle-timer))
+    (setq tree-sitter-idle-timer
+          (run-with-idle-timer 1 nil #'tree-sitter-force-update) ))
+  (defun tree-sitter-force-update()
+    (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
+    (tree-sitter--do-parse))
+  (defadvice tree-sitter--setup (after my-tree-sitter--setup activate)
+    "去掉hook，改为timer模式"
+    (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
+    (remove-hook 'before-change-functions #'tree-sitter--before-change :local)
+    )
+  (defun tree-sitter-setup-timer()
+    (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local))
+  )
 ;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
   :diminish(tree-sitter-mode)
@@ -2649,10 +2710,23 @@ _q_uit
 	  (grammatical-edit-mode 1)
 	  ))
   :config
-  ;; elisp没有高亮
-  (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
-  (add-to-list 'tree-sitter-major-mode-language-alist '(simpc-mode . cpp))
-  (use-package tree-sitter-langs)
+  (add-hook 'tree-sitter-hl-mode-hook (lambda()
+                                        (tree-sitter-setup-timer)
+                                        ))
+  )
+
+(use-package evil-textobj-tree-sitter
+  :load-path "~/.emacs.d/packages/tree-sitter/evil-textobj-tree-sitter-master"
+  :defer t
+  :commands(evil-textobj-tree-sitter-function--function\.outer)
+  :init
+  (defalias 'evil-define-text-object 'defun)
+  (defalias 'evil-range 'cons)
+  :config
+  (add-to-list 'evil-textobj-tree-sitter-major-mode-language-alist '(simpc-mode . "cpp"))
+  ;; 可惜没有elisp
+  (evil-textobj-tree-sitter-get-textobj "function.outer")
+  ;; (evil-textobj-tree-sitter-function--function\.outer 1)
   )
 
 ;; grammatical-edit bug太多了，pair用这个就够了
@@ -2812,9 +2886,10 @@ _q_uit
                               (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
                               (add-hook 'after-save-hook
                                         (lambda()
-                                          (unless diff-hl-update-timer
-                                            (setq diff-hl-update-timer
-                                                  (run-with-idle-timer 2 nil #'diff-hl-update-timer-function) ))
+                                          (when diff-hl-update-timer
+                                            (cancel-timer diff-hl-update-timer))
+                                          (setq diff-hl-update-timer
+                                                (run-with-idle-timer 2 nil #'diff-hl-update-timer-function) )
                                           ) nil t)
                               ))
   :config
@@ -2825,7 +2900,6 @@ _q_uit
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function()
     (diff-hl-update)
-    (setq diff-hl-update-timer nil)
     )
   (defun diff-hl-update-manual()(interactive) (diff-hl-update))
   
