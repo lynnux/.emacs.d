@@ -2674,39 +2674,51 @@ _q_uit
 (use-package tree-sitter-hl
   :diminish(tree-sitter-mode)
   :commands(tree-sitter-hl-mode)
-  ;; 来自tree-sitter-major-mode-language-alist
-  :hook ((sh-mode
-	  c-mode
-	  csharp-mode
-	  c++-mode 
-	  css-mode 
-	  elm-mode 
-	  emacs-lisp-mode ;; 需要自己编译
-	  go-mode 
-	  hcl-mode
-	  html-mode 
-	  mhtml-mode
-	  java-mode 
-	  javascript-mode
-	  js-mode 
-	  js2-mode
-	  js3-mode
-	  json-mode
-	  jsonc-mode
-	  julia-mode 
-	  ocaml-mode 
-	  php-mode 
-	  python-mode
-	  pygn-mode 
-	  rjsx-mode 
-	  ruby-mode 
-	  rust-mode
-	  rustic-mode
-	  scala-mode
-	  swift-mode
-	  tuareg-mode
+  ;; 来自`tree-sitter-major-mode-language-alist'
+  :hook ((agda-mode
+          sh-mode
+          c-mode
+          caml-mode
+          csharp-mode
+          c++-mode
+          d-mode
+          css-mode
+          elm-mode
+          elixir-mode
+          go-mode
+          haskell-mode
+          hcl-mode
+          terraform-mode
+          html-mode
+          mhtml-mode
+          nix-mode
+          java-mode
+          javascript-mode
+          js-mode
+          js2-mode
+          js3-mode
+          json-mode
+          jsonc-mode
+          julia-mode
+          ocaml-mode
+          perl-mode
+          php-mode
+          prisma-mode
+          python-mode
+          pygn-mode
+          rjsx-mode
+          ruby-mode
+          rust-mode
+          rustic-mode
+          scala-mode
+          swift-mode
+          tuareg-mode
           typescript-mode
+          verilog-mode
+          yaml-mode
+          zig-mode
           simpc-mode
+          emacs-lisp-mode
           ) . (lambda ()
 	  ;; (tree-sitter-hl-mode)
 	  (grammatical-edit-mode 1)
