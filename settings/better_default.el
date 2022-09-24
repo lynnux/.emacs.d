@@ -13,7 +13,6 @@
 (global-set-key (kbd "C-v") 'yank)	; 翻页基本不用
 (delete-selection-mode 1);; 选中替换模式，比较方便，但是据说有副作用，先用用再说
 (global-set-key [?\C-h] 'delete-backward-char) ;C-H当删除很好用！
-(global-set-key [?\M-h] 'backward-kill-word) ;M-H顺便也弄上
 (setq x-select-enable-clipboard t);; 支持emacs和外部程序的粘(ubuntu)
 ;; (icomplete-mode 1);; 用M-x执行某个命令的时候，在输入的同时给出可选的命令名提示，跟swiper冲突
 
@@ -290,3 +289,17 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (define-key global-map (kbd "<S-mouse-1>") 'ignore)
 
 (global-set-key (kbd "C-x C-f") 'find-file-at-point)
+(defun delete-word (arg)
+  "代替kill-word，不加入kill-ring"
+  (interactive "p")
+  (delete-region
+   (point)
+   (progn
+     (forward-word arg)
+     (point))))
+(defun delete-word-backward (arg)
+  ""
+  (interactive "p")
+  (delete-word (- arg)))
+(global-set-key [remap kill-word] 'delete-word)
+(global-set-key [?\M-h] 'delete-word-backward)
