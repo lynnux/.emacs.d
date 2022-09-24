@@ -589,6 +589,13 @@ _c_: hide comment        _q_uit
                         (call-interactively 'tempel-expand)
                       (call-interactively 'indent-for-tab-command)
                       )))
+  (with-eval-after-load 'corfu
+    ;; 解决补全弹出过快，TAB对tempel无效的问题，TAB优先tempel
+    (defun corfu-complete-pass-tempel (&rest app)
+      (if (my-tempel-expandable-p)
+          (call-interactively 'tempel-expand)
+        (apply app)))
+    (advice-add #'corfu-complete :around #'corfu-complete-pass-tempel))
   )
 (use-package yasnippet
   :disabled
