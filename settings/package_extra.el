@@ -768,11 +768,10 @@ _c_: hide comment        _q_uit
 ;; corfu的原理是添加completion-at-point-functions，很标准的做法
 ;; company机制不清楚。eglot+ctags用corfu好配一点
 (use-package corfu
-  :defer 1
-  :load-path "~/.emacs.d/packages/corfu/corfu-main"
-  :commands(global-corfu-mode corfu-mode)
+  :defer t
+  :commands(corfu-mode)
   :init
-  
+  (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
   (setq corfu-cycle t
         corfu-auto t
         corfu-auto-prefix 1
@@ -1870,9 +1869,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; easy-kill，添加类似vim里yi/a的东西！
 (use-package easy-kill
-  :load-path "~/.emacs.d/packages/easy-kill"
   :commands(easy-kill easy-mark)
   :init
+  (autoload 'easy-kill "easy-kill/easy-kill" "" nil)
+  (autoload 'easy-mark "easy-kill/easy-kill" "" nil)
   (global-set-key [remap kill-ring-save] 'easy-kill)
   ;; 有选中或者mark时用expand-region，否则用easy-mark
   ;; 替换expand-region
@@ -2322,7 +2322,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
-  :load-path "~/.emacs.d/packages/projectile"
   :commands(rg-define-search)
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/projectile/rg.el-master")
@@ -2388,8 +2387,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 
 ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
-
-(add-to-list 'load-path "~/.emacs.d/packages/lsp")
 (use-package lsp-bridge
   :diminish
   :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
@@ -2466,8 +2463,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (defvar flymake-list-only-diagnostics nil)
     ))
 (use-package eglot
-  :load-path "~/.emacs.d/packages/lsp"
   :init
+  (autoload 'eglot-ensure "lsp/eglot" "" nil)
+  (autoload 'eglot "lsp/eglot" "" nil)
+  (autoload 'eglot-rename "lsp/eglot" "" nil)
   (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
         eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
         eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
