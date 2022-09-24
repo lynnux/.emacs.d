@@ -2665,9 +2665,11 @@ _q_uit
     (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
     (remove-hook 'before-change-functions #'tree-sitter--before-change :local)
     )
-  (defun tree-sitter-setup-timer()
-    (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local))
-  )
+  (defun tree-sitter-setup-timer(&optional on)
+    (if on
+        (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local)
+      (remove-hook 'after-change-functions #'my/tree-sitter--after-change :local)
+      )))
 ;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
   :diminish(tree-sitter-mode)
@@ -2711,7 +2713,7 @@ _q_uit
 	  ))
   :config
   (add-hook 'tree-sitter-hl-mode-hook (lambda()
-                                        (tree-sitter-setup-timer)
+                                        (tree-sitter-setup-timer tree-sitter-hl-mode)
                                         ))
   )
 
