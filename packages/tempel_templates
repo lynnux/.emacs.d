@@ -130,6 +130,20 @@ int main()
 "#define " guard-name n n
 q n n
 "#endif /* " guard-name " */")
+(for "for ("(p "auto i = 0")"; " (p "i < N") "; "(p "++i")") {"n > q n"}">)
+(if "if ("p") {" n > q n >"}">) ;; 目前缩进还有些问题
+(struct "struct "p"
+{
+    "q"
+};")
+(class "class "p"
+{
+    "q"
+};")
+(pub "public:" n >)
+(pri "private:" n >)
+(pro "protect:" n >)
+(while "while ("p") {"n > q n >"}">)
 
 cmake-mode
 
@@ -150,11 +164,34 @@ endif()")
 foreach(CompilerFlag ${CompilerFlags})
     string(REPLACE \"/MD\" \"/MT\" ${CompilerFlag} \"${${CompilerFlag}}\")
 endforeach()")
+(cmake_minimum_required "cmake_minimum_required(VERSION " (p "2.6") ")")
+(add_executable "add_executable(" (p "" exe-name) " " (p "main.cpp") ")
+target_link_libraries("exe-name" "q")")
+(add_library "add_library(" (p "" exe-name) " " (p "main.cpp") ")
+target_link_libraries("exe-name" "q")")
 
 lua-mode
 
 (lc "local " q)
 (ret "return"q)
+(pairs "for "(p "name")", "(p "val")" in pairs("(p "table_name")") do
+	"q"
+end")
+(ipairs "for "(p "idx")", "(p "val")" in ipairs("(p "table_name")") do
+	"q"
+end")
+(if "if "p" then
+	"q"
+end
+")
+(fun "function "p"("p")
+	"q"
+end
+")
+(repeat "repeat
+	"p"
+until "q"
+")
 
 python-mode
 
