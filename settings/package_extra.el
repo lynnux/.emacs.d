@@ -2779,11 +2779,44 @@ _q_uit
 ;; grammatical-edit bug太多了，pair用这个就够了
 (use-package elec-pair
   :config
+  
+  ;; 去掉elec-pair的post-self-insert-hook，改为直接对键绑定并调用elec-pair的函数
+  (when t
+    ;; (这个我不知道它是哪里创建的，干脆把所有已知的都列在这里
+    (defvar my-elec-pairs-list '((?\" . ?\")
+                                 (?\( . ?\))
+                                 (?\{ . ?\})
+                                 ))
+    (add-hook 'electric-pair-mode-hook 
+              (lambda()
+                (when electric-pair-mode
+                  (remove-hook 'post-self-insert-hook
+                               #'electric-pair-post-self-insert-function)
+                  ))
+              100 ;; make this hook the last
+              )
+    (cl-dolist (pairs my-elec-pairs-list)
+      (let* ((key (car pairs))
+             (key_str (char-to-string key))
+             )
+        (global-set-key key_str (lambda()
+                                  (interactive)
+                                  (let ((this-command 'self-insert-command)
+                                        (electric-pair-mode t)
+                                        (last-command-event key))
+                                    (self-insert-command 1 key)
+                                    (electric-pair-post-self-insert-function)
+                                    )
+                                  )))
+      )
+    )
+  
   (electric-pair-mode 1)
   ;; c++换行时输入{}自动indent
   (defadvice electric-pair--insert (after my-electric-pair--insert activate)
     (indent-according-to-mode))
   )
+
 
 (use-package grammatical-edit
   :commands(grammatical-edit-mode)
