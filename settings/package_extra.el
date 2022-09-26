@@ -1822,6 +1822,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (unless (string-equal str "")
           str)))
     )
+  (with-eval-after-load 'magit-mode
+    (remove-hook 'pre-command-hook #'magit-pre-command-hook))
   :commands (magit magit-status)        ;; magit-status
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
