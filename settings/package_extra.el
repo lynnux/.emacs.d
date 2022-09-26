@@ -2492,7 +2492,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (advice-add 'jsonrpc--log-event :around
               (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
   ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-  ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  (add-to-list 'eglot-stay-out-of 'flymake)
   (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
   (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
         eglot-ignored-server-capabilities) 
@@ -3605,9 +3605,9 @@ _q_uit
           )
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
         (random-load-doom-theme (list
-                                 'doom-one
+                                 ;; 'doom-one
                                  ;; 'spacemacs-dark
-                                 ;; 'modus-vivendi
+                                 'modus-vivendi
                                  ))
         )
       )
