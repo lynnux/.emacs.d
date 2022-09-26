@@ -2477,6 +2477,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   :commands (eglot eglot-ensure eglot-rename)
   :config
+  (add-hook 'eglot-managed-mode-hook 
+            (lambda()
+              ;; 去掉flymake的hook，eglot自己会更新flymake
+              (remove-hook 'after-change-functions 'flymake-after-change-function t)
+              (remove-hook 'after-save-hook 'flymake-after-save-hook t)
+              (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
+              (remove-hook 'eldoc-documentation-functions 'flymake-eldoc-function t)
+              ))
   (add-to-list 'eglot-server-programs '(simpc-mode . ("clangd")))
   (advice-add 'jsonrpc--log-event :around
               (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
