@@ -2764,13 +2764,23 @@ _q_uit
           simpc-mode
           emacs-lisp-mode
           ) . (lambda ()
+                (when (eq major-mode 'simpc-mode)
+                  (tree-sitter-hl-mode +1)
+                  )
 	  ;; (tree-sitter-hl-mode)
 	  (grammatical-edit-mode 1)
 	  ))
   :config
+  ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
+  (defun remove-jit-lock-after-change()
+    (when tree-sitter-hl-mode
+      (remove-hook 'after-change-functions 'jit-lock-after-change t)))
+  (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
   (add-hook 'tree-sitter-hl-mode-hook (lambda()
                                         (tree-sitter-setup-timer tree-sitter-hl-mode)
-                                        ))
+                                        (if tree-sitter-hl-mode
+                                            (remove-jit-lock-after-change)
+                                          (add-hook 'after-change-functions 'jit-lock-after-change nil t))))
   )
 
 (use-package evil-textobj-tree-sitter
