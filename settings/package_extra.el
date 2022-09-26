@@ -1912,12 +1912,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (`(,_x . ,_x) ();; 这就是字符串形式
          )
         (`(,beg . ,end) ;; begin end位置模式 
-         (when (eq (easy-kill-get thing) 'line-with-yank-handler)
-           (let ((string ad-return-value))
-             (when (> (length string) 0)
-	       (put-text-property 0 (length string)
-			          'yank-handler '(yank-line) string))
-             (setq ad-return-value string)))))))
+         (let ((string ad-return-value))
+           (if (eq (easy-kill-get thing) 'line-with-yank-handler)
+               (put-text-property 0 (length string)
+			          'yank-handler '(yank-line) string)
+             ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
+             (remove-text-properties 0 (length string) 'yank-handler string))
+           (setq ad-return-value string))))))
   
   (defun easy-kill-on-forward-word(n)
     (let ((beg (easy-kill-get start)) (end (easy-kill-get end)))
