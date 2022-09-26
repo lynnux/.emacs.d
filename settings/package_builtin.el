@@ -341,3 +341,5 @@ Run occur in all buffers whose names match this type for REXP."
 
 (setq-default compilation-scroll-output 'first-error)
 (electric-indent-mode -1) ;; 貌似没什么用也没有，还占了post-self-insert-hook一席
+
+(remove-hook 'after-save-hook 'rmail-after-save-hook) ;; emacs默认还给你加个这玩意
