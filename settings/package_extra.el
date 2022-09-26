@@ -2793,7 +2793,8 @@ _q_uit
   ;; 去掉elec-pair的post-self-insert-hook，改为直接对char绑定并调用elec-pair的函数
   (when t
     ;; 把所有会成对的char都放这里 (elec-pair是从`syntax-table'找到成对的)
-    (defvar elec-pair-chars '(?\' ?\" ?\` ?\( ?\{ ?\[ ?\< ))
+    (defvar elec-pair-chars '( ?\' ?\" ?\` ?\( ?\{ ?\[ ?\< 
+                                  ?\) ?\} ?\] ?\> )) ;; 右边也加上，有时候人工会输入
     (add-hook 'electric-pair-mode-hook 
               (lambda()
                 (when electric-pair-mode
