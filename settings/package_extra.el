@@ -2436,10 +2436,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
                lsp-enable-suggest-server-download nil ;;不需要下载server
                )
-         (use-package lsp-pyright
-           :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
-           :defer t
-           )
+         (defun my/lsp-mode-setup-completion ()
+           "必须设置这个，不然会让人以为补全有问题"
+           (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+                 '(flex)))
+         :hook
+         (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred)
          :config
          (add-hook 'lsp-managed-mode-hook 'remove-flymake-hook)
