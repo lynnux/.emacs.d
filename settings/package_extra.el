@@ -33,8 +33,6 @@
   (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
-  (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
-  (ensure-latest "~/.emacs.d/packages/tree-sitter/evil-textobj-tree-sitter-master.zip")
   (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
   )
 
