@@ -2470,7 +2470,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          :commands (eglot eglot-ensure eglot-rename)
          :config
          (add-hook 'eglot-managed-mode-hook 'remove-flymake-hook)
-         (add-to-list 'eglot-server-programs '(simpc-mode . ("clangd")))
          (advice-add 'jsonrpc--log-event :around
                      (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
          ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
@@ -2575,54 +2574,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                               (unless (eq lsp-use-which 'lsp-bridge)
                                 (corfu-mode))
                               (lsp-ensure)))
-(use-package simpc-mode
-  ;; :disabled
-  ;; cc-mode因为历史原因，很多功能都不是必须的，如mode-map和after/before change hook，但去掉hook的话有时候font lock会不正常，所以干脆换个major-mode
-  ;; 还有个类似的https://github.com/veera-sivarajan/minc-mode/blob/master/highlight.el
-  ;; 缺点：defun没有，symbol选择有问题，高亮用tree-sittr的话测试sqlite3会卡(cc-mode反而很快)
-  :commands(simpc-mode)
-  :init
-  (when nil
-    (add-to-list 'auto-mode-alist '("\\.c\\'" . simpc-mode))
-    (add-to-list 'auto-mode-alist '("\\.h\\'" . simpc-mode))
-    (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . simpc-mode))
-    (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . simpc-mode))
-    (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . simpc-mode)))
-  :config
-  ;; 实现defun范围获取，速度稍微比cc-mode慢了点
-  (defun simpc-mode-beginning-of-defun(&optional arg)
-    (interactive)
-    (unless tree-sitter-mode
-      (tree-sitter-mode +1))
-    (tree-sitter-force-update)
-    (if (re-search-backward "{" nil t) ;;粗暴解决end-of-defun的问题，但M-x beginning-of-defun有点问题
-        (goto-char (match-beginning 0)))
-    (let* ((inhibit-message t)
-          (range (evil-textobj-tree-sitter-function--function\.outer arg))
-          )
-      (when (consp range)
-        (goto-char (car range))
-        t)))
-  (defun simpc-mode-end-of-defun()
-    "有个问题end-of-defun老是定位到你给的end位置的下一行，这时再beginning-of-defun就失败了"
-    (interactive)
-    (unless tree-sitter-mode
-      (tree-sitter-mode +1))
-    (tree-sitter-force-update)
-    (let* ((inhibit-message t)
-          (range (evil-textobj-tree-sitter-function--function\.outer 1))
-          )
-      (when (consp range)
-        (goto-char (cdr range))
-        t)))
-  (add-hook 'simpc-mode-hook (lambda()
-                               ;; 能成功实现defun的thing at point的要素是两次手动M-x beginning-of-defun和end-of-defun依然在函数边界上
-                               ;; 不然就不会成功
-                               (setq-local beginning-of-defun-function #'simpc-mode-beginning-of-defun)
-                               (setq-local end-of-defun-function #'simpc-mode-end-of-defun)
-                               ))
-  )
-(add-hook 'simpc-mode-hook 'my-eglot-ensure)
+
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)) ;; h当成c++文件
+
 ;; cc-mode包含java等
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
@@ -2752,7 +2706,6 @@ _q_uit
   :config
   ;; elisp没有高亮
   (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
-  (add-to-list 'tree-sitter-major-mode-language-alist '(simpc-mode . cpp))
   (use-package tree-sitter-langs)
   
   (defvar tree-sitter-idle-timer nil
@@ -2823,15 +2776,12 @@ _q_uit
           verilog-mode
           yaml-mode
           zig-mode
-          simpc-mode
           emacs-lisp-mode
-          ) . (lambda ()
-                (when (eq major-mode 'simpc-mode)
-                  (tree-sitter-hl-mode +1) ;
-                  )
-	  ;; (tree-sitter-hl-mode)
-	  (grammatical-edit-mode 1)
-	  ))
+          ) . 
+            (lambda ()
+	      ;; (tree-sitter-hl-mode)
+	      (grammatical-edit-mode 1)
+	      ))
   :config
   ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
   (defun remove-jit-lock-after-change()
@@ -2844,20 +2794,6 @@ _q_uit
                                           (if tree-sitter-hl-mode
                                               (remove-jit-lock-after-change)
                                             (add-hook 'after-change-functions 'jit-lock-after-change nil t)))))
-  )
-
-(use-package evil-textobj-tree-sitter
-  :load-path "~/.emacs.d/packages/tree-sitter/evil-textobj-tree-sitter-master"
-  :defer t
-  :commands(evil-textobj-tree-sitter-function--function\.outer)
-  :init
-  (defalias 'evil-define-text-object 'defun)
-  (defalias 'evil-range 'cons)
-  :config
-  (add-to-list 'evil-textobj-tree-sitter-major-mode-language-alist '(simpc-mode . "cpp"))
-  ;; 可惜没有elisp
-  (evil-textobj-tree-sitter-get-textobj "function.outer")
-  ;; (evil-textobj-tree-sitter-function--function\.outer 1)
   )
 
 ;; grammatical-edit bug太多了，pair用这个就够了
