@@ -2692,16 +2692,20 @@ _q_uit
 (use-package fd-dired
   :commands(fd-dired))
 
-;; tree sitter
-(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
-(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
-(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
-(add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
-(setq tree-sitter-langs--testing t) ;; 静止联网check bin
 (use-package tree-sitter
   :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
   :defer t
   :init
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
+  (setq tree-sitter-langs--testing t ;; 禁止联网check bin
+        tsc-dyn-get-from nil ;; 
+        tree-sitter-langs-git-dir nil ;; 禁止调用git
+        tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
+        tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core"
+        )
   (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
   :config
   ;; elisp没有高亮
