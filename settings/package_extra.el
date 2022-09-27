@@ -2529,15 +2529,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                 )
                               (lsp-ensure)))
 (use-package simpc-mode
+  ;; :disabled
   ;; cc-mode因为历史原因，很多功能都不是必须的，如mode-map和after/before change hook，但去掉hook的话有时候font lock会不正常，所以干脆换个major-mode
   ;; 还有个类似的https://github.com/veera-sivarajan/minc-mode/blob/master/highlight.el
+  ;; 缺点：defun没有，symbol选择有问题，高亮用tree-sittr的话测试sqlite3会卡(cc-mode反而很快)
   :commands(simpc-mode)
   :init
-  (add-to-list 'auto-mode-alist '("\\.c\\'" . simpc-mode))
-  (add-to-list 'auto-mode-alist '("\\.h\\'" . simpc-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . simpc-mode))
-  (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . simpc-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . simpc-mode))
+  (when nil
+    (add-to-list 'auto-mode-alist '("\\.c\\'" . simpc-mode))
+    (add-to-list 'auto-mode-alist '("\\.h\\'" . simpc-mode))
+    (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . simpc-mode))
+    (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . simpc-mode))
+    (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . simpc-mode)))
   :config
   ;; 实现defun范围获取，速度稍微比cc-mode慢了点
   (defun simpc-mode-beginning-of-defun(&optional arg)
@@ -2695,6 +2698,8 @@ _q_uit
 (use-package tree-sitter
   :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
   :defer t
+  :init
+  (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
   :config
   ;; elisp没有高亮
   (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
@@ -2707,20 +2712,21 @@ _q_uit
     (when tree-sitter-idle-timer
       (cancel-timer tree-sitter-idle-timer))
     (setq tree-sitter-idle-timer
-          (run-with-idle-timer 1 nil #'tree-sitter-force-update) ))
+          (run-with-idle-timer 0.2 nil #'tree-sitter-force-update) ))
   (defun tree-sitter-force-update()
     (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
     (tree-sitter--do-parse))
-  (defadvice tree-sitter--setup (after my-tree-sitter--setup activate)
-    "去掉hook，改为timer模式"
-    (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
-    (remove-hook 'before-change-functions #'tree-sitter--before-change :local)
-    )
-  (defun tree-sitter-setup-timer(&optional on)
-    (if on
-        (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local)
-      (remove-hook 'after-change-functions #'my/tree-sitter--after-change :local)
-      )))
+  (when use-tree-sitter-hl-mode-hack
+    (defadvice tree-sitter--setup (after my-tree-sitter--setup activate)
+      "去掉hook，改为timer模式"
+      (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
+      (remove-hook 'before-change-functions #'tree-sitter--before-change :local))
+    (defun tree-sitter-setup-timer(&optional on)
+      (if on
+          (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local)
+        (remove-hook 'after-change-functions #'my/tree-sitter--after-change :local)
+        )))
+  )
 ;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
   :diminish(tree-sitter-mode)
@@ -2772,7 +2778,7 @@ _q_uit
           emacs-lisp-mode
           ) . (lambda ()
                 (when (eq major-mode 'simpc-mode)
-                  (tree-sitter-hl-mode +1)
+                  (tree-sitter-hl-mode +1) ;
                   )
 	  ;; (tree-sitter-hl-mode)
 	  (grammatical-edit-mode 1)
@@ -2782,12 +2788,13 @@ _q_uit
   (defun remove-jit-lock-after-change()
     (when tree-sitter-hl-mode
       (remove-hook 'after-change-functions 'jit-lock-after-change t)))
-  (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
-  (add-hook 'tree-sitter-hl-mode-hook (lambda()
-                                        (tree-sitter-setup-timer tree-sitter-hl-mode)
-                                        (if tree-sitter-hl-mode
-                                            (remove-jit-lock-after-change)
-                                          (add-hook 'after-change-functions 'jit-lock-after-change nil t))))
+  (when use-tree-sitter-hl-mode-hack
+    (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
+    (add-hook 'tree-sitter-hl-mode-hook (lambda()
+                                          (tree-sitter-setup-timer tree-sitter-hl-mode)
+                                          (if tree-sitter-hl-mode
+                                              (remove-jit-lock-after-change)
+                                            (add-hook 'after-change-functions 'jit-lock-after-change nil t)))))
   )
 
 (use-package evil-textobj-tree-sitter
