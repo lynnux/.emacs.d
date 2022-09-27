@@ -2426,12 +2426,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-modeline-workspace-status-enable nil
                lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
                lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
-               lsp-enable-folding nil
+               lsp-enable-folding nil ;; 不需要折叠
                lsp-semantic-tokens-enable nil
                lsp-enable-links nil
                lsp-enable-text-document-color nil
                lsp-enable-snippet nil   ;; 不用yas了
                lsp-completion-provider :none ;; 不用company就要设置这个
+               lsp-enable-on-type-formatting nil ;; 输入后format，完全不需要这个功能，太影响体验了
+               lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
+               lsp-enable-suggest-server-download nil ;;不需要下载server
                )
          (use-package lsp-pyright
            :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
