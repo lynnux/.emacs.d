@@ -2812,15 +2812,21 @@ _q_uit
                                #'electric-pair-post-self-insert-function)
                   )))
     (cl-dolist (key elec-pair-chars)
-      (let* ((key_str (char-to-string key)))
-        (global-set-key key_str (lambda()
-                                  (interactive)
-                                  (let ((this-command 'self-insert-command)
-                                        (last-command-event key))
-                                    (self-insert-command 1 key)
-                                    (electric-pair-post-self-insert-function)
-                                    )
-                                  )))))
+      (let* ((key_str (char-to-string key))
+             (key_symbol (make-symbol (format "my-elec-pair-%s" (char-to-string key)))))
+        (fset key_symbol (lambda()
+                           (interactive)
+                           (let ((this-command 'self-insert-command)
+                                 (last-command-event key))
+                             (self-insert-command 1 key)
+                             (electric-pair-post-self-insert-function)
+                             )
+                           ))
+        (global-set-key key_str key_symbol))))
+  
+  ;; 修复eldoc不显示参数名问题
+  (with-eval-after-load 'eldoc
+    (eldoc-add-command "my-elec-pair-\("))
   
   (electric-pair-mode 1) ;; 这个是必须开的，有些mode会添加自己的chars
   ;; c++换行时输入{}自动indent
