@@ -35,6 +35,7 @@
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master.zip")
   (ensure-latest "~/.emacs.d/packages/tree-sitter/evil-textobj-tree-sitter-master.zip")
+  (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -2394,75 +2395,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   )
 
-;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
-(use-package lsp-bridge
-  :diminish
-  :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
-  :commands(lsp-bridge-mode)
-  :init
-  
-  (setq acm-enable-english-helper nil  ;; english字典太大已经删除了
-        )
-  (defun lsp-ensure()
-    (lsp-bridge-mode 1)
-    )
-  (use-package acm-backend-citre
-    :defer t
-    :init
-    (setq acm-enable-citre t)
-    :config
-    (defun acm-backend-citre-candidates (keyword)
-      "原函数去重，二次fuzzy，排序什么的都不需要"
-      (when (and acm-enable-citre (>= (length keyword) 3)) ;; 必须设置长度，1会卡死，2有时会卡
-        (let* ((candidates (list))
-               (collection (all-completions keyword (tags-lazy-completion-table))))
-          (when collection
-            (dolist (candidate collection)
-              (add-to-list 'candidates (list :key candidate
-                                             :icon "tabnine"
-                                             :label candidate
-                                             :display-label candidate
-                                             :annotation "tabnine" 
-                                             :backend "citre")
-                           t))
-            candidates))))
-    )
-  :config
-  (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
-  (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
-  (define-key lsp-bridge-mode-map [(meta f8)] 'lsp-bridge-code-format)
-
-  ;; 在minbuffer时不显示
-  (setq lsp-bridge-signature-function (lambda(msg)
-                                        (unless (minibufferp)
-                                          (message msg))
-                                        ))
-  ;; 显示project名
-  (defadvice lsp-bridge--mode-line-format (after my-lsp-bridge--mode-line-format activate)
-    (setq ad-return-value 
-          (propertize (concat "lsp-bridge:" (file-name-base (directory-file-name  
-                                                      (let ((pr  (project-current nil)))
-                                                        (if pr
-                                                            (project-root pr)
-                                                          default-directory))))) 'face mode-face)  
-          )
-    )
-  ;; 找不到定义就fallback to xref
-  (defadvice lsp-bridge--eval-in-emacs-func (after my-lsp-bridge--eval-in-emacs-func activate)
-    ;;(message (ad-get-arg 0))
-    (when (string-match "No definition found" (ad-get-arg 0))
-      (xref-find-definitions (find-tag--default))
-      ))
-  ;; 添加csharp，目前json里的路径是写死的，自己改改
-  (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
-  (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
-  (use-package acm
-    :init
-    ;; (setq acm-candidate-match-function 'orderless-flex) ;; flex有奇怪问题，如createprocessw，输入到w就卡死了
-    :config
-    (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
-    )
-  )
 (use-package flymake
   :defer t
   :config
@@ -2470,51 +2402,162 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (unless (boundp 'flymake-list-only-diagnostics)
     (defvar flymake-list-only-diagnostics nil)
     ))
-(use-package eglot
-  :init
-  (autoload 'eglot-ensure "lsp/eglot" "" nil)
-  (autoload 'eglot "lsp/eglot" "" nil)
-  (autoload 'eglot-rename "lsp/eglot" "" nil)
-  (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
-        ;; eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
-        eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
-        )
-  (defun my-eglot-ensure()
-    (corfu-mode)
-    (eglot-ensure)
-    )
-  :commands (eglot eglot-ensure eglot-rename)
-  :config
-  (add-hook 'eglot-managed-mode-hook 
-            (lambda()
-              ;; 去掉flymake的hook，eglot自己会更新flymake
-              (remove-hook 'after-change-functions 'flymake-after-change-function t)
-              (remove-hook 'after-save-hook 'flymake-after-save-hook t)
-              (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
-              (remove-hook 'eldoc-documentation-functions 'flymake-eldoc-function t)
-              ))
-  (add-to-list 'eglot-server-programs '(simpc-mode . ("clangd")))
-  (advice-add 'jsonrpc--log-event :around
-              (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
-  ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-  (add-to-list 'eglot-stay-out-of 'flymake)
-  (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
-  (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
-        eglot-ignored-server-capabilities)
-  (push :hoverProvider
-        eglot-ignored-server-capabilities) ;; hover没什么用，在sqlite3中还会卡
-  ;; 临时禁止view-mode，使重命名可用
-  (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
-    (setq tmp-disable-view-mode t)
-    ad-do-it
-    (setq tmp-disable-view-mode nil)
-    )
-  ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-  (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+
+(defun remove-flymake-hook()
+  ;; 去掉flymake的hook，eglot自己会更新flymake
+  (remove-hook 'after-change-functions 'flymake-after-change-function t)
+  (remove-hook 'after-save-hook 'flymake-after-save-hook t)
+  (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
+  (remove-hook 'eldoc-documentation-functions 'flymake-eldoc-function t)
   )
+;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
+(defconst lsp-use-which 'lsp-mode)
+(cond ((eq lsp-use-which 'lsp-mode)
+       ;; 额外需要ht和spinner
+       (use-package lsp-mode
+         :load-path "~/.emacs.d/packages/lsp/lsp-mode-master"
+         :init
+         (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
+         (defun lsp-ensure() (lsp-deferred))
+         ;; lens和modeline没效果？好像要配合lsp ui用
+         (setq lsp-lens-enable nil
+               lsp-modeline-code-actions-enable nil
+               lsp-modeline-diagnostics-enable nil
+               lsp-modeline-workspace-status-enable nil
+               lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
+               lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
+               lsp-enable-folding nil
+               lsp-semantic-tokens-enable nil
+               lsp-enable-links nil
+               lsp-enable-text-document-color nil
+               lsp-enable-snippet nil   ;; 不用yas了
+               lsp-completion-provider :none ;; 不用company就要设置这个
+               )
+         (use-package lsp-pyright
+           :load-path "~/.emacs.d/packages/lsp/lsp-pyright-master"
+           :defer t
+           )
+         :commands (lsp lsp-deferred)
+         :config
+         (add-hook 'lsp-managed-mode-hook 'remove-flymake-hook)
+         ;; 使重命名可用
+         (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
+           (setq tmp-disable-view-mode t)
+           ad-do-it
+           (setq tmp-disable-view-mode nil)
+           )
+         ;; (require 'lsp-diagnostics) ;; flymake
+         (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
+                                                (if (use-region-p)
+                                                    (call-interactively 'lsp-format-region)
+                                                  (call-interactively 'lsp-format-buffer))
+			                        )))       
+       )
+      ((eq lsp-use-which 'eglot)
+       (use-package eglot
+         :disabled 
+         :init
+         (autoload 'eglot-ensure "lsp/eglot" "" nil)
+         (autoload 'eglot "lsp/eglot" "" nil)
+         (autoload 'eglot-rename "lsp/eglot" "" nil)
+         (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
+               ;; eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
+               eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+               )
+         :commands (eglot eglot-ensure eglot-rename)
+         :config
+         (add-hook 'eglot-managed-mode-hook 'remove-flymake-hook)
+         (add-to-list 'eglot-server-programs '(simpc-mode . ("clangd")))
+         (advice-add 'jsonrpc--log-event :around
+                     (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
+         ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+         (add-to-list 'eglot-stay-out-of 'flymake)
+         (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
+         (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
+               eglot-ignored-server-capabilities)
+         (push :hoverProvider
+               eglot-ignored-server-capabilities) ;; hover没什么用，在sqlite3中还会卡
+         ;; 临时禁止view-mode，使重命名可用
+         (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
+           (setq tmp-disable-view-mode t)
+           ad-do-it
+           (setq tmp-disable-view-mode nil)
+           )
+         ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+         (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+         )       
+       )
+      ((eq lsp-use-which 'lsp-bridge)
+       ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
+       (use-package lsp-bridge
+         :diminish
+         :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
+         :commands(lsp-bridge-mode)
+         :init  
+         (setq acm-enable-english-helper nil  ;; english字典太大已经删除了
+               )
+         (defun lsp-ensure()
+           (lsp-bridge-mode 1)
+           )
+         (use-package acm-backend-citre
+           :defer t
+           :init
+           (setq acm-enable-citre t)
+           :config
+           (defun acm-backend-citre-candidates (keyword)
+             "原函数去重，二次fuzzy，排序什么的都不需要"
+             (when (and acm-enable-citre (>= (length keyword) 3)) ;; 必须设置长度，1会卡死，2有时会卡
+               (let* ((candidates (list))
+                      (collection (all-completions keyword (tags-lazy-completion-table))))
+                 (when collection
+                   (dolist (candidate collection)
+                     (add-to-list 'candidates (list :key candidate
+                                                    :icon "tabnine"
+                                                    :label candidate
+                                                    :display-label candidate
+                                                    :annotation "tabnine" 
+                                                    :backend "citre")
+                                  t))
+                   candidates))))
+           )
+         :config
+         (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
+         (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
+         (define-key lsp-bridge-mode-map [(meta f8)] 'lsp-bridge-code-format)
+
+         ;; 在minbuffer时不显示
+         (setq lsp-bridge-signature-function (lambda(msg)
+                                               (unless (minibufferp)
+                                                 (message msg))
+                                               ))
+         ;; 显示project名
+         (defadvice lsp-bridge--mode-line-format (after my-lsp-bridge--mode-line-format activate)
+           (setq ad-return-value 
+                 (propertize (concat "lsp-bridge:" (file-name-base (directory-file-name  
+                                                                    (let ((pr  (project-current nil)))
+                                                                      (if pr
+                                                                          (project-root pr)
+                                                                        default-directory))))) 'face mode-face)  
+                 )
+           )
+         ;; 找不到定义就fallback to xref
+         (defadvice lsp-bridge--eval-in-emacs-func (after my-lsp-bridge--eval-in-emacs-func activate)
+           ;;(message (ad-get-arg 0))
+           (when (string-match "No definition found" (ad-get-arg 0))
+             (xref-find-definitions (find-tag--default))
+             ))
+         ;; 添加csharp，目前json里的路径是写死的，自己改改
+         (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
+         (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
+         (use-package acm
+           :init
+           ;; (setq acm-candidate-match-function 'orderless-flex) ;; flex有奇怪问题，如createprocessw，输入到w就卡死了
+           :config
+           (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
+           )
+         )))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
-
 (defun enable-format-on-save()
   (add-hook 'before-save-hook (lambda()
 				(when (featurep 'eglot)
@@ -2524,9 +2567,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 				) nil 'local))
 ;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
 (add-hook 'python-mode-hook (lambda ()
-                              (when (featurep 'lsp-pyright)
-                                (require 'lsp-pyright)
-                                )
+                              (when (eq lsp-use-which 'lsp-mode)
+                                (load "lsp/lsp-pyright"))
+                              (unless (eq lsp-use-which 'lsp-bridge)
+                                (corfu-mode))
                               (lsp-ensure)))
 (use-package simpc-mode
   ;; :disabled
@@ -2583,7 +2627,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
               ;; (enable-format-on-save)
               (my-c-mode-hook-set)
-              (my-eglot-ensure) ;; lsp bridge配合clangd很容易遇到问题还没法解决。。
+              (unless (eq lsp-use-which 'lsp-bridge)
+                (corfu-mode))
+              (lsp-ensure)
 	      )
             (abbrev-mode -1) ;; 有yas就够了
             ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
@@ -3581,7 +3627,7 @@ _q_uit
           (interactive)
           (let* ((th (nth (mod (random t) (length tl)) tl))
                  )
-            ;; (message "load-doom-theme: %s" (symbol-name th))
+            (message "load-doom-theme: %s" (symbol-name th))
 
             ;; before load
             (cond ((eq th 'spacemacs-dark)
@@ -3601,7 +3647,7 @@ _q_uit
             (load-theme th t)
 
             ;; after load
-            (doom-themes-org-config)
+            ;; (doom-themes-org-config)
             (cond ((eq th 'spacemacs-dark)
                    (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
                    )
@@ -3611,23 +3657,26 @@ _q_uit
                   (t
                    ;; 参考的spacemacs
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
-                   (custom-set-faces
-	            '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
-	            '(corfu-current ((t (:foreground "#c678dd"))))
-                    )
                    (when nil
+                     (custom-set-faces
+	              '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
+	              '(corfu-current ((t (:foreground "#c678dd"))))
+                      )
                      ;; region有点看不清，单独设置
                      (set-face-attribute 'region nil :background "#4C7073")
                      )
                    )
                   )
+            
             )
           )
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
         (random-load-doom-theme (list
+         ;; 'doom-snazzy
+        'doom-city-lights
                                  ;; 'doom-one
                                  ;; 'spacemacs-dark
-                                 'modus-vivendi
+                                 ;; 'modus-vivendi
                                  ))
         )
       )
