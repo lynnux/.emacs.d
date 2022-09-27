@@ -2500,7 +2500,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-to-list 'eglot-stay-out-of 'flymake)
   (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
   (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
-        eglot-ignored-server-capabilities) 
+        eglot-ignored-server-capabilities)
+  (push :hoverProvider
+        eglot-ignored-server-capabilities) ;; hover没什么用，在sqlite3中还会卡
   ;; 临时禁止view-mode，使重命名可用
   (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
     (setq tmp-disable-view-mode t)
