@@ -119,6 +119,11 @@
   (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
   :config
   (advice-add 'eldoc-pre-command-refresh-echo-area :override #'ignore) ;; 在pre-command-hook里影响性能
+  (with-eval-after-load 'grammatical-edit
+    ;; 自作聪明就给加了eldoc
+    (eldoc-remove-command-completions
+     "grammatical-edit-")
+    )
   )
 
 (autoload 'defhydra "hydra" nil t)
