@@ -191,7 +191,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "C-S-j") 'my-insert-char-next-line) ;
 
 ;;; m-o切换h/cpp文件
-(global-set-key (kbd "M-o") 'ff-find-other-file)
+(global-set-key (kbd "M-o") 'ff-get-other-file)
 
 ;; (global-set-key (kbd "<f4>") 'next-error)
 (global-set-key (kbd "S-<f4>") 'previous-error)
