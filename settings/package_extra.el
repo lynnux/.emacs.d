@@ -860,29 +860,35 @@ _c_: hide comment        _q_uit
                (end   (cdr bs)))
           `(,start ,end completion--file-name-table . (:exclusive no))))))
   (add-to-list 'completion-at-point-functions 'esy/file-capf t)
+
+  ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
+  ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
+  (defun lsp-other-capf-function ()
+    (let ((lsp-result (funcall my-lsp-completion-at-point)))
+      (if (and lsp-result
+               (try-completion
+                (buffer-substring (nth 0 lsp-result)
+                                  (nth 1 lsp-result))
+                (nth 2 lsp-result)))
+          lsp-result
+        ;; TODO: 添加其它后端
+        (tags-completion-at-point-function))))
   
-  (when (functionp 'eglot-ensure)
-    ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
-    ;; 参考https://github.com/seagle0128/.emacs.d/blob/8f1a2fc483da8cb430f3bd53e6a5f7ce392c3c4f/lisp/init-ctags.el
-    (defun lsp-other-capf-function ()
-      (let ((lsp-result (eglot-completion-at-point)))
-        (if (and lsp-result
-                 (try-completion
-                  (buffer-substring (nth 0 lsp-result)
-                                    (nth 1 lsp-result))
-                  (nth 2 lsp-result)))
-            lsp-result
-          ;; TODO: 添加其它后端
-          (tags-completion-at-point-function))))
-    (defun enable-eglot-other-backend()
-      "替换eglot的补全"
-      (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
-			                                   'eglot-completion-at-point
-			                                   completion-at-point-functions))
-      )
-    (add-hook 'eglot-managed-mode-hook 'enable-eglot-other-backend))
+  (defmacro enable-lsp-other-backend (use-eglot)
+    "替换lsp的补全"
+    `(let ((lsp-capf (if (eq ,use-eglot 'eglot)
+                         'eglot-completion-at-point
+                       'lsp-completion-at-point)))
+       (lambda()
+         (defvar-local my-lsp-completion-at-point lsp-capf)
+         (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
+                                                              lsp-capf
+			                                      completion-at-point-functions)))))
+  (eval-after-load 'eglot
+    (add-hook 'eglot-managed-mode-hook (enable-lsp-other-backend 'eglot)))
+  (eval-after-load 'lsp-mode
+    (add-hook 'lsp-managed-mode-hook (enable-lsp-other-backend 'lsp-mode))) ;
   )
-       
  
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
@@ -2440,7 +2446,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  '(flex)))
          :hook
          (lsp-completion-mode . my/lsp-mode-setup-completion)
-         :commands (lsp lsp-deferred)
+         :commands (lsp lsp-deferred lsp-completion-at-point)
          :config
          (add-hook 'lsp-managed-mode-hook 'remove-flymake-hook)
          ;; 使重命名可用
@@ -2467,7 +2473,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                ;; eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
                eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
                )
-         :commands (eglot eglot-ensure eglot-rename)
+         :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
          (add-hook 'eglot-managed-mode-hook 'remove-flymake-hook)
          (advice-add 'jsonrpc--log-event :around
