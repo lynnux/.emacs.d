@@ -1648,9 +1648,13 @@ _c_: hide comment        _q_uit
     
     (defun my-project-imenu()
       (interactive)
-      (if (bound-and-true-p eglot--managed-mode)
-          (call-interactively 'consult-eglot-symbols)
-        (call-interactively 'consult-imenu-multi)))
+      (cond ((bound-and-true-p eglot--managed-mode)
+             (call-interactively 'consult-eglot-symbols))
+            ((bound-and-true-p lsp-managed-mode)
+             (call-interactively 'consult-lsp-symbols)) ;; 支持narrow字符！
+            (t
+             (call-interactively 'consult-imenu-multi))))
+    (global-set-key [(control ?\,)] 'my-project-imenu)
     
     (use-package consult-imenu
       :commands(consult-imenu consult-imenu-multi)
@@ -1675,8 +1679,10 @@ _c_: hide comment        _q_uit
     (use-package consult-eglot
       :commands(consult-eglot-symbols)
       :init
-      (global-set-key [(control ?\,)] 'my-project-imenu)
       ;; 好像没办法过滤，只有用vertico的f+空格过滤function，其它见`consult-eglot-narrow'
+      )
+    (use-package consult-lsp
+      :commands(consult-lsp-symbols)
       )
     (use-package consult-project-extra
       :commands(consult-project-extra-find))
