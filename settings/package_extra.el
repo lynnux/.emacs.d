@@ -3493,7 +3493,14 @@ _q_uit
                                    (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
                                    (gud-def gud-quit "q " "\C-q" "Quit Debug")
                                    ))
-    (global-set-key (kbd "S-<f5>") 'gud-quit)
+    (global-set-key (kbd "S-<f5>") '(lambda()
+                                      (interactive)
+                                      ;; 经尝试先发送退出命令再按C-c C-c可以关闭运行中的调试程序
+                                      (call-interactively 'gud-quit)
+                                      (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
+                                        (with-current-buffer gud-comint-buffer
+                                          ;; C-c C-c
+                                          (call-interactively 'comint-interrupt-subjob)))))
     ))
 
 (use-package gud
