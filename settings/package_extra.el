@@ -2464,6 +2464,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-enable-on-type-formatting nil ;; 输入后format，完全不需要这个功能，太影响体验了
                lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
                lsp-enable-suggest-server-download nil ;;不需要下载server
+               lsp-restart 'ignore ;; 避免project-kill时提示是否重启
                )
          (defun my/lsp-mode-setup-completion ()
            "必须设置这个，不然会让人以为补全有问题"
