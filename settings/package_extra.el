@@ -884,9 +884,9 @@ _c_: hide comment        _q_uit
          (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
                                                               lsp-capf
 			                                      completion-at-point-functions)))))
-  (eval-after-load 'eglot
+  (with-eval-after-load 'eglot
     (add-hook 'eglot-managed-mode-hook (enable-lsp-other-backend 'eglot)))
-  (eval-after-load 'lsp-mode
+  (with-eval-after-load 'lsp-mode
     (add-hook 'lsp-managed-mode-hook (enable-lsp-other-backend 'lsp-mode))) ;
   )
  
@@ -2408,18 +2408,37 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package flymake
   :defer t
   :config
+  ;; 当lsp开启时，去掉自己的hook
+  (add-hook 'flymake-mode-hook 
+            (lambda()
+              (when (and flymake-mode 
+                         (or (bound-and-true-p eglot--managed-mode)
+                             (bound-and-true-p lsp-managed-mode)))
+                (remove-hook 'after-change-functions 'flymake-after-change-function t)
+                (remove-hook 'after-save-hook 'flymake-after-save-hook t)
+                (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
+                (remove-hook 'eldoc-documentation-functions 'flymake-eldoc-function t))))
   ;; fixed for eglot with emacs 28.0.50，就kill-buffer时有提示，实际好像没什么问题
   (unless (boundp 'flymake-list-only-diagnostics)
     (defvar flymake-list-only-diagnostics nil)
     ))
 
-(defun remove-flymake-hook()
-  ;; 去掉flymake的hook，eglot自己会更新flymake
-  (remove-hook 'after-change-functions 'flymake-after-change-function t)
-  (remove-hook 'after-save-hook 'flymake-after-save-hook t)
-  (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
-  (remove-hook 'eldoc-documentation-functions 'flymake-eldoc-function t)
-  )
+(use-package flycheck
+  :commands(flycheck-mode)
+  :init
+  (autoload 'flycheck-mode "lsp/flycheck")
+  (with-eval-after-load 'lsp-diagnostics
+    (load "lsp/flycheck"))
+  :config
+  ;; 当lsp开启时，去掉自己的hook
+  (add-hook 'flycheck-mode-hook 
+            (lambda()
+              (when (and flycheck-mode 
+                         (or (bound-and-true-p eglot--managed-mode)
+                             (bound-and-true-p lsp-managed-mode)))
+                (pcase-dolist (`(,hook . ,fn) flycheck-hooks-alist)
+                  (remove-hook hook fn 'local))))))
+
 ;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
 (defconst lsp-use-which 'lsp-mode)
 (cond ((eq lsp-use-which 'lsp-mode)
@@ -2454,14 +2473,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred lsp-completion-at-point)
          :config
-         (add-hook 'lsp-managed-mode-hook 'remove-flymake-hook)
          ;; 使重命名可用
          (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
            ad-do-it
            (setq tmp-disable-view-mode nil)
            )
-         ;; (require 'lsp-diagnostics) ;; flymake
+         (setq lsp-diagnostics-provider :flycheck) ;; 实测flymake是server返回就马上刷新可能会造成输入卡，而flycheck是idle（查看代码知道)时刷新
+         (require 'lsp-diagnostics) ;; flymake
          (define-key lsp-mode-map [(meta f8)] (lambda () (interactive)
                                                 (if (use-region-p)
                                                     (call-interactively 'lsp-format-region)
@@ -2481,7 +2500,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
-         (add-hook 'eglot-managed-mode-hook 'remove-flymake-hook)
          (advice-add 'jsonrpc--log-event :around
                      (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
          ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
