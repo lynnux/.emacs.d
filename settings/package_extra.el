@@ -2614,6 +2614,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	    (when (derived-mode-p 'c-mode 'c++-mode)
 	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
               ;; (enable-format-on-save)
+              (make-local-variable 'my-auto-newline)
+              (setq my-auto-newline t)
+              (defun semicolon-auto-newline()
+                (interactive)
+                (self-insert-command 1 ?\;)
+                ;; 只在行尾才auto newline，这样可以排除for(auto xxx;)
+                (when (memq (char-after) '(?\C-j  nil))
+                  (call-interactively 'new-line-dwim))
+                )
+              (define-key c++-mode-map (kbd ";") 'semicolon-auto-newline)
               (my-c-mode-hook-set)
               (unless (eq lsp-use-which 'lsp-bridge)
                 (corfu-mode))
@@ -2833,6 +2843,9 @@ _q_uit
 
 ;; grammatical-edit bug太多了，pair用这个就够了
 (use-package elec-pair
+  :init
+  (defvar my-auto-newline nil
+    "自己实现auto newline")
   :config
   ;; 去掉elec-pair的post-self-insert-hook，改为直接对char绑定并调用elec-pair的函数
   (when t
@@ -2854,8 +2867,11 @@ _q_uit
                                  (last-command-event key))
                              (self-insert-command 1 key)
                              (electric-pair-post-self-insert-function)
-                             )
-                           ))
+                             (when my-auto-newline
+                               (when (eq key ?\{)
+                                     (call-interactively 'new-line-dwim)
+                                     ))
+                             )))
         (global-set-key key_str key_symbol))))
   
   ;; 修复eldoc不显示参数名问题
