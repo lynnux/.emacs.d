@@ -1512,7 +1512,8 @@ _c_: hide comment        _q_uit
                                         (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
       (setq completion-styles '(orderless basic)
             completion-category-defaults nil
-            completion-category-overrides '((file (styles flex)) ;; helm是flex
+            completion-category-overrides '((multi-category (styles flex)) ;; consult buffer等，也会影响其它到project buffer
+                                            (file (styles flex)) ;; helm是flex
                                             (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
                                             (variable (styles +orderless-with-initialism))
                                             (symbol (styles +orderless-with-initialism)))
