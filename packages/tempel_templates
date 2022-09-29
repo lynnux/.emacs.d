@@ -113,7 +113,7 @@ cd TDPCSoftMgr_vs2010
 ninja
 cd ..")
 
-simpc-mode
+c++-mode
 
 (main "#include <stdio.h>
 #include <iostream>
