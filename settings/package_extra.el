@@ -3510,14 +3510,20 @@ _q_uit
   (defvar f5-read-command t)
   (defun my-f5()
     (interactive)
-    (when current-prefix-arg
+    (when current-prefix-arg ;; C-u F5重设参数
       (setq f5-read-command t))
-    (condition-case nil
-        (call-interactively 'gud-cont)
-      (error (if f5-read-command
-                 (progn (setq f5-read-command nil)
-                        (call-interactively 'cdb))
-               (cdb (car gud-cdb-history))))))
+    (let ((default-directory (directory-file-name  
+                              (let ((pr  (project-current nil)))
+                                (if pr
+                                    (project-root pr)
+                                  default-directory))))) ;; 设置为project根目录减少麻烦
+      (condition-case nil
+          (call-interactively 'gud-cont)
+        (error (if f5-read-command
+                   (progn (setq f5-read-command nil)
+                          (call-interactively 'cdb))
+                 (cdb (car gud-cdb-history)))))
+      ))
   (global-set-key (kbd "<f4>") (lambda()
                                  (interactive)
                                  (if (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
