@@ -123,8 +123,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   "Do indentation, as long as the region isn't too large."
   ;; (if (<= (- end beg) yank-advised-indent-threshold)
   ;;     (indent-region beg end nil))
-  (indent-region beg end nil)
-  )
+  (let ((inhibit-message t))
+    (indent-region beg end nil)))
 (defadvice yank (after yank-indent activate)
   "If current mode is one of 'yank-indent-modes, indent yanked text (with prefix arg don't indent)."
   (if (and (not (ad-get-arg 0))
