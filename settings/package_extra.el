@@ -2469,7 +2469,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (defun my/lsp-mode-setup-completion ()
            "必须设置这个，不然会让人以为补全有问题"
            (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-                 '(flex)))
+                 '(orderless)))
          :hook
          (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred lsp-completion-at-point)
@@ -3644,7 +3644,7 @@ _q_uit
                   (t
                    ;; 参考的spacemacs
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
-                   (when nil
+                   (when t
                      (custom-set-faces
 	              '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
 	              '(corfu-current ((t (:foreground "#c678dd"))))
@@ -3659,8 +3659,11 @@ _q_uit
           )
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
         (random-load-doom-theme (list
-         ;; 'doom-snazzy
-        'doom-city-lights
+                                 ;; 'doom-snazzy
+                                 ;; 'doom-city-lights
+                                 ;; 'doom-material
+                                 'doom-horizon
+                                 ;; 'doom-tomorrow-night
                                  ;; 'doom-one
                                  ;; 'spacemacs-dark
                                  ;; 'modus-vivendi
