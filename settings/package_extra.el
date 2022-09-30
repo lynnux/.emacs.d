@@ -919,22 +919,42 @@ _c_: hide comment        _q_uit
 
 (use-package cc-mode
   :defer t
+  :init
+  (defun my-c-mode-hook-set()
+    (c-toggle-hungry-state t)
+    (c-toggle-electric-state t)
+    (c-toggle-auto-newline t)
+    (google-set-c-style)
+    (setq c-basic-offset 4) ;; tab4个空格习惯了
+    
+    (when nil
+      ;; cc mode自己实现貌似要好一些
+      (make-local-variable 'my-auto-newline)
+      (setq my-auto-newline t)
+      (defun semicolon-auto-newline()
+        (interactive)
+        (self-insert-command 1 ?\;)
+        ;; 只在行尾才auto newline，这样可以排除for(auto xxx;)
+        (when (memq (char-after) '(?\C-j  nil))
+          (call-interactively 'new-line-dwim)))
+      (define-key c++-mode-map (kbd ";") 'semicolon-auto-newline))
+    )
   :config
+  (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace)
+  
   ;; 自带的key基本没什么用
-  (setq c-mode-base-map (make-sparse-keymap)
-        c-mode-map (make-sparse-keymap)
-        c++-mode-map (make-sparse-keymap)
-        objc-mode-map (make-sparse-keymap)
-        java-mode-map (make-sparse-keymap)
-        idl-mode-map (make-sparse-keymap)
-        pike-mode-map (make-sparse-keymap)
-        awk-mode-map (make-sparse-keymap)
-        ))
-
-(defun my-c-mode-hook-set()
-  (google-set-c-style)
-  (setq c-basic-offset 4) ;; tab4个空格习惯了
+  ;; (setq c-mode-base-map (make-sparse-keymap)
+  ;;       c-mode-map (make-sparse-keymap)
+  ;;       c++-mode-map (make-sparse-keymap)
+  ;;       objc-mode-map (make-sparse-keymap)
+  ;;       java-mode-map (make-sparse-keymap)
+  ;;       idl-mode-map (make-sparse-keymap)
+  ;;       pike-mode-map (make-sparse-keymap)
+  ;;       awk-mode-map (make-sparse-keymap)
+  ;;       )
   )
+
+
 
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
@@ -2609,16 +2629,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 	    (when (derived-mode-p 'c-mode 'c++-mode)
 	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
               ;; (enable-format-on-save)
-              (make-local-variable 'my-auto-newline)
-              (setq my-auto-newline t)
-              (defun semicolon-auto-newline()
-                (interactive)
-                (self-insert-command 1 ?\;)
-                ;; 只在行尾才auto newline，这样可以排除for(auto xxx;)
-                (when (memq (char-after) '(?\C-j  nil))
-                  (call-interactively 'new-line-dwim))
-                )
-              (define-key c++-mode-map (kbd ";") 'semicolon-auto-newline)
+              
               (my-c-mode-hook-set)
               (unless (eq lsp-use-which 'lsp-bridge)
                 (corfu-mode))
