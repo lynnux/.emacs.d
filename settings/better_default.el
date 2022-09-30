@@ -192,6 +192,10 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 
 ;;; m-o切换h/cpp文件
 (global-set-key (kbd "M-o") 'ff-get-other-file)
+(setq compilation-auto-jump-to-first-error t ; 自动跳到错误，这个在只有warning时相当烦！
+      compilation-scroll-output t
+      compilation-skip-threshold 2 ;; 编译错误默认跳过warning和info
+      )
 
 ;; (global-set-key (kbd "<f4>") 'next-error)
 (global-set-key (kbd "S-<f4>") 'previous-error)

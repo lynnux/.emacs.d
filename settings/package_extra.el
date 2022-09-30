@@ -1011,12 +1011,6 @@ _c_: hide comment        _q_uit
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
 
-
-;;; TODO 如果编译过其他目录后，另一个目录C-F7时当前目录没有变，必须C-u F7重新配置
-;; compile，加入了单独编译某个文件
-(setq compilation-auto-jump-to-first-error nil ; 自动跳到错误，这个在只有warning时相当烦！
-      compilation-scroll-output t)
-
 ;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (use-package expand-region
   :load-path "~/.emacs.d/packages/expand-region/expand-region.el-master"
