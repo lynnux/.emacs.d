@@ -1517,6 +1517,9 @@ _c_: hide comment        _q_uit
       ;; +orderless-with-initialism直接进completion-styles-alist了
       (orderless-define-completion-style +orderless-with-initialism
         (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
+      ;; 不能直接用orderless-flex，不然consult-everything运行有问题
+      (orderless-define-completion-style +orderless-flex
+        (orderless-matching-styles '(orderless-flex))) ;; 这个还不是最强大的，如果反序需要分词，如xmlopti匹配不了dlg_optimize.xml
       (defun my/orderless-dispatch-flex-first (_pattern index _total)
         "https://github.com/minad/corfu/wiki#advanced-example-configuration-with-orderless"
         (and (eq index 0) 'orderless-flex))
@@ -1526,8 +1529,8 @@ _c_: hide comment        _q_uit
                                         (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
       (setq completion-styles '(orderless basic)
             completion-category-defaults nil
-            completion-category-overrides '((multi-category (styles orderless-flex)) ;; consult buffer等，也会影响其它到project buffer
-                                            (file (styles orderless-flex)) ;; helm是flex，orderless-flex比原版flex可以不排顺序分词
+            completion-category-overrides '((multi-category (styles +orderless-flex)) ;; consult buffer等，也会影响其它到project buffer
+                                            (file (styles +orderless-flex)) ;; helm是flex，orderless-flex比原版flex可以不排顺序分词
                                             (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
                                             (variable (styles +orderless-with-initialism))
                                             (symbol (styles +orderless-with-initialism)))
@@ -1716,9 +1719,7 @@ _c_: hide comment        _q_uit
         (minibuffer-with-setup-hook
             (lambda ()
               (setq-local consult--regexp-compiler #'consult--default-regexp-compiler))
-          (let ((completion-category-overrides '((file (styles flex))))) ; 直接用orderless-flex会有问题，这里覆盖下
-            (apply args))
-          ))
+          (apply args)))
       (advice-add #'consult-everything :around #'consult--with-orderless)
       :config
       )
