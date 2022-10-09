@@ -1716,7 +1716,9 @@ _c_: hide comment        _q_uit
         (minibuffer-with-setup-hook
             (lambda ()
               (setq-local consult--regexp-compiler #'consult--default-regexp-compiler))
-          (apply args)))
+          (let ((completion-category-overrides '((file (styles flex))))) ; 直接用orderless-flex会有问题，这里覆盖下
+            (apply args))
+          ))
       (advice-add #'consult-everything :around #'consult--with-orderless)
       :config
       )
