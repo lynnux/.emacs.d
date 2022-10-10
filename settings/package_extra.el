@@ -3663,23 +3663,25 @@ _q_uit
             (cond ((eq th 'spacemacs-dark)
                    (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
                    )
+                  ((eq th 'doom-horizon)
+                   )
                   ((not (string-prefix-p "doom" (symbol-name th)))
                    (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b")
                    )
                   (t
-                   ;; 参考的spacemacs
-                   (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
-                   (when t
-                     (custom-set-faces
-	              '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
-	              '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
-	              '(corfu-current ((t (:foreground "#c678dd"))))
-                      )
-                     ;; region有点看不清，单独设置
-                     (set-face-attribute 'region nil :background "#4C7073")
-                     )
                    )
                   )
+            ;; paren加下划线，参考的spacemacs
+            (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
+            (when t
+              (custom-set-faces
+	       '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
+	       '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
+	       '(corfu-current ((t (:foreground "#c678dd"))))
+               )
+              ;; region有点看不清，单独设置
+              (set-face-attribute 'region nil :background "#555555")
+              )
             
             )
           )
