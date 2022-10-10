@@ -1612,6 +1612,7 @@ _c_: hide comment        _q_uit
      consult-fontify-preserve nil ;; 直接禁用fontify，副作用是搜索到的没有color，没什么影响
      consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
      consult-locate-args (encode-coding-string "es.exe -n 30 -p -r" 'gbk)
+     consult-preview-key nil ;; 默认禁止preview，后面有设置哪些开启
      )
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list 'process-coding-system-alist '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
@@ -1687,7 +1688,6 @@ _c_: hide comment        _q_uit
       :commands(consult-org-agenda) ; 这个很卡啊，还是不替换C-c a了(C-c a再按t也比较卡，应该是org mode问题)
       )
     (use-package consult-xref
-      :after(xref) ;; 有时候显示结果为0，但只要一输入或者移动就有结果了
       :commands(consult-xref)
       :init
       (setq xref-show-xrefs-function #'consult-xref
@@ -1742,13 +1742,12 @@ _c_: hide comment        _q_uit
         )
       )
     :config
-    ;; 禁止某些preview
+    ;; 某些命令开启preview，`consult-preview-key'
     (consult-customize
-     consult-recent-file
-     consult--source-bookmark consult--source-recent-file
-     consult--source-project-recent-file
-     ;; :preview-key '(:debounce 0.2 any) ;; 只是延迟
-     :preview-key (kbd "M-.")
+     consult-line
+     my-consult-ripgrep my-consult-ripgrep-only-current-dir
+     consult-xref
+     :preview-key 'any
      )
     ;; 含中文字符搜索时添加--pre rgpre
     (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
