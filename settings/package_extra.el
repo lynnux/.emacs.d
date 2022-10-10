@@ -2733,6 +2733,7 @@ _q_uit
 (use-package rainbow-mode
   :commands
   (rainbow-mode)
+  :hook (help-mode . rainbow-mode)
   :config
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
