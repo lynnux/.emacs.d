@@ -3671,7 +3671,8 @@ _q_uit
                    (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
                    (when t
                      (custom-set-faces
-	              '(line-number ((t (:foreground "#6F6F6F"))));; doom-one的行号实在看不清
+	              '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
+	              '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
 	              '(corfu-current ((t (:foreground "#c678dd"))))
                       )
                      ;; region有点看不清，单独设置
