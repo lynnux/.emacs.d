@@ -132,14 +132,8 @@ q n n
 "#endif /* " guard-name " */")
 (for "for ("(p "auto i = 0")"; " (p "i < N") "; "(p "++i")") {"n > q n"}">)
 (if "if ("p") {" n > q n >"}">) ;; 目前缩进还有些问题
-(struct "struct "p"
-{
-    "q"
-};")
-(class "class "p"
-{
-    "q"
-};")
+(struct "struct "p" {"n > q n >"};">)
+(class "class "p"{"n > q n >"};">)
 (pub "public:" n >)
 (pri "private:" n >)
 (pro "protect:" n >)
