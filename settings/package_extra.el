@@ -3567,9 +3567,6 @@ _q_uit
   (global-set-key (kbd "<f11>") 'gud-step)
   (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点。支持region
   :config
-  (add-hook 'gud-mode-hook (lambda()
-                             (corfu-mode) ;; gud有capf可用
-                             ))
   (defadvice gud-sentinel (after my-gud-sentinel activate)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
     (let ((process (ad-get-arg 0)))
