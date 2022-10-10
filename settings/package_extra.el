@@ -3664,6 +3664,11 @@ _q_uit
                    (set-face-attribute 'mode-line-inactive nil :foreground "#888a85")
                    )
                   ((eq th 'doom-horizon)
+                   (custom-set-faces
+                    '(tab-line-tab-current ((t (:foreground "#fdf0ed"))))
+                    '(tab-line-tab-inactive ((t (:foreground "#c7c9cb"))))
+                    '(tab-line-tab-special ((t (:weight unspecified))))
+                    )
                    )
                   ((not (string-prefix-p "doom" (symbol-name th)))
                    (set-face-attribute 'doom-themes-visual-bell nil :background "#ff6c6b")
