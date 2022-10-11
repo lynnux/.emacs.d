@@ -155,6 +155,34 @@ _q_uit
     :init
     (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
     )
+  
+  ;; bug较多能用，好处是支持diredful、diff-hl显示、dired-quick-sort等
+  (use-package dired-sidebar
+    :commands(dired-sidebar-toggle-sidebar)
+    :init
+    (global-set-key (kbd "<C-f1>") 'dired-sidebar-toggle-sidebar)
+    (setq dired-sidebar-theme 'ascii
+          dired-sidebar-width 32
+          ;; dired-sidebar-use-custom-font t 不好看，字变小了
+          dired-sidebar-should-follow-file nil ;; 有bug
+          dired-sidebar-delay-auto-revert-updates nil ;; 不需要自动刷新
+          dired-sidebar-refresh-on-special-commands nil ;; 这个会导致buffer自动刷新(diff hl刷新很明显)
+          dired-sidebar-refresh-on-project-switch nil ;; 有bug
+          dired-sidebar-no-delete-other-windows t ;; C-1不关闭，最需要的！
+          dired-sidebar-use-one-instance t ;; 有bug 不起效果，:开头的buffer还是很多
+          )
+    (add-hook 'dired-sidebar-mode-hook
+              (lambda ()
+                (unless (file-remote-p default-directory)
+                  (auto-revert-mode))))
+    :config
+    (define-key dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
+    (define-key dired-sidebar-mode-map (kbd "l") 'dired-sidebar-up-directory)
+    )
+  ;; 以dired形式展示fd搜索的文件
+  (use-package fd-dired
+    :commands(fd-dired))
+  
   :commands(dired dired-jump)
   :config
   (when (string-equal system-type "windows-nt")
@@ -1231,29 +1259,6 @@ _c_: hide comment        _q_uit
   (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
   )
 
-;; bug很多(如鼠标展开目录，下面不显示)，好处是支持diredful、diff-hl显示、dired-quick-sort等。
-(use-package dired-sidebar
-  :commands(dired-sidebar-toggle-sidebar)
-  :init
-  (global-set-key (kbd "<C-f1>") 'dired-sidebar-toggle-sidebar)
-  (setq dired-sidebar-theme 'ascii
-        dired-sidebar-width 32
-        ;; dired-sidebar-use-custom-font t 不好看，字变小了
-        dired-sidebar-should-follow-file nil ;; 有bug
-        dired-sidebar-delay-auto-revert-updates nil ;; 不需要自动刷新
-        dired-sidebar-refresh-on-special-commands nil ;; 这个会导致buffer自动刷新(diff hl刷新很明显)
-        dired-sidebar-refresh-on-project-switch nil ;; 有bug
-        dired-sidebar-no-delete-other-windows t ;; C-1不关闭，最需要的！
-        dired-sidebar-use-one-instance t ;; 有bug 不起效果，:开头的buffer还是很多
-        )
-  (add-hook 'dired-sidebar-mode-hook
-            (lambda ()
-              (unless (file-remote-p default-directory)
-                (auto-revert-mode))))
-  :config
-  (define-key dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
-  (define-key dired-sidebar-mode-map (kbd "l") 'dired-sidebar-up-directory)
-  )
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
@@ -2761,10 +2766,6 @@ _q_uit
   :config
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
-
-;; 以dired形式展示fd搜索的文件
-(use-package fd-dired
-  :commands(fd-dired))
 
 (use-package tree-sitter
   :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
