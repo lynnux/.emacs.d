@@ -55,7 +55,6 @@ transient/*
 /.recentf
 /.savehist
 /.saveplace
-/packages/dired/dired-*.el
 packages/tree-sitter/core/*
 !packages/tree-sitter/core/DYN-VERSION
 packages/tree-sitter/langs/*

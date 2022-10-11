@@ -141,7 +141,7 @@ _q_uit
 
 ;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
-  ;;:disabled
+  ;; :disabled
   :load-path "~/.emacs.d/packages/dired"
   :init
   ;; 用dired+自带的
@@ -171,7 +171,9 @@ _q_uit
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
     )
 
-  (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
+  ;; 设置dired-listing-switches会造成dired-sidebar不能展开目录
+  ;; (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
+  
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
   (setq dired-recursive-deletes (quote top)) ; “top” means ask once
@@ -646,6 +648,7 @@ _c_: hide comment        _q_uit
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
+                     ((char-equal ?: (aref (buffer-name b) 0)) nil) ;; 排除dired-sidebar buffer
                      ((buffer-live-p b) b)))
                 (buffer-list))))
 
@@ -663,9 +666,8 @@ _c_: hide comment        _q_uit
         :config
         (global-tab-line-mode 1)
         (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
-        )
-      
-      )
+        (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
+        ))
   (progn
     (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
     (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
@@ -1208,7 +1210,7 @@ _c_: hide comment        _q_uit
         speedbar-use-images t ;; 图标太丑了，或许可以用all-the-icon?
         ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
         )
-  (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
+  ;; (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
   :config
   (unless sr-speedbar-auto-refresh
     ;; 重新打开时更新目录
@@ -1228,8 +1230,30 @@ _c_: hide comment        _q_uit
   (define-key speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
   (define-key speedbar-file-key-map (kbd "RET") 'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
   )
-  
 
+;; bug很多(如鼠标展开目录，下面不显示)，好处是支持diredful、diff-hl显示、dired-quick-sort等。
+(use-package dired-sidebar
+  :commands(dired-sidebar-toggle-sidebar)
+  :init
+  (global-set-key (kbd "<C-f1>") 'dired-sidebar-toggle-sidebar)
+  (setq dired-sidebar-theme 'ascii
+        dired-sidebar-width 32
+        ;; dired-sidebar-use-custom-font t 不好看，字变小了
+        dired-sidebar-should-follow-file nil ;; 有bug
+        dired-sidebar-delay-auto-revert-updates nil ;; 不需要自动刷新
+        dired-sidebar-refresh-on-special-commands nil ;; 这个会导致buffer自动刷新(diff hl刷新很明显)
+        dired-sidebar-refresh-on-project-switch nil ;; 有bug
+        dired-sidebar-no-delete-other-windows t ;; C-1不关闭，最需要的！
+        dired-sidebar-use-one-instance t ;; 有bug 不起效果，:开头的buffer还是很多
+        )
+  (add-hook 'dired-sidebar-mode-hook
+            (lambda ()
+              (unless (file-remote-p default-directory)
+                (auto-revert-mode))))
+  :config
+  (define-key dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
+  (define-key dired-sidebar-mode-map (kbd "l") 'dired-sidebar-up-directory)
+  )
 
 (use-package imenu-list 
   :commands(imenu-list-smart-toggle)
