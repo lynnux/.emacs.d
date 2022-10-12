@@ -3705,6 +3705,7 @@ _q_uit
 	       '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
 	       '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
 	       '(corfu-current ((t (:foreground "#c678dd"))))
+               '(consult-preview-cursor ((t (:inherit highlight)))) ;; TODO: 整个单词高亮，虽然很多情况下不一定是一个词
                )
               ;; region有点看不清，单独设置
               (set-face-attribute 'region nil :background "#555555")
