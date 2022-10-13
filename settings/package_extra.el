@@ -2532,7 +2532,140 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                                 (if (use-region-p)
                                                     (call-interactively 'lsp-format-region)
                                                   (call-interactively 'lsp-format-buffer))
-			                        )))       
+			                        )))
+       
+       ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe,lsp-docker,yaml
+       (use-package dap-mode
+         :disabled
+         :load-path "~/.emacs.d/packages/lsp/dap-mode/dap-mode-master"
+         :commands(dap-mode dap-auto-configure-mode)
+         :init
+         (add-to-list 'load-path "~/.emacs.d/packages/lsp/dap-mode")
+         (setq dap-cpptools-debug-program (expand-file-name ".extension/vscode/cpptools/extension/debugAdapters/vsdbg/bin/vsdbg.exe" user-emacs-directory)
+               lsp-enable-dap-auto-configure nil ;; 禁止自动配置dap-mode
+               )
+         (defmacro forward-to-dap(key)
+           "调试键启动dap，并调用原功能"
+           `(lambda()
+             (interactive)
+             (unless dap-auto-configure-mode
+               (dap-auto-configure-mode +1))
+             (call-interactively (key-binding (kbd ,key)))))
+         (global-set-key (kbd "<f5>") (forward-to-dap "f5"))
+         (global-set-key (kbd "<f9>") (forward-to-dap "f9"))
+         (global-set-key (kbd "<f10>") (forward-to-dap "f10"))
+         (global-set-key (kbd "<f11>") (forward-to-dap "f11"))
+         (global-set-key (kbd "<f12>") (forward-to-dap "f12"))
+         (require 'dap-autoloads)
+         ;; controls目前有bug
+         (setq dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
+         :config
+         (use-package bui
+           :init
+           ;; 避免多加个load-path
+           (load "lsp/dap-mode/bui.el-master/bui-utils")
+           (load "lsp/dap-mode/bui.el-master/bui-button")
+           (load "lsp/dap-mode/bui.el-master/bui-history")
+           (load "lsp/dap-mode/bui.el-master/bui-core")
+           (load "lsp/dap-mode/bui.el-master/bui-entry")
+           (load "lsp/dap-mode/bui.el-master/bui-info")
+           (load "lsp/dap-mode/bui.el-master/bui-list")
+           (load "lsp/dap-mode/bui.el-master/bui")
+           )
+         
+         (use-package treemacs
+           :commands(treemacs treemacs-add-and-display-current-project treemacs-current-visibility)
+           :init
+           (use-package cfrs
+             :init
+             ;; (autoload 'cfrs-read "lsp/dap-mode/treemacs/cfrs")
+             :commands(cfrs-read))
+           ;; (load "lsp/dap-mode/treemacs/pfuture")
+           (add-to-list 'load-path "~/.emacs.d/packages/lsp/dap-mode/treemacs")
+           (add-to-list 'load-path "~/.emacs.d/packages/lsp/dap-mode/treemacs/treemacs-master/src/elisp")
+           (require 'treemacs-autoloads)
+           ;; (setq treemacs-recenter-after-file-follow t ;好像没效果啊
+           ;;       treemacs-recenter-after-tag-follow t
+           ;;       treemacs-recenter-distance 0.5
+           ;;       ;; treemacs-no-png-images t
+           ;;       )
+           :config
+           (add-to-list 'tab-line-exclude-modes 'treemacs-mode)
+           ;; (with-eval-after-load 'treemacs-mode
+           ;;   (when (display-graphic-p)
+           ;;     ;; 改变高亮行背景色
+           ;;     (add-hook 'treemacs-mode-hook
+           ;;               (lambda ()
+           ;;                 (face-remap-add-relative 'hl-line '(:background "#666")))))
+           ;;   )
+           ;; 避免treemacs persistence文件变成只读
+           ;; (with-eval-after-load 'treemacs-persistence
+           ;;   (defadvice treemacs--persist (around my-treemacs--persist activate)
+           ;;     (setq tmp-disable-view-mode 2);; 2不恢复只读
+           ;;     ad-do-it
+           ;;     (setq tmp-disable-view-mode nil)
+           ;;     )
+           ;;   )
+           ;; (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
+           ;; (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
+           ;; (treemacs-filewatch-mode t)          ; 监视系统文件变化
+           )
+         (use-package lsp-treemacs
+           :init
+           (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs-themes")
+           (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs-generic")
+           (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs")
+           )
+         ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
+         (define-key dap-mode-map (kbd "<f5>") (lambda ()(interactive)
+                                                 (let ((cs (dap--cur-session)))
+                                                   (if cs
+                                                       (if (dap--session-running cs)
+                                                           (call-interactively 'dap-continue)
+                                                         (call-interactively 'dap-debug-restart))
+                                                     (call-interactively 'dap-debug))
+                                                   )))
+         (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
+         (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
+         (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
+         (define-key dap-mode-map (kbd "<f10>") 'dap-next)
+
+         ;; 解决hl line不及时更新问题
+         ;; (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
+         ;;                                           (when global-hl-line-mode
+         ;;                                             (global-hl-line-highlight))
+         ;;                                           ))
+         (use-package dap-python
+           ;; 需要pip install "ptvsd>=4.2"
+           ;; ptvsd调试bug: https://github.com/emacs-lsp/dap-mode/issues/625
+           :after (dap-mode python)
+           :init
+           ;; (setq dap-python-debugger 'debugpy) ;; 这个好像bug要少些
+           )
+
+         ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
+         (use-package dap-cpptools
+           :after (dap-mode cc-mode)
+           :config
+           (dap-register-debug-template
+            "cpptools::Run Configuration"
+            (list :type "cppdbg"
+                  :request "launch"
+                  :name "cpptools::Run Configuration"
+                  :program "${workspaceFolder}/../Autoruns_build/autoruns.exe"
+                  :cwd "${workspaceFolder}"))
+           )
+         
+         (use-package dap-hydra
+           :commands(dap-hydra)
+           :init
+           ;; (add-hook 'dap-stopped-hook
+           ;;           (lambda (arg)
+           ;;             (call-interactively #'dap-hydra)))
+           )
+         ;; TODO: Locals里的icon显示不正常
+         )
+      
        )
       ((eq lsp-use-which 'eglot)
        (use-package eglot
