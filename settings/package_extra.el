@@ -616,13 +616,13 @@ _c_: hide comment        _q_uit
         (when (and s (assoc (intern s)
                             (tempel--templates)))
           t))))
-  (global-set-key [remap indent-for-tab-command] 
-                  (lambda()
-                    (interactive)
-                    (if (my-tempel-expandable-p)
-                        (call-interactively 'tempel-expand)
-                      (call-interactively 'indent-for-tab-command)
-                      )))
+  (defmacro tab-try-tempel-first(cmd)
+    `(lambda()
+       (interactive)
+       (if (my-tempel-expandable-p)
+           (call-interactively 'tempel-expand)
+         (call-interactively ,cmd))))
+  (global-set-key [remap indent-for-tab-command] (tab-try-tempel-first 'indent-for-tab-command))
   (with-eval-after-load 'corfu
     ;; 解决补全弹出过快，TAB对tempel无效的问题，TAB优先tempel
     (defun corfu-complete-pass-tempel (&rest app)
@@ -630,6 +630,8 @@ _c_: hide comment        _q_uit
           (call-interactively 'tempel-expand)
         (apply app)))
     (advice-add #'corfu-complete :around #'corfu-complete-pass-tempel))
+  (with-eval-after-load 'cc-mode
+    (define-key c-mode-base-map [remap c-indent-line-or-region] (tab-try-tempel-first 'c-indent-line-or-region)))
   )
 (use-package yasnippet
   :disabled
@@ -971,7 +973,8 @@ _c_: hide comment        _q_uit
     )
   :config
   (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace)
-  
+  ;; (define-key c-mode-base-map ";" nil)
+
   ;; 自带的key基本没什么用
   ;; (setq c-mode-base-map (make-sparse-keymap)
   ;;       c-mode-map (make-sparse-keymap)
@@ -1774,8 +1777,9 @@ _c_: hide comment        _q_uit
     ;; 某些命令开启preview，`consult-preview-key'
     (consult-customize
      consult-line
-     my-consult-ripgrep my-consult-ripgrep-only-current-dir
-     consult-xref
+     my-consult-ripgrep my-consult-ripgrep-only-current-dir my-project-search call-project-search
+     consult-xref 
+     project-switch-project ;; project后按s不跟随貌似只能这个了(F1 l可以看运行了哪些命令)
      :preview-key 'any
      )
     ;; 含中文字符搜索时添加--pre rgpre
