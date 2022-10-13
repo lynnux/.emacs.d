@@ -3685,20 +3685,16 @@ _q_uit
   (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点。支持region
   (global-set-key (kbd "S-<f5>") '(lambda()
                                     (interactive)
-                                    (if (eq gud-minor-mode 'cdb)
-                                        (progn
-                                          ;; cdb先发送退出命令再按C-c C-c可以关闭运行中的调试程序
-                                          (call-interactively 'gud-quit)
-                                          (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
-                                            (with-current-buffer gud-comint-buffer
-                                              ;; C-c C-c
-                                              (call-interactively 'comint-interrupt-subjob))))
-                                      ;; pdb直接C-c C-\就能退出，不管是否在运行中
-                                      (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
-                                        (with-current-buffer gud-comint-buffer
-                                          ;; C-c C-\
-                                          (call-interactively 'comint-quit-subjob)))
-                                      )))
+                                    (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
+                                      (with-current-buffer gud-comint-buffer
+                                        (let ((quit 'comint-quit-subjob)) ; C-c C-\
+                                          (when (eq gud-minor-mode 'cdb)
+                                            ;; 测试先发送q再C-c C-c可以结束在运行的程序
+                                            (call-interactively 'gud-quit)
+                                            (setq quit 'comint-interrupt-subjob) ; C-c C-c
+                                            )
+                                          (call-interactively quit))
+                                        ))))
   :config
   (defadvice gud-sentinel (after my-gud-sentinel activate)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
