@@ -2832,28 +2832,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-hook 'csharp-mode-hook 'my-csharp-hook) ;; lsp-bridge这个有bug，还是用eglot的
   )
 
-(use-package quickrun
-  :commands(quickrun quickrun-shell helm-quickrun)
-  :init
-  (with-eval-after-load 'python
-    (define-key python-mode-map (kbd "<f5>") 'quickrun))
-  (setq quickrun-option-shebang nil     ;; windows没有这东西
-        quickrun-timeout-seconds 20 ;; 超过10秒不结束进程
-        )
-  :config
-  ;; 添加额外消息，不然执行了都不知道
-  (defun my/quickrun-after-run-hook ()
-    (save-excursion
-      (read-only-mode -1)
-      (goto-char (point-max))
-      (newline)
-      (insert (format "Command %s at %s"
-                      (propertize "finished" 'face 'compilation-info)
-                      (current-time-string)))
-      (read-only-mode 1)))
-  (add-hook 'quickrun-after-run-hook 'my/quickrun-after-run-hook)
-  )
-
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
 (defun hydra-tfs-select1 ()
@@ -3640,7 +3618,7 @@ _q_uit
   (use-package gud-cdb
     ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
     ;; 唯一不足的是不支持speedbar，还有attach    
-    :commands(cdb gud-kill-buffer)
+    :commands(cdb)
     :init
     (defalias 'defcustom% 'defcustom)
     (defalias 'ignore* 'ignore)
@@ -3655,39 +3633,11 @@ _q_uit
                                     (if cdb-add-g
                                         '("-2" "-G" "-netsymsno" "-g")
                                       '("-2" "-G" "-netsymsno"))))) ;; cdb /?不对啦(跟.netsyms命令对得上)
-      ;; 清楚显示当前行 from cdb-gud
-    (defvar gud-overlay
-      (let* ((ov (make-overlay (point-min) (point-min))))
-        (overlay-put ov 'face 'secondary-selection)
-        ov)
-      "Overlay variable for GUD highlighting.")
-    (defadvice gud-display-line (after my-gud-highlight act)
-      "Highlight current line."
-      (let* ((ov gud-overlay)
-             (bf (gud-find-file true-file)))
-        (if bf
-	    (save-excursion
-	      (set-buffer bf)
-	      (move-overlay ov (line-beginning-position) (line-end-position) (current-buffer))))))
-    (defun gud-kill-buffer ()
-      (if (eq major-mode 'gud-mode)
-          (delete-overlay gud-overlay)))
-    (add-hook 'gud-cdb-mode-hook (lambda()
-                                   (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
-                                   (gud-def gud-quit "q " "\C-q" "Quit Debug")
-                                   ))
-    (global-set-key (kbd "S-<f5>") '(lambda()
-                                      (interactive)
-                                      ;; 经尝试先发送退出命令再按C-c C-c可以关闭运行中的调试程序
-                                      (call-interactively 'gud-quit)
-                                      (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
-                                        (with-current-buffer gud-comint-buffer
-                                          ;; C-c C-c
-                                          (call-interactively 'comint-interrupt-subjob)))))
     ))
 
 (use-package gud
   :defer t
+  :commands(gud-quit)
   :init
   (setq gud-chdir-before-run nil) ;; 避免gud自动设置运行目录为exe所在目录
   (defvar f5-read-command t)
@@ -3695,18 +3645,27 @@ _q_uit
     (interactive)
     (when current-prefix-arg ;; C-u F5重设参数
       (setq f5-read-command t))
+    ;; 设置为project根目录减少麻烦
     (let ((default-directory (directory-file-name  
                               (let ((pr  (project-current nil)))
                                 (if pr
                                     (project-root pr)
-                                  default-directory))))) ;; 设置为project根目录减少麻烦
+                                  default-directory)))))
+      ;; 自动继续调试或者开始调试
       (condition-case nil
           (call-interactively 'gud-cont)
         (error (if f5-read-command
                    (progn (setq f5-read-command nil)
-                          (call-interactively 'cdb))
-                 (cdb (car gud-cdb-history)))))
-      ))
+                          (cond ((eq major-mode 'python-mode)
+                                 (call-interactively 'pdb))
+                                (t
+                                 ;; 默认还是cdb，因为这个用得多
+                                 (call-interactively 'cdb)))
+                          )
+                 (cond ((eq major-mode 'python-mode)
+                        (pdb (car gud-pdb-history)))
+                       ;; 默认cdb
+                       (t (cdb (car gud-cdb-history)))))))))
   (global-set-key (kbd "<f4>") (lambda()
                                  (interactive)
                                  (if (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
@@ -3724,6 +3683,22 @@ _q_uit
   (global-set-key (kbd "<f10>") 'gud-next)
   (global-set-key (kbd "<f11>") 'gud-step)
   (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点。支持region
+  (global-set-key (kbd "S-<f5>") '(lambda()
+                                    (interactive)
+                                    (if (eq gud-minor-mode 'cdb)
+                                        (progn
+                                          ;; cdb先发送退出命令再按C-c C-c可以关闭运行中的调试程序
+                                          (call-interactively 'gud-quit)
+                                          (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
+                                            (with-current-buffer gud-comint-buffer
+                                              ;; C-c C-c
+                                              (call-interactively 'comint-interrupt-subjob))))
+                                      ;; pdb直接C-c C-\就能退出，不管是否在运行中
+                                      (when (and (bound-and-true-p gud-comint-buffer) (buffer-name gud-comint-buffer))
+                                        (with-current-buffer gud-comint-buffer
+                                          ;; C-c C-\
+                                          (call-interactively 'comint-quit-subjob)))
+                                      )))
   :config
   (defadvice gud-sentinel (after my-gud-sentinel activate)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
@@ -3733,6 +3708,32 @@ _q_uit
         (delete-other-windows)
         (message "Debugger finished")))
     )
+  ;; 清楚显示当前行 from cdb-gud
+  (defvar gud-overlay
+    (let* ((ov (make-overlay (point-min) (point-min))))
+      (overlay-put ov 'face 'secondary-selection)
+      ov)
+    "Overlay variable for GUD highlighting.")
+  (defadvice gud-display-line (after my-gud-highlight act)
+    "Highlight current line."
+    (let* ((ov gud-overlay)
+           (bf (gud-find-file true-file)))
+      (if bf
+	  (save-excursion
+	    (set-buffer bf)
+	    (move-overlay ov (line-beginning-position) (line-end-position) (current-buffer))))))
+  (defun gud-kill-buffer ()
+    (if (eq major-mode 'gud-mode)
+        (delete-overlay gud-overlay)))
+  (defun my-gud-hook()
+    "安装退出时去掉overlay的钩子，定义gud-quit供S-f5使用"
+    (add-hook 'kill-buffer-hook #'gud-kill-buffer nil :local)
+    (gud-def gud-quit "q " "\C-q" "Quit Debug")
+    )
+  (with-eval-after-load 'gud-cdb
+    (add-hook 'gud-cdb-mode-hook 'my-gud-hook))
+  (add-hook 'pdb-mode-hook 'my-gud-hook)
+  (add-hook 'gud-gdb-mode-hook 'my-gud-hook)
   )
 
 (use-package god-mode
