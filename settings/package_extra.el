@@ -1588,6 +1588,7 @@ _c_: hide comment        _q_uit
       )
     (use-package fussy
       :init
+      (setq fussy-filter-fn 'fussy-filter-default) ;; fussy-filter-default和fussy-filter-orderless据说更快，但fussy-filter-orderless测试不支持packex匹配package_extra啊！
       :config
       (setq 
        ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
