@@ -1580,6 +1580,22 @@ _c_: hide comment        _q_uit
       (setq consult--regexp-compiler #'consult--orderless-regexp-compiler)
       )
     
+    (use-package fzf-native
+      :init
+      ;; 这个lspmodeel匹配比lsp-mode.el比fussy好，毕竟是fzf算法
+      (setq fussy-score-fn 'fussy-fzf-native-score)
+      (ignore-errors (module-load (expand-file-name "~/.emacs.d/packages/minibuffer/fzf-native-module.dll")))
+      )
+    (use-package fussy
+      :init
+      :config
+      (setq 
+       ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
+       ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
+       completion-category-overrides '((multi-category (styles fussy))
+                                       (file (styles fussy))
+                                       )))
+    
     ;; 美化
     (use-package marginalia
       :commands(marginalia-mode)
