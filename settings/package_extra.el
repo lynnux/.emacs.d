@@ -2545,12 +2545,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (load "lsp/yasnippet") ;; 必须有这个占位的文件
          (defun yas-expand-snippet(snippet &optional start end expand-env)
            "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
-           ;; 因为正则最大匹配原则，同好把所有参数都给替换了 
-           (let ((new (replace-regexp-in-string "${.*}" "" snippet)))
+           ;; 去掉${参数}和$0等，因为正则最大匹配原则，同好把所有参数都给替换了 
+           ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
+           (let ((new (replace-regexp-in-string "$[0-9]" "" (replace-regexp-in-string "${.*}" "" snippet))))
              (goto-char start)
              (delete-char (- end start))
              (insert new)
-             (backward-char)))
+             (backward-char) ;; 更优雅的办法是定位到$的位置
+             ))
          ;; 使重命名可用
          (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
