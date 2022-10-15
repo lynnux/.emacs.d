@@ -1791,12 +1791,11 @@ _c_: hide comment        _q_uit
         )
       )
     :config
-    ;; 某些命令开启preview，`consult-preview-key'
+    ;; 只对这部分命令开启preview，`consult-preview-key'
     (consult-customize
      consult-line
      my-consult-ripgrep my-consult-ripgrep-only-current-dir my-project-search call-project-search
      consult-xref 
-     project-switch-project ;; project后按s不跟随貌似只能这个了(F1 l可以看运行了哪些命令)
      :preview-key 'any
      )
     ;; 含中文字符搜索时添加--pre rgpre
@@ -2288,6 +2287,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (defun my-project-search()
   (interactive)
+  (setq this-command 'my-project-search) ;; 使C-; s的preview生效
   (cond ((functionp 'helm-do-grep-ag)
          ;; 比project-find-regex好的是可以随时更改搜索词
          (let ((default-directory (project-root (project-current t)))
