@@ -2526,13 +2526,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-semantic-tokens-enable nil
                lsp-enable-links nil
                lsp-enable-text-document-color nil
-               lsp-enable-snippet nil   ;; 不用yas了
+               lsp-enable-snippet t
                lsp-completion-provider :none ;; 不用company就要设置这个
                lsp-enable-on-type-formatting nil ;; 输入后format，完全不需要这个功能，太影响体验了
                lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
                lsp-enable-suggest-server-download nil ;;不需要下载server
                lsp-restart 'ignore ;; 避免project-kill时提示是否重启
                )
+         
          (defun my/lsp-mode-setup-completion ()
            "必须设置这个，不然会让人以为补全有问题"
            (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
@@ -2541,6 +2542,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred lsp-completion-at-point)
          :config
+         (load "lsp/yasnippet") ;; 必须有这个占位的文件
+         (defun yas-expand-snippet(snippet &optional start end expand-env)
+           "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
+           ;; 因为正则最大匹配原则，同好把所有参数都给替换了 
+           (let ((new (replace-regexp-in-string "${.*}" "" snippet)))
+             (goto-char start)
+             (delete-char (- end start))
+             (insert new)
+             (backward-char)))
          ;; 使重命名可用
          (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
