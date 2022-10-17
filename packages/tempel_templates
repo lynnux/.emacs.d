@@ -7,7 +7,6 @@ BasedOnStyle: Google
 IndentWidth: 4
 SortIncludes: false
 ObjCBlockIndentWidth: 4
-MaxEmptyLinesToKeep: 0
 ")
 
 prog-mode
