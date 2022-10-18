@@ -1731,6 +1731,7 @@ _c_: hide comment        _q_uit
       ;; (global-set-key [(control ?\,)] 'consult-imenu-multi)
       (global-set-key (kbd "M-m") 'consult-imenu)
       (keyboard-translate ?\C-m ?\H-m)
+      (global-set-key (kbd "C-x H-m") mule-keymap)
       (global-set-key [?\H-m] 'consult-imenu)
       )
     (use-package consult-org
