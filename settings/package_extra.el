@@ -3734,6 +3734,10 @@ _q_uit
                                             )
                                           (call-interactively quit))
                                         ))))
+  ;; 不需要RET确认参数再运行，很多时间都是同一个项目。放gud或者gud-cdb的:config里没用，这里等等待session初始化后再设置
+  (add-to-list 'emacs-startup-hook (lambda()
+                                  (when gud-cdb-history
+                                    (setq f5-read-command nil))))
   :config
   (defadvice gud-sentinel (after my-gud-sentinel activate)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
