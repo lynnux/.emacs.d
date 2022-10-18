@@ -2388,23 +2388,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (use-package compile
   :defer t
+  :init
+  (global-set-key [f7] (lambda ()
+                         (interactive)
+                         (when current-prefix-arg ;; C-u F7同S-F7
+                           (setq compilation-read-command t))
+		         (progn
+			   (call-interactively 'project-compile)
+			   (setq compilation-read-command nil) ;; 不再提示
+			   )))
+  (global-set-key [(shift f7)]
+		  (lambda ()(interactive)
+		    (progn
+		      (setq compilation-read-command t)
+                      (call-interactively 'project-compile)
+		      (setq compilation-read-command nil) ;; 不再提示
+		      )))
   :config
   (when compile-history
     ;; 自动使用最近的历史记录
-    (setq compile-command (car compile-history))))
-
-(global-set-key [f7] (lambda ()(interactive)
-		       (progn
-			 (call-interactively 'project-compile)
-			 (setq compilation-read-command nil) ;; 不再提示
-			 )))
-(global-set-key [(shift f7)]
-		(lambda ()(interactive)
-		  (progn
-		    (setq compilation-read-command t)
-                    (call-interactively 'project-compile)
-		    (setq compilation-read-command nil) ;; 不再提示
-		    )))
+    (setq compile-command (car compile-history))
+    (setq compilation-read-command nil) ;; 大部分时间都在同一个项目，无须再按RET确认了
+    ))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
