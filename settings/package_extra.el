@@ -188,7 +188,7 @@ _q_uit
   (when (string-equal system-type "windows-nt")
     (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
     ;; 真正实现是在files.el里的insert-directory
-    (defadvice dired-insert-directory (around my-dired-insert-directory activate)
+    (defadvice insert-directory (around my-dired-insert-directory activate)
       (let ((old coding-system-for-read))
 	(setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
 	ad-do-it
@@ -1763,7 +1763,7 @@ _c_: hide comment        _q_uit
     (use-package consult-everything
       :commands(consult-everything)
       :init
-      (setq consult-everything-args "es -p -n 30 -r") ;; -i是区分大小写
+      (setq consult-everything-args "es -p -r") ;; -i是区分大小写
       ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
       (defun consult--with-orderless (&rest args)
         (minibuffer-with-setup-hook
@@ -2856,6 +2856,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (add-path-to-execute-path (expand-file-name "bin" lua-server-path)))
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
+  (setq lsp-clients-lua-language-server-install-dir lua-server-path)
   (add-hook 'lua-mode-hook 'lsp-ensure) 
   )
 
