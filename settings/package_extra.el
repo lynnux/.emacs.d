@@ -186,14 +186,6 @@ _q_uit
   :commands(dired dired-jump)
   :config
   (when (string-equal system-type "windows-nt")
-    (setq ls-lisp-use-insert-directory-program t) ;; 默认用lisp实现的ls
-    ;; 真正实现是在files.el里的insert-directory
-    (defadvice insert-directory (around my-dired-insert-directory activate)
-      (let ((old coding-system-for-read))
-	(setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
-	ad-do-it
-	(setq coding-system-for-read old)
-	))
     (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore)
     (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser) ;; 使用explorer打开
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
@@ -237,14 +229,27 @@ _q_uit
       (dired-hist-mode 1)
       (dired-hist--update) ;; 调用一次修复延迟加载导致的问题
       )
-    ;; dired-quick-sort
-    ;;  (setq dired-quick-sort-suppress-setup-warning t)
+    
+    ;; dired-quick-sort，由于调用外部ls，在win10上比较慢。
     (use-package dired-quick-sort
       :config
-      (dired-quick-sort-setup)
-      (define-key dired-mode-map "s" 'hydra-dired-quick-sort/body) ;; 不用默认的s
-      (dired-quick-sort-set-switches) ;; 调用一次修复延迟加载导致的问题
-      )
+      (defun my-dired-sort()
+        (interactive)
+        (if (eq major-mode 'dired-sidebar-mode)
+            (call-interactively 'dired-sort-toggle-or-edit)
+          (if (local-variable-p 'ls-lisp-use-insert-directory-program)
+              (call-interactively 'hydra-dired-quick-sort/body)
+            (set (make-local-variable 'ls-lisp-use-insert-directory-program) t)
+            (dired-sort-other (dired-quick-sort--format-switches))
+            )))
+      (define-key dired-mode-map "s" 'my-dired-sort)
+      ;; 修复ls乱码
+      (defadvice dired-insert-directory (around my-dired-insert-directory activate)
+        (let ((old coding-system-for-read))
+	  (setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
+	  ad-do-it
+	  (setq coding-system-for-read old)
+	  )))
     
     ;; dired-hacks功能很多
     (use-package dired-filter
