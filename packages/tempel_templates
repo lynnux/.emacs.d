@@ -130,7 +130,7 @@ int main()
 "#define " guard-name n n
 q n n
 "#endif /* " guard-name " */")
-(for "for ("(p "auto i = 0")"; " (p "i < N") "; "(p "++i")") {"n > q n"}">)
+(for "for ("(p "auto i = 0i32")"; " (p "i < N") "; "(p "++i")") {"n > q n"}">)
 (if "if ("p") {" n > q n >"}">) ;; 目前缩进还有些问题
 (struct "struct "p" {"n > q n >"};">)
 (class "class "p"{"n > q n >"};">)
