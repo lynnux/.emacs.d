@@ -189,7 +189,7 @@ _q_uit
             (run-with-idle-timer
              dired-sidebar-follow-file-idle-delay
              nil #'dired-sidebar-follow-to-file)))
-    (defvar dired-sibar-follow-file-commands '(my-pop-select my-project-search tab-line-select-tab)) ;; 随时加
+    (defvar dired-sibar-follow-file-commands '(my-pop-select my-project-search tab-line-select-tab volatile-kill-buffer consult-buffer)) ;; 随时加
     (cl-dolist (jc dired-sibar-follow-file-commands)
       (advice-add jc :after #'dired-sidbar-follow-file-advice))  
     (defun dired-sidebar-follow-to-file()
