@@ -1797,7 +1797,10 @@ _c_: hide comment        _q_uit
         (minibuffer-with-setup-hook
             (lambda ()
               (setq-local consult--regexp-compiler #'consult--default-regexp-compiler))
-          (apply args)))
+          ;; vertico--filter-files会过滤一些后辍，如.map .dll等，既然是everything，肯定啥都不能过滤掉
+          (let ((completion-ignored-extensions nil))
+            (apply args))
+          ))
       (advice-add #'consult-everything :around #'consult--with-orderless)
       :config
       )
