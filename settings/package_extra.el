@@ -739,13 +739,18 @@ _c_: hide comment        _q_uit
         idle-highlight-exclude-point t ;; 可以设置不高亮光标下
         ;;idle-highlight-ignore-modes (list 'minibuffer-mode)
         idle-highlight-exceptions-syntax nil ;; 默认光标在单词末尾是不高亮的，有点不习惯
-        idle-highlight-exceptions-face nil ;; 高亮全部
+        idle-highlight-exceptions-face  '(hi-yellow hi-pink hi-green hi-blue hi-salmon hi-aquamarine
+                                                    hi-black-b hi-blue-b hi-red-b hi-green-b hi-black-hb) ;; 排除CTRL+F3高亮的
         )
   ;; 没什么功能，还好embark有实现
   (global-set-key [f3] 'embark-next-symbol)
   (global-set-key [(shift f3)] 'embark-previous-symbol)
   (global-set-key [(control f3)] 'embark-toggle-highlight)
   :config
+  (with-eval-after-load 'hi-lock
+    ;; 让CTRL+F3立即显示高亮效果
+    (defadvice highlight-symbol-at-point (before my-highlight-symbol-at-point activate)
+      (idle-highlight--unhighlight)))
   ;; 输入时高亮效果不是那么好，这里设置鼠标点击时高亮点击处
   (defadvice idle-highlight--highlight (around my-idle-highlight--highlight activate)
     (if (memq last-command '(mouse-set-point 
