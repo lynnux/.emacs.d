@@ -3912,6 +3912,17 @@ _q_uit
 	       '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
 	       '(corfu-current ((t (:foreground "#c678dd"))))
                '(consult-preview-cursor ((t (:inherit highlight)))) ;; TODO: 整个单词高亮，虽然很多情况下不一定是一个词
+               '(hi-yellow ((t (:foreground "black" :background "yellow"))))
+               '(hi-pink ((t (:foreground "black" :background "HotPink"))))
+               '(hi-green ((t (:foreground "black" :background "green"))))
+               '(hi-blue ((t (:foreground "black" :background "DodgerBlue"))))
+               '(hi-salmon ((t (:foreground "black" :background "light salmon"))))
+               '(hi-aquamarine ((t (:foreground "black" :background "aquamarine"))))
+               '(hi-black-b ((t (:foreground "white" :background "black"))))
+               '(hi-blue-b ((t (:foreground "DodgerBlue" :background "black"))))
+               '(hi-red-b ((t (:foreground "red" :background "black"))))
+               '(hi-green-b ((t (:foreground "green" :background "black"))))
+               '(hi-black-hb ((t (:foreground "orange" :background "black"))))
                )
               ;; region有点看不清，单独设置
               (set-face-attribute 'region nil :background "#555555")
