@@ -5,7 +5,7 @@
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2022
-;; Version: 0.4
+;; Version: 0.5
 ;; Package-Requires: ((emacs "27.1"))
 ;; Homepage: https://github.com/minad/tempel
 
@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -308,13 +308,19 @@ Return the added field."
       (push ov (car st))
       ov)))
 
+(defmacro tempel--protect (&rest body)
+  "Protect BODY, catch errors."
+  `(with-demoted-errors "Tempel Error: %S"
+     ,@body))
+
 (defun tempel--element (st region elt)
   "Add template ELT to ST given the REGION."
   (pcase elt
     ('nil)
     ('n (insert "\n"))
-    ('n> (insert "\n") (indent-according-to-mode))
-    ('> (indent-according-to-mode))
+    ;; `indent-according-to-mode' fails sometimes in Org. Ignore errors.
+    ('n> (insert "\n") (tempel--protect (indent-according-to-mode)))
+    ('> (tempel--protect (indent-according-to-mode)))
     ((pred stringp) (insert elt))
     ('& (unless (or (bolp) (save-excursion (re-search-backward "^\\s-*\\=" nil t)))
           (insert "\n")))
@@ -589,7 +595,9 @@ This is meant to be a source in `tempel-template-sources'."
   "Finalize template ST, or last template."
   (let ((st (or st (car tempel--active)))
         (buf (current-buffer)))
-    (eval (overlay-get (caar st) 'tempel--post) (cdr st))
+    ;; Ignore errors in post expansion to ensure that templates can be
+    ;; terminated gracefully.
+    (tempel--protect (eval (overlay-get (caar st) 'tempel--post) (cdr st)))
     (with-current-buffer buf
       (tempel--disable st))))
 
