@@ -633,7 +633,7 @@ _c_: hide comment        _q_uit
          ("<tab>" . tempel-next)
          ("<backtab>" . tempel-previous)
          )
-  :commands(tempel-insert tempel--templates tempel-expand)
+  :commands(tempel-insert tempel--templates tempel-expand tempel--insert)
   :init
   (defun tempel-try-key-from-whitespace (_start-point)
     (skip-chars-backward "^[:space:]\n"))
@@ -674,7 +674,9 @@ _c_: hide comment        _q_uit
         (when templates
           ;; (message templates)
           (list templates (point) original))))) ;; 返回text start end
-  (setq tempel-path (expand-file-name "packages/tempel_templates" user-emacs-directory))
+  (setq tempel-path (expand-file-name "packages/tempel_templates" user-emacs-directory)
+        tempel-auto-reload nil ;; 不需要检测模板是否更新了
+        )
   (defun my-tempel-expandable-p ()
     "from https://gitlab.com/daanturo/e/-/blob/main/autoload/16-my-functions-snippet.el#L47"
     (when (and t;; (memq (char-after) '(?\C-j ?  nil)) ;; 位置必须是最后或者后面有空格
@@ -709,17 +711,55 @@ _c_: hide comment        _q_uit
         (setq ad-return-value (cons (car bounds) (nth 1 bounds)))
         )))
   )
+
+(use-package s
+  :commands(s-split))
+
+;; 利用tempel实现yas功能
+(use-package yasnippet
+  :defer t
+  :config
+  (setq yas-global-mode t)
+  (defun yas-expand-snippet(snippet &optional start end expand-env)
+    "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
+    ;; 去掉${参数}和$0等，因为正则最大匹配原则，同好把所有参数都给替换了 
+    ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
+    ;; (message "%S" snippet)
+    (let ((new (replace-regexp-in-string "$[0-9]" "$" (replace-regexp-in-string "${.*}" "$" snippet))) 
+          temp
+          )
+      (if (string-equal new snippet)
+          (setq new (list new))
+        ;; (message "%S" new)
+        (setq temp (s-split "\\$" new))
+        (setq new nil)
+        ;; 除了最后一个都添上p
+        (setq new (mapcar (lambda (x)
+                            (cons x 'p)) (butlast temp))) 
+        (setq new (cons new (last temp))) ;; 补全最后一个
+        (setq new (flatten-tree new))
+        )
+      ;; (message "%S" new)
+      (when start (delete-region start end))
+      (tempel--insert (cons nil new) nil)
+      ))
+  )
+(load "lsp/yasnippet") ;; lsp需要先load yas
+
+(use-package auto-yasnippet
+  :commands(aya-create aya-expand)
+  :init
+  ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
+  (global-set-key (kbd "C-c y") #'aya-create)
+  (global-set-key (kbd "C-c e") #'aya-expand)
+  )
+
+
 (use-package yasnippet
   :disabled
   :defer t
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
-  ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
-  (autoload 'aya-create "auto-yasnippet" nil t)
-  (autoload 'aya-expand "auto-yasnippet" nil t)
-  (global-set-key (kbd "C-c y") #'aya-create)
-  (global-set-key (kbd "C-c e") #'aya-expand)
-  
   :diminish(yas-minor-mode)
   :config
   ;; copy from yasnippet-snippets.el，fix for eglot
@@ -2657,19 +2697,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          :hook
          (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred lsp-completion-at-point)
-         :config
-         (load "lsp/yasnippet") ;; 必须有这个占位的文件
-         (defun yas-expand-snippet(snippet &optional start end expand-env)
-           "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
-           ;; 去掉${参数}和$0等，因为正则最大匹配原则，同好把所有参数都给替换了 
-           ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
-           (let ((new (replace-regexp-in-string "$[0-9]" "" (replace-regexp-in-string "${.*}" "" snippet))))
-             (unless (string-equal new snippet)
-               (goto-char start)
-               (delete-char (- end start))
-               (insert new)
-               (backward-char) ;; 更优雅的办法是定位到$的位置
-               )))
+         :config         
          ;; 使重命名可用
          (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
