@@ -189,7 +189,7 @@ _q_uit
             (run-with-idle-timer
              dired-sidebar-follow-file-idle-delay
              nil #'dired-sidebar-follow-to-file)))
-    (defvar dired-sibar-follow-file-commands '(my-pop-select my-project-search tab-line-select-tab volatile-kill-buffer consult-buffer)) ;; 随时加
+    (defvar dired-sibar-follow-file-commands '(my-pop-select my-project-search tab-line-select-tab volatile-kill-buffer consult-buffer ff-get-other-file)) ;; 随时加
     (cl-dolist (jc dired-sibar-follow-file-commands)
       (advice-add jc :after #'dired-sidbar-follow-file-advice))  
     (defun dired-sidebar-follow-to-file()
@@ -2469,7 +2469,33 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;;     ad-do-it
   ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
   )
-  
+
+(use-package shell
+  :defer t
+  :config
+  ;; No confirm kill process: for *shell* and *compilation*
+  ;; https://emacs.stackexchange.com/q/24330
+  (defun set-no-process-query-on-exit ()
+    (let ((proc (get-buffer-process (current-buffer))))
+      (when (processp proc)
+        (set-process-query-on-exit-flag proc nil))))
+  (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
+  ;; Kill the buffer when the shell process exits
+  ;; https://emacs.stackexchange.com/a/48307
+  (defun kill-buffer-on-shell-logout ()
+    (let* ((proc (get-buffer-process (current-buffer)))
+           (sentinel (process-sentinel proc)))
+      (set-process-sentinel
+       proc
+       `(lambda (process signal)
+          ;; Call the original process sentinel first.
+          (funcall #',sentinel process signal)
+          ;; Kill the buffer on an exit signal.
+          (and (memq (process-status process) '(exit signal))
+               (buffer-live-p (process-buffer process))
+               (kill-buffer (process-buffer process)))))))
+  (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout)
+  )
 
 (use-package compile
   :defer t
