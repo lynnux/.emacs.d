@@ -367,6 +367,7 @@ _q_uit
   (define-key help-mode-map "w" 'scroll-down-command)
   (define-key help-mode-map (kbd "M-p") 'help-go-back)
   (define-key help-mode-map (kbd "M-n") 'help-go-forward)
+  (define-key help-mode-map (kbd "DEL") 'help-go-back)
   )
 
 ;; 保存cursor位置
