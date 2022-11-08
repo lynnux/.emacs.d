@@ -743,7 +743,7 @@ _c_: hide comment        _q_uit
       (mapcar #'(lambda(s)
                   (if (stringp s)
                       (let ((x (my-replace-regexp-in-string "$\\([0-9]+\\)" "(s \\1)" s)))
-                        (message "%S" x)
+                        ;; (message "%S" x)
                         (cl-dolist (y x)
                           (setq temp2 (append temp2 (list y)))))
                     (setq temp2 (append temp2 (list s))))
