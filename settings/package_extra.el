@@ -726,24 +726,67 @@ _c_: hide comment        _q_uit
     ;; 去掉${参数}和$0等，因为正则最大匹配原则，同好把所有参数都给替换了 
     ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
     ;; (message "%S" snippet)
-    (let ((new (replace-regexp-in-string "$[0-9]" "$" (replace-regexp-in-string "${.*}" "$" snippet))) 
-          temp
-          )
-      (if (string-equal new snippet)
-          (setq new (list new))
-        ;; (message "%S" new)
-        (setq temp (s-split "\\$" new))
-        (setq new nil)
-        ;; 除了最后一个都添上p
-        (setq new (mapcar (lambda (x)
-                            (cons x 'p)) (butlast temp))) 
-        (setq new (cons new (last temp))) ;; 补全最后一个
-        (setq new (flatten-tree new))
-        )
-      ;; (message "%S" new)
+    (let ((new (convert-yas-to-tempel snippet)))
       (when start (delete-region start end))
       (tempel--insert (cons nil new) nil)
       ))
+  
+  (defun convert-yas-to-tempel(str &optional remove_multi_args)
+    "转化yas字符串为tempel模板"
+    ;; 第1步先处理${1:xxx}，尤其注意${1:xxx}123这种
+    (let ((temp (my-replace-regexp-in-string
+                 (if remove_multi_args
+                     "${\\([0-9]+\\).*}"
+                   "${\\([0-9]+\\):.*?}" ;; ?是“non-greedy”
+                   )
+                 "(s \\1)" str))
+          temp2)
+      ;; (message "%S" temp)
+      (mapcar #'(lambda(s)
+                       (if (stringp s)
+                           (let ((x (my-replace-regexp-in-string "$\\([0-9]+\\)" "(s \\1)" s)))
+                             (message "%S" x)
+                             (cl-dolist (y x)
+                               (setq temp2 (append temp2 (list y)))))
+                         (setq temp2 (append temp2 (list s))))
+                       ) temp)
+      temp2))
+  (when nil
+    (progn
+      (cl-assert (equal (convert-yas-to-tempel "$2 $1") '("" (s 2) " " (s 1) "")))
+      (cl-assert (equal (convert-yas-to-tempel "${123:aaaa}123,${456:aaaa} $1") '("" (s 123) "123," (s 456) " " (s 1) "")))
+      (cl-assert (equal (convert-yas-to-tempel "${1:class Kty}, ${2:class Ty}") '("" (s 1) ", " (s 2) "")))
+      (cl-assert (equal (convert-yas-to-tempel "${123:aaaa}123,${456:aaaa} $1" t) '("" (s 123) " " (s 1) "")))
+      (cl-assert (equal (convert-yas-to-tempel "${1:class Kty}, ${2:class Ty}" t) '("" (s 1) "")))
+      )
+    )
+  (defun my-replace-regexp-in-string (regexp rep string &optional
+					     fixedcase literal subexp start)
+    "将yas里的${1:aa}直接转化为(s 1)，并返回list"
+    (let ((l (length string))
+	  (start (or start 0))
+	  matches str mb me)
+      (save-match-data
+        (while (and (< start l) (string-match regexp string start))
+	  (setq mb (match-beginning 0)
+	        me (match-end 0))
+	  (when (= me mb) (setq me (min l (1+ mb))))
+          (match-data--translate (- mb))
+          (setq str (substring string mb me))
+	  (setq matches
+	        (cons (read ;; 这个把"(s 1)"变为(s 1)，跟prin1-to-string相反
+                       (replace-match (if (stringp rep)
+				          rep
+				        (funcall rep (match-string 0 str)))
+				      fixedcase literal str subexp))
+		      (cons (substring string start mb) ; unmatched prefix
+			    matches)))
+	  (setq start me))
+        ;; Reconstruct a string from the pieces.
+        (setq matches (cons (substring string start l) matches)) ; leftover
+        ;; (apply #'concat (nreverse matches))
+        (nreverse matches)
+        )))
   )
 (load "lsp/yasnippet") ;; lsp需要先load yas
 
