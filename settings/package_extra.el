@@ -634,7 +634,7 @@ _c_: hide comment        _q_uit
          ("<tab>" . tempel-next)
          ("<backtab>" . tempel-previous)
          )
-  :commands(tempel-insert tempel--templates tempel-expand tempel--insert)
+  :commands(tempel-insert tempel--templates tempel-expand)
   :init
   (defun tempel-try-key-from-whitespace (_start-point)
     (skip-chars-backward "^[:space:]\n"))
@@ -723,13 +723,12 @@ _c_: hide comment        _q_uit
   (setq yas-global-mode t)
   (defun yas-expand-snippet(snippet &optional start end expand-env)
     "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
-    ;; 去掉${参数}和$0等，因为正则最大匹配原则，同好把所有参数都给替换了 
     ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
     ;; (message "%S" snippet)
     (let ((new (convert-yas-to-tempel snippet)))
       (when start (delete-region start end))
-      (tempel--insert (cons nil new) nil)
-      ))
+      ;; (message "%S" new)
+      (tempel-insert new)))
   
   (defun convert-yas-to-tempel(str &optional remove_multi_args)
     "转化yas字符串为tempel模板"
@@ -741,15 +740,14 @@ _c_: hide comment        _q_uit
                    )
                  "(s \\1)" str))
           temp2)
-      ;; (message "%S" temp)
       (mapcar #'(lambda(s)
-                       (if (stringp s)
-                           (let ((x (my-replace-regexp-in-string "$\\([0-9]+\\)" "(s \\1)" s)))
-                             (message "%S" x)
-                             (cl-dolist (y x)
-                               (setq temp2 (append temp2 (list y)))))
-                         (setq temp2 (append temp2 (list s))))
-                       ) temp)
+                  (if (stringp s)
+                      (let ((x (my-replace-regexp-in-string "$\\([0-9]+\\)" "(s \\1)" s)))
+                        (message "%S" x)
+                        (cl-dolist (y x)
+                          (setq temp2 (append temp2 (list y)))))
+                    (setq temp2 (append temp2 (list s))))
+                  ) temp)
       temp2))
   (when nil
     (progn
