@@ -134,8 +134,8 @@ The options are
 3. Any user-defined function. This function should take no
 arguments and return a list of directories."
   :type '(radio
-          (const :tag "Project.el projects" 'consult-dir-project-dirs)
-          (const :tag "Projectile projects" 'consult-dir-projectile-dirs)
+          (function-item :tag "Project.el projects" consult-dir-project-dirs)
+          (function-item :tag "Projectile projects" consult-dir-projectile-dirs)
           (function :tag "User-defined function")))
 
 (defcustom consult-dir-sources
@@ -261,11 +261,16 @@ REFRESH is non-nil force the hash to be rebuilt."
 
 Entries that are also in the list of projects are removed."
   (let* ((current-dirs (consult-dir--default-dirs))
-           (proj-list-hash (consult-dir--project-list-make))
-           (in-other-source-p (lambda (dir) (not (or (and proj-list-hash (gethash dir proj-list-hash))
-                                                (member dir current-dirs))))))
+         (proj-list-hash (consult-dir--project-list-make))
+         (in-other-source-p (lambda (dir) (not (or (and proj-list-hash (gethash dir proj-list-hash))
+                                              (member dir current-dirs)))))
+         (file-directory-safe (lambda (f) (or (and (if (file-remote-p f)
+                                                       (string-suffix-p "/" f)
+                                                     (file-directory-p f))
+                                                   (file-name-as-directory f))
+                                              (file-name-directory f)))))
     (thread-last recentf-list
-      (mapcar #'file-name-directory)
+      (mapcar file-directory-safe)
       (delete-dups)
       (mapcar #'abbreviate-file-name)
       (seq-filter in-other-source-p))))

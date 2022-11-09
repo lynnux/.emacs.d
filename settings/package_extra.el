@@ -154,7 +154,11 @@ _q_uit
     :commands(dired-recent-mode dired-recent-open)
     :init
     (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
-    )
+    :config
+    (with-eval-after-load 'marginalia
+      ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
+      (add-to-list 'marginalia-command-categories '(dired-recent-open . file))
+      ))
   
   ;; bug较多能用，好处是支持diredful、diff-hl显示、dired-quick-sort等
   (use-package dired-sidebar
@@ -1798,6 +1802,15 @@ _c_: hide comment        _q_uit
       (define-key embark-file-map (kbd "C-x C-d") (lambda (file)
                                                     (interactive "f")
                                                     (browse-file-in-explorer file)))
+      (defun embark-consult-rg (target)
+        (if (file-exists-p target)
+            (let ((default-directory (if (file-directory-p target)
+                                         target
+                                       (file-name-directory target))))
+              (call-interactively 'my-consult-ripgrep))
+          (message "not exist! %S" target )) ; TODO: 支持buffer bookmark等
+        )
+      (define-key embark-general-map [f2] 'embark-consult-rg)
       )
     )
   ;; 预览功能很快！好像不是真的加载
@@ -1847,10 +1860,10 @@ _c_: hide comment        _q_uit
     (defun my-consult-ripgrep(&optional dir initial)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
       (require 'consult)
+      (setq this-command 'my-consult-ripgrep)
       ;; 不忽略ignore
       (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
-        (consult-ripgrep (or dir default-directory) initial))
-      )
+        (consult-ripgrep (or dir default-directory) initial)))
     (defun my-consult-ripgrep-only-current-dir(&optional dir)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
       (require 'consult)
