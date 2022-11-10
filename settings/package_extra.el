@@ -3654,8 +3654,16 @@ _q_uit
   (popper-mode +1)
   (add-hook 'popper-open-popup-hook (lambda()
                                       (tab-line-mode -1)))
-  (require 'popper-echo)
-  (popper-echo-mode +1)
+  (use-package popper-echo
+    :init
+    (setq popper-echo-dispatch-actions t) ;; 开启k关闭buffer，需要先k后再按buffer对应的快捷键如M-2
+    :config
+    ;; C-tab切换buffer，可以避免在popper-echo里打开文件。目前只能切换最前面两个
+    (setq popper-echo-dispatch-keys (cl-nsubst-if "C-<tab>" 
+                                                  (lambda(x)
+                                                    (equal x "M-1"))
+                                                  popper-echo-dispatch-keys))
+    (popper-echo-mode +1))
 
   (defun popper-close-window-hack (&rest _)
     "Close popper window via `C-g'."
