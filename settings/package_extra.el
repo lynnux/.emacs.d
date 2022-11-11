@@ -2567,6 +2567,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (use-package shell
   :defer t
+  :init
+  (setq confirm-kill-processes nil)
   :config
   ;; No confirm kill process: for *shell* and *compilation*
   ;; https://emacs.stackexchange.com/q/24330
@@ -3605,40 +3607,46 @@ _q_uit
     )
   )
 
+(defmacro my-C-1 (pop-toggle-latest)
+  `(lambda ()
+     (interactive)
+     ;; 在popper里按C-.转到定义了就无法C-1了，提示"Cannot make side window the only window"。先切换到其它窗口再关闭
+     ;; (when (window-parameter nil 'window-side)
+     ;;   (call-interactively 'other-window))
+     ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
+     (let ((show-popper (cond ((eq last-command 'mode-exited) t)
+	                      ((region-active-p)
+	                       'a)
+	                      ((> (minibuffer-depth) 0)
+	                       'b)
+	                      (current-prefix-arg
+	                       t)
+	                      ((> (recursion-depth) 0)
+	                       'c)
+	                      (buffer-quit-function
+	                       'd)
+	                      ((not (one-window-p t))
+	                       'e)
+	                      ((string-match "^ \\*" (buffer-name (current-buffer)))
+	                       'f)
+                              (t t))))
+       ;; 如果在pop窗口里，先关闭pop窗口
+       (if (eq 'popper-toggle-latest ,pop-toggle-latest)
+           (when (bound-and-true-p popper-open-popup-alist)
+             (call-interactively ,pop-toggle-latest))
+         (when (bound-and-true-p poe-popup-mode)
+           (call-interactively ,pop-toggle-latest)))
+       (if (eq show-popper t)
+           (call-interactively ,pop-toggle-latest)
+         (call-interactively 'keyboard-escape-quit) ;; 关闭minibuffer，关闭其它窗口
+         ))))
+
 (use-package popper
+  :disabled
   :defer 1.0
   :commands(popper-mode popper-toggle-latest)
   :init
-  (defun my-C-1()
-    (interactive)
-    ;; 在popper里按C-.转到定义了就无法C-1了，提示"Cannot make side window the only window"。先切换到其它窗口再关闭
-    (when (window-parameter nil 'window-side)
-      (call-interactively 'other-window))
-    ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
-    (let ((show-popper (cond ((eq last-command 'mode-exited) t)
-	                     ((region-active-p)
-	                      'a)
-	                     ((> (minibuffer-depth) 0)
-	                      'b)
-	                     (current-prefix-arg
-	                      t)
-	                     ((> (recursion-depth) 0)
-	                      'c)
-	                     (buffer-quit-function
-	                      'd)
-	                     ((not (one-window-p t))
-	                      'e)
-	                     ((string-match "^ \\*" (buffer-name (current-buffer)))
-	                      'f)
-                             (t t))))
-      ;; 有popper窗口先关闭
-      (when (bound-and-true-p popper-open-popup-alist)
-        (call-interactively 'popper-toggle-latest))
-      (if (eq show-popper t)
-          (call-interactively 'popper-toggle-latest)
-        (call-interactively 'keyboard-escape-quit) ;; 关闭minibuffer，关闭其它窗口
-        )))
-  (global-set-key (kbd "C-1") 'my-C-1)
+  (global-set-key (kbd "C-1") (my-C-1 'popper-toggle-latest))
   (global-set-key (kbd "M-`") 'popper-toggle-latest)
 
   (setq popper-reference-buffers
@@ -3652,8 +3660,7 @@ _q_uit
           ))
   :config
   (popper-mode +1)
-  (add-hook 'popper-open-popup-hook (lambda()
-                                      (tab-line-mode -1)))
+  (add-hook 'popper-open-popup-hook (lambda() (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (use-package popper-echo
     :init
     (setq popper-echo-dispatch-actions t) ;; 开启k关闭buffer，需要先k后再按buffer对应的快捷键如M-2
@@ -3675,6 +3682,44 @@ _q_uit
         (when (window-live-p window)
           (delete-window window)))))
   (advice-add #'keyboard-quit :before #'popper-close-window-hack)
+  )
+
+;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去。
+;; 规则跟shackle类似，并且切换到message会直接到pop里去，限制得死死的！
+(use-package poe
+  ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
+  :defer 1.0
+  :commands(poe-popup poe-rule poe-popup-toggle)
+  :init
+  (global-set-key (kbd "C-1") (my-C-1 'poe-popup-toggle))
+  (setq poe-remove-fringes-from-popups nil
+        poe-dim-popups nil)
+  :config
+  ;; https://github.com/endofunky/emacs.d/blob/master/lisp/core/core-popup.el#L18
+  (poe-popup " *Metahelp*" :ephemeral t)
+  (poe-popup "*Apropos*" :size .3 :shrink t :ephemeral t)
+  (poe-popup "*Backtrace*")
+  (poe-popup "*Checkdoc Status*" :ephemeral t)
+  (poe-popup "*Compile-Log*" :ephemeral t)
+  (poe-popup "*Command History*")
+  (poe-popup "*Help*" :size 0.5 :shrink t :ephemeral t)
+  (poe-popup "*Messages*")
+  (poe-popup "*Occur*" :ephemeral t)
+  (poe-popup "*Pp Eval Output*")
+  (poe-popup "*Warnings*" :ephemeral t)
+  (poe-popup "*compilation*")
+  (poe-popup "\\`\\*WoMan.*?\\*\\'" :regexp t :size 0.5 :shrink t :ephemeral t)
+  (poe-popup 'calendar-mode :ephemeral t)
+  (poe-popup 'comint-mode)
+  (poe-popup 'compilation-mode)
+  (poe-popup 'Man-mode :size 0.5 :shrink t :ephemeral t)
+  
+  (add-hook 'poe-popup-mode-hook (lambda() (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
+  (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
+  (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
+  (define-key poe-popup-mode-map (kbd "<C-tab>") 'poe-popup-next)
+  (define-key poe-popup-mode-map (kbd "<C-S-tab>") 'poe-popup-prev)
+  (poe-mode +1)
   )
 
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
