@@ -3685,7 +3685,7 @@ _q_uit
   )
 
 ;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去。
-;; 规则跟shackle类似，并且切换到message会直接到pop里去，限制得死死的！
+;; TODO：替代shackle
 (use-package poe
   ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
   :defer 1.0
@@ -3719,6 +3719,31 @@ _q_uit
   (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
   (define-key poe-popup-mode-map (kbd "<C-tab>") 'poe-popup-next)
   (define-key poe-popup-mode-map (kbd "<C-S-tab>") 'poe-popup-prev)
+  (defface popper-echo-area-buried
+    '((t :inherit shadow))
+    "Echo area face for buried popups.")
+  (defface popper-echo-area
+    '((t :inverse-video t
+         :weight bold))
+    "Echo area face for opened popup.")
+  (defun echo-poe-buffers (&rest _app)
+    "简单实现popper-echo那样的效果"
+    ;; 手动执行C-x C-e message居然没有高亮效果
+    (message (cl-reduce #'concat
+                        (cons
+                         (propertize
+                          (funcall #'identity (buffer-name (car poe--popup-buffer-list)))
+                          'face 'popper-echo-area)
+                         (cl-mapcar (lambda (buf)
+                                      (concat
+                                       (propertize ", " 'face 'popper-echo-area-buried)
+                                       (propertize (funcall #'identity (buffer-name buf))
+                                                   'face 'popper-echo-area-buried)))
+                                    (cdr poe--popup-buffer-list)))))
+    )
+  (advice-add #'poe-popup-toggle :after #'echo-poe-buffers)
+  (advice-add #'poe-popup-next :after #'echo-poe-buffers)
+  (advice-add #'poe-popup-prev :after #'echo-poe-buffers)
   (poe-mode +1)
   )
 
