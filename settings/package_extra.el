@@ -3702,7 +3702,7 @@ _q_uit
   (poe-popup "*Checkdoc Status*" :ephemeral t)
   (poe-popup "*Compile-Log*" :ephemeral t)
   (poe-popup "*Command History*")
-  (poe-popup "*Help*" :size 0.5 :shrink t :ephemeral t)
+  (poe-popup "*Help*" :size 0.4 :shrink t :ephemeral t)
   (poe-popup "*Messages*")
   (poe-popup "*Occur*" :ephemeral t)
   (poe-popup "*Pp Eval Output*")
@@ -3712,7 +3712,7 @@ _q_uit
   (poe-popup 'calendar-mode :ephemeral t)
   (poe-popup 'comint-mode)
   (poe-popup 'compilation-mode)
-  (poe-popup 'Man-mode :size 0.5 :shrink t :ephemeral t)
+  (poe-popup 'Man-mode :size 0.4 :shrink t :ephemeral t)
   
   (add-hook 'poe-popup-mode-hook (lambda() (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
