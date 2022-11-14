@@ -2283,9 +2283,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                        do (define-key easy-kill-base-map (number-to-string i) nil))
               (setq my-easy-kill-map (easy-kill-map))
               ))
-          ;; 有popper窗口时不弹出
-          (if (and (functionp 'popper-toggle-latest) (boundp 'popper-open-popup-alist))
-              (unless popper-open-popup-alist 
+          ;; 有poe窗口时不弹出
+          (if (and (functionp 'poe-toggle-latest) (boundp 'poe-open-popup-alist))
+              (unless poe-open-popup-alist 
                 (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging))
             (which-key--show-keymap "keymap" my-easy-kill-map nil nil 'no-paging)))
         (defadvice set-transient-map (before my-set-transient-map activate)
@@ -3607,91 +3607,26 @@ _q_uit
     )
   )
 
-(defmacro my-C-1 (pop-toggle-latest)
-  `(lambda ()
-     (interactive)
-     ;; 在popper里按C-.转到定义了就无法C-1了，提示"Cannot make side window the only window"。先切换到其它窗口再关闭
-     ;; (when (window-parameter nil 'window-side)
-     ;;   (call-interactively 'other-window))
-     ;; 抄自keyboard-escape-quit的判断，只有当1个窗口时才弹出popper
-     (let ((show-popper (cond ((eq last-command 'mode-exited) t)
-	                      ((region-active-p)
-	                       'a)
-	                      ((> (minibuffer-depth) 0)
-	                       'b)
-	                      (current-prefix-arg
-	                       t)
-	                      ((> (recursion-depth) 0)
-	                       'c)
-	                      (buffer-quit-function
-	                       'd)
-	                      ((not (one-window-p t))
-	                       'e)
-	                      ((string-match "^ \\*" (buffer-name (current-buffer)))
-	                       'f)
-                              (t t))))
-       ;; 如果在pop窗口里，先关闭pop窗口
-       (if (eq 'popper-toggle-latest ,pop-toggle-latest)
-           (when (bound-and-true-p popper-open-popup-alist)
-             (call-interactively ,pop-toggle-latest))
-         (when (bound-and-true-p poe-popup-mode)
-           (call-interactively ,pop-toggle-latest)))
-       (if (eq show-popper t)
-           (call-interactively ,pop-toggle-latest)
-         (call-interactively 'keyboard-escape-quit) ;; 关闭minibuffer，关闭其它窗口
-         ))))
+(defun my-C-1()
+  (interactive)
+  (while (or (window-parameter nil 'window-side) 
+             (bound-and-true-p poe-popup-mode))
+    ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
+    (call-interactively 'other-window))
+  (let ((wcount (length (window-list))))
+    (call-interactively 'keyboard-escape-quit)
+    ;; 如果窗口数没变，就可以弹出pop窗口了
+    (if (eq wcount (length (window-list)))
+        (call-interactively 'poe-popup-toggle))))
 
-(use-package popper
-  :disabled
-  :defer 1.0
-  :commands(popper-mode popper-toggle-latest)
-  :init
-  (global-set-key (kbd "C-1") (my-C-1 'popper-toggle-latest))
-  (global-set-key (kbd "M-`") 'popper-toggle-latest)
-
-  (setq popper-reference-buffers
-        '("\\*Messages\\*"
-          "Output\\*$"
-          "\\*Async Shell Command\\*"
-          "\\*Backtrace\\*"
-          help-mode
-          compilation-mode
-          shell-mode eshell-mode ;; 初始化还是全屏，但后面切换没事
-          ))
-  :config
-  (popper-mode +1)
-  (add-hook 'popper-open-popup-hook (lambda() (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
-  (use-package popper-echo
-    :init
-    (setq popper-echo-dispatch-actions t) ;; 开启k关闭buffer，需要先k后再按buffer对应的快捷键如M-2
-    :config
-    ;; C-tab切换buffer，可以避免在popper-echo里打开文件。目前只能切换最前面两个
-    (setq popper-echo-dispatch-keys (cl-nsubst-if "C-<tab>" 
-                                                  (lambda(x)
-                                                    (equal x "M-1"))
-                                                  popper-echo-dispatch-keys))
-    (popper-echo-mode +1))
-
-  (defun popper-close-window-hack (&rest _)
-    "Close popper window via `C-g'."
-    ;; `C-g' can deactivate region
-    (when (and (called-interactively-p 'interactive)
-               (not (region-active-p))
-               popper-open-popup-alist)
-      (let ((window (caar popper-open-popup-alist)))
-        (when (window-live-p window)
-          (delete-window window)))))
-  (advice-add #'keyboard-quit :before #'popper-close-window-hack)
-  )
-
-;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去。
-;; TODO：替代shackle
+;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去(也可以设置:select t切换到)。
+;; 规则跟shackle是一样的，不过设置:same有bug所以还不能去掉shackle
 (use-package poe
   ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
   :defer 1.0
   :commands(poe-popup poe-rule poe-popup-toggle)
   :init
-  (global-set-key (kbd "C-1") (my-C-1 'poe-popup-toggle))
+  (global-set-key (kbd "C-1") 'my-C-1)
   (setq poe-remove-fringes-from-popups nil
         poe-dim-popups nil)
   :config
@@ -3719,31 +3654,42 @@ _q_uit
   (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
   (define-key poe-popup-mode-map (kbd "<C-tab>") 'poe-popup-next)
   (define-key poe-popup-mode-map (kbd "<C-S-tab>") 'poe-popup-prev)
-  (defface popper-echo-area-buried
+  (defface poe-echo-area-buried
     '((t :inherit shadow))
     "Echo area face for buried popups.")
-  (defface popper-echo-area
+  (defface poe-echo-area
     '((t :inverse-video t
          :weight bold))
     "Echo area face for opened popup.")
   (defun echo-poe-buffers (&rest _app)
-    "简单实现popper-echo那样的效果"
+    "简单实现poe-echo那样的效果"
     ;; 手动执行C-x C-e message居然没有高亮效果
     (message (cl-reduce #'concat
                         (cons
                          (propertize
                           (funcall #'identity (buffer-name (car poe--popup-buffer-list)))
-                          'face 'popper-echo-area)
+                          'face 'poe-echo-area)
                          (cl-mapcar (lambda (buf)
                                       (concat
-                                       (propertize ", " 'face 'popper-echo-area-buried)
+                                       (propertize ", " 'face 'poe-echo-area-buried)
                                        (propertize (funcall #'identity (buffer-name buf))
-                                                   'face 'popper-echo-area-buried)))
+                                                   'face 'poe-echo-area-buried)))
                                     (cdr poe--popup-buffer-list)))))
     )
   (advice-add #'poe-popup-toggle :after #'echo-poe-buffers)
   (advice-add #'poe-popup-next :after #'echo-poe-buffers)
   (advice-add #'poe-popup-prev :after #'echo-poe-buffers)
+  (defun poe-close-window-hack (&rest _)
+    "Close poe window via `C-g'."
+    ;; `C-g' can deactivate region
+    (when (and (called-interactively-p 'interactive)
+               (not (region-active-p))
+               (poe--popup-windows))
+      (let ((window (car (poe--popup-windows))))
+        (when (window-live-p window)
+          (delete-window window)))))
+  (advice-add #'keyboard-quit :before #'poe-close-window-hack)
+  
   (poe-mode +1)
   )
 
