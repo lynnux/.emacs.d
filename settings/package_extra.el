@@ -3614,6 +3614,7 @@ _q_uit
     ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
     (call-interactively 'other-window))
   (let ((wcount (length (window-list))))
+    (poe-popup-close)
     (call-interactively 'keyboard-escape-quit)
     ;; 如果窗口数没变，就可以弹出pop窗口了
     (if (eq wcount (length (window-list)))
