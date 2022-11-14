@@ -187,12 +187,13 @@ _q_uit
     ;; 对部分命令执行后follow。不能用buffer-list-update-hook，会大量调用diff-hl卡死
     (defvar dired-sidebar-follow-to-file-timer nil)
     (defun dired-sidbar-follow-file-advice (&rest args)
-      (when dired-sidebar-follow-to-file-timer
-        (cancel-timer dired-sidebar-follow-to-file-timer))
-      (setq dired-sidebar-follow-to-file-timer
-            (run-with-idle-timer
-             dired-sidebar-follow-file-idle-delay
-             nil #'dired-sidebar-follow-to-file)))
+      (when (dired-sidebar-showing-sidebar-p)
+        (when dired-sidebar-follow-to-file-timer
+          (cancel-timer dired-sidebar-follow-to-file-timer))
+        (setq dired-sidebar-follow-to-file-timer
+              (run-with-idle-timer
+               dired-sidebar-follow-file-idle-delay
+               nil #'dired-sidebar-follow-to-file))))
     (defvar dired-sibar-follow-file-commands '(my-pop-select my-project-search tab-line-select-tab volatile-kill-buffer consult-buffer ff-get-other-file)) ;; 随时加
     (cl-dolist (jc dired-sibar-follow-file-commands)
       (advice-add jc :after #'dired-sidbar-follow-file-advice))  
@@ -200,9 +201,10 @@ _q_uit
       "直接用dired-sidebar-follow-file，hl-line的行有问题，这里修复下"
       (interactive)
       (dired-sidebar-follow-file)
-      (with-current-buffer (dired-sidebar-buffer)
-        (hl-line-highlight) ;; dired-sidebar-theme需要设置为none或者icons，避免调用`dired-sidebar-tui-update-with-delay'来revert buffer失去hl-line效果
-        ))
+      (when (dired-sidebar-showing-sidebar-p)
+        (with-current-buffer (dired-sidebar-buffer)
+          (hl-line-highlight) ;; dired-sidebar-theme需要设置为none或者icons，避免调用`dired-sidebar-tui-update-with-delay'来revert buffer失去hl-line效果
+          )))
     (define-key dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
     (define-key dired-sidebar-mode-map (kbd "l") 'dired-sidebar-up-directory)
     )
