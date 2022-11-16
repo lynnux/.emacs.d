@@ -2747,6 +2747,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
                lsp-enable-suggest-server-download nil ;;不需要下载server
                lsp-restart 'ignore ;; 避免project-kill时提示是否重启
+               lsp-enable-imenu nil ;; buffer初次使用时太卡了，用cc mode自带的分析就足够了
                )
          
          (defun my/lsp-mode-setup-completion ()
@@ -3018,9 +3019,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook 'python-mode-hook (lambda ()
                               (when (eq lsp-use-which 'lsp-mode)
                                 (load "lsp/lsp-pyright"))
-                              (unless (eq lsp-use-which 'lsp-bridge)
-                                (corfu-mode))
-                              (lsp-ensure)))
+                              (lsp-with-corfu-check)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)) ;; h当成c++文件
 
@@ -3032,18 +3031,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               ;; (enable-format-on-save)
               
               (my-c-mode-hook-set)
-              (unless (eq lsp-use-which 'lsp-bridge)
-                (corfu-mode))
-              (lsp-ensure)
+              (lsp-with-corfu-check)
 	      )
             (abbrev-mode -1) ;; 有yas就够了
             ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
             ;; (remove-hook 'after-change-functions 'c-after-change t)            
             ))
-(add-hook 'rust-mode-hook 'lsp-ensure)
+(defun lsp-with-corfu-check()
+  (unless (eq lsp-use-which 'lsp-bridge)
+    (corfu-mode))
+  (lsp-ensure))
+(add-hook 'rust-mode-hook 'lsp-with-corfu-check)
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
-(add-hook 'cmake-mode-hook 'lsp-ensure)
+(add-hook 'cmake-mode-hook 'lsp-with-corfu-check)
 
 ;; https://github.com/sumneko/lua-language-server 去下载bin
 (defvar lua-server-path (cond ((file-exists-p "~/lua-language-server-3.2.4-win32-x64") "~/lua-language-server-3.2.4-win32-x64")
@@ -3054,7 +3055,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
   (setq lsp-clients-lua-language-server-install-dir lua-server-path)
-  (add-hook 'lua-mode-hook 'lsp-ensure) 
+  (add-hook 'lua-mode-hook 'lsp-with-corfu-check)
   )
 
 ;; https://github.com/OmniSharp/omnisharp-roslyn 本身就是net core编译的，不需要net6.0体积还小点
