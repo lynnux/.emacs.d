@@ -177,12 +177,6 @@ _q_uit
           dired-sidebar-no-delete-other-windows t ;; C-1不关闭，最需要的！
           dired-sidebar-use-one-instance t ;; 有bug 不起效果，:开头的buffer还是很多
           )
-    (add-hook 'dired-sidebar-mode-hook
-              (lambda ()
-                (hl-line-mode +1)
-                (face-remap-add-relative 'hl-line '(:background "#666"))
-                (unless (file-remote-p default-directory)
-                  (auto-revert-mode))))
     :config
     ;; 对部分命令执行后follow。不能用buffer-list-update-hook，会大量调用diff-hl卡死
     (defvar dired-sidebar-follow-to-file-timer nil)
@@ -243,10 +237,36 @@ _q_uit
 
   ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
   (define-key dired-mode-map (kbd "C-c C-p") 'wdired-change-to-wdired-mode)
+  (when (functionp 'pop-select/popup-shell-menu)
+    ;; TODO: 目前可以把外面的粘贴进来，但是dired里复制粘贴是不行的
+    (define-key dired-mode-map (kbd "<mouse-3>") 
+      (lambda (event)
+        (interactive "e")
+        (let ((pt (posn-point (event-end event)))
+              path)
+          (goto-char pt) ;; 选中指针下的文件
+          (redisplay)
+          (setq path (dired-get-filename nil t))
+          (unless path ;可能是点击了空白处，那么就取当前目录
+            (setq path (dired-current-directory)))
+          ;; 延迟调用使当前选中项更新hl-line等
+          (run-at-time 0.1 nil (lambda ()
+                                 ;; 路径用/分隔的话弹不出来
+                                 (pop-select/popup-shell-menu (replace-regexp-in-string "/" "\\\\" path) 0 0)
+                                 ))
+          ))))
+  
+  (add-hook 'dired-mode-hook (lambda()
+                               (hl-line-mode +1)
+                               (face-remap-add-relative 'hl-line '(:background "#666"))
+                               (unless (file-remote-p default-directory)
+                                 (auto-revert-mode) ;; 还有个选项也可以global-auto-revert-non-file-buffers
+                                 )))
   
   (defun delay-dired-relate-init()
     "因为tree-sittr加载会导致dired加载，这里把dired相关mode延迟到dired-mode-hook"
     (remove-hook 'dired-mode-hook 'delay-dired-relate-init)
+
     
     (dired-recent-mode 1)
     (dired-recent-path-save) ;; 调用一次修复延迟加载导致的问题
