@@ -4133,8 +4133,8 @@ _q_uit
                '(hi-red-b ((t (:foreground "red" :background "black"))))
                '(hi-green-b ((t (:foreground "green" :background "black"))))
                '(hi-black-hb ((t (:foreground "orange" :background "black"))))
-               '(outline-2 ((t (:foreground "#c678dd")))) ;; org-level-2继承这个
-               '(outline-3 ((t (:foreground "red")))) ;; org-level-3继承这个
+               '(outline-2 ((t (:foreground "#f9cec3")))) ;; org-org-level-2和org-headline-done互换
+               '(org-headline-done ((t (:foreground "#6c6f93")))) ;; 
                )
               ;; region有点看不清，单独设置
               (set-face-attribute 'region nil :background "#555555")
