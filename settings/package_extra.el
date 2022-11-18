@@ -237,24 +237,89 @@ _q_uit
 
   ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
   (define-key dired-mode-map (kbd "C-c C-p") 'wdired-change-to-wdired-mode)
+  
   (when (functionp 'pop-select/popup-shell-menu)
-    ;; TODO: 目前可以把外面的粘贴进来，但是dired里复制粘贴是不行的
+    (defun get-region-select-path()
+      "获取选中的路径，抄的dired-mark和dired-mark-files-in-region"
+      (let (paths)
+        (when (region-active-p)
+          (setq paths [])
+          (save-excursion 
+            (let* ((beg (region-beginning))
+	           (end (region-end))
+                   (start (progn (goto-char beg) (line-beginning-position)))
+                   (end (progn (goto-char end)
+                               (if (if (eq dired-mark-region 'line)
+                                       (not (bolp))
+                                     (get-text-property (1- (point)) 'dired-filename))
+                                   (line-end-position)
+                                 (line-beginning-position)))) 
+                   )
+              (goto-char start)     ; assumed at beginning of line
+              (while (< (point) end)
+                ;; Skip subdir line and following garbage like the `total' line:
+                (while (and (< (point) end) (dired-between-files))
+	          (forward-line 1))
+                (if (and (not (looking-at-p dired-re-dot))
+	                 (dired-get-filename nil t))
+                    (setq paths (vconcat paths (list (replace-regexp-in-string "/" "\\\\" (dired-get-filename nil t)))))
+	          )
+                (forward-line 1))
+	      )))
+        paths))
+    (defun get-select-or-current-path()
+      (let ((paths (get-region-select-path))
+            current)
+        (unless paths
+          (setq current (dired-get-filename nil t))
+          (when current
+            (setq paths [])
+            (setq paths (vconcat paths (list (replace-regexp-in-string "/" "\\\\" current)))))
+          )
+        paths))
+    
     (define-key dired-mode-map (kbd "<mouse-3>") 
       (lambda (event)
         (interactive "e")
         (let ((pt (posn-point (event-end event)))
+              (paths (get-region-select-path))
               path)
-          (goto-char pt) ;; 选中指针下的文件
-          (redisplay)
-          (setq path (dired-get-filename nil t))
-          (unless path ;可能是点击了空白处，那么就取当前目录
-            (setq path (dired-current-directory)))
-          ;; 延迟调用使当前选中项更新hl-line等
-          (run-at-time 0.1 nil (lambda ()
-                                 ;; 路径用/分隔的话弹不出来
-                                 (pop-select/popup-shell-menu (replace-regexp-in-string "/" "\\\\" path) 0 0)
-                                 ))
-          ))))
+          (if paths
+              (pop-select/popup-shell-menu paths 0 0 1)
+            ;; 单个文件直接跳过去
+            (select-window (posn-window (event-end event)))
+            (goto-char pt)
+            (setq path (dired-get-filename nil t))
+            (unless path         ;可能是点击了空白处，那么就取当前目录
+              (setq path (dired-current-directory)))
+            (setq paths (vconcat paths (list (replace-regexp-in-string "/" "\\\\" path))))
+            ;; 延迟调用使当前选中项更新hl-line等
+            (run-at-time 0.1 nil (lambda ()
+                                   (pop-select/popup-shell-menu paths 0 0 1)
+                                   ))))))
+    (define-key dired-mode-map (kbd "C-c C-c") 
+      (lambda()
+        (interactive)
+        (let ((paths (get-select-or-current-path)))
+          (when paths
+            (pop-select/shell-copyfiles paths)
+            (message "Copy: %S" paths)))))
+    (define-key dired-mode-map (kbd "C-w")
+      (lambda()
+        (interactive)
+        (let ((paths (get-select-or-current-path)))
+          (when paths
+            (pop-select/shell-cutfiles paths)
+            (message "Cut: %S" paths)))))
+    (define-key dired-mode-map (kbd "C-v")
+      (lambda()
+        (interactive)
+        (let ((current-dir (dired-current-directory)))
+          (when current-dir
+            (pop-select/shell-pastefiles current-dir)
+            (message "Paste in: %S" current-dir)))))
+    )
+  
   
   (add-hook 'dired-mode-hook (lambda()
                                (hl-line-mode +1)
@@ -3648,7 +3713,7 @@ _q_uit
 (use-package poe
   ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
   :defer 1.0
-  :commands(poe-popup poe-rule poe-popup-toggle)
+  :commands(poe-popup poe-rule poe-popup-toggle poe-popup-close)
   :init
   (global-set-key (kbd "C-1") 'my-C-1)
   (setq poe-remove-fringes-from-popups nil
