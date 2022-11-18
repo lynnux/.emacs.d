@@ -297,21 +297,29 @@ _q_uit
             (run-at-time 0.1 nil (lambda ()
                                    (pop-select/popup-shell-menu paths 0 0 1)
                                    ))))))
-    (define-key dired-mode-map (kbd "C-c C-c") 
+    (defun print-paths(vec)
+      (let ((len (length vec))
+            (s "")
+            (i 0))
+        (while (< i len)
+          (setq s (concat  s "\n" (file-name-nondirectory (aref vec i)) ))
+          (setq i (1+ i)))
+        s))
+    (define-key dired-mode-map "c" 
       (lambda()
         (interactive)
         (let ((paths (get-select-or-current-path)))
           (when paths
             (pop-select/shell-copyfiles paths)
-            (message "Copy: %S" paths)))))
+            (message (concat "Copy: " (print-paths paths)))))))
     (define-key dired-mode-map (kbd "C-w")
       (lambda()
         (interactive)
         (let ((paths (get-select-or-current-path)))
           (when paths
             (pop-select/shell-cutfiles paths)
-            (message "Cut: %S" paths)))))
-    (define-key dired-mode-map (kbd "C-v")
+            (message (concat "Cut: " (print-paths paths)))))))
+    (define-key dired-mode-map "v"
       (lambda()
         (interactive)
         (let ((current-dir (dired-current-directory)))
@@ -415,9 +423,6 @@ _q_uit
     (use-package dired-ranger
       :config
       (define-key dired-mode-map "z" 'dired-do-compress-to)
-      (define-key dired-mode-map "c" 'dired-ranger-copy) ;; cz交换
-      (define-key dired-mode-map "y" 'dired-ranger-paste) ;; 原命令显示文件类型没什么大用
-      (define-key dired-mode-map "v" 'dired-ranger-move) ;; view file用o代替
       (defun dired-ranger-clear()
         (interactive)
         (let ((count (ring-size dired-ranger-copy-ring))
