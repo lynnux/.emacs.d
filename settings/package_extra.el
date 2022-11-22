@@ -2214,7 +2214,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :commands(dumb-jump-xref-activate)
   :init
   ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate 100)
   ;; (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
   :config
   ;; (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
