@@ -2848,6 +2848,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                lsp-enable-suggest-server-download nil ;;不需要下载server
                lsp-restart 'ignore ;; 避免project-kill时提示是否重启
                lsp-enable-imenu nil ;; buffer初次使用时太卡了，用cc mode自带的分析就足够了
+               lsp-display-inline-image nil ;; 好像会开启markdown?
                )
          
          (defun my/lsp-mode-setup-completion ()
