@@ -1532,6 +1532,16 @@ _c_: hide comment        _q_uit
 				    ;; 指示当前是在哪个函数里     
 				    (face-remap-add-relative 'hl-line '(:background "#666"))))))
 
+;; imenu不能显示cpp类里的函数，而lsp mode的imenu太卡了，想用ctag只对当前文件parse，counsel-etags的实现跟我想的一致，用得很爽！
+(use-package counsel-etags
+  :commands(imenu-setup-for-cpp)
+  :init
+  (defun ivy-set-occur(a b))
+  (defun ivy-configure(a b c))
+  :config
+  (defun imenu-setup-for-cpp()
+    (setq-local imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)))
+
 (defun chinese-char-p (char)
   (if (string-match "\\cC\\{1\\}" (string char))
       t
@@ -3122,6 +3132,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               
               (my-c-mode-hook-set)
               (lsp-with-corfu-check)
+              (imenu-setup-for-cpp)
 	      )
             (abbrev-mode -1) ;; 有yas就够了
             ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
