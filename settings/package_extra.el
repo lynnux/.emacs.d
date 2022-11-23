@@ -522,8 +522,10 @@ _q_uit
   (setq session-save-file-coding-system 'utf-8)
   (setq session-globals-include '(
                                   ;;(kill-ring 50) ;; 用ditto就行了
-				  (session-file-alist 100 t)
-				  (file-name-history 300))
+                                  (session-file-alist 100 t)
+                                  (file-name-history 300)
+                                  query-replace-defaults ;; M-r replace-string默认值
+                                  )
         session-locals-include nil)
   
   :config
