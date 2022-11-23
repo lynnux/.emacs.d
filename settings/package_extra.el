@@ -2887,7 +2887,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          :hook
          (lsp-completion-mode . my/lsp-mode-setup-completion)
          :commands (lsp lsp-deferred lsp-completion-at-point)
-         :config         
+         :config
          ;; 使重命名可用
          (defadvice lsp--apply-workspace-edit (around my-lsp--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
@@ -2900,7 +2900,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                                 (if (use-region-p)
                                                     (call-interactively 'lsp-format-region)
                                                   (call-interactively 'lsp-format-buffer))
-			                        )))
+			                        ))
+         (defun lsp--workspace-print (workspace)
+           "替换成显示root目录名"
+           (let* ((status (lsp--workspace-status workspace))
+                  (server-id (-> workspace lsp--workspace-client lsp--client-server-id symbol-name))
+                  (root (file-name-base (lsp--workspace-root workspace))))
+             (if (eq 'initialized status)
+                 (format "%s:%s" server-id root)
+               (format "%s:%s/%s" server-id root status)))))
        
        ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe,lsp-docker,yaml
        (use-package dap-mode
