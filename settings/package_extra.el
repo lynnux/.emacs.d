@@ -1539,8 +1539,35 @@ _c_: hide comment        _q_uit
   (defun ivy-set-occur(a b))
   (defun ivy-configure(a b c))
   :config
+  (defun my-counsel-etags-imenu-default-create-index-function ()
+    "修改原版不用临时文件"
+    (let* ((ctags-program "ctags")
+           (code-file buffer-file-name)
+           cmd
+           imenu-items
+           cands)
+      (when (and code-file (file-exists-p code-file))
+        (setq cmd
+              (cond
+               (counsel-etags-command-to-scan-single-code-file
+                (concat counsel-etags-command-to-scan-single-code-file
+                        "\""
+                        code-file
+                        "\""))
+               (t
+                (counsel-etags-get-scan-command ctags-program code-file))))
+        (setq cands (counsel-etags-imenu-scan-string (shell-command-to-string cmd)))
+        (save-excursion
+          (dolist (c cands)
+            (let* ((name (car c)))
+              (goto-char (point-min))
+              (counsel-etags-forward-line (cdr c))
+              (when (search-forward name (point-at-eol) t)
+                (forward-char (- (length name))))
+              (push (cons name (point-marker)) imenu-items)))))
+      imenu-items))
   (defun imenu-setup-for-cpp()
-    (setq-local imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)))
+    (setq-local imenu-create-index-function 'my-counsel-etags-imenu-default-create-index-function)))
 
 (defun chinese-char-p (char)
   (if (string-match "\\cC\\{1\\}" (string char))
