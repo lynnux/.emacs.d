@@ -5,7 +5,7 @@
 ;; Author: Omar Antolín Camarena <omar@matem.unam.mx>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Omar Antolín Camarena <omar@matem.unam.mx>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2020
-;; Version: 0.13
+;; Version: 0.15
 ;; Package-Requires: ((emacs "27.1"))
 ;; Homepage: https://github.com/minad/marginalia
 
@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -287,7 +287,6 @@ determine it."
 
 ;;;; Pre-declarations for external packages
 
-(defvar bookmark-alist)
 (declare-function bookmark-get-handler "bookmark")
 (declare-function bookmark-get-filename "bookmark")
 (declare-function bookmark-get-front-context-string "bookmark")
@@ -305,8 +304,6 @@ determine it."
 (declare-function color-rgb-to-hex "color")
 (declare-function color-rgb-to-hsl "color")
 (declare-function color-hsl-to-rgb "color")
-
-(declare-function selectrum--get-full "ext:selectrum")
 
 ;;;; Marginalia mode
 
@@ -426,10 +423,11 @@ FACE is the name of the face, with which the field should be propertized."
   (let ((flist (indirect-function fun)))
     (advice--p (if (eq 'macro (car-safe flist)) (cdr flist) flist))))
 
-;; Symbol class characters from Emacs 28 `help--symbol-class'
-;; ! and & are our additions
 (defun marginalia--symbol-class (s)
   "Return symbol class characters for symbol S.
+
+This function is an extension of `help--symbol-class'. It returns
+more fine-grained and more detailled symbol information.
 
 Function:
 f function
@@ -706,9 +704,15 @@ keybinding since CAND includes it."
 (defun marginalia-annotate-package (cand)
   "Annotate package CAND with its description summary."
   (when-let* ((pkg-alist (bound-and-true-p package-alist))
-              (pkg (intern-soft (replace-regexp-in-string "-[[:digit:]\\.-]+\\'" "" cand)))
-              ;; taken from `describe-package-1'
-              (desc (or (car (alist-get pkg pkg-alist))
+              (name (replace-regexp-in-string "-[0-9\\.-]+\\'" "" cand))
+              (pkg (intern-soft name))
+              (desc (or (unless (equal name cand)
+                          (cl-loop with version = (substring cand (1+ (length name)))
+                                   for d in (alist-get pkg pkg-alist)
+                                   if (equal (package-version-join (package-desc-version d)) version)
+                                   return d))
+                        ;; taken from `describe-package-1'
+                        (car (alist-get pkg pkg-alist))
                         (if-let (built-in (assq pkg package--builtins))
                             (package--from-builtin built-in)
                           (car (alist-get pkg package-archive-contents))))))
@@ -814,11 +818,9 @@ example, during file name completion the candidates are one path
 component of a full file path."
   (if-let (win (active-minibuffer-window))
       (with-current-buffer (window-buffer win)
-        (if (bound-and-true-p selectrum-is-active)
-            (selectrum--get-full cand)
-          (concat (substring (minibuffer-contents-no-properties)
-                             0 marginalia--base-position)
-                  cand)))
+        (concat (substring (minibuffer-contents-no-properties)
+                           0 marginalia--base-position)
+                cand))
     ;; no minibuffer is active, trust that cand already conveys all
     ;; necessary information (there's not much else we can do)
     cand))
@@ -1050,12 +1052,16 @@ These annotations are skipped for remote paths."
       (concat
        (format #(" (%s)" 0 5 (face marginalia-key)) index)
        (marginalia--fields
-        ((if (cdr bufs)
-             (format "%d windows" (length bufs))
-           "1 window ")
+        ((format "win:%s"
+                 (if (eq (car tab) 'current-tab)
+                     (length (window-list nil 'no-minibuf))
+                   (length bufs)))
          :face 'marginalia-size)
-        ((if (memq 'current-tab tab)
-             "*current tab*"
+        ((format "group:%s" (or (alist-get 'group tab) 'none))
+         :face 'marginalia-type
+         :truncate 20)
+        ((if (eq (car tab) 'current-tab)
+             "(current tab)"
            (string-join bufs " "))
          :face 'marginalia-documentation))))))
 
@@ -1092,7 +1098,7 @@ looking for a regexp that matches the prompt."
              when (string-match-p regexp prompt)
              return category)))
 
-(defun marginalia--cache-reset ()
+(defun marginalia--cache-reset (&rest _)
   "Reset the cache."
   (setq marginalia--cache (and marginalia--cache (> marginalia--cache-size 0)
                                (cons nil (make-hash-table :test #'equal
@@ -1100,9 +1106,9 @@ looking for a regexp that matches the prompt."
 
 (defun marginalia--cached (cache fun key)
   "Cached application of function FUN with KEY.
-The CACHE keeps around the last `marginalia--cache-size' computed annotations.
-The cache is mainly useful when scrolling in completion UIs like Vertico or
-Selectrum."
+The CACHE keeps around the last `marginalia--cache-size' computed
+annotations. The cache is mainly useful when scrolling in
+completion UIs like Vertico or Icomplete."
   (if cache
       (let ((ht (cdr cache)))
         (or (gethash key ht)
