@@ -3481,7 +3481,9 @@ _q_uit
   ;; (global-set-key (kbd "<C-wheel-up>") 'dec-transparent)
   ;; (global-set-key (kbd "<C-wheel-down>") 'inc-transparent)
   )
-(w32-send-sys-command #xf030) ;; 放大窗口，pop-select/ensure-all-window-dark-mode还有bug就是caption不能重绘，这里放大就OK了
+(when (version< emacs-version "29")
+  ;; 放大窗口，pop-select/ensure-all-window-dark-mode还有bug就是caption不能重绘，这里放大就OK了
+  (w32-send-sys-command #xf030))
 
 (when (fboundp 'pop-select/pop-select)
   (defun my-pop-select(&optional backward)
