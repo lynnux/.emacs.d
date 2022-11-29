@@ -19,7 +19,7 @@
 ;; (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
 (define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表
 (setq org-log-done 'time) ;给已完成事项打上时间戳。可选 note，附加注释
-(setq org-startup-folded 'show2levels) ; 打开时折叠
+(setq org-startup-folded 'show4levels) ; 打开时折叠
 (add-hook 'org-agenda-mode-hook 
 	  (lambda ()
 	    (setq org-agenda-follow-mode t))
