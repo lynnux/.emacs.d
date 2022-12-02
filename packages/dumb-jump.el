@@ -260,6 +260,12 @@ or most optimal searcher."
            :not ("(defun test-asdf (blah)" "(defun test-blah\n" "(cl-defun test-asdf (blah)"
                  "(cl-defun test-blah\n"  "(defun tester (blah)" "(defun test? (blah)" "(defun test- (blah)"))
 
+    (:type "function" :supports ("ag" "grep" "rg" "git-grep") :language "elisp"
+           :regex "\\\(defmacro\\s+JJJ\\j"
+           :tests ("(defmacro test (blah)" "(defmacro test\n")
+           :not ("(defmacro test-asdf (blah)" "(defmacro test-blah\n" "(defmacro tester (blah)"
+                 "(defmacro test? (blah)" "(defmacro test- (blah)"))
+
     (:type "variable" :supports ("ag" "grep" "rg" "git-grep") :language "elisp"
            :regex "\\\(defvar\\b\\s*JJJ\\j"
            :tests ("(defvar test " "(defvar test\n")
@@ -1729,7 +1735,7 @@ a symbol then it's probably a function call"
                                (string :tag "Regular expression")))))))
 
 (defcustom dumb-jump-project-denoters
-  '(".dumbjump" ".projectile" ".git" ".hg" ".fslckout" ".bzr" "_darcs" ".svn" "Makefile" "PkgInfo" "-pkg.el")
+  '(".dumbjump" ".projectile" ".git" ".hg" ".fslckout" ".bzr" "_darcs" ".svn" "Makefile" "PkgInfo" "-pkg.el" "_FOSSIL_")
   "Files and directories that signify a directory is a project root."
   :group 'dumb-jump
   :type '(repeat (string  :tag "Name")))
