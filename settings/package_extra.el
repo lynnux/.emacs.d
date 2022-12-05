@@ -1958,9 +1958,9 @@ _c_: hide comment        _q_uit
               consult-project-buffer;; buffer+file
               consult-locate ;; everything!
               consult-find ;; minad说fd不太成熟，就用find吧
+              consult--read
               )
     :init
-    
     (setq
      consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
      consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
@@ -2102,12 +2102,50 @@ _c_: hide comment        _q_uit
         (setq ad-return-value dired-recent-directories)
         )
       )
+    (defun search-in-browser ()
+      "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
+      (interactive)
+      (let (myword myurl backend)
+        (setq myword
+              (if (region-active-p)
+                  (buffer-substring-no-properties (region-beginning) (region-end))
+                (thing-at-point 'symbol)))
+        (unless myword
+          (setq myword (read-string "请输入要搜索的内容：")))
+        (if myword
+            (progn 
+              (setq backend (consult--read
+                             '("baidu" "google" "rust winapi" "msdn" "emacs china" 
+                               "everything" "project search" 
+                               ;; "project file"
+                               )
+                             :prompt (format "Search %s on: " myword)
+                             ;; :history t ;; 不需要这个，选择会记录在minibuffer-history里
+                             :require-match t
+                             :sort t    ; 这个会方住上次的选择
+                             :category 'file ;; 按前面的设置这个是flex匹配
+                             ))
+              (cond ((equal backend "everything") (consult-everything myword))
+                    ((equal backend "project search") (let ((disable-for-vertico-repeat t))
+                                                        (my-project-search nil myword)))
+                    ((equal backend "project file") (call-interactively 'my-project-find-file))
+                    (t
+                     (progn
+                       (setq myword (replace-regexp-in-string " " "%20" myword))
+                       (setq myurl (cond ((equal backend "google") (concat "https://www.google.com/search?q=" myword))
+                                         ((equal backend "msdn") (concat "https://www.baidu.com/s?wd=" myword "%20site%3Amsdn.microsoft.com"))
+                                         ((equal backend "rust winapi") (concat "https://docs.rs/winapi/latest/winapi/index.html?search=" myword))
+                                         ((equal backend "emacs china") (concat "https://emacs-china.org/search?q=" myword))
+                                         (t (concat "https://www.baidu.com/s?wd=" myword))))
+                       (message myurl)
+                       (browse-url myurl))))))))
+    (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
     ;; 只对这部分命令开启preview，`consult-preview-key'
     (consult-customize
      consult-line
      my-consult-ripgrep my-consult-ripgrep-only-current-dir my-project-search call-project-search
-     consult-xref 
+     consult-xref
      :preview-key 'any
      )
     ;; 含中文字符搜索时添加--pre rgpre
@@ -2622,20 +2660,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key citre-edit-cmd-buf-map (kbd "C-c C-l") 'citre-edit-cmd-buf-add-lang)
   )
 
-(defun my-project-search()
+(defun my-project-search (&optional dir initial)
   (interactive)
   (setq this-command 'my-project-search) ;; 使C-; s的preview生效
-  (cond ((functionp 'helm-do-grep-ag)
-         ;; 比project-find-regex好的是可以随时更改搜索词
-         (let ((default-directory (project-root (project-current t)))
-               ;; 项目搜索要启动.gitignore了。不过ignore目录的forced added文件仍然会被忽略
-               (helm-grep-ag-command "rg --color=always --colors match:style:nobold --smart-case --no-heading --line-number %s %s %s"))
-           (call-interactively 'helm-do-grep-ag)
-           ))
-        
-        ((functionp 'counsel-rg) (call-interactively 'counsel-rg))
-        ((functionp 'consult-ripgrep) (call-interactively 'consult-ripgrep))
-        ))
+  (consult-ripgrep dir initial))
+
 (defun my-project-find-file()
   (interactive)
   (if (functionp 'consult-project-extra-find)
