@@ -1775,6 +1775,7 @@ _c_: hide comment        _q_uit
       :init
       (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
     (use-package vertico-multiform
+      :disabled ;; 用`mini-popup'了
       :init
       ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
       ;; (defadvice vertico-multiform--setup (before my-vertico-multiform--setup activate)
@@ -2118,7 +2119,32 @@ _c_: hide comment        _q_uit
         ad-do-it))
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)
     )
-  )       
+  
+  ;; 不知道哪里设置的命中项在中间，刚好跟这个`mini-popup'配合得很好
+  (use-package mini-popup
+    :defer 0.5
+    :config
+    (advice-add #'vertico--resize-window :around
+                (lambda (&rest args)
+                  (unless mini-popup-mode
+                    (apply args))))
+
+    ;; Ensure that the popup is updated after refresh (Consult-specific)
+    (add-hook 'consult--completion-refresh-hook
+              (lambda (&rest _) (mini-popup--setup)) 99)
+    (mini-popup-mode)
+    ;; 自己创建frame，避免首次延迟，抄自`mini-popup--setup-frame'
+    (unless mini-popup--frame
+      (let ((parent (window-frame)))
+        (setq mini-popup--frame (make-frame
+                                 `((parent-frame . ,parent)
+                                   (minibuffer . ,(minibuffer-window parent))
+                                   ;; Set `internal-border-width' for Emacs 27
+                                   (internal-border-width
+                                    . ,(alist-get 'child-frame-border-width mini-popup--frame-parameters))
+                                   ,@mini-popup--frame-parameters)))))
+    )
+  )
 
 (use-package smart-hungry-delete
   :defer 0.8
