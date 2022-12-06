@@ -2175,13 +2175,14 @@ _c_: hide comment        _q_uit
           (message "%S" (frame-parameter frame 'last-args))))
       )
     (vertico-posframe-mode)
-    (set-frame-parameter (posframe-show " *Minibuf-1*" :timeout 0.1 
-                                        :foreground-color "#c7c9cb" 
-                                        :background-color "#232530" 
-                                        :border-width 1
-                                        :border-color "#6a6a6a"
-                                        :left-fringe 8 :right-fringe 8) 'last-args 
-                                        '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
+    (set-frame-parameter (posframe--create-posframe " *Minibuf-1*"
+                                                    :foreground-color "#c7c9cb" 
+                                                    :background-color "#232530" 
+                                                    :border-width 1
+                                                    :border-color "#6a6a6a"
+                                                    :left-fringe 8 :right-fringe 8)
+                         'last-args 
+                         '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
     )
   )
 
