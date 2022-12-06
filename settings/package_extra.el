@@ -2158,12 +2158,31 @@ _c_: hide comment        _q_uit
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)
     )
   
-  ;; mini-popup更小，但不支持递归，而且切换不同内容时有一点点闪烁
+  ;; 这个支持递归，遮挡内容多少点。mini-popup更新内容有点点闪烁且不支持minibuffer递归
   (use-package vertico-posframe
     :defer 0.5
+    :init
+    (setq vertico-posframe-parameters
+          '((left-fringe . 8)
+            (right-fringe . 8)
+            (border-width . 1)          ;; 没有效果，下面posframe-show的:border-width 1有效果
+            ))
     :config
-    ;; TODO: 找到后台隐藏初始化frame的方法
-    (vertico-posframe-mode))
+    (when nil
+      ;; 改了vertico-posframe-parameters，就要重新获取last-args的值供下面偷偷初始化用
+      (dolist (frame (frame-list))
+        (when (frame-parameter frame 'posframe-buffer)
+          (message "%S" (frame-parameter frame 'last-args))))
+      )
+    (vertico-posframe-mode)
+    (set-frame-parameter (posframe-show " *Minibuf-1*" :timeout 0.1 
+                                        :foreground-color "#c7c9cb" 
+                                        :background-color "#232530" 
+                                        :border-width 1
+                                        :border-color "#6a6a6a"
+                                        :left-fringe 8 :right-fringe 8) 'last-args 
+                                        '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
+    )
   )
 
 (use-package smart-hungry-delete
