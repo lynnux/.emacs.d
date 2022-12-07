@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: clang-format
-# key: clang-format
-# --
----
-BasedOnStyle: Google
-IndentWidth: 4
-SortIncludes: false
-ObjCBlockIndentWidth: 4

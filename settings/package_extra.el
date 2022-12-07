@@ -1089,6 +1089,7 @@ _c_: hide comment        _q_uit
                                    (corfu--popup-show (point) 0 8 '(#("No match" 0 8 (face italic))))
                                    )))
   :config
+  (global-corfu-mode t)
   (defadvice corfu--update (around my-corfu--update activate)
     (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
       ad-do-it))
@@ -1296,10 +1297,9 @@ _c_: hide comment        _q_uit
                           xref-find-definitions
                           session-jump-to-last-change
                           org-roam-preview-visit
-                          counsel-rg consult-ripgrep consult-line
+                          consult-ripgrep consult-line
                           avy-goto-word-1
                           my-consult-ripgrep embark-act consult-imenu-multi keyboard-escape-quit
-                          lsp-bridge-find-define lsp-bridge-find-def
                           embark-next-symbol embark-previous-symbol
                           my-pop-select
                           ))
@@ -1600,8 +1600,6 @@ _c_: hide comment        _q_uit
       swiper swiper-backward swiper-all
       swiper-isearch swiper-isearch-backward
       lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol
-      counsel-grep-or-swiper counsel-grep-or-swiper-backward
-      counsel-grep counsel-ack counsel-ag counsel-rg counsel-pt
       my-project-search my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
       consult-line consult-ripgrep
       my-consult-ripgrep my-consult-ripgrep-only-current-dir my-consult-ripgrep-or-line
@@ -1611,7 +1609,7 @@ _c_: hide comment        _q_uit
     '(self-insert-command
       ivy-forward-char ivy-delete-char delete-forward-char kill-word kill-sexp
       end-of-line mwim-end-of-line mwim-end-of-code-or-line mwim-end-of-line-or-code
-      yank ivy-yank-word ivy-yank-char ivy-yank-symbol counsel-yank-pop))
+      yank ivy-yank-word ivy-yank-char ivy-yank-symbol))
 
   (defvar-local my-ivy-fly--travel nil)
   (defun my-ivy-fly-back-to-present ()
@@ -3218,75 +3216,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (define-key eglot-mode-map [(meta f8)] 'eglot-format)
          )       
        )
-      ((eq lsp-use-which 'lsp-bridge)
-       ;; lsp，c++装个llvm(包含clangd)，python装pyright，rust装rust-analyzer
-       (use-package lsp-bridge
-         :diminish
-         :load-path "~/.emacs.d/packages/lsp/lsp-bridge-master"
-         :commands(lsp-bridge-mode)
-         :init  
-         (setq acm-enable-english-helper nil  ;; english字典太大已经删除了
-               )
-         (defun lsp-ensure()
-           (lsp-bridge-mode 1)
-           )
-         (use-package acm-backend-citre
-           :defer t
-           :init
-           (setq acm-enable-citre t)
-           :config
-           (defun acm-backend-citre-candidates (keyword)
-             "原函数去重，二次fuzzy，排序什么的都不需要"
-             (when (and acm-enable-citre (>= (length keyword) 3)) ;; 必须设置长度，1会卡死，2有时会卡
-               (let* ((candidates (list))
-                      (collection (all-completions keyword (tags-lazy-completion-table))))
-                 (when collection
-                   (dolist (candidate collection)
-                     (add-to-list 'candidates (list :key candidate
-                                                    :icon "tabnine"
-                                                    :label candidate
-                                                    :display-label candidate
-                                                    :annotation "tabnine" 
-                                                    :backend "citre")
-                                  t))
-                   candidates))))
-           )
-         :config
-         (define-key lsp-bridge-mode-map [remap xref-find-definitions] 'lsp-bridge-find-def)
-         (define-key lsp-bridge-mode-map (kbd "C-<return>") 'lsp-bridge-popup-complete) ; 手动调用补全
-         (define-key lsp-bridge-mode-map [(meta f8)] 'lsp-bridge-code-format)
-
-         ;; 在minbuffer时不显示
-         (setq lsp-bridge-signature-function (lambda(msg)
-                                               (unless (minibufferp)
-                                                 (message msg))
-                                               ))
-         ;; 显示project名
-         (defadvice lsp-bridge--mode-line-format (after my-lsp-bridge--mode-line-format activate)
-           (setq ad-return-value 
-                 (propertize (concat "lsp-bridge:" (file-name-base (directory-file-name  
-                                                                    (let ((pr  (project-current nil)))
-                                                                      (if pr
-                                                                          (project-root pr)
-                                                                        default-directory))))) 'face mode-face)  
-                 )
-           )
-         ;; 找不到定义就fallback to xref
-         (defadvice lsp-bridge--eval-in-emacs-func (after my-lsp-bridge--eval-in-emacs-func activate)
-           ;;(message (ad-get-arg 0))
-           (when (string-match "No definition found" (ad-get-arg 0))
-             (xref-find-definitions (find-tag--default))
-             ))
-         ;; 添加csharp，目前json里的路径是写死的，自己改改
-         (add-to-list 'lsp-bridge-single-lang-server-mode-list '(csharp-mode . "csharp"))
-         (add-to-list 'lsp-bridge-default-mode-hooks 'csharp-mode-hook)
-         (use-package acm
-           :init
-           ;; (setq acm-candidate-match-function 'orderless-flex) ;; flex有奇怪问题，如createprocessw，输入到w就卡死了
-           :config
-           (define-key acm-mode-map "\M-h" nil) ;; M-h用自己的绑定
-           )
-         )))
+)
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save()
@@ -3300,7 +3230,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook 'python-mode-hook (lambda ()
                               (when (eq lsp-use-which 'lsp-mode)
                                 (load "lsp/lsp-pyright"))
-                              (lsp-with-corfu-check)))
+                              (lsp-ensure)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)) ;; h当成c++文件
 
@@ -3312,21 +3242,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               ;; (enable-format-on-save)
               
               (my-c-mode-hook-set)
-              (lsp-with-corfu-check)
+              (lsp-ensure)
               (imenu-setup-for-cpp)
 	      )
             (abbrev-mode -1) ;; 有yas就够了
             ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
             ;; (remove-hook 'after-change-functions 'c-after-change t)            
             ))
-(defun lsp-with-corfu-check()
-  (unless (eq lsp-use-which 'lsp-bridge)
-    (corfu-mode))
-  (lsp-ensure))
-(add-hook 'rust-mode-hook 'lsp-with-corfu-check)
+(add-hook 'rust-mode-hook 'lsp-ensure)
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
-(add-hook 'cmake-mode-hook 'lsp-with-corfu-check)
+(add-hook 'cmake-mode-hook 'lsp-ensure)
 
 ;; https://github.com/sumneko/lua-language-server 去下载bin
 (defvar lua-server-path (cond ((file-exists-p "~/lua-language-server-3.2.4-win32-x64") "~/lua-language-server-3.2.4-win32-x64")
@@ -3337,7 +3263,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
   (setq lsp-clients-lua-language-server-install-dir lua-server-path)
-  (add-hook 'lua-mode-hook 'lsp-with-corfu-check)
+  (add-hook 'lua-mode-hook 'lsp-ensure)
   )
 
 ;; https://github.com/OmniSharp/omnisharp-roslyn 本身就是net core编译的，不需要net6.0体积还小点

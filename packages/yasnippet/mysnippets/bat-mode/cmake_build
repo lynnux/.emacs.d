@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: cmake_build
-# key: cmake_build
-# --
-call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat"
-cd ..
-cd TDPCSoftMgr_vs2010
-ninja
-cd ..
