@@ -26,7 +26,6 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/compat.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
-  (ensure-latest "~/.emacs.d/packages/lsp/lsp-bridge-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
@@ -3273,10 +3272,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (with-eval-after-load 'csharp-mode
     (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
   (defun my-csharp-hook()
-    (my-eglot-ensure)
+    (lsp-ensure)
     (define-key csharp-mode-map "\C-d" nil) ;; 使用我们自己的hungry delete(cc自带hungry不好用)
     )
-  (add-hook 'csharp-mode-hook 'my-csharp-hook) ;; lsp-bridge这个有bug，还是用eglot的
+  (add-hook 'csharp-mode-hook 'my-csharp-hook)
   )
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
