@@ -2216,19 +2216,22 @@ _c_: hide comment        _q_uit
   ;; 非常快，缺点不支持递归，切换内容时有点点闪烁。移动窗口后会固定在那个位置，posframe反而调整很烦。
   (use-package mini-popup
     :defer 0.5
-    :init
-    (defun mini-popup-height-fixed ()
-      (* (1+ (if vertico--input vertico-count 0)) (default-line-height)))
-    (setq mini-popup--height-function #'mini-popup-height-fixed)
     :config
+    ;; 添加border
+    (setq mini-popup--frame-parameters (assq-delete-all 'border-width mini-popup--frame-parameters))
+    (add-to-list 'mini-popup--frame-parameters '(border-width . 1))
+    (add-to-list 'mini-popup--frame-parameters '(border-color . "#6a6a6a"))
+
+    ;; 抄的官方配置
     (advice-add #'vertico--resize-window :around
                 (lambda (&rest args)
                   (unless mini-popup-mode
                     (apply args))))
-
-    ;; Ensure that the popup is updated after refresh (Consult-specific)
     (add-hook 'consult--completion-refresh-hook
               (lambda (&rest _) (mini-popup--setup)) 99)
+    (defun mini-popup-height-fixed ()
+      (* (1+ (if vertico--input vertico-count 0)) (default-line-height)))
+    (setq mini-popup--height-function #'mini-popup-height-fixed)
     (mini-popup-mode)
     
     ;; 自己创建frame，避免首次延迟，抄自`mini-popup--setup-frame'
