@@ -1079,6 +1079,15 @@ _c_: hide comment        _q_uit
         )
   (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
   (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
+  
+  ;; 偷偷隐藏创建corfu的frame加快首次使用
+  (run-with-idle-timer 1.5 nil (lambda()
+                                 (let ((inhibit-message t))
+                                   (load "corfu/corfu-main/corfu"))
+                                 (cl-letf (((symbol-function #'make-frame-visible)
+                                            (lambda (frame))))
+                                   (corfu--popup-show (point) 0 8 '(#("No match" 0 8 (face italic))))
+                                   )))
   :config
   (defadvice corfu--update (around my-corfu--update activate)
     (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
