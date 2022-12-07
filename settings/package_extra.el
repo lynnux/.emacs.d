@@ -2167,8 +2167,9 @@ _c_: hide comment        _q_uit
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)
     )
   
-  ;; 这个支持递归，遮挡内容多少点。mini-popup更新内容有点点闪烁且不支持minibuffer递归
+  ;; 这个支持递归。mini-popup更新内容有点点闪烁且不支持minibuffer递归
   (use-package vertico-posframe
+    :disabled
     :defer 0.5
     :init
     (setq vertico-posframe-parameters
@@ -2177,6 +2178,24 @@ _c_: hide comment        _q_uit
             (border-width . 1)          ;; 没有效果，下面posframe-show的:border-width 1有效果
             ))
     :config
+    (defun move-frame-to-right(&optional buffer-or-name)
+      (interactive)
+      (setq buffer-or-name (or buffer-or-name " *Minibuf-1*"))
+      (dolist (frame (frame-list))
+        (let ((buffer-info (frame-parameter frame 'posframe-buffer))
+              (frame-resize-pixelwise t))
+          (when (or (equal buffer-or-name (car buffer-info))
+                    (equal buffer-or-name (cdr buffer-info)))
+            (with-current-buffer buffer-or-name
+              (when (and posframe--frame (frame-visible-p posframe--frame))
+                (redisplay 'force)
+                (sleep-for 0.01)
+                (let ((pos (frame-position posframe--frame)))
+                  (set-frame-position posframe--frame (+ 100 (car pos)) (cdr pos))
+                  ))
+              )))))
+    (global-set-key  (kbd "C-<right>") 'move-frame-to-right)
+    
     (when nil
       ;; 改了vertico-posframe-parameters，就要重新获取last-args的值供下面偷偷初始化用
       (dolist (frame (frame-list))
@@ -2192,6 +2211,60 @@ _c_: hide comment        _q_uit
                                                     :left-fringe 8 :right-fringe 8)
                          'last-args 
                          '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
+    )
+  
+  ;; 非常快，缺点不支持递归。移动窗口后会固定在那个位置，posframe反而调整很烦。
+  (use-package mini-popup
+    :defer 0.5
+    :init
+    (defun mini-popup-height-fixed ()
+      (* (1+ (if vertico--input vertico-count 0)) (default-line-height)))
+    (setq mini-popup--height-function #'mini-popup-height-fixed)
+    :config
+    (advice-add #'vertico--resize-window :around
+                (lambda (&rest args)
+                  (unless mini-popup-mode
+                    (apply args))))
+
+    ;; Ensure that the popup is updated after refresh (Consult-specific)
+    (add-hook 'consult--completion-refresh-hook
+              (lambda (&rest _) (mini-popup--setup)) 99)
+    (mini-popup-mode)
+    
+    ;; 自己创建frame，避免首次延迟，抄自`mini-popup--setup-frame'
+    (unless mini-popup--frame
+      (let ((parent (window-frame)))
+        (setq mini-popup--frame (make-frame
+                                 `((parent-frame . ,parent)
+                                   (minibuffer . ,(minibuffer-window parent))
+                                   ;; Set `internal-border-width' for Emacs 27
+                                   (internal-border-width
+                                    . ,(alist-get 'child-frame-border-width mini-popup--frame-parameters))
+                                   ,@mini-popup--frame-parameters)))
+        ;; 调整下初始位置，比posframe好不会两次调整位置
+        (let ((pos (frame-position mini-popup--frame)))
+          (set-frame-position mini-popup--frame (+ 200 (car pos)) (+ 200 (cdr pos))))
+        ))
+    
+    (defmacro move-mini-popup-frame(op_x op_y num)
+      `(lambda()
+         (interactive)
+         (when (and mini-popup--frame (frame-visible-p mini-popup--frame))
+           (redisplay 'force)
+           (sleep-for 0.01)
+           (let ((pos (frame-position mini-popup--frame)))
+             (set-frame-position mini-popup--frame 
+                                 (if ,op_x
+                                     (apply ,op_x (list (car pos) ,num))
+                                     ;; (car pos)
+                                   (car pos))
+                                 (if ,op_y
+                                     (apply ,op_y (list (cdr pos) ,num))
+                                   (cdr pos)))))))
+    (define-key vertico-map  (kbd "C-<right>") (move-mini-popup-frame '+ nil 100))
+    (define-key vertico-map  (kbd "C-<left>")  (move-mini-popup-frame '- nil 100))
+    (define-key vertico-map  (kbd "C-<up>")  (move-mini-popup-frame nil '- 100))
+    (define-key vertico-map  (kbd "C-<down>")  (move-mini-popup-frame nil '+ 100))
     )
   )
 
