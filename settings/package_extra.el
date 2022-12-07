@@ -2213,7 +2213,7 @@ _c_: hide comment        _q_uit
                          '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
     )
   
-  ;; 非常快，缺点不支持递归。移动窗口后会固定在那个位置，posframe反而调整很烦。
+  ;; 非常快，缺点不支持递归，切换内容时有点点闪烁。移动窗口后会固定在那个位置，posframe反而调整很烦。
   (use-package mini-popup
     :defer 0.5
     :init
@@ -2247,6 +2247,7 @@ _c_: hide comment        _q_uit
         ))
     
     (defmacro move-mini-popup-frame(op_x op_y num)
+      "参考corfu实现的位置调整"
       `(lambda()
          (interactive)
          (when (and mini-popup--frame (frame-visible-p mini-popup--frame))
