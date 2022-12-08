@@ -2227,7 +2227,7 @@ _c_: hide comment        _q_uit
     (add-hook 'consult--completion-refresh-hook
               (lambda (&rest _) (mini-popup--setup)) 99)
     (defun mini-popup-height-fixed ()
-      (* (1+ (if vertico--input vertico-count 0)) (default-line-height)))
+      (* (1+ (if (or vertico--input vertico--groups) vertico-count 0)) (default-line-height)))
     (setq mini-popup--height-function #'mini-popup-height-fixed)
     (mini-popup-mode)
     
