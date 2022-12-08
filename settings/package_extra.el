@@ -2787,14 +2787,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   (defun my-project-magit()
     (interactive)
-    (let ((pr (project-current t)))
-      (magit-status (project-root pr))))
+    (magit-status (project-root (project-current t))))
   ;; p切换project时显示的命令
   (setq project-switch-commands
         `((?f "File" my-project-find-file)
           (?s "Search" my-project-search)
           (?d "Dired" project-dired)
-          (?m "Magit" magit-status)
+          (?m "Magit" my-project-magit)
           (?b "Buffer" my-project-buffer) ; 这个当recent buffer使用了
           (?v "VC-Dir" project-vc-dir)
           (?e "Eshell" project-eshell)
