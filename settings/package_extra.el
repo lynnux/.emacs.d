@@ -3227,8 +3227,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
 (add-hook 'python-mode-hook (lambda ()
                               (when (eq lsp-use-which 'lsp-mode)
-                                (load "lsp/lsp-pyright"))
-                              (lsp-ensure)))
+                                (load "lsp/lsp-pyright"))))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)) ;; h当成c++文件
 
@@ -3236,21 +3235,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook 'c-mode-common-hook 
 	  (lambda ()
 	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      ;; 保存时自动format，因为下面的google style跟clang-format的google有点不一致
-              ;; (enable-format-on-save)
-              
               (my-c-mode-hook-set)
-              (lsp-ensure)
-              (imenu-setup-for-cpp)
-	      )
-            (abbrev-mode -1) ;; 有yas就够了
-            ;; (remove-hook 'before-change-functions 'c-before-change t) ;; cc-mode各种历史毒瘤
-            ;; (remove-hook 'after-change-functions 'c-after-change t)            
-            ))
-(add-hook 'rust-mode-hook 'lsp-ensure)
+              (imenu-setup-for-cpp))
+            (abbrev-mode -1)))
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
-(add-hook 'cmake-mode-hook 'lsp-ensure)
 
 ;; https://github.com/sumneko/lua-language-server 去下载bin
 (defvar lua-server-path (cond ((file-exists-p "~/lua-language-server-3.2.4-win32-x64") "~/lua-language-server-3.2.4-win32-x64")
@@ -3260,9 +3249,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (add-path-to-execute-path (expand-file-name "bin" lua-server-path)))
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(lua-mode . ("lua-language-server"))))
-  (setq lsp-clients-lua-language-server-install-dir lua-server-path)
-  (add-hook 'lua-mode-hook 'lsp-ensure)
-  )
+  (setq lsp-clients-lua-language-server-install-dir lua-server-path))
 
 ;; https://github.com/OmniSharp/omnisharp-roslyn 本身就是net core编译的，不需要net6.0体积还小点
 (defvar c-sharp-server-path (cond ((file-exists-p "H:/green/omnisharp-win-x64") "H:/green/omnisharp-win-x64")
@@ -3271,11 +3258,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (with-eval-after-load 'csharp-mode
     (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
   (defun my-csharp-hook()
-    (lsp-ensure)
     (define-key csharp-mode-map "\C-d" nil) ;; 使用我们自己的hungry delete(cc自带hungry不好用)
     )
-  (add-hook 'csharp-mode-hook 'my-csharp-hook)
-  )
+  (add-hook 'csharp-mode-hook 'my-csharp-hook))
+
+;; 仅在view mode off时开启lsp，文件本身只读的(如tfs管理的)更不会开启lsp！
+(defvar-local lsp-inited nil)
+(add-hook 'view-mode-hook (lambda()
+                            (unless lsp-inited
+                              (when (not buffer-read-only)
+                                (setq-local lsp-inited t)
+                                (when (or (memq major-mode '(c-mode c++-mode python-mode rust-mode cmake-mode))
+                                          (and lua-server-path (eq major-mode 'lua-mode))
+                                          (and c-sharp-server-path (eq major-mode 'csharp-mode)))
+                                  (lsp-ensure))))))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
