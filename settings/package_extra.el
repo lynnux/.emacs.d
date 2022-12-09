@@ -304,27 +304,29 @@ _q_uit
           (setq s (concat  s "\n" (file-name-nondirectory (aref vec i)) ))
           (setq i (1+ i)))
         s))
-    (define-key dired-mode-map "c" 
-      (lambda()
-        (interactive)
-        (let ((paths (get-select-or-current-path)))
-          (when paths
-            (pop-select/shell-copyfiles paths)
-            (message (concat "Copy: " (print-paths paths)))))))
-    (define-key dired-mode-map (kbd "C-w")
-      (lambda()
-        (interactive)
-        (let ((paths (get-select-or-current-path)))
-          (when paths
-            (pop-select/shell-cutfiles paths)
-            (message (concat "Cut: " (print-paths paths)))))))
-    (define-key dired-mode-map "v"
-      (lambda()
-        (interactive)
-        (let ((current-dir (dired-current-directory)))
-          (when current-dir
-            (pop-select/shell-pastefiles current-dir)
-            (message "Paste in: %S" current-dir)))))
+    (defun dired-w32-shell-copy()
+      (interactive)
+      (let ((paths (get-select-or-current-path)))
+        (when paths
+          (pop-select/shell-copyfiles paths)
+          (message (concat "Copy: " (print-paths paths))))))
+    (defun dired-w32-shell-cut()
+      (interactive)
+      (let ((paths (get-select-or-current-path)))
+        (when paths
+          (pop-select/shell-cutfiles paths)
+          (message (concat "Cut: " (print-paths paths))))))
+    (defun dired-w32-shell-paste()
+      (interactive)
+      (let ((current-dir (dired-current-directory)))
+        (when current-dir
+          (pop-select/shell-pastefiles current-dir)
+          (message "Paste in: %S" current-dir))))
+    (define-key dired-mode-map "c" 'dired-w32-shell-copy)
+    (define-key dired-mode-map (kbd "C-c C-c") 'dired-w32-shell-copy)
+    (define-key dired-mode-map "v" 'dired-w32-shell-paste)
+    (define-key dired-mode-map (kbd "C-v") 'dired-w32-shell-paste)
+    (define-key dired-mode-map (kbd "C-w") 'dired-w32-shell-cut)
     )
   
   
@@ -1072,8 +1074,8 @@ _c_: hide comment        _q_uit
         corfu-auto t
         corfu-auto-prefix 1
         corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
-        ;; corfu-auto-delay 0.5      ;; 避免输完后马上C-n/C-p也补全
-        corfu-quit-at-boundary nil ;; 可以用M-空格来分词
+        ;; corfu-auto-delay 0.2      ;; 避免输完后马上C-n/C-p也补全
+        ;; corfu-quit-at-boundary nil ;; 可以用M-空格来分词
         corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
         )
   (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
@@ -1088,6 +1090,32 @@ _c_: hide comment        _q_uit
                                    (corfu--popup-show (point) 0 8 '(#("No match" 0 8 (face italic))))
                                    )))
   :config
+  (when nil
+    (setq corfu-preselect-first nil
+          corfu-quit-no-match 'separator
+          )
+    (define-key corfu-map "TAB" 'my-corfu-tab)
+    (define-key corfu-map [tab] 'my-corfu-tab)
+    (define-key corfu-map "\r" 'my-corfu-ret)
+    
+    ;; tab and go方式的补全，优点是不打扰正常输入
+    (defun my-corfu-ret()
+      "参考corfu-insert，让RET不需要按两次才换行"
+      (interactive)
+      (if (>= corfu--index 0)
+          (corfu--insert 'finished)
+        (corfu-quit)
+        ;; 退出corfu，执行非corfu的RET
+        (call-interactively (key-binding "\r"))))
+    (defun my-corfu-tab()
+      "SPACE直接上屏"
+      (interactive)
+      (when (> corfu--total 0) ;; No Match
+        (when (>= corfu--index 0)
+          (corfu--goto 0))
+        (corfu--insert 'finished)))
+    )
+  
   (global-corfu-mode t)
   (defadvice corfu--update (around my-corfu--update activate)
     (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
