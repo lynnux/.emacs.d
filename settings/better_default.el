@@ -308,3 +308,5 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key [remap kill-word] 'delete-word)
 (global-set-key [?\M-h] 'delete-word-backward)
 (delete ".map" completion-ignored-extensions) ;; vertico补全会过滤一些后辍文件
+
+(global-set-key (kbd "C-x C-p") 'mark-whole-buffer) ;; 即C-x h功能，原mark-page会被分隔
