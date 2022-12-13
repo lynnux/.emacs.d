@@ -4099,6 +4099,108 @@ _q_uit
     ;;(advice-add #'show-paren-function :after #'show-paren-off-screen)
     ))
 
+;; 显示beginning-of-defun所在的两三行
+(defvar-local show-fun-name--last-defun-pos nil)
+(defvar-local show-fun-name--last-cursor nil)
+(defvar show-fun-name--context-child-frame nil)
+(defcustom show-fun-name-always nil
+  "是否总是显示")
+(defun show-fun-name--context-child-frame-buffer (text)
+  "参考`show-paren--context-child-frame-buffer' "
+  (with-current-buffer
+      (get-buffer-create " *show-fun context*")
+    ;; Use an empty keymap.
+    (use-local-map (make-keymap))
+    (dolist (var '((mode-line-format . nil)
+                   (header-line-format . nil)
+                   (tab-line-format . nil)
+                   (tab-bar-format . nil) ;; Emacs 28 tab-bar-format
+                   (frame-title-format . "")
+                   (truncate-lines . t)
+                   (cursor-in-non-selected-windows . nil)
+                   (cursor-type . nil)
+                   (show-trailing-whitespace . nil)
+                   (display-line-numbers . nil)
+                   (left-fringe-width . nil)
+                   (right-fringe-width . nil)
+                   (left-margin-width . 0)
+                   (right-margin-width . 0)
+                   (fringes-outside-margins . 0)
+                   (buffer-read-only . t)))
+      (set (make-local-variable (car var)) (cdr var)))
+    (let ((inhibit-modification-hooks t)
+          (inhibit-read-only t))
+      (erase-buffer)
+      (insert text)
+      (goto-char (point-min)))
+    (current-buffer)))
+(defun show-fun-name--show-context-in-child-frame (text)
+  "参考`show-paren--show-context-in-child-frame'"
+  (if (and text (< 0 (length text)))
+      (let ((minibuffer (minibuffer-window (window-frame)))
+            (buffer (show-fun-name--context-child-frame-buffer text))
+            (x (window-pixel-left))
+            (y (window-pixel-top))
+            (window-min-height 1)
+            (window-min-width 1)
+            after-make-frame-functions)
+        (unless show-fun-name--context-child-frame
+          (setq show-fun-name--context-child-frame
+                (make-frame
+                 `((border-width . 0)
+                   (parent-frame . ,(window-frame))
+                   (minibuffer . ,minibuffer)
+                   ,@show-paren--context-child-frame-parameters))) ;; 默认开启了show-paren，直接可用
+          ;; 设置border-color，参考posframe
+          (set-face-background
+           (if (facep 'child-frame-border)
+               'child-frame-border
+             'internal-border)
+           "red" show-fun-name--context-child-frame)
+          )
+        (let ((win (frame-root-window show-fun-name--context-child-frame)))
+          (set-window-buffer win buffer)
+          (set-window-dedicated-p win t)
+          (set-frame-size show-fun-name--context-child-frame
+                          (string-width text)
+                          (length (string-lines text)))
+          (set-frame-position show-fun-name--context-child-frame x (+ 20 y))
+          (make-frame-visible show-fun-name--context-child-frame)
+          ))
+    ;; 没有内容则隐藏
+    (when show-fun-name--context-child-frame
+      (make-frame-invisible show-fun-name--context-child-frame))))
+(defun show-fun-name--update-pos()
+  "根据光标位置综合判断是否位置已更新"
+  (unless (eq (point) show-fun-name--last-cursor)
+    (setq show-fun-name--last-defun-pos nil)
+    (setq show-fun-name--last-cursor (point))
+    )
+  (unless show-fun-name--last-defun-pos
+    (save-excursion
+      (beginning-of-defun)
+      (let ((begin (point)))
+        ;; (next-line)
+        (end-of-line)
+        (setq show-fun-name--last-defun-pos (cons begin (point)))
+        ))))
+(defun show-fun-name--timer-function()
+  (when (not (or cursor-in-echo-area
+                 executing-kbd-macro
+                 noninteractive
+                 (minibufferp)
+                 this-command))
+    (show-fun-name--update-pos)
+    (if show-fun-name-always
+        (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+      ;; 如果可见，则隐藏之
+      (if (pos-visible-in-window-p (car show-fun-name--last-defun-pos))
+          (when show-fun-name--context-child-frame
+            (make-frame-invisible show-fun-name--context-child-frame))
+        (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+        ))))
+(run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
+
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
     :commands (w32explore dired-mouse-w32-browser dired-w32-browser dired-multiple-w32-browser dired-w32explore)
