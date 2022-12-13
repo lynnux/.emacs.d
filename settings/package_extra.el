@@ -4100,6 +4100,7 @@ _q_uit
     ))
 
 ;; 显示beginning-of-defun所在的两三行
+;; TODO: 对于新开的frame显示有问题，暂时也不想弄了
 (defvar-local show-fun-name--last-defun-pos nil)
 (defvar-local show-fun-name--last-cursor nil)
 (defvar show-fun-name--context-child-frame nil)
@@ -4180,7 +4181,7 @@ _q_uit
     (save-excursion
       (beginning-of-defun)
       (let ((begin (point)))
-        ;; (next-line)
+        (next-line) ;; 对于一些C代码是需要显示两行的
         (end-of-line)
         (setq show-fun-name--last-defun-pos (cons begin (point)))
         ))))
