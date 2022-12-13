@@ -4186,20 +4186,24 @@ _q_uit
         (setq show-fun-name--last-defun-pos (cons begin (point)))
         ))))
 (defun show-fun-name--timer-function()
-  (when (not (or cursor-in-echo-area
-                 executing-kbd-macro
-                 noninteractive
-                 (minibufferp)
-                 this-command))
-    (show-fun-name--update-pos)
-    (if show-fun-name-always
-        (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
-      ;; 如果可见，则隐藏之
-      (if (pos-visible-in-window-p (car show-fun-name--last-defun-pos))
-          (when show-fun-name--context-child-frame
-            (make-frame-invisible show-fun-name--context-child-frame))
-        (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
-        ))))
+  (condition-case nil
+      (when (not (or cursor-in-echo-area
+                     executing-kbd-macro
+                     noninteractive
+                     (minibufferp)
+                     this-command))
+        (show-fun-name--update-pos)
+        (if show-fun-name-always
+            (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+          ;; 如果可见，则隐藏之
+          (if (pos-visible-in-window-p (car show-fun-name--last-defun-pos))
+              (when show-fun-name--context-child-frame
+                (make-frame-invisible show-fun-name--context-child-frame))
+            (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+            )))
+    (error (when show-fun-name--context-child-frame
+             (make-frame-invisible show-fun-name--context-child-frame))))
+  )
 (run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
 
 (when (string-equal system-type "windows-nt")
