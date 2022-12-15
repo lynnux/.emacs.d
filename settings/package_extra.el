@@ -978,6 +978,12 @@ _c_: hide comment        _q_uit
   (global-set-key [(shift f3)] 'embark-previous-symbol)
   (global-set-key [(control f3)] 'embark-toggle-highlight)
   :config
+  ;; 仅在编辑时才不高亮光标下的
+  (with-eval-after-load 'view
+    (add-hook 'view-mode-hook (lambda()
+                                (unless (local-variable-p 'idle-highlight-exclude-point)
+                                  (make-local-variable 'idle-highlight-exclude-point))
+                                (setq idle-highlight-exclude-point (not buffer-read-only)))))
   (with-eval-after-load 'hi-lock
     ;; 让CTRL+F3立即显示高亮效果
     (defadvice highlight-symbol-at-point (before my-highlight-symbol-at-point activate)
