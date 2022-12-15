@@ -2245,11 +2245,12 @@ _c_: hide comment        _q_uit
     :defer 0.5
     :config
     (setq mini-frame-show-parameters
-          '((top . 0.48)
+          '((top . 0.56)
             (width . 0.7)
             (left . 400) ;; 设置float没效果，直接设置像素
             (background-color . "#191a1b")
             )
+          mini-frame-resize-min-height 10 ;; 最小高度，当选项少时区分更明显，上面top也要跟着调整
           mini-frame-internal-border-color "#6a6a6a" 
           )
     (mini-frame-mode)
