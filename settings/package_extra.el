@@ -2245,7 +2245,7 @@ _c_: hide comment        _q_uit
     :defer 0.5
     :config
     (setq mini-frame-show-parameters
-          '((top . 0.4)
+          '((top . 0.48)
             (width . 0.7)
             (left . 400) ;; 设置float没效果，直接设置像素
             (background-color . "#191a1b")
