@@ -2240,8 +2240,50 @@ _c_: hide comment        _q_uit
                          '("args" "#c7c9cb" "#232530" nil nil 2 "#6a6a6a" nil nil nil nil ((left-fringe . 8) (right-fringe . 8) (border-width . 1)) nil nil nil))
     )
   
+  ;; 这个支持minibuffer递归，比posframe快，关键还支持鼠标点击！
+  (use-package mini-frame
+    :defer 0.5
+    :config
+    (setq mini-frame-show-parameters
+          '((top . 0.4)
+            (width . 0.7)
+            (left . 400) ;; 设置float没效果，直接设置像素
+            (background-color . "#191a1b")
+            )
+          mini-frame-internal-border-color "#6a6a6a" 
+          )
+    (mini-frame-mode)
+    (let ((after-make-frame-functions nil))
+      (setq mini-frame-frame
+            (mini-frame--make-frame '((minibuffer . only))))
+      (modify-frame-parameters mini-frame-frame '((child-frame-border-width . 1))) ; border默认很粗
+      (mini-frame--resize-mini-frame mini-frame-frame) ; 修正第1次显示位置
+      )
+    (defmacro move-mini-frame(op_x op_y num)
+      "参考corfu实现的位置调整"
+      `(lambda()
+         (interactive)
+         (when (and mini-frame-frame (frame-visible-p mini-frame-frame))
+           (redisplay 'force)
+           (sleep-for 0.01)
+           (let ((pos (frame-position mini-frame-frame)))
+             (set-frame-position mini-frame-frame 
+                                 (if ,op_x
+                                     (apply ,op_x (list (car pos) ,num))
+                                   ;; (car pos)
+                                   (car pos))
+                                 (if ,op_y
+                                     (apply ,op_y (list (cdr pos) ,num))
+                                   (cdr pos)))))))
+    (define-key vertico-map  (kbd "C-<right>") (move-mini-frame '+ nil 100))
+    (define-key vertico-map  (kbd "C-<left>")  (move-mini-frame '- nil 100))
+    (define-key vertico-map  (kbd "C-<up>")  (move-mini-frame nil '- 100))
+    (define-key vertico-map  (kbd "C-<down>")  (move-mini-frame nil '+ 100))
+    )
+  
   ;; 非常快，缺点不支持递归，切换内容时有点点闪烁。移动窗口后会固定在那个位置，posframe反而调整很烦。
   (use-package mini-popup
+    :disabled
     :defer 0.5
     :config
     ;; 添加border
