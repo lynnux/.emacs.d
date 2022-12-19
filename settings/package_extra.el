@@ -2075,7 +2075,7 @@ _c_: hide comment        _q_uit
     (global-set-key [(control ?\,)] 'my-project-imenu)
     
     (use-package consult-imenu
-      :commands(consult-imenu consult-imenu-multi)
+      :commands(consult-imenu consult-imenu-multi consult-imenu--items)
       :init
       ;; 所有project打开的buffer中查找，太爽了！因为函数名/变量等没有多少，所以没有效率问题
       ;; (global-set-key [(control ?\,)] 'consult-imenu-multi)
@@ -2727,6 +2727,37 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (advice-add #'xref--create-fetcher :override #'zjy/xref--create-fetcher)
   )
 
+;; 利用imenu信息实现xref，对cpp比较好，因为用的counsel-etags是根据单个文件生成的。对elisp貌似也有不错的效果
+(cl-defmethod xref-backend-identifier-at-point ((_backend (eql 'imenu-xref)))
+  (find-tag--default))
+(cl-defmethod xref-backend-identifier-completion-table ((_backend
+                                                         (eql 'imenu-xref)))
+  ;; 参考的https://github.com/zbelial/lspce/blob/master/lspce.el，这个可以实现空白处列举所有符号，暂时不需要这个功能
+  (list (propertize (or (thing-at-point 'symbol) "")
+                    'identifier-at-point t)))
+(cl-defmethod xref-backend-definitions ((_backend (eql 'imenu-xref)) symbol)
+  (let (xrefs column line)
+    ;; 直接用consult-imenu，因为它会缓存imenu
+    (cl-dolist (v (consult-imenu--items))
+      ;; 一些前面会加上Type，Variable什么的来分类，只需要取最后一个对比就可以了
+      (when (equal symbol (car-safe (last (split-string (car v))))) 
+        ;; 从point-marker得到column和line
+        (save-excursion
+          (goto-char (cdr v))
+          (setq line (line-number-at-pos))
+          (setq column (current-column))
+          (when (equal column 0)
+            ;; 某些imenu只有行信息，而column为0，这里参考counsel-etags搜索下symbol定位
+            (when (search-forward symbol (line-end-position) t)
+              (forward-char (- (length symbol)))
+              (setq column (current-column)))))
+        (cl-pushnew (xref-make
+                     (car v)
+                     (xref-make-file-location (buffer-file-name) line column)
+                     ) xrefs)))
+    xrefs))
+(defun imenu-xref-backend () 'imenu-xref)
+(add-hook 'xref-backend-functions 'imenu-xref-backend)
 
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
