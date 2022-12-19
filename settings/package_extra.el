@@ -2179,7 +2179,7 @@ _c_: hide comment        _q_uit
                                          ((equal backend "rust winapi") (concat "https://docs.rs/winapi/latest/winapi/index.html?search=" myword))
                                          ((equal backend "emacs china") (concat "https://emacs-china.org/search?q=" myword))
                                          (t (concat "https://www.baidu.com/s?wd=" myword))))
-                       (message myurl)
+                       (message "%S" myurl)
                        (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
