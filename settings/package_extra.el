@@ -200,6 +200,7 @@ _q_uit
           )))
     (define-key dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
     (define-key dired-sidebar-mode-map (kbd "l") 'dired-sidebar-up-directory)
+    (define-key dired-sidebar-mode-map [double-mouse-1] 'dired-sidebar-up-directory)
     )
   ;; 以dired形式展示fd搜索的文件
   (use-package fd-dired
