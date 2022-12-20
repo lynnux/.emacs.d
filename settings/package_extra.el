@@ -233,6 +233,8 @@ _q_uit
   (define-key dired-mode-map "W" 'dired-copy-filename-as-kill)
   (define-key dired-mode-map "1" 'delete-other-windows)
   (define-key dired-mode-map "\C-t" 'mark-word) ; 还有t, U等mark快捷键
+  (define-key dired-mode-map [mouse-2] 'dired-find-alternate-file) ;; 避免鼠标点击目录打开多个目录
+  (define-key dired-mode-map [double-mouse-1] (lambda () (interactive) (find-alternate-file ".."))) ;; 鼠标双击空白处返回上级目录，原来是选中好像也没什么用，直接替换了
 
   ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
   (define-key dired-mode-map (kbd "C-c C-p") 'wdired-change-to-wdired-mode)
