@@ -332,6 +332,17 @@ _q_uit
     (define-key dired-mode-map (kbd "C-w") 'dired-w32-shell-cut)
     )
   
+  ;; 给目录加上[]以便跟普通buffer区分开
+  (add-hook 'dired-after-readin-hook
+            (lambda ()
+              (let ((count 1)
+                    (name (format "[%s]" (buffer-name))))
+                ;; buffer名不能重名
+                (while (get-buffer name)
+                  (setq name (format "[%s]%d" (buffer-name) count))
+                  (setq count (+ count 1)))
+                (rename-buffer name)
+                )))
   
   (add-hook 'dired-mode-hook (lambda()
                                (hl-line-mode +1)
