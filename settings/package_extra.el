@@ -336,10 +336,10 @@ _q_uit
   (add-hook 'dired-after-readin-hook
             (lambda ()
               (let ((count 1)
-                    (name (format "[%s]" (buffer-name))))
+                    (name (format "[%s]" (file-name-nondirectory (directory-file-name dired-directory)))))
                 ;; buffer名不能重名
                 (while (get-buffer name)
-                  (setq name (format "[%s]%d" (buffer-name) count))
+                  (setq name (format "[%s]%d" (file-name-nondirectory (directory-file-name dired-directory)) count))
                   (setq count (+ count 1)))
                 (rename-buffer name)
                 )))
