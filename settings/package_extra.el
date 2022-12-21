@@ -1711,6 +1711,7 @@ _c_: hide comment        _q_uit
           vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
           vertico-resize nil ;; 让它初始化就固定大小
           vertico-count 20   ;; 高度多少行
+          vertico-sort-function 'vertico-sort-history-alpha ;; 禁了虽然会加快速度，但是不方便了，比如F1 v什么的，列举最近使用还是很方便的
           )
     :defer 0.3
     :config
@@ -1820,23 +1821,25 @@ _c_: hide comment        _q_uit
       :init
       (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
     (use-package vertico-multiform
-      :disabled ;; 用`mini-popup'了
       :init
-      ;; 定制什么命令使用何种布局，太爽了！  buffer默认height要高一些，其它好像并没有什么不同
-      ;; (defadvice vertico-multiform--setup (before my-vertico-multiform--setup activate)
-      ;;   (message (concat "last command:" (symbol-name this-command)))
-      ;;   )
+      (when nil
+        ;; 调试用
+        (defadvice vertico-multiform--setup (before my-vertico-multiform--setup activate)
+          (message (concat "last command:" (symbol-name this-command))))
+        )
       (setq vertico-multiform-commands
             '(
-              (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
-              (my-consult-ripgrep buffer)
-              (my-project-search buffer)
-              (project-find-regexp buffer) ;; project内置搜索，xarg发送files给rg可以搜索被ignore目录里的force add文件
-              (dired-do-find-regexp buffer) ;; dired里的A，可以只搜索mark了的文件
-              (my-consult-ripgrep-only-current-dir buffer)
-              (consult-ripgrep buffer) 
+              ;; (consult-line buffer) ; buffer 可以显示更多搜索出来的内容
+              ;; (my-consult-ripgrep buffer)
+              ;; (my-project-search buffer)
+              ;; (project-find-regexp buffer) ;; project内置搜索，xarg发送files给rg可以搜索被ignore目录里的force add文件
+              ;; (dired-do-find-regexp buffer) ;; dired里的A，可以只搜索mark了的文件
+              ;; (my-consult-ripgrep-only-current-dir buffer)
+              ;; (consult-ripgrep buffer) 
               (execute-extended-command grid) ; M-x
-              (yas-insert-snippet grid)))
+              (yas-insert-snippet grid)
+              (dired-recent-open (vertico-sort-function . nil)) ;; 已经是排好序了的
+              ))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
       ;;         (imenu (:not indexed mouse))
