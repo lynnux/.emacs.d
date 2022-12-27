@@ -314,7 +314,7 @@ _q_uit
           (pop-select/shell-copyfiles paths)
           (message (concat "Copy: " (print-paths paths))))))
     (defun dired-w32-shell-cut()
-      (interactive)
+      (interactive)
       (let ((paths (get-select-or-current-path)))
         (when paths
           (pop-select/shell-cutfiles paths)
@@ -1011,18 +1011,9 @@ _c_: hide comment        _q_uit
         (let ((idle-highlight-exclude-point nil))
           ad-do-it)
       ad-do-it))
-  ;; 避免在cursor位置不变时仍然高亮
-  (defvar-local idle-highlight-last-point nil)
-  (defadvice idle-highlight--time-callback-or-disable (around my-idle-highlight--time-callback-or-disable activate)
-    (unless (or (eq (point) idle-highlight-last-point) 
-                (bound-and-true-p multiple-cursors-mode))
-      ad-do-it
-      (setq idle-highlight-last-point (point))
-      ))
   (with-eval-after-load 'multiple-cursors-core
     (add-hook 'multiple-cursors-mode-enabled-hook 'idle-highlight--unhighlight)
     (add-hook 'multiple-cursors-mode-disabled-hook (lambda()
-                                                     (setq idle-highlight-last-point nil);; 确实刷新
                                                      (idle-highlight--time-callback-or-disable)
                                                      ))
     )
