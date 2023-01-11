@@ -962,10 +962,13 @@ _c_: hide comment        _q_uit
         :defer 0.5
         :init
         (setq tab-line-tabs-function 'ep-tabbar-buffer-list
-              tab-line-close-button-show nil
-              tab-line-new-button-show nil
-              tab-line-separator (propertize " ▶ " 'face  '(foreground-color . "cyan")) ;; 这个比close button好看
-              )
+              tab-line-new-button-show nil)
+        (unless (version< emacs-version "29")
+          ;; 28.0.50 设置后鼠标不能选择buffer了
+          (setq 
+           tab-line-close-button-show nil
+           tab-line-separator (propertize " ▶ " 'face  '(foreground-color . "cyan")) ;; 这个比close button好看 
+           ))
         :config
         (global-tab-line-mode 1)
         (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
