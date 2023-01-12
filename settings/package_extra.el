@@ -335,14 +335,15 @@ _q_uit
   ;; 给目录加上[]以便跟普通buffer区分开
   (add-hook 'dired-after-readin-hook
             (lambda ()
-              (let ((count 1)
-                    (name (format "[%s]" (file-name-nondirectory (directory-file-name dired-directory)))))
-                ;; buffer名不能重名
-                (while (get-buffer name)
-                  (setq name (format "[%s]%d" (file-name-nondirectory (directory-file-name dired-directory)) count))
-                  (setq count (+ count 1)))
-                (rename-buffer name)
-                )))
+              (unless (eq major-mode 'dired-sidebar-mode)
+                (let ((count 1)
+                      (name (format "[%s]" (file-name-nondirectory (directory-file-name dired-directory)))))
+                  ;; buffer名不能重名
+                  (while (get-buffer name)
+                    (setq name (format "[%s]%d" (file-name-nondirectory (directory-file-name dired-directory)) count))
+                    (setq count (+ count 1)))
+                  (rename-buffer name)
+                  ))))
   
   (add-hook 'dired-mode-hook (lambda()
                                (hl-line-mode +1)
@@ -4206,6 +4207,7 @@ _q_uit
     (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer)
     )
   
+  ;; 需要删除gud-cdb.elc，不然运行报错
   (use-package gud-cdb
     ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
     ;; 唯一不足的是不支持speedbar，还有attach    
