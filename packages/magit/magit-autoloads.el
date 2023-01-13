@@ -25,21 +25,21 @@
 (autoload 'git-rebase-current-line "magit-master/lisp/git-rebase" "\
 Parse current line into a `git-rebase-action' instance.
 If the current line isn't recognized as a rebase line, an
-instance with all nil values is returned." nil nil)
+instance with all nil values is returned.")
 
 (autoload 'git-rebase-mode "magit-master/lisp/git-rebase" "\
 Major mode for editing of a Git rebase file.
 
-Rebase files are generated when you run 'git rebase -i' or run
+Rebase files are generated when you run \"git rebase -i\" or run
 `magit-interactive-rebase'.  They describe how Git should perform
 the rebase.  See the documentation for git-rebase (e.g., by
-running 'man git-rebase' at the command line) for details.
+running \"man git-rebase\" at the command line) for details.
 
-\(fn)" t nil)
+\(fn)" t)
 
 (defconst git-rebase-filename-regexp "/git-rebase-todo\\'")
 
-(add-to-list 'auto-mode-alist (cons git-rebase-filename-regexp 'git-rebase-mode))
+(add-to-list 'auto-mode-alist (cons git-rebase-filename-regexp #'git-rebase-mode))
 
 (register-definition-prefixes "magit-master/lisp/git-rebase" '("git-rebase-" "magit-imenu--rebase-"))
 
@@ -97,7 +97,7 @@ Also see info node `(magit)Commands for Buffers Visiting Files'.")
 
 (defun magit-maybe-define-global-key-bindings (&optional force) (when magit-define-global-key-bindings (let ((map (current-global-map))) (dolist (elt '(("C-x g" . magit-status) ("C-x M-g" . magit-dispatch) ("C-c M-g" . magit-file-dispatch))) (let ((key (kbd (car elt))) (def (cdr elt))) (when (or force (not (or (lookup-key map key) (where-is-internal def (make-sparse-keymap) t)))) (define-key map key def)))))))
 
-(if after-init-time (magit-maybe-define-global-key-bindings) (add-hook 'after-init-hook 'magit-maybe-define-global-key-bindings t))
+(if after-init-time (magit-maybe-define-global-key-bindings) (add-hook 'after-init-hook #'magit-maybe-define-global-key-bindings t))
  (autoload 'magit-dispatch "magit" nil t)
  (autoload 'magit-run "magit" nil t)
 
@@ -110,7 +110,7 @@ used as initial input, but can be deleted to run another command.
 With a prefix argument COMMAND is run in the top-level directory
 of the current working tree, otherwise in `default-directory'.
 
-\(fn COMMAND)" t nil)
+\(fn COMMAND)" t)
 
 (autoload 'magit-git-command-topdir "magit-master/lisp/magit" "\
 Execute COMMAND asynchronously; display output.
@@ -121,7 +121,7 @@ used as initial input, but can be deleted to run another command.
 COMMAND is run in the top-level directory of the current
 working tree.
 
-\(fn COMMAND)" t nil)
+\(fn COMMAND)" t)
 
 (autoload 'magit-shell-command "magit-master/lisp/magit" "\
 Execute COMMAND asynchronously; display output.
@@ -130,7 +130,7 @@ Interactively, prompt for COMMAND in the minibuffer.  With a
 prefix argument COMMAND is run in the top-level directory of
 the current working tree, otherwise in `default-directory'.
 
-\(fn COMMAND)" t nil)
+\(fn COMMAND)" t)
 
 (autoload 'magit-shell-command-topdir "magit-master/lisp/magit" "\
 Execute COMMAND asynchronously; display output.
@@ -138,7 +138,7 @@ Execute COMMAND asynchronously; display output.
 Interactively, prompt for COMMAND in the minibuffer.  COMMAND
 is run in the top-level directory of the current working tree.
 
-\(fn COMMAND)" t nil)
+\(fn COMMAND)" t)
 
 (autoload 'magit-version "magit-master/lisp/magit" "\
 Return the version of Magit currently in use.
@@ -147,7 +147,7 @@ stream (interactively, the echo area, or the current buffer with
 a prefix argument), also print the used versions of Magit, Git,
 and Emacs to it.
 
-\(fn &optional PRINT-DEST)" t nil)
+\(fn &optional PRINT-DEST)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit" '("magit-"))
 
@@ -163,7 +163,7 @@ With a prefix argument or when there is no file at point ask for
 the file to be staged.  Otherwise stage the file at point without
 requiring confirmation.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-stage-modified "magit-master/lisp/magit-apply" "\
 Stage all changes to files modified in the worktree.
@@ -172,7 +172,7 @@ that no longer exist in the working tree from the index also.
 With a prefix argument also stage previously untracked (but not
 ignored) files.
 
-\(fn &optional ALL)" t nil)
+\(fn &optional ALL)" t)
 
 (autoload 'magit-unstage-file "magit-master/lisp/magit-apply" "\
 Unstage all changes to FILE.
@@ -180,10 +180,10 @@ With a prefix argument or when there is no file at point ask for
 the file to be unstaged.  Otherwise unstage the file at point
 without requiring confirmation.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-unstage-all "magit-master/lisp/magit-apply" "\
-Remove all changes from the staging area." t nil)
+Remove all changes from the staging area." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-apply" '("magit-"))
 
@@ -219,7 +219,7 @@ Auto-Revert mode is enabled in all buffers where
 
 See `auto-revert-mode' for more information on Auto-Revert mode.
 
-\(fn &optional ARG)" t nil)
+\(fn &optional ARG)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-autorevert" '("auto-revert-buffer" "magit-"))
 
@@ -231,21 +231,21 @@ See `auto-revert-mode' for more information on Auto-Revert mode.
 
 (autoload 'magit-emacs-Q-command "magit-master/lisp/magit-base" "\
 Show a shell command that runs an uncustomized Emacs with only Magit loaded.
-See info node `(magit)Debugging Tools' for more information." t nil)
+See info node `(magit)Debugging Tools' for more information." t)
 
 (autoload 'Info-follow-nearest-node--magit-gitman "magit-master/lisp/magit-base" "\
 
 
-\(fn FN &optional FORK)" nil nil)
+\(fn FN &optional FORK)")
 
-(advice-add 'Info-follow-nearest-node :around 'Info-follow-nearest-node--magit-gitman)
+(advice-add 'Info-follow-nearest-node :around #'Info-follow-nearest-node--magit-gitman)
 
-(advice-add 'org-man-export :around 'org-man-export--magit-gitman)
+(advice-add 'org-man-export :around #'org-man-export--magit-gitman)
 
 (autoload 'org-man-export--magit-gitman "magit-master/lisp/magit-base" "\
 
 
-\(fn FN LINK DESCRIPTION FORMAT)" nil nil)
+\(fn FN LINK DESCRIPTION FORMAT)")
 
 (register-definition-prefixes "magit-master/lisp/magit-base" '("magit-"))
 
@@ -264,20 +264,20 @@ This command starts such a bisect session by asking for a known
 good and a known bad commit.  To move the session forward use the
 other actions from the bisect transient command (\\<magit-status-mode-map>\\[magit-bisect]).
 
-\(fn BAD GOOD ARGS)" t nil)
+\(fn BAD GOOD ARGS)" t)
 
 (autoload 'magit-bisect-reset "magit-master/lisp/magit-bisect" "\
-After bisecting, cleanup bisection state and return to original `HEAD'." t nil)
+After bisecting, cleanup bisection state and return to original `HEAD'." t)
 
 (autoload 'magit-bisect-good "magit-master/lisp/magit-bisect" "\
 While bisecting, mark the current commit as good.
 Use this after you have asserted that the commit does not contain
-the bug in question." t nil)
+the bug in question." t)
 
 (autoload 'magit-bisect-bad "magit-master/lisp/magit-bisect" "\
 While bisecting, mark the current commit as bad.
 Use this after you have asserted that the commit does contain the
-bug in question." t nil)
+bug in question." t)
 
 (autoload 'magit-bisect-mark "magit-master/lisp/magit-bisect" "\
 While bisecting, mark the current commit with a bisect term.
@@ -286,12 +286,12 @@ marked with `magit-bisect-good' and `magit-bisect-bad', as those
 commands map to the correct term (\"good\" to --term-old's value
 and \"bad\" to --term-new's).  However, in some cases, it can be
 difficult to keep that mapping straight in your head; this
-command provides an interface that exposes the underlying terms." t nil)
+command provides an interface that exposes the underlying terms." t)
 
 (autoload 'magit-bisect-skip "magit-master/lisp/magit-bisect" "\
 While bisecting, skip the current commit.
 Use this if for some reason the current commit is not a good one
-to test.  This command lets Git choose a different one." t nil)
+to test.  This command lets Git choose a different one." t)
 
 (autoload 'magit-bisect-run "magit-master/lisp/magit-bisect" "\
 Bisect automatically by running commands after each step.
@@ -300,7 +300,7 @@ Unlike `git bisect run' this can be used before bisecting has
 begun.  In that case it behaves like `git bisect start; git
 bisect run'.
 
-\(fn CMDLINE &optional BAD GOOD ARGS)" t nil)
+\(fn CMDLINE &optional BAD GOOD ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-bisect" '("magit-"))
 
@@ -319,22 +319,6 @@ bisect run'.
 
 ;;;***
 
-;;;### (autoloads nil "magit-master/lisp/magit-bookmark" "magit-master/lisp/magit-bookmark.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from magit-master/lisp/magit-bookmark.el
-
-(autoload 'magit--handle-bookmark "magit-master/lisp/magit-bookmark" "\
-Open a bookmark created by `magit--make-bookmark'.
-Call the `magit-*-setup-buffer' function of the the major-mode
-with the variables' values as arguments, which were recorded by
-`magit--make-bookmark'.  Ignore `magit-display-buffer-function'.
-
-\(fn BOOKMARK)" nil nil)
-
-(register-definition-prefixes "magit-master/lisp/magit-bookmark" '("magit--make-bookmark"))
-
-;;;***
-
 ;;;### (autoloads nil "magit-master/lisp/magit-branch" "magit-master/lisp/magit-branch.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from magit-master/lisp/magit-branch.el
@@ -349,17 +333,17 @@ changes.
 
 \(git checkout REVISION).
 
-\(fn REVISION &optional ARGS)" t nil)
+\(fn REVISION &optional ARGS)" t)
 
 (autoload 'magit-branch-create "magit-master/lisp/magit-branch" "\
 Create BRANCH at branch or revision START-POINT.
 
-\(fn BRANCH START-POINT)" t nil)
+\(fn BRANCH START-POINT)" t)
 
 (autoload 'magit-branch-and-checkout "magit-master/lisp/magit-branch" "\
 Create and checkout BRANCH at branch or revision START-POINT.
 
-\(fn BRANCH START-POINT &optional ARGS)" t nil)
+\(fn BRANCH START-POINT &optional ARGS)" t)
 
 (autoload 'magit-branch-or-checkout "magit-master/lisp/magit-branch" "\
 Hybrid between `magit-checkout' and `magit-branch-and-checkout'.
@@ -373,7 +357,7 @@ its name.  Before doing so read the starting-point for the new
 branch.  This is similar to what `magit-branch-and-checkout'
 does.
 
-\(fn ARG &optional START-POINT)" t nil)
+\(fn ARG &optional START-POINT)" t)
 
 (autoload 'magit-branch-checkout "magit-master/lisp/magit-branch" "\
 Checkout an existing or new local branch.
@@ -399,12 +383,12 @@ set to the chosen START-POINT or something else depends on the
 value of `magit-branch-adjust-remote-upstream-alist', just like
 when using `magit-branch-and-checkout'.
 
-\(fn BRANCH &optional START-POINT)" t nil)
+\(fn BRANCH &optional START-POINT)" t)
 
 (autoload 'magit-branch-orphan "magit-master/lisp/magit-branch" "\
 Create and checkout an orphan BRANCH with contents from revision START-POINT.
 
-\(fn BRANCH START-POINT)" t nil)
+\(fn BRANCH START-POINT)" t)
 
 (autoload 'magit-branch-spinout "magit-master/lisp/magit-branch" "\
 Create new branch from the unpushed commits.
@@ -412,7 +396,7 @@ Like `magit-branch-spinoff' but remain on the current branch.
 If there are any uncommitted changes, then behave exactly like
 `magit-branch-spinoff'.
 
-\(fn BRANCH &optional FROM)" t nil)
+\(fn BRANCH &optional FROM)" t)
 
 (autoload 'magit-branch-spinoff "magit-master/lisp/magit-branch" "\
 Create new branch from the unpushed commits.
@@ -444,7 +428,7 @@ matter, all commits between FROM and `HEAD' are moved to the new
 branch.  If FROM is not reachable from `HEAD' or is reachable
 from the source branch's upstream, then an error is raised.
 
-\(fn BRANCH &optional FROM)" t nil)
+\(fn BRANCH &optional FROM)" t)
 
 (autoload 'magit-branch-reset "magit-master/lisp/magit-branch" "\
 Reset a branch to the tip of another branch or any other commit.
@@ -460,7 +444,7 @@ When resetting to another branch and a prefix argument is used,
 then also set the target branch as the upstream of the branch
 that is being reset.
 
-\(fn BRANCH TO &optional SET-UPSTREAM)" t nil)
+\(fn BRANCH TO &optional SET-UPSTREAM)" t)
 
 (autoload 'magit-branch-delete "magit-master/lisp/magit-branch" "\
 Delete one or multiple branches.
@@ -468,7 +452,7 @@ If the region marks multiple branches, then offer to delete
 those, otherwise prompt for a single branch to be deleted,
 defaulting to the branch at point.
 
-\(fn BRANCHES &optional FORCE)" t nil)
+\(fn BRANCHES &optional FORCE)" t)
 
 (autoload 'magit-branch-rename "magit-master/lisp/magit-branch" "\
 Rename the branch named OLD to NEW.
@@ -481,21 +465,21 @@ the value of `magit-branch-rename-push-target' (which see) maybe
 set `branch.NEW.pushRemote' and maybe rename the push-target on
 the remote.
 
-\(fn OLD NEW &optional FORCE)" t nil)
+\(fn OLD NEW &optional FORCE)" t)
 
 (autoload 'magit-branch-shelve "magit-master/lisp/magit-branch" "\
 Shelve a BRANCH.
 Rename \"refs/heads/BRANCH\" to \"refs/shelved/BRANCH\",
 and also rename the respective reflog file.
 
-\(fn BRANCH)" t nil)
+\(fn BRANCH)" t)
 
 (autoload 'magit-branch-unshelve "magit-master/lisp/magit-branch" "\
 Unshelve a BRANCH
 Rename \"refs/shelved/BRANCH\" to \"refs/heads/BRANCH\",
 and also rename the respective reflog file.
 
-\(fn BRANCH)" t nil)
+\(fn BRANCH)" t)
  (autoload 'magit-branch-configure "magit-branch" nil t)
 
 (register-definition-prefixes "magit-master/lisp/magit-branch" '("magit-"))
@@ -511,22 +495,22 @@ and also rename the respective reflog file.
 (autoload 'magit-bundle-create-tracked "magit-master/lisp/magit-bundle" "\
 Create and track a new bundle.
 
-\(fn FILE TAG BRANCH REFS ARGS)" t nil)
+\(fn FILE TAG BRANCH REFS ARGS)" t)
 
 (autoload 'magit-bundle-update-tracked "magit-master/lisp/magit-bundle" "\
 Update a bundle that is being tracked using TAG.
 
-\(fn TAG)" t nil)
+\(fn TAG)" t)
 
 (autoload 'magit-bundle-verify "magit-master/lisp/magit-bundle" "\
 Check whether FILE is valid and applies to the current repository.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-bundle-list-heads "magit-master/lisp/magit-bundle" "\
 List the refs in FILE.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-bundle" '("magit-"))
 
@@ -541,7 +525,7 @@ List the refs in FILE.
 Create a clone of REPOSITORY in DIRECTORY.
 Then show the status buffer for the new repository.
 
-\(fn REPOSITORY DIRECTORY ARGS)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS)" t)
 
 (autoload 'magit-clone-shallow "magit-master/lisp/magit-clone" "\
 Create a shallow clone of REPOSITORY in DIRECTORY.
@@ -549,7 +533,7 @@ Then show the status buffer for the new repository.
 With a prefix argument read the DEPTH of the clone;
 otherwise use 1.
 
-\(fn REPOSITORY DIRECTORY ARGS DEPTH)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS DEPTH)" t)
 
 (autoload 'magit-clone-shallow-since "magit-master/lisp/magit-clone" "\
 Create a shallow clone of REPOSITORY in DIRECTORY.
@@ -557,7 +541,7 @@ Then show the status buffer for the new repository.
 Exclude commits before DATE, which is read from the
 user.
 
-\(fn REPOSITORY DIRECTORY ARGS DATE)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS DATE)" t)
 
 (autoload 'magit-clone-shallow-exclude "magit-master/lisp/magit-clone" "\
 Create a shallow clone of REPOSITORY in DIRECTORY.
@@ -565,24 +549,24 @@ Then show the status buffer for the new repository.
 Exclude commits reachable from EXCLUDE, which is a
 branch or tag read from the user.
 
-\(fn REPOSITORY DIRECTORY ARGS EXCLUDE)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS EXCLUDE)" t)
 
 (autoload 'magit-clone-bare "magit-master/lisp/magit-clone" "\
 Create a bare clone of REPOSITORY in DIRECTORY.
 Then show the status buffer for the new repository.
 
-\(fn REPOSITORY DIRECTORY ARGS)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS)" t)
 
 (autoload 'magit-clone-mirror "magit-master/lisp/magit-clone" "\
 Create a mirror of REPOSITORY in DIRECTORY.
 Then show the status buffer for the new repository.
 
-\(fn REPOSITORY DIRECTORY ARGS)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS)" t)
 
 (autoload 'magit-clone-sparse "magit-master/lisp/magit-clone" "\
 Clone REPOSITORY into DIRECTORY and create a sparse checkout.
 
-\(fn REPOSITORY DIRECTORY ARGS)" t nil)
+\(fn REPOSITORY DIRECTORY ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-clone" '("magit-clone-"))
 
@@ -599,14 +583,14 @@ With a prefix argument, amend to the commit at `HEAD' instead.
 
 \(git commit [--amend] ARGS)
 
-\(fn &optional ARGS)" t nil)
+\(fn &optional ARGS)" t)
 
 (autoload 'magit-commit-amend "magit-master/lisp/magit-commit" "\
 Amend the last commit.
 
 \(git commit --amend ARGS)
 
-\(fn &optional ARGS)" t nil)
+\(fn &optional ARGS)" t)
 
 (autoload 'magit-commit-extend "magit-master/lisp/magit-commit" "\
 Amend the last commit, without editing the message.
@@ -617,7 +601,7 @@ to inverse the meaning of the prefix argument.
 \(git commit
 --amend --no-edit)
 
-\(fn &optional ARGS OVERRIDE-DATE)" t nil)
+\(fn &optional ARGS OVERRIDE-DATE)" t)
 
 (autoload 'magit-commit-reword "magit-master/lisp/magit-commit" "\
 Reword the last commit, ignoring staged changes.
@@ -631,7 +615,7 @@ and ignore the option.
 
 \(git commit --amend --only)
 
-\(fn &optional ARGS OVERRIDE-DATE)" t nil)
+\(fn &optional ARGS OVERRIDE-DATE)" t)
 
 (autoload 'magit-commit-fixup "magit-master/lisp/magit-commit" "\
 Create a fixup commit.
@@ -640,7 +624,7 @@ With a prefix argument the target COMMIT has to be confirmed.
 Otherwise the commit at point may be used without confirmation
 depending on the value of option `magit-commit-squash-confirm'.
 
-\(fn &optional COMMIT ARGS)" t nil)
+\(fn &optional COMMIT ARGS)" t)
 
 (autoload 'magit-commit-squash "magit-master/lisp/magit-commit" "\
 Create a squash commit, without editing the squash message.
@@ -652,7 +636,7 @@ depending on the value of option `magit-commit-squash-confirm'.
 If you want to immediately add a message to the squash commit,
 then use `magit-commit-augment' instead of this command.
 
-\(fn &optional COMMIT ARGS)" t nil)
+\(fn &optional COMMIT ARGS)" t)
 
 (autoload 'magit-commit-augment "magit-master/lisp/magit-commit" "\
 Create a squash commit, editing the squash message.
@@ -661,17 +645,17 @@ With a prefix argument the target COMMIT has to be confirmed.
 Otherwise the commit at point may be used without confirmation
 depending on the value of option `magit-commit-squash-confirm'.
 
-\(fn &optional COMMIT ARGS)" t nil)
+\(fn &optional COMMIT ARGS)" t)
 
 (autoload 'magit-commit-instant-fixup "magit-master/lisp/magit-commit" "\
 Create a fixup commit targeting COMMIT and instantly rebase.
 
-\(fn &optional COMMIT ARGS)" t nil)
+\(fn &optional COMMIT ARGS)" t)
 
 (autoload 'magit-commit-instant-squash "magit-master/lisp/magit-commit" "\
 Create a squash commit targeting COMMIT and instantly rebase.
 
-\(fn &optional COMMIT ARGS)" t nil)
+\(fn &optional COMMIT ARGS)" t)
 
 (autoload 'magit-commit-reshelve "magit-master/lisp/magit-commit" "\
 Change the committer date and possibly the author date of `HEAD'.
@@ -687,12 +671,12 @@ is updated:
 - The command was invoked with a prefix argument.
 - Non-interactively if UPDATE-AUTHOR is nil.
 
-\(fn DATE UPDATE-AUTHOR &optional ARGS)" t nil)
+\(fn DATE UPDATE-AUTHOR &optional ARGS)" t)
 
 (autoload 'magit-commit-absorb-modules "magit-master/lisp/magit-commit" "\
 Spread modified modules across recent commits.
 
-\(fn PHASE COMMIT)" t nil)
+\(fn PHASE COMMIT)" t)
  (autoload 'magit-commit-absorb "magit-commit" nil t)
  (autoload 'magit-commit-autofixup "magit-commit" nil t)
 
@@ -709,7 +693,7 @@ Spread modified modules across recent commits.
 (autoload 'magit-diff-dwim "magit-master/lisp/magit-diff" "\
 Show changes for the thing at point.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-diff-range "magit-master/lisp/magit-diff" "\
 Show differences between two commits.
@@ -725,59 +709,57 @@ argument, instead of diffing the revisions, choose a revision to
 view changes along, starting at the common ancestor of both
 revisions (i.e., use a \"...\" range).
 
-\(fn REV-OR-RANGE &optional ARGS FILES)" t nil)
+\(fn REV-OR-RANGE &optional ARGS FILES)" t)
 
 (autoload 'magit-diff-working-tree "magit-master/lisp/magit-diff" "\
 Show changes between the current working tree and the `HEAD' commit.
 With a prefix argument show changes between the working tree and
 a commit read from the minibuffer.
 
-\(fn &optional REV ARGS FILES)" t nil)
+\(fn &optional REV ARGS FILES)" t)
 
 (autoload 'magit-diff-staged "magit-master/lisp/magit-diff" "\
 Show changes between the index and the `HEAD' commit.
 With a prefix argument show changes between the index and
 a commit read from the minibuffer.
 
-\(fn &optional REV ARGS FILES)" t nil)
+\(fn &optional REV ARGS FILES)" t)
 
 (autoload 'magit-diff-unstaged "magit-master/lisp/magit-diff" "\
 Show changes between the working tree and the index.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-diff-unmerged "magit-master/lisp/magit-diff" "\
 Show changes that are being merged.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-diff-while-committing "magit-master/lisp/magit-diff" "\
 While committing, show the changes that are about to be committed.
 While amending, invoking the command again toggles between
 showing just the new changes or all the changes that will
-be committed.
-
-\(fn &optional ARGS)" t nil)
+be committed." t)
 
 (autoload 'magit-diff-buffer-file "magit-master/lisp/magit-diff" "\
 Show diff for the blob or file visited in the current buffer.
 
 When the buffer visits a blob, then show the respective commit.
-When the buffer visits a file, then show the differenced between
+When the buffer visits a file, then show the differences between
 `HEAD' and the working tree.  In both cases limit the diff to
-the file or blob." t nil)
+the file or blob." t)
 
 (autoload 'magit-diff-paths "magit-master/lisp/magit-diff" "\
 Show changes between any two files on disk.
 
-\(fn A B)" t nil)
+\(fn A B)" t)
 
 (autoload 'magit-show-commit "magit-master/lisp/magit-diff" "\
 Visit the revision at point in another buffer.
 If there is no revision at point or with a prefix argument prompt
 for a revision.
 
-\(fn REV &optional ARGS FILES MODULE)" t nil)
+\(fn REV &optional ARGS FILES MODULE)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-diff" '("magit-"))
 
@@ -788,21 +770,33 @@ for a revision.
 ;;; Generated autoloads from magit-master/lisp/magit-ediff.el
  (autoload 'magit-ediff "magit-ediff" nil)
 
-(autoload 'magit-ediff-resolve "magit-master/lisp/magit-ediff" "\
-Resolve outstanding conflicts in FILE using Ediff.
-FILE has to be relative to the top directory of the repository.
+(autoload 'magit-ediff-resolve-all "magit-master/lisp/magit-ediff" "\
+Resolve all conflicts in the FILE at point using Ediff.
 
-In the rare event that you want to manually resolve all
-conflicts, including those already resolved by Git, use
-`ediff-merge-revisions-with-ancestor'.
+If there is no file at point or if it doesn't have any unmerged
+changes, then prompt for a file.
 
-\(fn FILE)" t nil)
+See info node `(magit) Ediffing' for more information about this
+and alternative commands.
+
+\(fn FILE)" t)
+
+(autoload 'magit-ediff-resolve-rest "magit-master/lisp/magit-ediff" "\
+Resolve outstanding conflicts in the FILE at point using Ediff.
+
+If there is no file at point or if it doesn't have any unmerged
+changes, then prompt for a file.
+
+See info node `(magit) Ediffing' for more information about this
+and alternative commands.
+
+\(fn FILE)" t)
 
 (autoload 'magit-ediff-stage "magit-master/lisp/magit-ediff" "\
 Stage and unstage changes to FILE using Ediff.
 FILE has to be relative to the top directory of the repository.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-ediff-compare "magit-master/lisp/magit-ediff" "\
 Compare REVA:FILEA with REVB:FILEB using Ediff.
@@ -817,7 +811,7 @@ the revisions, choose a revision to view changes along, starting
 at the common ancestor of both revisions (i.e., use a \"...\"
 range).
 
-\(fn REVA REVB FILEA FILEB)" t nil)
+\(fn REVA REVB FILEA FILEB)" t)
 
 (autoload 'magit-ediff-dwim "magit-master/lisp/magit-ediff" "\
 Compare, stage, or resolve using Ediff.
@@ -827,7 +821,7 @@ might only be able to guess either the file, or range or commit,
 in which case the user is asked about the other.  It might not
 always guess right, in which case the appropriate `magit-ediff-*'
 command has to be used explicitly.  If it cannot read the user's
-mind at all, then it asks the user for a command to run." t nil)
+mind at all, then it asks the user for a command to run." t)
 
 (autoload 'magit-ediff-show-staged "magit-master/lisp/magit-ediff" "\
 Show staged changes using Ediff.
@@ -837,7 +831,7 @@ and discard changes using Ediff, use `magit-ediff-stage'.
 
 FILE must be relative to the top directory of the repository.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-ediff-show-unstaged "magit-master/lisp/magit-ediff" "\
 Show unstaged changes using Ediff.
@@ -847,18 +841,18 @@ and discard changes using Ediff, use `magit-ediff-stage'.
 
 FILE must be relative to the top directory of the repository.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-ediff-show-working-tree "magit-master/lisp/magit-ediff" "\
 Show changes between `HEAD' and working tree using Ediff.
 FILE must be relative to the top directory of the repository.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-ediff-show-commit "magit-master/lisp/magit-ediff" "\
 Show changes introduced by COMMIT using Ediff.
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-ediff-show-stash "magit-master/lisp/magit-ediff" "\
 Show changes introduced by STASH using Ediff.
@@ -866,7 +860,7 @@ Show changes introduced by STASH using Ediff.
 three-buffer Ediff is used in order to distinguish changes in the
 stash that were staged.
 
-\(fn STASH)" t nil)
+\(fn STASH)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-ediff" '("magit-ediff-"))
 
@@ -884,19 +878,19 @@ prefix or when the current file cannot be determined let the user
 choose.  When the current buffer is visiting FILENAME instruct
 blame to center around the line point is on.
 
-\(fn COMMIT FILENAME &optional LINENUM)" t nil)
+\(fn COMMIT FILENAME &optional LINENUM)" t)
 
 (autoload 'magit-run-git-gui "magit-master/lisp/magit-extras" "\
-Run `git gui' for the current git repository." t nil)
+Run `git gui' for the current git repository." t)
 
 (autoload 'magit-run-gitk "magit-master/lisp/magit-extras" "\
-Run `gitk' in the current repository." t nil)
+Run `gitk' in the current repository." t)
 
 (autoload 'magit-run-gitk-branches "magit-master/lisp/magit-extras" "\
-Run `gitk --branches' in the current repository." t nil)
+Run `gitk --branches' in the current repository." t)
 
 (autoload 'magit-run-gitk-all "magit-master/lisp/magit-extras" "\
-Run `gitk --all' in the current repository." t nil)
+Run `gitk --all' in the current repository." t)
 
 (autoload 'ido-enter-magit-status "magit-master/lisp/magit-extras" "\
 Drop into `magit-status' from file switching.
@@ -917,35 +911,35 @@ instead of every time Ido is invoked, so now you can modify it
 like pretty much every other keymap:
 
   (define-key ido-common-completion-map
-    (kbd \"C-x g\") \\='ido-enter-magit-status)" t nil)
+    (kbd \"C-x g\") \\='ido-enter-magit-status)" t)
 
 (autoload 'magit-project-status "magit-master/lisp/magit-extras" "\
-Run `magit-status' in the current project's root." t nil)
+Run `magit-status' in the current project's root." t)
 
 (autoload 'magit-dired-jump "magit-master/lisp/magit-extras" "\
 Visit file at point using Dired.
 With a prefix argument, visit in another window.  If there
 is no file at point, then instead visit `default-directory'.
 
-\(fn &optional OTHER-WINDOW)" t nil)
+\(fn &optional OTHER-WINDOW)" t)
 
 (autoload 'magit-dired-log "magit-master/lisp/magit-extras" "\
 Show log for all marked files, or the current file.
 
-\(fn &optional FOLLOW)" t nil)
+\(fn &optional FOLLOW)" t)
 
 (autoload 'magit-dired-am-apply-patches "magit-master/lisp/magit-extras" "\
 In Dired, apply the marked (or next ARG) files as patches.
 If inside a repository, then apply in that.  Otherwise prompt
 for a repository.
 
-\(fn REPO &optional ARG)" t nil)
+\(fn REPO &optional ARG)" t)
 
 (autoload 'magit-do-async-shell-command "magit-master/lisp/magit-extras" "\
 Open FILE with `dired-do-async-shell-command'.
 Interactively, open the file at point.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-previous-line "magit-master/lisp/magit-extras" "\
 Like `previous-line' but with Magit-specific shift-selection.
@@ -958,7 +952,7 @@ command does not move point on the first invocation and thereby
 it only selects a single line.  Which inconsistency you prefer
 is a matter of preference.
 
-\(fn &optional ARG TRY-VSCROLL)" t nil)
+\(fn &optional ARG TRY-VSCROLL)" t)
 
 (function-put 'magit-previous-line 'interactive-only '"use `forward-line' with negative argument instead.")
 
@@ -973,7 +967,7 @@ this command does not move point on the first invocation and
 thereby it only selects a single line.  Which inconsistency you
 prefer is a matter of preference.
 
-\(fn &optional ARG TRY-VSCROLL)" t nil)
+\(fn &optional ARG TRY-VSCROLL)" t)
 
 (function-put 'magit-next-line 'interactive-only 'forward-line)
 
@@ -984,7 +978,7 @@ with two prefix arguments remove ignored files only.
 
 \(git clean -f -d [-x|-X])
 
-\(fn &optional ARG)" t nil)
+\(fn &optional ARG)" t)
 
 (autoload 'magit-generate-changelog "magit-master/lisp/magit-extras" "\
 Insert ChangeLog entries into the current buffer.
@@ -993,7 +987,7 @@ The entries are generated from the diff being committed.
 If prefix argument, AMENDING, is non-nil, include changes
 in HEAD as well as staged changes in the diff to check.
 
-\(fn &optional AMENDING)" t nil)
+\(fn &optional AMENDING)" t)
 
 (autoload 'magit-add-change-log-entry "magit-master/lisp/magit-extras" "\
 Find change log file and add date entry and item for current change.
@@ -1001,7 +995,7 @@ This differs from `add-change-log-entry' (which see) in that
 it acts on the current hunk in a Magit buffer instead of on
 a position in a file-visiting buffer.
 
-\(fn &optional WHOAMI FILE-NAME OTHER-WINDOW)" t nil)
+\(fn &optional WHOAMI FILE-NAME OTHER-WINDOW)" t)
 
 (autoload 'magit-add-change-log-entry-other-window "magit-master/lisp/magit-extras" "\
 Find change log file in other window and add entry and item.
@@ -1009,7 +1003,7 @@ This differs from `add-change-log-entry-other-window' (which see)
 in that it acts on the current hunk in a Magit buffer instead of
 on a position in a file-visiting buffer.
 
-\(fn &optional WHOAMI FILE-NAME)" t nil)
+\(fn &optional WHOAMI FILE-NAME)" t)
 
 (autoload 'magit-edit-line-commit "magit-master/lisp/magit-extras" "\
 Edit the commit that added the current line.
@@ -1020,7 +1014,7 @@ editable using `git rebase --interactive' if it is reachable
 from `HEAD', or by checking out the commit (or a branch that
 points at it) otherwise.
 
-\(fn &optional TYPE)" t nil)
+\(fn &optional TYPE)" t)
 
 (autoload 'magit-diff-edit-hunk-commit "magit-master/lisp/magit-extras" "\
 From a hunk, edit the respective commit and visit the file.
@@ -1040,7 +1034,7 @@ Neither the blob nor the file buffer are killed when finishing
 the rebase.  If that is undesirable, then it might be better to
 use `magit-rebase-edit-command' instead of this command.
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-reshelve-since "magit-master/lisp/magit-extras" "\
 Change the author and committer dates of the commits since REV.
@@ -1058,7 +1052,7 @@ If KEYID is non-nil, then use that to sign all reshelved commits.
 Interactively use the value of the \"--gpg-sign\" option in the
 list returned by `magit-rebase-arguments'.
 
-\(fn REV KEYID)" t nil)
+\(fn REV KEYID)" t)
 
 (autoload 'magit-pop-revision-stack "magit-master/lisp/magit-extras" "\
 Insert a representation of a revision into the current buffer.
@@ -1084,7 +1078,7 @@ revision).  If not called inside a repository and with an empty
 stack, or with two prefix arguments, then read the repository in
 the minibuffer too.
 
-\(fn REV TOPLEVEL)" t nil)
+\(fn REV TOPLEVEL)" t)
 
 (autoload 'magit-copy-section-value "magit-master/lisp/magit-extras" "\
 Save the value of the current section for later use.
@@ -1109,7 +1103,7 @@ a hunk, then strip the diff marker column and keep only either
 the added or removed lines, depending on the sign of the prefix
 argument.
 
-\(fn ARG)" t nil)
+\(fn ARG)" t)
 
 (autoload 'magit-copy-buffer-revision "magit-master/lisp/magit-extras" "\
 Save the revision of the current buffer for later use.
@@ -1135,33 +1129,33 @@ above.
 
 When `magit-copy-revision-abbreviated' is non-nil, save the
 abbreviated revision to the `kill-ring' and the
-`magit-revision-stack'." t nil)
+`magit-revision-stack'." t)
 
 (autoload 'magit-display-repository-buffer "magit-master/lisp/magit-extras" "\
 Display a Magit buffer belonging to the current Git repository.
 The buffer is displayed using `magit-display-buffer', which see.
 
-\(fn BUFFER)" t nil)
+\(fn BUFFER)" t)
 
 (autoload 'magit-switch-to-repository-buffer "magit-master/lisp/magit-extras" "\
 Switch to a Magit buffer belonging to the current Git repository.
 
-\(fn BUFFER)" t nil)
+\(fn BUFFER)" t)
 
 (autoload 'magit-switch-to-repository-buffer-other-window "magit-master/lisp/magit-extras" "\
 Switch to a Magit buffer belonging to the current Git repository.
 
-\(fn BUFFER)" t nil)
+\(fn BUFFER)" t)
 
 (autoload 'magit-switch-to-repository-buffer-other-frame "magit-master/lisp/magit-extras" "\
 Switch to a Magit buffer belonging to the current Git repository.
 
-\(fn BUFFER)" t nil)
+\(fn BUFFER)" t)
 
 (autoload 'magit-abort-dwim "magit-master/lisp/magit-extras" "\
 Abort current operation.
 Depending on the context, this will abort a merge, a rebase, a
-patch application, a cherry-pick, a revert, or a bisect." t nil)
+patch application, a cherry-pick, a revert, or a bisect." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-extras" '("magit-"))
 
@@ -1177,30 +1171,30 @@ patch application, a cherry-pick, a revert, or a bisect." t nil)
 (autoload 'magit-fetch-other "magit-master/lisp/magit-fetch" "\
 Fetch from another repository.
 
-\(fn REMOTE ARGS)" t nil)
+\(fn REMOTE ARGS)" t)
 
 (autoload 'magit-fetch-branch "magit-master/lisp/magit-fetch" "\
 Fetch a BRANCH from a REMOTE.
 
-\(fn REMOTE BRANCH ARGS)" t nil)
+\(fn REMOTE BRANCH ARGS)" t)
 
 (autoload 'magit-fetch-refspec "magit-master/lisp/magit-fetch" "\
 Fetch a REFSPEC from a REMOTE.
 
-\(fn REMOTE REFSPEC ARGS)" t nil)
+\(fn REMOTE REFSPEC ARGS)" t)
 
 (autoload 'magit-fetch-all "magit-master/lisp/magit-fetch" "\
 Fetch from all remotes.
 
-\(fn ARGS)" t nil)
+\(fn ARGS)" t)
 
 (autoload 'magit-fetch-all-prune "magit-master/lisp/magit-fetch" "\
 Fetch from all remotes, and prune.
 Prune remote tracking branches for branches that have been
-removed on the respective remote." t nil)
+removed on the respective remote." t)
 
 (autoload 'magit-fetch-all-no-prune "magit-master/lisp/magit-fetch" "\
-Fetch from all remotes." t nil)
+Fetch from all remotes." t)
  (autoload 'magit-fetch-modules "magit-fetch" nil t)
 
 (register-definition-prefixes "magit-master/lisp/magit-fetch" '("magit-"))
@@ -1218,7 +1212,7 @@ already exists.  If prior to calling this command the current
 buffer and/or cursor position is about the same file, then go
 to the line and column corresponding to that location.
 
-\(fn REV FILE)" t nil)
+\(fn REV FILE)" t)
 
 (autoload 'magit-find-file-other-window "magit-master/lisp/magit-files" "\
 View FILE from REV, in another window.
@@ -1227,7 +1221,7 @@ already exists.  If prior to calling this command the current
 buffer and/or cursor position is about the same file, then go to
 the line and column corresponding to that location.
 
-\(fn REV FILE)" t nil)
+\(fn REV FILE)" t)
 
 (autoload 'magit-find-file-other-frame "magit-master/lisp/magit-files" "\
 View FILE from REV, in another frame.
@@ -1236,18 +1230,18 @@ already exists.  If prior to calling this command the current
 buffer and/or cursor position is about the same file, then go to
 the line and column corresponding to that location.
 
-\(fn REV FILE)" t nil)
+\(fn REV FILE)" t)
  (autoload 'magit-file-dispatch "magit" nil t)
 
 (autoload 'magit-blob-visit-file "magit-master/lisp/magit-files" "\
 View the file from the worktree corresponding to the current blob.
 When visiting a blob or the version from the index, then go to
-the same location in the respective file in the working tree." t nil)
+the same location in the respective file in the working tree." t)
 
 (autoload 'magit-file-checkout "magit-master/lisp/magit-files" "\
 Checkout FILE from REV.
 
-\(fn REV FILE)" t nil)
+\(fn REV FILE)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-files" '("magit-"))
 
@@ -1271,7 +1265,7 @@ Add the Git ignore RULE to the top-level \".gitignore\" file.
 Since this file is tracked, it is shared with other clones of the
 repository.  Also stage the file.
 
-\(fn RULE)" t nil)
+\(fn RULE)" t)
 
 (autoload 'magit-gitignore-in-subdir "magit-master/lisp/magit-gitignore" "\
 Add the Git ignore RULE to a \".gitignore\" file in DIRECTORY.
@@ -1280,130 +1274,41 @@ Prompt the user for a directory and add the rule to the
 tracked, they are shared with other clones of the repository.
 Also stage the file.
 
-\(fn RULE DIRECTORY)" t nil)
+\(fn RULE DIRECTORY)" t)
 
 (autoload 'magit-gitignore-in-gitdir "magit-master/lisp/magit-gitignore" "\
 Add the Git ignore RULE to \"$GIT_DIR/info/exclude\".
 Rules in that file only affects this clone of the repository.
 
-\(fn RULE)" t nil)
+\(fn RULE)" t)
 
 (autoload 'magit-gitignore-on-system "magit-master/lisp/magit-gitignore" "\
 Add the Git ignore RULE to the file specified by `core.excludesFile'.
 Rules that are defined in that file affect all local repositories.
 
-\(fn RULE)" t nil)
+\(fn RULE)" t)
 
 (autoload 'magit-skip-worktree "magit-master/lisp/magit-gitignore" "\
 Call \"git update-index --skip-worktree -- FILE\".
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-no-skip-worktree "magit-master/lisp/magit-gitignore" "\
 Call \"git update-index --no-skip-worktree -- FILE\".
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-assume-unchanged "magit-master/lisp/magit-gitignore" "\
 Call \"git update-index --assume-unchanged -- FILE\".
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (autoload 'magit-no-assume-unchanged "magit-master/lisp/magit-gitignore" "\
 Call \"git update-index --no-assume-unchanged -- FILE\".
 
-\(fn FILE)" t nil)
+\(fn FILE)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-gitignore" '("magit-"))
-
-;;;***
-
-;;;### (autoloads nil "magit-master/lisp/magit-imenu" "magit-master/lisp/magit-imenu.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from magit-master/lisp/magit-imenu.el
-
-(autoload 'magit-imenu--log-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous line in current buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--log-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(autoload 'magit-imenu--diff-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous file line in current buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--diff-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(autoload 'magit-imenu--status-create-index-function "magit-master/lisp/magit-imenu" "\
-Return an alist of all imenu entries in current buffer.
-This function is used as a value for
-`imenu-create-index-function'." nil nil)
-
-(autoload 'magit-imenu--refs-create-index-function "magit-master/lisp/magit-imenu" "\
-Return an alist of all imenu entries in current buffer.
-This function is used as a value for
-`imenu-create-index-function'." nil nil)
-
-(autoload 'magit-imenu--cherry-create-index-function "magit-master/lisp/magit-imenu" "\
-Return an alist of all imenu entries in current buffer.
-This function is used as a value for
-`imenu-create-index-function'." nil nil)
-
-(autoload 'magit-imenu--submodule-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous line in magit-submodule-list buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--submodule-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(autoload 'magit-imenu--repolist-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous line in magit-repolist buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--repolist-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(autoload 'magit-imenu--process-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous process in magit-process buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--process-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(autoload 'magit-imenu--rebase-prev-index-position-function "magit-master/lisp/magit-imenu" "\
-Move point to previous commit in git-rebase buffer.
-This function is used as a value for
-`imenu-prev-index-position-function'." nil nil)
-
-(autoload 'magit-imenu--rebase-extract-index-name-function "magit-master/lisp/magit-imenu" "\
-Return imenu name for line at point.
-This function is used as a value for
-`imenu-extract-index-name-function'.  Point should be at the
-beginning of the line." nil nil)
-
-(register-definition-prefixes "magit-master/lisp/magit-imenu" '("magit-imenu--index-function"))
 
 ;;;***
 
@@ -1426,12 +1331,12 @@ Show log for the current branch.
 When `HEAD' is detached or with a prefix argument show log for
 one or more revs read from the minibuffer.
 
-\(fn REVS &optional ARGS FILES)" t nil)
+\(fn REVS &optional ARGS FILES)" t)
 
 (autoload 'magit-log-head "magit-master/lisp/magit-log" "\
 Show log for `HEAD'.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-log-related "magit-master/lisp/magit-log" "\
 Show log for the current branch, its upstream and its push target.
@@ -1439,7 +1344,7 @@ When the upstream is a local branch, then also show its own
 upstream.  When `HEAD' is detached, then show log for that, the
 previously checked out branch and its upstream and push-target.
 
-\(fn REVS &optional ARGS FILES)" t nil)
+\(fn REVS &optional ARGS FILES)" t)
 
 (autoload 'magit-log-other "magit-master/lisp/magit-log" "\
 Show log for one or more revs read from the minibuffer.
@@ -1448,32 +1353,32 @@ space, or even ranges, but only branches and tags, and a
 representation of the commit at point, are available as
 completion candidates.
 
-\(fn REVS &optional ARGS FILES)" t nil)
+\(fn REVS &optional ARGS FILES)" t)
 
 (autoload 'magit-log-branches "magit-master/lisp/magit-log" "\
 Show log for all local branches and `HEAD'.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-log-matching-branches "magit-master/lisp/magit-log" "\
 Show log for all branches matching PATTERN and `HEAD'.
 
-\(fn PATTERN &optional ARGS FILES)" t nil)
+\(fn PATTERN &optional ARGS FILES)" t)
 
 (autoload 'magit-log-matching-tags "magit-master/lisp/magit-log" "\
 Show log for all tags matching PATTERN and `HEAD'.
 
-\(fn PATTERN &optional ARGS FILES)" t nil)
+\(fn PATTERN &optional ARGS FILES)" t)
 
 (autoload 'magit-log-all-branches "magit-master/lisp/magit-log" "\
 Show log for all local and remote branches and `HEAD'.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-log-all "magit-master/lisp/magit-log" "\
 Show log for all references and `HEAD'.
 
-\(fn &optional ARGS FILES)" t nil)
+\(fn &optional ARGS FILES)" t)
 
 (autoload 'magit-log-buffer-file "magit-master/lisp/magit-log" "\
 Show log for the blob or file visited in the current buffer.
@@ -1481,46 +1386,46 @@ With a prefix argument or when `--follow' is an active log
 argument, then follow renames.  When the region is active,
 restrict the log to the lines that the region touches.
 
-\(fn &optional FOLLOW BEG END)" t nil)
+\(fn &optional FOLLOW BEG END)" t)
 
 (autoload 'magit-log-trace-definition "magit-master/lisp/magit-log" "\
 Show log for the definition at point.
 
-\(fn FILE FN REV)" t nil)
+\(fn FILE FN REV)" t)
 
 (autoload 'magit-log-merged "magit-master/lisp/magit-log" "\
 Show log for the merge of COMMIT into BRANCH.
 
 More precisely, find merge commit M that brought COMMIT into
-BRANCH, and show the log of the range \"M^1..M\".  If COMMIT is
-directly on BRANCH, then show approximately twenty surrounding
-commits instead.
+BRANCH, and show the log of the range \"M^1..M\". If COMMIT is
+directly on BRANCH, then show approximately
+`magit-log-merged-commit-count' surrounding commits instead.
 
 This command requires git-when-merged, which is available from
 https://github.com/mhagger/git-when-merged.
 
-\(fn COMMIT BRANCH &optional ARGS FILES)" t nil)
+\(fn COMMIT BRANCH &optional ARGS FILES)" t)
 
 (autoload 'magit-log-move-to-parent "magit-master/lisp/magit-log" "\
 Move to the Nth parent of the current commit.
 
-\(fn &optional N)" t nil)
+\(fn &optional N)" t)
  (autoload 'magit-shortlog "magit-log" nil t)
 
 (autoload 'magit-shortlog-since "magit-master/lisp/magit-log" "\
 Show a history summary for commits since REV.
 
-\(fn REV ARGS)" t nil)
+\(fn REV ARGS)" t)
 
 (autoload 'magit-shortlog-range "magit-master/lisp/magit-log" "\
 Show a history summary for commit or range REV-OR-RANGE.
 
-\(fn REV-OR-RANGE ARGS)" t nil)
+\(fn REV-OR-RANGE ARGS)" t)
 
 (autoload 'magit-cherry "magit-master/lisp/magit-log" "\
 Show commits in a branch that are not merged in the upstream branch.
 
-\(fn HEAD UPSTREAM)" t nil)
+\(fn HEAD UPSTREAM)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-log" '("magit-"))
 
@@ -1550,7 +1455,7 @@ merge.
 
 \(git merge --no-edit|--no-commit [ARGS] REV)
 
-\(fn REV &optional ARGS NOCOMMIT)" t nil)
+\(fn REV &optional ARGS NOCOMMIT)" t)
 
 (autoload 'magit-merge-editmsg "magit-master/lisp/magit-merge" "\
 Merge commit REV into the current branch; and edit message.
@@ -1559,7 +1464,7 @@ edit it.
 
 \(git merge --edit --no-ff [ARGS] REV)
 
-\(fn REV &optional ARGS)" t nil)
+\(fn REV &optional ARGS)" t)
 
 (autoload 'magit-merge-nocommit "magit-master/lisp/magit-merge" "\
 Merge commit REV into the current branch; pretending it failed.
@@ -1568,7 +1473,7 @@ inspect the merge and change the commit message.
 
 \(git merge --no-commit --no-ff [ARGS] REV)
 
-\(fn REV &optional ARGS)" t nil)
+\(fn REV &optional ARGS)" t)
 
 (autoload 'magit-merge-into "magit-master/lisp/magit-merge" "\
 Merge the current branch into BRANCH and remove the former.
@@ -1580,7 +1485,7 @@ obsolete version of the commits that are being merged.  Finally
 if `forge-branch-pullreq' was used to create the merged branch,
 then also remove the respective remote branch.
 
-\(fn BRANCH &optional ARGS)" t nil)
+\(fn BRANCH &optional ARGS)" t)
 
 (autoload 'magit-merge-absorb "magit-master/lisp/magit-merge" "\
 Merge BRANCH into the current branch and remove the former.
@@ -1592,24 +1497,24 @@ obsolete version of the commits that are being merged.  Finally
 if `forge-branch-pullreq' was used to create the merged branch,
 then also remove the respective remote branch.
 
-\(fn BRANCH &optional ARGS)" t nil)
+\(fn BRANCH &optional ARGS)" t)
 
 (autoload 'magit-merge-squash "magit-master/lisp/magit-merge" "\
 Squash commit REV into the current branch; don't create a commit.
 
 \(git merge --squash REV)
 
-\(fn REV)" t nil)
+\(fn REV)" t)
 
 (autoload 'magit-merge-preview "magit-master/lisp/magit-merge" "\
 Preview result of merging REV into the current branch.
 
-\(fn REV)" t nil)
+\(fn REV)" t)
 
 (autoload 'magit-merge-abort "magit-master/lisp/magit-merge" "\
 Abort the current merge operation.
 
-\(git merge --abort)" t nil)
+\(git merge --abort)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-merge" '("magit-"))
 
@@ -1620,9 +1525,9 @@ Abort the current merge operation.
 ;;; Generated autoloads from magit-master/lisp/magit-mode.el
 
 (autoload 'magit-info "magit-master/lisp/magit-mode" "\
-Visit the Magit manual." t nil)
+Visit the Magit manual." t)
 
-(register-definition-prefixes "magit-master/lisp/magit-mode" '("disable-magit-save-buffers" "magit-"))
+(register-definition-prefixes "magit-master/lisp/magit-mode" '("magit-"))
 
 ;;;***
 
@@ -1673,7 +1578,7 @@ arguments as the buffer.
 Of course the arguments that are required to actually show the
 same differences as those shown in the buffer are always used.
 
-\(fn FILE &optional ARG)" t nil)
+\(fn FILE &optional ARG)" t)
 
 (autoload 'magit-request-pull "magit-master/lisp/magit-patch" "\
 Request upstream to pull from your public repository.
@@ -1683,7 +1588,7 @@ START is a commit that already is in the upstream repository.
 END is the last commit, usually a branch name, which upstream
 is asked to pull.  START has to be reachable from that commit.
 
-\(fn URL START END)" t nil)
+\(fn URL START END)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-patch" '("magit-"))
 
@@ -1707,7 +1612,7 @@ is asked to pull.  START has to be reachable from that commit.
 (autoload 'magit-pull-branch "magit-master/lisp/magit-pull" "\
 Pull from a branch read in the minibuffer.
 
-\(fn SOURCE ARGS)" t nil)
+\(fn SOURCE ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-pull" '("magit-pull-"))
 
@@ -1723,13 +1628,13 @@ Pull from a branch read in the minibuffer.
 (autoload 'magit-push-current "magit-master/lisp/magit-push" "\
 Push the current branch to a branch read in the minibuffer.
 
-\(fn TARGET ARGS)" t nil)
+\(fn TARGET ARGS)" t)
 
 (autoload 'magit-push-other "magit-master/lisp/magit-push" "\
 Push an arbitrary branch or commit somewhere.
 Both the source and the target are read in the minibuffer.
 
-\(fn SOURCE TARGET ARGS)" t nil)
+\(fn SOURCE TARGET ARGS)" t)
 
 (autoload 'magit-push-refspecs "magit-master/lisp/magit-push" "\
 Push one or multiple REFSPECS to a REMOTE.
@@ -1738,14 +1643,14 @@ use multiple REFSPECS, separate them with commas.  Completion is
 only available for the part before the colon, or when no colon
 is used.
 
-\(fn REMOTE REFSPECS ARGS)" t nil)
+\(fn REMOTE REFSPECS ARGS)" t)
 
 (autoload 'magit-push-matching "magit-master/lisp/magit-push" "\
 Push all matching branches to another repository.
 If multiple remotes exist, then read one from the user.
 If just one exists, use that without requiring confirmation.
 
-\(fn REMOTE &optional ARGS)" t nil)
+\(fn REMOTE &optional ARGS)" t)
 
 (autoload 'magit-push-tags "magit-master/lisp/magit-push" "\
 Push all tags to another repository.
@@ -1753,31 +1658,19 @@ If only one remote exists, then push to that.  Otherwise prompt
 for a remote, offering the remote configured for the current
 branch as default.
 
-\(fn REMOTE &optional ARGS)" t nil)
+\(fn REMOTE &optional ARGS)" t)
 
 (autoload 'magit-push-tag "magit-master/lisp/magit-push" "\
 Push a tag to another repository.
 
-\(fn TAG REMOTE &optional ARGS)" t nil)
+\(fn TAG REMOTE &optional ARGS)" t)
 
 (autoload 'magit-push-notes-ref "magit-master/lisp/magit-push" "\
 Push a notes ref to another repository.
 
-\(fn REF REMOTE &optional ARGS)" t nil)
+\(fn REF REMOTE &optional ARGS)" t)
  (autoload 'magit-push-implicitly "magit-push" nil t)
-
-(autoload 'magit-push-to-remote "magit-master/lisp/magit-push" "\
-Push to REMOTE without using an explicit refspec.
-The REMOTE is read in the minibuffer.
-
-This command simply runs \"git push -v [ARGS] REMOTE\".  ARGS
-are the arguments specified in the popup buffer.  No refspec
-arguments are used.  Instead the behavior depends on at least
-these Git variables: `push.default', `remote.pushDefault',
-`branch.<branch>.pushRemote', `branch.<branch>.remote',
-`branch.<branch>.merge', and `remote.<remote>.push'.
-
-\(fn REMOTE ARGS)" t nil)
+ (autoload 'magit-push-to-remote "magit-push" nil t)
 
 (register-definition-prefixes "magit-master/lisp/magit-push" '("magit-"))
 
@@ -1789,15 +1682,15 @@ these Git variables: `push.default', `remote.pushDefault',
 
 (autoload 'magit-reflog-current "magit-master/lisp/magit-reflog" "\
 Display the reflog of the current branch.
-If `HEAD' is detached, then show the reflog for that instead." t nil)
+If `HEAD' is detached, then show the reflog for that instead." t)
 
 (autoload 'magit-reflog-other "magit-master/lisp/magit-reflog" "\
 Display the reflog of a branch or another ref.
 
-\(fn REF)" t nil)
+\(fn REF)" t)
 
 (autoload 'magit-reflog-head "magit-master/lisp/magit-reflog" "\
-Display the `HEAD' reflog." t nil)
+Display the `HEAD' reflog." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-reflog" '("magit-reflog-"))
 
@@ -1812,19 +1705,19 @@ Display the `HEAD' reflog." t nil)
 List and compare references in a dedicated buffer.
 Compared with `HEAD'.
 
-\(fn &optional ARGS)" t nil)
+\(fn &optional ARGS)" t)
 
 (autoload 'magit-show-refs-current "magit-master/lisp/magit-refs" "\
 List and compare references in a dedicated buffer.
 Compare with the current branch or `HEAD' if it is detached.
 
-\(fn &optional ARGS)" t nil)
+\(fn &optional ARGS)" t)
 
 (autoload 'magit-show-refs-other "magit-master/lisp/magit-refs" "\
 List and compare references in a dedicated buffer.
 Compared with a branch read from the user.
 
-\(fn &optional REF ARGS)" t nil)
+\(fn &optional REF ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-refs" '("magit-"))
 
@@ -1838,22 +1731,22 @@ Compared with a branch read from the user.
 (autoload 'magit-remote-add "magit-master/lisp/magit-remote" "\
 Add a remote named REMOTE and fetch it.
 
-\(fn REMOTE URL &optional ARGS)" t nil)
+\(fn REMOTE URL &optional ARGS)" t)
 
 (autoload 'magit-remote-rename "magit-master/lisp/magit-remote" "\
 Rename the remote named OLD to NEW.
 
-\(fn OLD NEW)" t nil)
+\(fn OLD NEW)" t)
 
 (autoload 'magit-remote-remove "magit-master/lisp/magit-remote" "\
 Delete the remote named REMOTE.
 
-\(fn REMOTE)" t nil)
+\(fn REMOTE)" t)
 
 (autoload 'magit-remote-prune "magit-master/lisp/magit-remote" "\
 Remove stale remote-tracking branches for REMOTE.
 
-\(fn REMOTE)" t nil)
+\(fn REMOTE)" t)
 
 (autoload 'magit-remote-prune-refspecs "magit-master/lisp/magit-remote" "\
 Remove stale refspecs for REMOTE.
@@ -1869,7 +1762,7 @@ remote or to replace the stale refspecs with the default refspec.
 Also remove the remote-tracking branches that were created due to
 the now stale refspecs.  Other stale branches are not removed.
 
-\(fn REMOTE)" t nil)
+\(fn REMOTE)" t)
 
 (autoload 'magit-remote-set-head "magit-master/lisp/magit-remote" "\
 Set the local representation of REMOTE's default branch.
@@ -1878,13 +1771,13 @@ accordingly.  With a prefix argument query for the branch to be
 used, which allows you to select an incorrect value if you fancy
 doing that.
 
-\(fn REMOTE &optional BRANCH)" t nil)
+\(fn REMOTE &optional BRANCH)" t)
 
 (autoload 'magit-remote-unset-head "magit-master/lisp/magit-remote" "\
 Unset the local representation of REMOTE's default branch.
 Delete the symbolic-ref \"refs/remotes/<remote>/HEAD\".
 
-\(fn REMOTE)" t nil)
+\(fn REMOTE)" t)
 
 (autoload 'magit-remote-unshallow "magit-master/lisp/magit-remote" "\
 Convert a shallow remote into a full one.
@@ -1892,7 +1785,7 @@ If only a single refspec is set and it does not contain a
 wildcard, then also offer to replace it with the standard
 refspec.
 
-\(fn REMOTE)" t nil)
+\(fn REMOTE)" t)
  (autoload 'magit-remote-configure "magit-remote" nil t)
 
 (register-definition-prefixes "magit-master/lisp/magit-remote" '("magit-"))
@@ -1907,7 +1800,7 @@ refspec.
 Display a list of repositories.
 
 Use the options `magit-repository-directories' to control which
-repositories are displayed." t nil)
+repositories are displayed." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-repos" '("magit-"))
 
@@ -1923,28 +1816,28 @@ Reset the `HEAD' and index to COMMIT, but not the working tree.
 
 \(git reset --mixed COMMIT)
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-soft "magit-master/lisp/magit-reset" "\
 Reset the `HEAD' to COMMIT, but not the index and working tree.
 
 \(git reset --soft REVISION)
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-hard "magit-master/lisp/magit-reset" "\
 Reset the `HEAD', index, and working tree to COMMIT.
 
 \(git reset --hard REVISION)
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-keep "magit-master/lisp/magit-reset" "\
 Reset the `HEAD' and index to COMMIT, while keeping uncommitted changes.
 
 \(git reset --keep REVISION)
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-index "magit-master/lisp/magit-reset" "\
 Reset the index to COMMIT.
@@ -1953,13 +1846,13 @@ head this effectively unstages all changes.
 
 \(git reset COMMIT .)
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-worktree "magit-master/lisp/magit-reset" "\
 Reset the worktree to COMMIT.
 Keep the `HEAD' and index as-is.
 
-\(fn COMMIT)" t nil)
+\(fn COMMIT)" t)
 
 (autoload 'magit-reset-quickly "magit-master/lisp/magit-reset" "\
 Reset the `HEAD' and index to COMMIT, and possibly the working tree.
@@ -1967,7 +1860,7 @@ With a prefix argument reset the working tree otherwise don't.
 
 \(git reset --mixed|--hard COMMIT)
 
-\(fn COMMIT &optional HARD)" t nil)
+\(fn COMMIT &optional HARD)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-reset" '("magit-reset-"))
 
@@ -1986,14 +1879,14 @@ With a prefix argument reset the working tree otherwise don't.
 ;;; Generated autoloads from magit-master/lisp/magit-sequence.el
 
 (autoload 'magit-sequencer-continue "magit-master/lisp/magit-sequence" "\
-Resume the current cherry-pick or revert sequence." t nil)
+Resume the current cherry-pick or revert sequence." t)
 
 (autoload 'magit-sequencer-skip "magit-master/lisp/magit-sequence" "\
-Skip the stopped at commit during a cherry-pick or revert sequence." t nil)
+Skip the stopped at commit during a cherry-pick or revert sequence." t)
 
 (autoload 'magit-sequencer-abort "magit-master/lisp/magit-sequence" "\
 Abort the current cherry-pick or revert sequence.
-This discards all changes made since the sequence started." t nil)
+This discards all changes made since the sequence started." t)
  (autoload 'magit-cherry-pick "magit-sequence" nil t)
 
 (autoload 'magit-cherry-copy "magit-master/lisp/magit-sequence" "\
@@ -2002,7 +1895,7 @@ Prompt for a commit, defaulting to the commit at point.  If
 the region selects multiple commits, then pick all of them,
 without prompting.
 
-\(fn COMMITS &optional ARGS)" t nil)
+\(fn COMMITS &optional ARGS)" t)
 
 (autoload 'magit-cherry-apply "magit-master/lisp/magit-sequence" "\
 Apply the changes in COMMITS but do not commit them.
@@ -2010,7 +1903,7 @@ Prompt for a commit, defaulting to the commit at point.  If
 the region selects multiple commits, then apply all of them,
 without prompting.
 
-\(fn COMMITS &optional ARGS)" t nil)
+\(fn COMMITS &optional ARGS)" t)
 
 (autoload 'magit-cherry-harvest "magit-master/lisp/magit-sequence" "\
 Move COMMITS from another BRANCH onto the current branch.
@@ -2018,7 +1911,7 @@ Remove the COMMITS from BRANCH and stay on the current branch.
 If a conflict occurs, then you have to fix that and finish the
 process manually.
 
-\(fn COMMITS BRANCH &optional ARGS)" t nil)
+\(fn COMMITS BRANCH &optional ARGS)" t)
 
 (autoload 'magit-cherry-donate "magit-master/lisp/magit-sequence" "\
 Move COMMITS from the current branch onto another existing BRANCH.
@@ -2026,7 +1919,7 @@ Remove COMMITS from the current branch and stay on that branch.
 If a conflict occurs, then you have to fix that and finish the
 process manually.  `HEAD' is allowed to be detached initially.
 
-\(fn COMMITS BRANCH &optional ARGS)" t nil)
+\(fn COMMITS BRANCH &optional ARGS)" t)
 
 (autoload 'magit-cherry-spinout "magit-master/lisp/magit-sequence" "\
 Move COMMITS from the current branch onto a new BRANCH.
@@ -2034,7 +1927,7 @@ Remove COMMITS from the current branch and stay on that branch.
 If a conflict occurs, then you have to fix that and finish the
 process manually.
 
-\(fn COMMITS BRANCH START-POINT &optional ARGS)" t nil)
+\(fn COMMITS BRANCH START-POINT &optional ARGS)" t)
 
 (autoload 'magit-cherry-spinoff "magit-master/lisp/magit-sequence" "\
 Move COMMITS from the current branch onto a new BRANCH.
@@ -2042,7 +1935,7 @@ Remove COMMITS from the current branch and checkout BRANCH.
 If a conflict occurs, then you have to fix that and finish
 the process manually.
 
-\(fn COMMITS BRANCH START-POINT &optional ARGS)" t nil)
+\(fn COMMITS BRANCH START-POINT &optional ARGS)" t)
  (autoload 'magit-revert "magit-sequence" nil t)
 
 (autoload 'magit-revert-and-commit "magit-master/lisp/magit-sequence" "\
@@ -2051,7 +1944,7 @@ Prompt for a commit, defaulting to the commit at point.  If
 the region selects multiple commits, then revert all of them,
 without prompting.
 
-\(fn COMMIT &optional ARGS)" t nil)
+\(fn COMMIT &optional ARGS)" t)
 
 (autoload 'magit-revert-no-commit "magit-master/lisp/magit-sequence" "\
 Revert COMMIT by applying it in reverse to the worktree.
@@ -2059,28 +1952,28 @@ Prompt for a commit, defaulting to the commit at point.  If
 the region selects multiple commits, then revert all of them,
 without prompting.
 
-\(fn COMMIT &optional ARGS)" t nil)
+\(fn COMMIT &optional ARGS)" t)
  (autoload 'magit-am "magit-sequence" nil t)
 
 (autoload 'magit-am-apply-patches "magit-master/lisp/magit-sequence" "\
 Apply the patches FILES.
 
-\(fn &optional FILES ARGS)" t nil)
+\(fn &optional FILES ARGS)" t)
 
 (autoload 'magit-am-apply-maildir "magit-master/lisp/magit-sequence" "\
 Apply the patches from MAILDIR.
 
-\(fn &optional MAILDIR ARGS)" t nil)
+\(fn &optional MAILDIR ARGS)" t)
 
 (autoload 'magit-am-continue "magit-master/lisp/magit-sequence" "\
-Resume the current patch applying sequence." t nil)
+Resume the current patch applying sequence." t)
 
 (autoload 'magit-am-skip "magit-master/lisp/magit-sequence" "\
-Skip the stopped at patch during a patch applying sequence." t nil)
+Skip the stopped at patch during a patch applying sequence." t)
 
 (autoload 'magit-am-abort "magit-master/lisp/magit-sequence" "\
 Abort the current patch applying sequence.
-This discards all changes made since the sequence started." t nil)
+This discards all changes made since the sequence started." t)
  (autoload 'magit-rebase "magit-sequence" nil t)
  (autoload 'magit-rebase-onto-pushremote "magit-sequence" nil t)
  (autoload 'magit-rebase-onto-upstream "magit-sequence" nil t)
@@ -2090,55 +1983,55 @@ Rebase the current branch onto a branch read in the minibuffer.
 All commits that are reachable from `HEAD' but not from the
 selected branch TARGET are being rebased.
 
-\(fn TARGET ARGS)" t nil)
+\(fn TARGET ARGS)" t)
 
 (autoload 'magit-rebase-subset "magit-master/lisp/magit-sequence" "\
 Rebase a subset of the current branch's history onto a new base.
 Rebase commits from START to `HEAD' onto NEWBASE.
 START has to be selected from a list of recent commits.
 
-\(fn NEWBASE START ARGS)" t nil)
+\(fn NEWBASE START ARGS)" t)
 
 (autoload 'magit-rebase-interactive "magit-master/lisp/magit-sequence" "\
 Start an interactive rebase sequence.
 
-\(fn COMMIT ARGS)" t nil)
+\(fn COMMIT ARGS)" t)
 
 (autoload 'magit-rebase-autosquash "magit-master/lisp/magit-sequence" "\
 Combine squash and fixup commits with their intended targets.
 
-\(fn ARGS)" t nil)
+\(fn ARGS)" t)
 
 (autoload 'magit-rebase-edit-commit "magit-master/lisp/magit-sequence" "\
 Edit a single older commit using rebase.
 
-\(fn COMMIT ARGS)" t nil)
+\(fn COMMIT ARGS)" t)
 
 (autoload 'magit-rebase-reword-commit "magit-master/lisp/magit-sequence" "\
 Reword a single older commit using rebase.
 
-\(fn COMMIT ARGS)" t nil)
+\(fn COMMIT ARGS)" t)
 
 (autoload 'magit-rebase-remove-commit "magit-master/lisp/magit-sequence" "\
 Remove a single older commit using rebase.
 
-\(fn COMMIT ARGS)" t nil)
+\(fn COMMIT ARGS)" t)
 
 (autoload 'magit-rebase-continue "magit-master/lisp/magit-sequence" "\
 Restart the current rebasing operation.
 In some cases this pops up a commit message buffer for you do
 edit.  With a prefix argument the old message is reused as-is.
 
-\(fn &optional NOEDIT)" t nil)
+\(fn &optional NOEDIT)" t)
 
 (autoload 'magit-rebase-skip "magit-master/lisp/magit-sequence" "\
-Skip the current commit and restart the current rebase operation." t nil)
+Skip the current commit and restart the current rebase operation." t)
 
 (autoload 'magit-rebase-edit "magit-master/lisp/magit-sequence" "\
-Edit the todo list of the current rebase operation." t nil)
+Edit the todo list of the current rebase operation." t)
 
 (autoload 'magit-rebase-abort "magit-master/lisp/magit-sequence" "\
-Abort the current rebase operation, restoring the original branch." t nil)
+Abort the current rebase operation, restoring the original branch." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-sequence" '("magit-"))
 
@@ -2152,33 +2045,33 @@ Abort the current rebase operation, restoring the original branch." t nil)
 (autoload 'magit-sparse-checkout-enable "magit-master/lisp/magit-sparse-checkout" "\
 Convert the working tree to a sparse checkout.
 
-\(fn &optional ARGS)" t nil)
+\(fn &optional ARGS)" t)
 
 (autoload 'magit-sparse-checkout-set "magit-master/lisp/magit-sparse-checkout" "\
 Restrict working tree to DIRECTORIES.
 To extend rather than override the currently configured
 directories, call `magit-sparse-checkout-add' instead.
 
-\(fn DIRECTORIES)" t nil)
+\(fn DIRECTORIES)" t)
 
 (autoload 'magit-sparse-checkout-add "magit-master/lisp/magit-sparse-checkout" "\
 Add DIRECTORIES to the working tree.
 To override rather than extend the currently configured
 directories, call `magit-sparse-checkout-set' instead.
 
-\(fn DIRECTORIES)" t nil)
+\(fn DIRECTORIES)" t)
 
 (autoload 'magit-sparse-checkout-reapply "magit-master/lisp/magit-sparse-checkout" "\
 Reapply the sparse checkout rules to the working tree.
 Some operations such as merging or rebasing may need to check out
 files that aren't included in the sparse checkout.  Call this
-command to reset to the sparse checkout state." t nil)
+command to reset to the sparse checkout state." t)
 
 (autoload 'magit-sparse-checkout-disable "magit-master/lisp/magit-sparse-checkout" "\
 Convert sparse checkout to full checkout.
 Note that disabling the sparse checkout does not clear the
 configured directories.  Call `magit-sparse-checkout-enable' to
-restore the previous sparse checkout." t nil)
+restore the previous sparse checkout." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-sparse-checkout" '("magit-sparse-checkout-"))
 
@@ -2195,7 +2088,7 @@ Untracked files are included according to infix arguments.
 One prefix argument is equivalent to `--include-untracked'
 while two prefix arguments are equivalent to `--all'.
 
-\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t nil)
+\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t)
 
 (autoload 'magit-stash-index "magit-master/lisp/magit-stash" "\
 Create a stash of the index only.
@@ -2204,7 +2097,7 @@ changes are applied in reverse to both the index and the
 worktree.  This command can fail when the worktree is not clean.
 Applying the resulting stash has the inverse effect.
 
-\(fn MESSAGE)" t nil)
+\(fn MESSAGE)" t)
 
 (autoload 'magit-stash-worktree "magit-master/lisp/magit-stash" "\
 Create a stash of unstaged changes in the working tree.
@@ -2212,7 +2105,7 @@ Untracked files are included according to infix arguments.
 One prefix argument is equivalent to `--include-untracked'
 while two prefix arguments are equivalent to `--all'.
 
-\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t nil)
+\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t)
 
 (autoload 'magit-stash-keep-index "magit-master/lisp/magit-stash" "\
 Create a stash of the index and working tree, keeping index intact.
@@ -2220,7 +2113,7 @@ Untracked files are included according to infix arguments.
 One prefix argument is equivalent to `--include-untracked'
 while two prefix arguments are equivalent to `--all'.
 
-\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t nil)
+\(fn MESSAGE &optional INCLUDE-UNTRACKED)" t)
 
 (autoload 'magit-snapshot-both "magit-master/lisp/magit-stash" "\
 Create a snapshot of the index and working tree.
@@ -2228,11 +2121,11 @@ Untracked files are included according to infix arguments.
 One prefix argument is equivalent to `--include-untracked'
 while two prefix arguments are equivalent to `--all'.
 
-\(fn &optional INCLUDE-UNTRACKED)" t nil)
+\(fn &optional INCLUDE-UNTRACKED)" t)
 
 (autoload 'magit-snapshot-index "magit-master/lisp/magit-stash" "\
 Create a snapshot of the index only.
-Unstaged and untracked changes are not stashed." t nil)
+Unstaged and untracked changes are not stashed." t)
 
 (autoload 'magit-snapshot-worktree "magit-master/lisp/magit-stash" "\
 Create a snapshot of unstaged changes in the working tree.
@@ -2240,7 +2133,7 @@ Untracked files are included according to infix arguments.
 One prefix argument is equivalent to `--include-untracked'
 while two prefix arguments are equivalent to `--all'.
 
-\(fn &optional INCLUDE-UNTRACKED)" t nil)
+\(fn &optional INCLUDE-UNTRACKED)" t)
  (autoload 'magit-stash-push "magit-stash" nil t)
 
 (autoload 'magit-stash-apply "magit-master/lisp/magit-stash" "\
@@ -2248,7 +2141,7 @@ Apply a stash to the working tree.
 Try to preserve the stash index.  If that fails because there
 are staged changes, apply without preserving the stash index.
 
-\(fn STASH)" t nil)
+\(fn STASH)" t)
 
 (autoload 'magit-stash-pop "magit-master/lisp/magit-stash" "\
 Apply a stash to the working tree and remove it from stash list.
@@ -2256,43 +2149,43 @@ Try to preserve the stash index.  If that fails because there
 are staged changes, apply without preserving the stash index
 and forgo removing the stash.
 
-\(fn STASH)" t nil)
+\(fn STASH)" t)
 
 (autoload 'magit-stash-drop "magit-master/lisp/magit-stash" "\
 Remove a stash from the stash list.
 When the region is active offer to drop all contained stashes.
 
-\(fn STASH)" t nil)
+\(fn STASH)" t)
 
 (autoload 'magit-stash-clear "magit-master/lisp/magit-stash" "\
 Remove all stashes saved in REF's reflog by deleting REF.
 
-\(fn REF)" t nil)
+\(fn REF)" t)
 
 (autoload 'magit-stash-branch "magit-master/lisp/magit-stash" "\
 Create and checkout a new BRANCH from STASH.
 
-\(fn STASH BRANCH)" t nil)
+\(fn STASH BRANCH)" t)
 
 (autoload 'magit-stash-branch-here "magit-master/lisp/magit-stash" "\
 Create and checkout a new BRANCH and apply STASH.
 The branch is created using `magit-branch-and-checkout', using the
 current branch or `HEAD' as the start-point.
 
-\(fn STASH BRANCH)" t nil)
+\(fn STASH BRANCH)" t)
 
 (autoload 'magit-stash-format-patch "magit-master/lisp/magit-stash" "\
 Create a patch from STASH
 
-\(fn STASH)" t nil)
+\(fn STASH)" t)
 
 (autoload 'magit-stash-list "magit-master/lisp/magit-stash" "\
-List all stashes in a buffer." t nil)
+List all stashes in a buffer." t)
 
 (autoload 'magit-stash-show "magit-master/lisp/magit-stash" "\
 Show all diffs of a stash in a buffer.
 
-\(fn STASH &optional ARGS FILES)" t nil)
+\(fn STASH &optional ARGS FILES)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-stash" '("magit-"))
 
@@ -2312,7 +2205,7 @@ has to confirm that it should be reinitialized.
 
 Non-interactively DIRECTORY is (re-)initialized unconditionally.
 
-\(fn DIRECTORY)" t nil)
+\(fn DIRECTORY)" t)
 
 (autoload 'magit-status "magit-master/lisp/magit-status" "\
 Show the status of the current Git repository in a buffer.
@@ -2347,9 +2240,9 @@ prefix arguments:
   then fall back to the same behavior as with two prefix
   arguments.
 
-\(fn &optional DIRECTORY CACHE)" t nil)
+\(fn &optional DIRECTORY CACHE)" t)
 
-(defalias 'magit 'magit-status "\
+(defalias 'magit #'magit-status "\
 An alias for `magit-status' for better discoverability.
 
 Instead of invoking this alias for `magit-status' using
@@ -2358,7 +2251,7 @@ and read the info node `(magit)Getting Started', which
 also contains other useful hints.")
 
 (autoload 'magit-status-here "magit-master/lisp/magit-status" "\
-Like `magit-status' but with non-nil `magit-status-goto-file-position'." t nil)
+Like `magit-status' but with non-nil `magit-status-goto-file-position'." t)
 
 (autoload 'magit-status-quick "magit-master/lisp/magit-status" "\
 Show the status of the current Git repository, maybe without refreshing.
@@ -2374,12 +2267,12 @@ Prefix arguments have the same meaning as for `magit-status',
 and additionally cause the buffer to be refresh.
 
 To use this function instead of `magit-status', add this to your
-init file: (global-set-key (kbd \"C-x g\") 'magit-status-quick)." t nil)
+init file: (global-set-key (kbd \"C-x g\") \\='magit-status-quick)." t)
 
 (autoload 'magit-status-setup-buffer "magit-master/lisp/magit-status" "\
 
 
-\(fn &optional DIRECTORY)" nil nil)
+\(fn &optional DIRECTORY)")
 
 (register-definition-prefixes "magit-master/lisp/magit-status" '("magit-"))
 
@@ -2394,7 +2287,7 @@ init file: (global-set-key (kbd \"C-x g\") 'magit-status-quick)." t nil)
 (autoload 'magit-submodule-read-name-for-path "magit-master/lisp/magit-submodule" "\
 
 
-\(fn PATH &optional PREFER-SHORT)" nil nil)
+\(fn PATH &optional PREFER-SHORT)")
  (autoload 'magit-submodule-register "magit-submodule" nil t)
  (autoload 'magit-submodule-populate "magit-submodule" nil t)
  (autoload 'magit-submodule-update "magit-submodule" nil t)
@@ -2415,37 +2308,37 @@ Both actions are very dangerous and have to be confirmed.  There
 are additional safety precautions in place, so you might be able
 to recover from making a mistake here, but don't count on it.
 
-\(fn MODULES ARGS TRASH-GITDIRS)" t nil)
+\(fn MODULES ARGS TRASH-GITDIRS)" t)
 
 (autoload 'magit-insert-modules "magit-master/lisp/magit-submodule" "\
 Insert submodule sections.
 Hook `magit-module-sections-hook' controls which module sections
 are inserted, and option `magit-module-sections-nested' controls
-whether they are wrapped in an additional section." nil nil)
+whether they are wrapped in an additional section.")
 
 (autoload 'magit-insert-modules-overview "magit-master/lisp/magit-submodule" "\
 Insert sections for all modules.
 For each section insert the path and the output of `git describe --tags',
-or, failing that, the abbreviated HEAD commit hash." nil nil)
+or, failing that, the abbreviated HEAD commit hash.")
 
 (autoload 'magit-insert-modules-unpulled-from-upstream "magit-master/lisp/magit-submodule" "\
 Insert sections for modules that haven't been pulled from the upstream.
-These sections can be expanded to show the respective commits." nil nil)
+These sections can be expanded to show the respective commits.")
 
 (autoload 'magit-insert-modules-unpulled-from-pushremote "magit-master/lisp/magit-submodule" "\
 Insert sections for modules that haven't been pulled from the push-remote.
-These sections can be expanded to show the respective commits." nil nil)
+These sections can be expanded to show the respective commits.")
 
 (autoload 'magit-insert-modules-unpushed-to-upstream "magit-master/lisp/magit-submodule" "\
 Insert sections for modules that haven't been pushed to the upstream.
-These sections can be expanded to show the respective commits." nil nil)
+These sections can be expanded to show the respective commits.")
 
 (autoload 'magit-insert-modules-unpushed-to-pushremote "magit-master/lisp/magit-submodule" "\
 Insert sections for modules that haven't been pushed to the push-remote.
-These sections can be expanded to show the respective commits." nil nil)
+These sections can be expanded to show the respective commits.")
 
 (autoload 'magit-list-submodules "magit-master/lisp/magit-submodule" "\
-Display a list of the current repository's submodules." t nil)
+Display a list of the current repository's submodules." t)
 
 (register-definition-prefixes "magit-master/lisp/magit-submodule" '("magit-"))
 
@@ -2461,32 +2354,32 @@ Display a list of the current repository's submodules." t nil)
 (autoload 'magit-subtree-add "magit-master/lisp/magit-subtree" "\
 Add REF from REPOSITORY as a new subtree at PREFIX.
 
-\(fn PREFIX REPOSITORY REF ARGS)" t nil)
+\(fn PREFIX REPOSITORY REF ARGS)" t)
 
 (autoload 'magit-subtree-add-commit "magit-master/lisp/magit-subtree" "\
 Add COMMIT as a new subtree at PREFIX.
 
-\(fn PREFIX COMMIT ARGS)" t nil)
+\(fn PREFIX COMMIT ARGS)" t)
 
 (autoload 'magit-subtree-merge "magit-master/lisp/magit-subtree" "\
 Merge COMMIT into the PREFIX subtree.
 
-\(fn PREFIX COMMIT ARGS)" t nil)
+\(fn PREFIX COMMIT ARGS)" t)
 
 (autoload 'magit-subtree-pull "magit-master/lisp/magit-subtree" "\
 Pull REF from REPOSITORY into the PREFIX subtree.
 
-\(fn PREFIX REPOSITORY REF ARGS)" t nil)
+\(fn PREFIX REPOSITORY REF ARGS)" t)
 
 (autoload 'magit-subtree-push "magit-master/lisp/magit-subtree" "\
 Extract the history of the subtree PREFIX and push it to REF on REPOSITORY.
 
-\(fn PREFIX REPOSITORY REF ARGS)" t nil)
+\(fn PREFIX REPOSITORY REF ARGS)" t)
 
 (autoload 'magit-subtree-split "magit-master/lisp/magit-subtree" "\
 Extract the history of the subtree PREFIX.
 
-\(fn PREFIX COMMIT ARGS)" t nil)
+\(fn PREFIX COMMIT ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-subtree" '("magit-"))
 
@@ -2503,7 +2396,7 @@ With a prefix argument annotate the tag.
 
 \(git tag [--annotate] NAME REV)
 
-\(fn NAME REV &optional ARGS)" t nil)
+\(fn NAME REV &optional ARGS)" t)
 
 (autoload 'magit-tag-delete "magit-master/lisp/magit-tag" "\
 Delete one or more tags.
@@ -2513,12 +2406,12 @@ defaulting to the tag at point.
 
 \(git tag -d TAGS)
 
-\(fn TAGS)" t nil)
+\(fn TAGS)" t)
 
 (autoload 'magit-tag-prune "magit-master/lisp/magit-tag" "\
 Offer to delete tags missing locally from REMOTE, and vice versa.
 
-\(fn TAGS REMOTE-TAGS REMOTE)" t nil)
+\(fn TAGS REMOTE-TAGS REMOTE)" t)
 
 (autoload 'magit-tag-release "magit-master/lisp/magit-tag" "\
 Create a release tag for `HEAD'.
@@ -2539,7 +2432,7 @@ Otherwise propose something like \"Foo-Bar 1.2.3\", given, for
 example, a TAG \"v1.2.3\" and a repository located at something
 like \"/path/to/foo-bar\".
 
-\(fn TAG MSG &optional ARGS)" t nil)
+\(fn TAG MSG &optional ARGS)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-tag" '("magit-"))
 
@@ -2550,32 +2443,6 @@ like \"/path/to/foo-bar\".
 ;;; Generated autoloads from magit-master/lisp/magit-transient.el
 
 (register-definition-prefixes "magit-master/lisp/magit-transient" '("magit-"))
-
-;;;***
-
-;;;### (autoloads nil "magit-master/lisp/magit-utils" "magit-master/lisp/magit-utils.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from magit-master/lisp/magit-utils.el
-
-(autoload 'magit-emacs-Q-command "magit-master/lisp/magit-utils" "\
-Show a shell command that runs an uncustomized Emacs with only Magit loaded.
-See info node `(magit)Debugging Tools' for more information." t nil)
-
-(autoload 'Info-follow-nearest-node--magit-gitman "magit-master/lisp/magit-utils" "\
-
-
-\(fn FN &optional FORK)" nil nil)
-
-(advice-add 'Info-follow-nearest-node :around 'Info-follow-nearest-node--magit-gitman)
-
-(autoload 'org-man-export--magit-gitman "magit-master/lisp/magit-utils" "\
-
-
-\(fn FN LINK DESCRIPTION FORMAT)" nil nil)
-
-(advice-add 'org-man-export :around 'org-man-export--magit-gitman)
-
-(register-definition-prefixes "magit-master/lisp/magit-utils" '("magit-"))
 
 ;;;***
 
@@ -2596,20 +2463,6 @@ or call the function `magit-wip-mode'.")
 (autoload 'magit-wip-mode "magit-master/lisp/magit-wip" "\
 Save uncommitted changes to work-in-progress refs.
 
-This is a minor mode.  If called interactively, toggle the
-`Magit-Wip mode' mode.  If the prefix argument is positive,
-enable the mode, and if it is zero or negative, disable the mode.
-
-If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
-the mode if ARG is nil, omitted, or is a positive number.
-Disable the mode if ARG is a negative number.
-
-To check whether the minor mode is enabled in the current buffer,
-evaluate `(default-value 'magit-wip-mode)'.
-
-The mode's hook is called both when the mode is enabled and when
-it is disabled.
-
 Whenever appropriate (i.e. when dataloss would be a possibility
 otherwise) this mode causes uncommitted changes to be committed
 to dedicated work-in-progress refs.
@@ -2619,7 +2472,21 @@ other `magit-wip-*' modes, which can also be used individually,
 if you want finer control over when the wip refs are updated;
 but that is discouraged.
 
-\(fn &optional ARG)" t nil)
+This is a global minor mode.  If called interactively, toggle the
+`Magit-Wip mode' mode.  If the prefix argument is positive,
+enable the mode, and if it is zero or negative, disable the mode.
+
+If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
+the mode if ARG is nil, omitted, or is a positive number.
+Disable the mode if ARG is a negative number.
+
+To check whether the minor mode is enabled in the current buffer,
+evaluate `(default-value \\='magit-wip-mode)'.
+
+The mode's hook is called both when the mode is enabled and when
+it is disabled.
+
+\(fn &optional ARG)" t)
 
 (put 'magit-wip-after-save-mode 'globalized-minor-mode t)
 
@@ -2648,7 +2515,7 @@ Magit-Wip-After-Save-Local mode is enabled in all buffers where
 See `magit-wip-after-save-local-mode' for more information on
 Magit-Wip-After-Save-Local mode.
 
-\(fn &optional ARG)" t nil)
+\(fn &optional ARG)" t)
 
 (defvar magit-wip-after-apply-mode nil "\
 Non-nil if Magit-Wip-After-Apply mode is enabled.
@@ -2660,7 +2527,14 @@ for a description of this minor mode.")
 (autoload 'magit-wip-after-apply-mode "magit-master/lisp/magit-wip" "\
 Commit to work-in-progress refs.
 
-This is a minor mode.  If called interactively, toggle the
+After applying a change using any \"apply variant\"
+command (apply, stage, unstage, discard, and reverse) commit the
+affected files to the current wip refs.  For each branch there
+may be two wip refs; one contains snapshots of the files as found
+in the worktree and the other contains snapshots of the entries
+in the index.
+
+This is a global minor mode.  If called interactively, toggle the
 `Magit-Wip-After-Apply mode' mode.  If the prefix argument is
 positive, enable the mode, and if it is zero or negative, disable
 the mode.
@@ -2670,19 +2544,12 @@ the mode if ARG is nil, omitted, or is a positive number.
 Disable the mode if ARG is a negative number.
 
 To check whether the minor mode is enabled in the current buffer,
-evaluate `(default-value 'magit-wip-after-apply-mode)'.
+evaluate `(default-value \\='magit-wip-after-apply-mode)'.
 
 The mode's hook is called both when the mode is enabled and when
 it is disabled.
 
-After applying a change using any \"apply variant\"
-command (apply, stage, unstage, discard, and reverse) commit the
-affected files to the current wip refs.  For each branch there
-may be two wip refs; one contains snapshots of the files as found
-in the worktree and the other contains snapshots of the entries
-in the index.
-
-\(fn &optional ARG)" t nil)
+\(fn &optional ARG)" t)
 
 (defvar magit-wip-before-change-mode nil "\
 Non-nil if Magit-Wip-Before-Change mode is enabled.
@@ -2694,21 +2561,6 @@ for a description of this minor mode.")
 (autoload 'magit-wip-before-change-mode "magit-master/lisp/magit-wip" "\
 Commit to work-in-progress refs before certain destructive changes.
 
-This is a minor mode.  If called interactively, toggle the
-`Magit-Wip-Before-Change mode' mode.  If the prefix argument is
-positive, enable the mode, and if it is zero or negative, disable
-the mode.
-
-If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
-the mode if ARG is nil, omitted, or is a positive number.
-Disable the mode if ARG is a negative number.
-
-To check whether the minor mode is enabled in the current buffer,
-evaluate `(default-value 'magit-wip-before-change-mode)'.
-
-The mode's hook is called both when the mode is enabled and when
-it is disabled.
-
 Before invoking a revert command or an \"apply variant\"
 command (apply, stage, unstage, discard, and reverse) commit the
 affected tracked files to the current wip refs.  For each branch
@@ -2719,7 +2571,22 @@ entries in the index.
 Only changes to files which could potentially be affected by the
 command which is about to be called are committed.
 
-\(fn &optional ARG)" t nil)
+This is a global minor mode.  If called interactively, toggle the
+`Magit-Wip-Before-Change mode' mode.  If the prefix argument is
+positive, enable the mode, and if it is zero or negative, disable
+the mode.
+
+If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
+the mode if ARG is nil, omitted, or is a positive number.
+Disable the mode if ARG is a negative number.
+
+To check whether the minor mode is enabled in the current buffer,
+evaluate `(default-value \\='magit-wip-before-change-mode)'.
+
+The mode's hook is called both when the mode is enabled and when
+it is disabled.
+
+\(fn &optional ARG)" t)
 
 (autoload 'magit-wip-commit-initial-backup "magit-master/lisp/magit-wip" "\
 Before saving, commit current file to a worktree wip ref.
@@ -2735,7 +2602,7 @@ modes, instead of in a backup file as `backup-buffer' would.
 This function ignores the variables that affect `backup-buffer'
 and can be used along-side that function, which is recommended
 because this function only backs up files that are tracked in
-a Git repository." nil nil)
+a Git repository.")
 
 (register-definition-prefixes "magit-master/lisp/magit-wip" '("magit-"))
 
@@ -2749,26 +2616,26 @@ a Git repository." nil nil)
 (autoload 'magit-worktree-checkout "magit-master/lisp/magit-worktree" "\
 Checkout BRANCH in a new worktree at PATH.
 
-\(fn PATH BRANCH)" t nil)
+\(fn PATH BRANCH)" t)
 
 (autoload 'magit-worktree-branch "magit-master/lisp/magit-worktree" "\
 Create a new BRANCH and check it out in a new worktree at PATH.
 
-\(fn PATH BRANCH START-POINT &optional FORCE)" t nil)
+\(fn PATH BRANCH START-POINT &optional FORCE)" t)
 
 (autoload 'magit-worktree-move "magit-master/lisp/magit-worktree" "\
 Move WORKTREE to PATH.
 
-\(fn WORKTREE PATH)" t nil)
+\(fn WORKTREE PATH)" t)
 
 (register-definition-prefixes "magit-master/lisp/magit-worktree" '("magit-"))
 
 ;;;***
 
 ;;;### (autoloads nil nil ("magit-master/lisp/git-commit-pkg.el"
-;;;;;;  "magit-master/lisp/magit-core.el" "magit-master/lisp/magit-libgit-pkg.el"
-;;;;;;  "magit-master/lisp/magit-pkg.el" "magit-master/lisp/magit-section-pkg.el")
-;;;;;;  (0 0 0 0))
+;;;;;;  "magit-master/lisp/magit-bookmark.el" "magit-master/lisp/magit-core.el"
+;;;;;;  "magit-master/lisp/magit-libgit-pkg.el" "magit-master/lisp/magit-pkg.el"
+;;;;;;  "magit-master/lisp/magit-section-pkg.el") (0 0 0 0))
 
 ;;;***
 
