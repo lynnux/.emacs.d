@@ -24,7 +24,7 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
-  (ensure-latest "~/.emacs.d/packages/minibuffer/compat.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/compat-master.zip")
   (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
@@ -2033,7 +2033,7 @@ _c_: hide comment        _q_uit
     ;; https://github.com/phikal/compat.el
     (use-package compat
       :defer t
-      :load-path "~/.emacs.d/packages/minibuffer/compat.el-master"
+      :load-path "~/.emacs.d/packages/minibuffer/compat-master"
       :init
       (unless (functionp 'ensure-list)
         (defun ensure-list (object)
@@ -2138,7 +2138,6 @@ _c_: hide comment        _q_uit
       (advice-add #'consult-everything :around #'consult--with-orderless)
       :config
       )
-    ;; 会绑定consult-file-externally到embark里
     (use-package embark-consult
       :after (embark)
       :demand t

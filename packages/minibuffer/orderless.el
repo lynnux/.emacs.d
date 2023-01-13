@@ -5,7 +5,7 @@
 ;; Author: Omar Antolín Camarena <omar@matem.unam.mx>
 ;; Maintainer: Omar Antolín Camarena <omar@matem.unam.mx>
 ;; Keywords: extensions
-;; Version: 0.7
+;; Version: 1.0
 ;; Homepage: https://github.com/oantolin/orderless
 ;; Package-Requires: ((emacs "26.1"))
 
@@ -199,8 +199,10 @@ sequence."
   "Match a component in flex style.
 This means the characters in COMPONENT must occur in the
 candidate in that order, but not necessarily consecutively."
-  (orderless--separated-by '(zero-or-more nonl)
-    (cl-loop for char across component collect char)))
+  (rx-to-string
+   `(seq
+     ,@(cdr (cl-loop for char across component
+                     append `((zero-or-more (not ,char)) (group ,char)))))))
 
 (defun orderless-initialism (component)
   "Match a component as an initialism.
@@ -247,16 +249,21 @@ at a word boundary in the candidate.  This is similar to the
   string)
 
 (defun orderless-highlight-matches (regexps strings)
-    "Highlight a match of each of the REGEXPS in each of the STRINGS.
+  "Highlight a match of each of the REGEXPS in each of the STRINGS.
 Warning: only use this if you know all REGEXPs match all STRINGS!
 For the user's convenience, if REGEXPS is a string, it is
 converted to a list of regexps according to the value of
 `orderless-matching-styles'."
-    (when (stringp regexps)
-      (setq regexps (orderless-pattern-compiler regexps)))
+  (when (stringp regexps)
+    (setq regexps (orderless-pattern-compiler regexps)))
+  (let ((case-fold-search
+         (if orderless-smart-case
+             (cl-loop for regexp in regexps
+                      always (isearch-no-upper-case-p regexp t))
+           completion-ignore-case)))
     (cl-loop for original in strings
              for string = (copy-sequence original)
-             collect (orderless--highlight regexps string)))
+             collect (orderless--highlight regexps string))))
 
 ;;; Compiling patterns to lists of regexps
 
@@ -423,18 +430,20 @@ This function is part of the `orderless' completion style."
   (catch 'orderless--many
     (let (one)
       ;; Abuse all-completions/orderless-filter as a fast search loop.
-      ;; Should be more or less allocation-free since our "predicate"
-      ;; always returns nil.
-      (orderless-filter string table
-                        ;; key/value for hash tables
-                        (lambda (&rest args)
-                          (when (or (not pred) (apply pred args))
-                            (when one
-                              (throw 'orderless--many (cons string point)))
-                            (setq one (car args) ;; first argument is key
-                                  one (if (consp one) (car one) one) ;; alist
-                                  one (if (symbolp one) (symbol-name one) one)))
-                          nil))
+      ;; Should be almost allocation-free since our "predicate" is not
+      ;; called more than two times.
+      (orderless-filter
+       string table
+       ;; key/value for hash tables
+       (lambda (&rest args)
+         (when (or (not pred) (apply pred args))
+           (setq args (car args) ;; first argument is key
+                 args (if (consp args) (car args) args) ;; alist
+                 args (if (symbolp args) (symbol-name args) args))
+           (when (and one (not (equal one args)))
+             (throw 'orderless--many (cons string point)))
+           (setq one args)
+           t)))
       (when one
         (if (equal string one)
             t ;; unique exact match
