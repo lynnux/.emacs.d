@@ -1,11 +1,11 @@
 ;;; tempel.el --- Tempo templates/snippets with in-buffer field editing -*- lexical-binding: t -*-
 
-;; Copyright (C) 2022  Free Software Foundation, Inc.
+;; Copyright (C) 2022-2023 Free Software Foundation, Inc.
 
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2022
-;; Version: 0.5
+;; Version: 0.6
 ;; Package-Requires: ((emacs "27.1"))
 ;; Homepage: https://github.com/minad/tempel
 
@@ -299,7 +299,7 @@ Return the added field."
 Return the added field."
   (let ((beg (point)))
     (condition-case nil
-        (insert (eval form (cdr st)))
+        (insert (or (eval form (cdr st)) ""))
       ;; Ignore errors since some variables may not be defined yet.
       (void-variable nil))
     (let ((ov (make-overlay beg (point) nil t)))
@@ -454,7 +454,7 @@ This is meant to be a source in `tempel-template-sources'."
              for f in files collect
              (cons f (time-convert
                       (file-attribute-modification-time
-                       (file-attributes f))
+                       (file-attributes (file-truename f)))
                       'integer)))))
       (unless (equal (car tempel--path-templates) timestamps)
         (setq tempel--path-templates (cons timestamps
@@ -525,9 +525,12 @@ This is meant to be a source in `tempel-template-sources'."
 
 (defun tempel--field-at-point ()
   "Return the field overlay at point."
-  (cl-loop for ov in (overlays-in (max (point-min) (1- (point)))
-                                  (min (point-max) (1+ (point))))
-           thereis (and (overlay-get ov 'tempel--field) ov)))
+  (let ((start most-positive-fixnum) field)
+    (dolist (ov (overlays-in (max (point-min) (1- (point)))
+                             (min (point-max) (1+ (point)))))
+      (when (and (overlay-get ov 'tempel--field) (< (overlay-start ov) start))
+        (setq start (overlay-start ov) field ov)))
+    field))
 
 (defun tempel-kill ()
   "Kill the field contents."
