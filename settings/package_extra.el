@@ -4354,6 +4354,8 @@ _q_uit
   (define-key god-local-mode-map (kbd "i") 'view-mode)
   )
 
+(add-to-list 'auto-mode-alist '("\\.jsfl\\'" . js-mode))
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
