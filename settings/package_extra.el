@@ -240,6 +240,15 @@ _q_uit
   ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
   (define-key dired-mode-map (kbd "C-c C-p") 'wdired-change-to-wdired-mode)
   
+  (defun my-dired-do-rename()
+    "重命名，默认就是当前文件"
+    (interactive)
+    (minibuffer-with-setup-hook
+        (lambda()
+          (call-interactively 'next-history-element)) ;; 执行M-n future history
+      (call-interactively 'dired-do-rename)))
+  (define-key dired-mode-map [remap dired-do-rename] 'my-dired-do-rename)
+  
   (when (functionp 'pop-select/popup-shell-menu)
     (defun get-region-select-path()
       "获取选中的路径，抄的dired-mark和dired-mark-files-in-region"
