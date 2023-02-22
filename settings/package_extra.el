@@ -4141,7 +4141,7 @@ _q_uit
             (window-min-height 1)
             (window-min-width 1)
             after-make-frame-functions)
-        (unless show-fun-name--context-child-frame
+        (when (or (not show-fun-name--context-child-frame) (not (frame-live-p show-fun-name--context-child-frame)))
           (setq show-fun-name--context-child-frame
                 (make-frame
                  `((border-width . 0)
