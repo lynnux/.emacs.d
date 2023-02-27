@@ -151,7 +151,7 @@ set as `python3' to let ms-pyls use python 3 environments."
   :group 'lsp-pyright)
 
 (defcustom lsp-pyright-prefer-remote-env t
-  "If non nil, lsp-pyright will perfer remote python environment.
+  "If non nil, lsp-pyright will prefer remote python environment.
 Only available in Emacs 27 and above."
   :type 'boolean
   :group 'lsp-pyright)
@@ -229,7 +229,7 @@ Current LSP WORKSPACE should be passed in."
   :new-connection (lsp-stdio-connection (lambda ()
                                           (cons (lsp-package-path 'pyright)
                                                 lsp-pyright-langserver-command-args)))
-  :major-modes '(python-mode)
+  :major-modes '(python-mode python-ts-mode)
   :server-id 'pyright
   :multi-root lsp-pyright-multi-root
   :priority 3
