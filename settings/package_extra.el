@@ -848,7 +848,7 @@ _c_: hide comment        _q_uit
     "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
     ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
     ;; (message "%S" snippet)
-    (let ((new (convert-yas-to-tempel snippet)))
+    (let ((new (convert-yas-to-tempel snippet t)))
       (when start (delete-region start end))
       ;; (message "%S" new)
       (tempel-insert new)))
@@ -3841,6 +3841,7 @@ _q_uit
   (poe-popup 'comint-mode)
   (poe-popup 'compilation-mode)
   (poe-popup 'Man-mode :size 0.4 :shrink t )
+  (poe-popup "\\*gud-.*" :regexp t) ;; (poe-popup 'gud-mode) 没效果
   
   (add-hook 'poe-popup-mode-hook (lambda() (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
