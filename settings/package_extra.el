@@ -1150,6 +1150,16 @@ _c_: hide comment        _q_uit
     (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
       ad-do-it))
   
+  (defadvice corfu--make-frame (after my-corfu--make-frame activate)
+    (let ((frame ad-return-value))
+      (when (frame-live-p frame)
+        (set-face-background
+         (if (facep 'child-frame-border)
+             'child-frame-border
+           'internal-border)
+         "#6F6F6F" frame)
+        )))
+  
   ;; 历史输入排前！
   (use-package corfu-history
     :init
@@ -4421,7 +4431,7 @@ _q_uit
               (custom-set-faces
 	       '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
 	       '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
-	       '(corfu-current ((t (:foreground "#c678dd"))))
+	       '(corfu-current ((t (:foreground "red"))))
                '(consult-preview-cursor ((t (:inherit highlight)))) ;; TODO: 整个单词高亮，虽然很多情况下不一定是一个词
                '(hi-yellow ((t (:foreground "black" :background "yellow"))))
                '(hi-pink ((t (:foreground "black" :background "HotPink"))))
