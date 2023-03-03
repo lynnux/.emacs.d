@@ -2978,9 +2978,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                   (remove-hook hook fn 'local))))))
 
 ;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
-;; bug: lsp-mode，偶尔补全delete-region报错，导致补全失效(进入yas之前就报错)
-;; bug: eglot，补全后eldoc不弹出参数提示。另外flymake不是idle时更新的。
-(defconst lsp-use-which 'lsp-mode)
+;; lsp-mode缺点：偶尔补全delete-region报错，导致补全失效(进入yas之前就报错)
+;; eglot缺点。另外flymake不是idle时更新的。
+(defconst lsp-use-which 'eglot)
 (cond ((eq lsp-use-which 'lsp-mode)
        ;; 额外需要ht和spinner
        (use-package lsp-mode
@@ -3185,10 +3185,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
+         (eldoc-add-command 'c-electric-paren)
+         (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
+         (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
+         (when nil
+           ;; 获取不显示signature的方法
+           (defadvice eldoc--message-command-p (before my-eldoc--message-command-p activate)
+             (and (symbolp (ad-get-arg 0))
+                  (message "%S" (ad-get-arg 0)))
+             )
+           )
          (advice-add 'jsonrpc--log-event :around
                      (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
          ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-         (add-to-list 'eglot-stay-out-of 'flymake)
+         ;; (add-to-list 'eglot-stay-out-of 'flymake)
+         ;; (setq flymake-no-changes-timeout 1.0) ;; 这个是没有效果的
          (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
          (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
                eglot-ignored-server-capabilities)
