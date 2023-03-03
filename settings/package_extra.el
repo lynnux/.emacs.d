@@ -844,14 +844,16 @@ _c_: hide comment        _q_uit
   :defer t
   :config
   (setq yas-global-mode t)
+  (defvar yas-minor-mode t)
   (defun yas-expand-snippet(snippet &optional start end expand-env)
     "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
     ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
     ;; (message "%S" snippet)
     (let ((new (convert-yas-to-tempel snippet t)))
-      (when start (delete-region start end))
+      (ignore-errors (when start (delete-region start end)))
       ;; (message "%S" new)
-      (tempel-insert new)))
+      (tempel-insert new)
+      ))
   
   (defun convert-yas-to-tempel(str &optional remove_multi_args)
     "转化yas字符串为tempel模板"
@@ -871,6 +873,7 @@ _c_: hide comment        _q_uit
                           (setq temp2 (append temp2 (list y)))))
                     (setq temp2 (append temp2 (list s))))
                   ) temp)
+      (setq temp2 (append temp2 (list 'q))) ;; 避免多按一次tab才结束(参考eglot-tempel)
       temp2))
   (when nil
     (progn
@@ -2975,6 +2978,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                   (remove-hook hook fn 'local))))))
 
 ;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
+;; bug: lsp-mode，偶尔补全delete-region报错，导致补全失效(进入yas之前就报错)
+;; bug: eglot，补全后eldoc不弹出参数提示。另外flymake不是idle时更新的。
 (defconst lsp-use-which 'lsp-mode)
 (cond ((eq lsp-use-which 'lsp-mode)
        ;; 额外需要ht和spinner
@@ -4146,6 +4151,7 @@ _q_uit
                      executing-kbd-macro
                      noninteractive
                      (minibufferp)
+                     (not (derived-mode-p 'prog-mode))
                      this-command))
         (show-fun-name--update-pos)
         (if show-fun-name-always
