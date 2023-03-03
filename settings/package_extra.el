@@ -24,7 +24,7 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
-  (ensure-latest "~/.emacs.d/packages/minibuffer/compat-master.zip")
+  (ensure-latest "~/.emacs.d/packages/minibuffer/compat-main.zip")
   (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
@@ -2046,7 +2046,7 @@ _c_: hide comment        _q_uit
     ;; https://github.com/phikal/compat.el
     (use-package compat
       :defer t
-      :load-path "~/.emacs.d/packages/minibuffer/compat-master"
+      :load-path "~/.emacs.d/packages/minibuffer/compat-main"
       :init
       (unless (functionp 'ensure-list)
         (defun ensure-list (object)
@@ -3185,6 +3185,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
+         (add-to-list 'completion-category-overrides '(eglot (styles basic))) ;; flex可能会导致多按C-g，参考https://github.com/minad/corfu/wiki
          (eldoc-add-command 'c-electric-paren)
          (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
          (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
@@ -3213,7 +3214,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            )
          ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
          (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-         )       
+         ;; 用counsel-etags的imenu
+         (add-hook 'eglot-managed-mode-hook (lambda()
+                                              (remove-function (local 'imenu-create-index-function) #'eglot-imenu)))
+         )
        )
 )
 

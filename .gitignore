@@ -103,3 +103,4 @@ packages/minibuffer/compat.el-master/*
 /packages/tree-sitter/evil-textobj-tree-sitter-master/
 /org-persist/
 /packages/minibuffer/compat-master/
+/packages/minibuffer/compat-main/
