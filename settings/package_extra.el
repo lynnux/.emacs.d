@@ -214,8 +214,8 @@ _q_uit
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
     )
 
-  ;; 设置dired-listing-switches会造成dired-sidebar不能展开目录
   ;; (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
+  (setq dired-listing-switches "-alh --group-directories-first") ;; 支持dired-sidebar
   
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
@@ -4170,25 +4170,30 @@ _q_uit
         (end-of-line)
         (setq show-fun-name--last-defun-pos (cons begin (point)))
         ))))
+(defun show-fun-name--hide()
+  (when show-fun-name--context-child-frame
+    (make-frame-invisible show-fun-name--context-child-frame)))
+
 (defun show-fun-name--timer-function()
   (condition-case nil
-      (when (not (or cursor-in-echo-area
-                     executing-kbd-macro
-                     noninteractive
-                     (minibufferp)
-                     (not (derived-mode-p 'prog-mode))
-                     this-command))
-        (show-fun-name--update-pos)
-        (if show-fun-name-always
-            (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
-          ;; 如果可见，则隐藏之
-          (if (pos-visible-in-window-p (car show-fun-name--last-defun-pos))
-              (when show-fun-name--context-child-frame
-                (make-frame-invisible show-fun-name--context-child-frame))
-            (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
-            )))
-    (error (when show-fun-name--context-child-frame
-             (make-frame-invisible show-fun-name--context-child-frame))))
+      (if (not (or cursor-in-echo-area
+                   executing-kbd-macro
+                   noninteractive
+                   (minibufferp)
+                   (not (derived-mode-p 'prog-mode))
+                   this-command))
+          (progn
+            (show-fun-name--update-pos)
+            (if show-fun-name-always
+                (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+              ;; 如果可见，则隐藏之
+              (if (pos-visible-in-window-p (car show-fun-name--last-defun-pos))
+                  (show-fun-name--hide)
+                (show-fun-name--show-context-in-child-frame (buffer-substring (car show-fun-name--last-defun-pos ) (cdr show-fun-name--last-defun-pos)))
+                )))
+        (show-fun-name--hide)
+        )
+    (error (show-fun-name--hide)))
   )
 (run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
 
