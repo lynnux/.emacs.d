@@ -215,7 +215,7 @@ _q_uit
     )
 
   ;; (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
-  (setq dired-listing-switches "-alhX --group-directories-first") ;; 更好的文件大小，默认以后辍排序。(必须测试支持dired-sidebar)
+  (setq dired-listing-switches "-lhX --group-directories-first") ;; 更好的文件大小，默认以后辍排序。(必须测试支持dired-sidebar)
   
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
