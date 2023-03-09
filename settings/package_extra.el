@@ -1891,37 +1891,31 @@ _c_: hide comment        _q_uit
       ;; 启动用无序匹配，本质是一个自动正则生成器，结果给completion-styles用
       :config
       ;; https://github.com/minad/consult/wiki#minads-orderless-configuration
-      ;; 以这些开头或者结尾都是可以的
-      (defvar +orderless-dispatch-alist
-        '((?% . char-fold-to-regexp) ;; 默认就是支持regex，这里%可以转换欧州那些字母为英文
-          (?! . orderless-without-literal) ;; !不包含文本
-          (?`. orderless-initialism) ;; 每个字母都是一个词的开头，如`or匹配oaaa rbbb
-          (?= . orderless-literal) ;; 纯文本包含(regexp-quote实现)
-          (?~ . orderless-flex)) ;; fuzzy，不过是有顺序的
-        )
-      (defun +orderless--suffix-regexp ()
+      (defun +orderless--consult-suffix ()
+        "Regexp which matches the end of string with Consult tofu support."
         (if (and (boundp 'consult--tofu-char) (boundp 'consult--tofu-range))
             (format "[%c-%c]*$"
                     consult--tofu-char
                     (+ consult--tofu-char consult--tofu-range -1))
           "$"))
-      (defun +orderless-dispatch (word _index _total)
+      ;; 以这些开头或者结尾都是可以的
+      ;; (defcustom orderless-affix-dispatch-alist
+      ;;   `((?% . ,#'char-fold-to-regexp) ;; 默认就是支持regex，这里%可以转换欧州那些字母为英文
+      ;;     (?! . ,#'orderless-without-literal) ;; !不包含文本
+      ;;     (?, . ,#'orderless-initialism) ;; 每个字母都是一个词的开头，如,or匹配oaaa rbbb
+      ;;     (?= . ,#'orderless-literal) ;; 纯文本包含(regexp-quote实现)
+      ;;     (?~ . ,#'orderless-flex))) ;; fuzzy，不过是有顺序的
+      (defun +orderless-consult-dispatch (word _index _total)
         (cond
          ;; Ensure that $ works with Consult commands, which add disambiguation suffixes
          ((string-suffix-p "$" word)
-          `(orderless-regexp . ,(concat (substring word 0 -1) (+orderless--suffix-regexp))))
+          `(orderless-regexp . ,(concat (substring word 0 -1) (+orderless--consult-suffix))))
          ;; File extensions
          ((and (or minibuffer-completing-file-name
                    (derived-mode-p 'eshell-mode))
                (string-match-p "\\`\\.." word))
-          `(orderless-regexp . ,(concat "\\." (substring word 1) (+orderless--suffix-regexp))))
-         ;; Ignore single !
-         ((equal "!" word) `(orderless-literal . ""))
-         ;; Prefix and suffix
-         ((if-let (x (assq (aref word 0) +orderless-dispatch-alist))
-              (cons (cdr x) (substring word 1))
-            (when-let (x (assq (aref word (1- (length word))) +orderless-dispatch-alist))
-              (cons (cdr x) (substring word 0 -1)))))))
+          `(orderless-regexp . ,(concat "\\." (substring word 1) (+orderless--consult-suffix))))))
+      
       ;; +orderless-with-initialism直接进completion-styles-alist了
       (orderless-define-completion-style +orderless-with-initialism
         (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
@@ -1934,7 +1928,7 @@ _c_: hide comment        _q_uit
       ;; eglot本身就是flex的，只需要设置elisp就行了，也可以用空格分词(需要设置 corfu-quit-at-boundary)
       (add-hook 'emacs-lisp-mode-hook (lambda ()
                                         (make-local-variable 'orderless-style-dispatchers)
-                                        (setq orderless-style-dispatchers '(+orderless-dispatch my/orderless-dispatch-flex-first))))
+                                        (setq orderless-style-dispatchers '(orderless-affix-dispatch my/orderless-dispatch-flex-first))))
       (setq completion-styles '(orderless basic)
             completion-category-defaults nil
             completion-category-overrides '((multi-category (styles +orderless-flex)) ;; consult buffer等，也会影响其它到project buffer
@@ -1943,7 +1937,8 @@ _c_: hide comment        _q_uit
                                             (variable (styles +orderless-with-initialism))
                                             (symbol (styles +orderless-with-initialism)))
             orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
-            orderless-style-dispatchers '(+orderless-dispatch) ; 按+orderless-dispatch-alist执行相应的筛选
+            orderless-style-dispatchers (list #'+orderless-consult-dispatch
+                                              #'orderless-affix-dispatch)
             )
 
       ;; https://github.com/minad/consult/wiki#use-orderless-as-pattern-compiler-for-consult-grepripgrepfind
