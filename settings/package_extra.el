@@ -4190,7 +4190,7 @@ _q_uit
         )
     (error (show-fun-name--hide)))
   )
-(run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
+;; (run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
 
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
