@@ -344,15 +344,16 @@ _q_uit
   ;; 给目录加上[]以便跟普通buffer区分开
   (add-hook 'dired-after-readin-hook
             (lambda ()
-              (unless (eq major-mode 'dired-sidebar-mode)
-                (let ((count 1)
-                      (name (format "[%s]" (file-name-nondirectory (directory-file-name dired-directory)))))
-                  ;; buffer名不能重名
-                  (while (get-buffer name)
-                    (setq name (format "[%s]%d" (file-name-nondirectory (directory-file-name dired-directory)) count))
-                    (setq count (+ count 1)))
-                  (rename-buffer name)
-                  ))))
+              (ignore-errors
+                (unless (eq major-mode 'dired-sidebar-mode)
+                  (let ((count 1)
+                        (name (format "[%s]" (file-name-nondirectory (directory-file-name dired-directory)))))
+                    ;; buffer名不能重名
+                    (while (get-buffer name)
+                      (setq name (format "[%s]%d" (file-name-nondirectory (directory-file-name dired-directory)) count))
+                      (setq count (+ count 1)))
+                    (rename-buffer name)
+                    )))))
   
   (add-hook 'dired-mode-hook (lambda()
                                (hl-line-mode +1)
@@ -4190,7 +4191,7 @@ _q_uit
         )
     (error (show-fun-name--hide)))
   )
-(run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
+;; (run-with-idle-timer 0.5 t #'show-fun-name--timer-function)
 
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
