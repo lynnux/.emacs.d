@@ -3477,8 +3477,9 @@ _q_uit
   
   (electric-pair-mode 1) ;; 这个是必须开的，有些mode会添加自己的chars
   ;; c++换行时输入{}自动indent
-  (defadvice electric-pair--insert (after my-electric-pair--insert activate)
-    (indent-according-to-mode))
+  ;; (defadvice electric-pair--insert (after my-electric-pair--insert activate)
+  ;;   (indent-according-to-mode)
+  ;;   )
   )
 
 
