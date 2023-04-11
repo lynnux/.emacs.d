@@ -1866,7 +1866,7 @@ _c_: hide comment        _q_uit
               ;; (dired-do-find-regexp buffer) ;; dired里的A，可以只搜索mark了的文件
               ;; (my-consult-ripgrep-only-current-dir buffer)
               ;; (consult-ripgrep buffer) 
-              (execute-extended-command grid) ; M-x
+              (execute-extended-command grid (vertico-sort-function . vertico-sort-history-alpha)) ; M-x
               (yas-insert-snippet grid)
               (dired-recent-open (vertico-sort-function . nil)) ;; 已经是排好序了的
               (describe-function (vertico-sort-function . vertico-sort-history-alpha))
@@ -2732,7 +2732,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (defadvice etags-verify-tags-table (around my-etags-verify-tags-table activate)
       ;; 原来的判断是开头0xC字符
       (setq ad-return-value t)
-      ))
+      )
+    (defadvice visit-tags-table-buffer (around my-visit-tags-table activate)
+      "屏蔽xref提示选择TAGS"
+      (cl-letf (((symbol-function #'read-file-name)
+                 (lambda (prompt &optional dir default-filename &rest others)
+                   ;; (message "dir:%S, default-filename:%S" dir default-filename)
+                   ;; 直播返回，相当于按RET
+                   default-filename
+                   )))
+        ad-do-it
+        ))
+    )
   :config
   ;; 强制tag名
   (defadvice citre--path-to-cache-tags-file-name (around my-citre--path-to-cache-tags-file-name activate)
