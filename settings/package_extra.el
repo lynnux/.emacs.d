@@ -1741,7 +1741,7 @@ _c_: hide comment        _q_uit
           vertico-cycle t ;; vertico不同于其它的是当前行之前的结果被列在了最后
           vertico-resize nil ;; 让它初始化就固定大小
           vertico-count 20   ;; 高度多少行
-          vertico-sort-function 'vertico-sort-history-alpha ;; 禁了虽然会加快速度，但是不方便了，比如F1 v什么的，列举最近使用还是很方便的
+          vertico-sort-function  nil ;; 对需要排序的，添加到`vertico-multiform-commands'里
           )
     :defer 0.3
     :config
@@ -1869,6 +1869,8 @@ _c_: hide comment        _q_uit
               (execute-extended-command grid) ; M-x
               (yas-insert-snippet grid)
               (dired-recent-open (vertico-sort-function . nil)) ;; 已经是排好序了的
+              (describe-function (vertico-sort-function . vertico-sort-history-alpha))
+              (describe-variable (vertico-sort-function . vertico-sort-history-alpha))
               ))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
@@ -3181,9 +3183,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ((eq lsp-use-which 'eglot)
        (use-package eglot
          :init
-         (autoload 'eglot-ensure "lsp/eglot" "" nil)
-         (autoload 'eglot "lsp/eglot" "" nil)
-         (autoload 'eglot-rename "lsp/eglot" "" nil)
+         ;; 最新emacs自带eglot并依赖external-completion
+         (when (featurep 'external-completion)
+           (autoload 'eglot-ensure "lsp/eglot" "" nil)
+           (autoload 'eglot "lsp/eglot" "" nil)
+           (autoload 'eglot-rename "lsp/eglot" "" nil))
          (defun lsp-ensure() (eglot-ensure))
          (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
                ;; eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
