@@ -1100,6 +1100,7 @@ _c_: hide comment        _q_uit
   :commands(corfu-mode)
   :init
   (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
+  (autoload 'cape-wrap-buster "corfu/cape" "" nil)
   (setq corfu-cycle t
         corfu-auto t
         corfu-auto-prefix 1
@@ -1255,8 +1256,9 @@ _c_: hide comment        _q_uit
          (setq-local completion-at-point-functions (cl-nsubst #'lsp-other-capf-function
                                                               lsp-capf
 			                                      completion-at-point-functions)))))
-  (with-eval-after-load 'eglot
-    (add-hook 'eglot-managed-mode-hook (enable-lsp-other-backend 'eglot)))
+  ;; 会影响`cape-wrap-buster'，暂时不用tags补全了
+  ;; (with-eval-after-load 'eglot
+  ;;   (add-hook 'eglot-managed-mode-hook (enable-lsp-other-backend 'eglot)))
   (with-eval-after-load 'lsp-mode
     (add-hook 'lsp-managed-mode-hook (enable-lsp-other-backend 'lsp-mode))) ;
   )
@@ -3206,7 +3208,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
-         (add-to-list 'completion-category-overrides '(eglot (styles basic))) ;; flex可能会导致多按C-g，参考https://github.com/minad/corfu/wiki
+         ;; (add-to-list 'completion-category-overrides '(eglot (styles basic))) ;; flex可能会导致多按C-g，参考https://github.com/minad/corfu/wiki
+         (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
          (eldoc-add-command 'c-electric-paren)
          (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
          (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
