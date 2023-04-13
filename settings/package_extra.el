@@ -2036,6 +2036,7 @@ _c_: hide comment        _q_uit
               consult-locate ;; everything!
               consult-find ;; minad说fd不太成熟，就用find吧
               consult--read
+              consult-bookmark
               )
     :init
     (setq
