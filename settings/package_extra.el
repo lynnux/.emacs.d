@@ -1188,7 +1188,9 @@ _c_: hide comment        _q_uit
   (define-key corfu-map (kbd "M-n") 'corfu-scroll-up)
   (define-key corfu-map (kbd "M-p") 'corfu-scroll-down)
   (define-key corfu-map "\M-h" nil) ;; 屏蔽帮助文档
-  
+  (define-key corfu-map (kbd "<tab>") 'corfu-insert) ;; 解决`cape-wrap-buster'可能输入点圆点的bug
+  (define-key corfu-map (kbd "TAB") 'corfu-insert)
+
   ;; 将补全移动到minibuffer进行，这样就可以用embark了！
   (defun corfu-move-to-minibuffer ()
     (interactive)
@@ -3209,7 +3211,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
-         ;; (add-to-list 'completion-category-overrides '(eglot (styles basic))) ;; flex可能会导致多按C-g，参考https://github.com/minad/corfu/wiki
+         (add-to-list 'completion-category-overrides '(eglot (styles fussy))) ;; 配合cape-wrap-buster爽翻！
          (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
          (eldoc-add-command 'c-electric-paren)
          (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
