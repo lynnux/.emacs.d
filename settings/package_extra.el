@@ -27,7 +27,7 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/compat-main.zip")
   (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
-  (ensure-latest "~/.emacs.d/packages/org/org-roam.zip")
+  (ensure-latest "~/.emacs.d/packages/org/org-roam-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
   (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
@@ -3759,7 +3759,7 @@ _q_uit
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
   :defer t
-  :load-path "~/.emacs.d/packages/org/org-roam"
+  :load-path "~/.emacs.d/packages/org/org-roam-main"
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
   (setq org-roam-database-connector (if (version< emacs-version "29")
