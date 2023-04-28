@@ -2649,6 +2649,22 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defun imenu-xref-backend () 'imenu-xref)
 (add-hook 'xref-backend-functions 'imenu-xref-backend)
 
+;; xref最后的选择，直接调用consult-ripgrep搜索
+(cl-defmethod xref-backend-identifier-at-point ((_backend (eql 'xref-to-consult-rg)))
+  (find-tag--default))
+(cl-defmethod xref-backend-identifier-completion-table ((_backend
+                                                         (eql 'xref-to-consult-rg)))
+  ;; 参考的https://github.com/zbelial/lspce/blob/master/lspce.el，这个可以实现空白处列举所有符号，暂时不需要这个功能
+  (list (propertize (or (thing-at-point 'symbol) "")
+                    'identifier-at-point t)))
+(cl-defmethod xref-backend-definitions ((_backend (eql 'xref-to-consult-rg)) symbol)
+  (let (xrefs column line)
+    (call-interactively 'my-project-search) ;; 这个运行后才提示xref没找到
+    xrefs))
+(defun xref-to-consult-rg-backend () 'xref-to-consult-rg)
+(add-hook 'xref-backend-functions 'xref-to-consult-rg-backend 101) ;; 排到最后，实际上这直接破坏了xref流程
+
+
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
 ;; 所以目前仅用它来创建TAGS文件
