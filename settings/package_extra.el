@@ -2370,6 +2370,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;;   ;; arount设置有问题
   ;;   (setq dumb-jump-default-project default-directory) ; 默认设置为当前目录
   ;;   )
+  
+  (defadvice dumb-jump-run-command (around my-dumb-jump-run-command activate)
+    "修复中文路径跳转问题，即修复`shell-command-to-string'调用"
+    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
+      ad-do-it
+      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
+      ))
   )
 
 (use-package which-key
