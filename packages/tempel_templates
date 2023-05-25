@@ -15,7 +15,8 @@ prog-mode
 (todo (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "TODO ")
 (bug (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "BUG ")
 (hack (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "HACK ")
-(timestamp "Time-stamp: <>")
+(timestamp (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "Time-stamp: <>")
+(coding (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "-*- coding: " (p "utf-8") " -*-")
 
 latex-mode
 
