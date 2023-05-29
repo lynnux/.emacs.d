@@ -58,6 +58,10 @@
     (setq tmp-disable-view-mode nil)
     )
   )
+(with-eval-after-load 'org
+  ;; M-RET绑定给tempel了，这个比C-RET更适合
+  (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
+ )
 
 ;; tabbar配置那里有对org的C-TAB的设置
 (defvar website-org-path nil)
