@@ -518,6 +518,8 @@ _q_uit
   (setq recentf-exclude
         '(".cache"
           ".cask"
+          "bookmarks$"
+          "/G?TAGS$"
           "COMMIT_EDITMSG\\'"
           "/ssh:"
           "/sudo:"
