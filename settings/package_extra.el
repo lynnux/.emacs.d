@@ -1876,6 +1876,7 @@ _c_: hide comment        _q_uit
               (dired-recent-open (vertico-sort-function . nil)) ;; 已经是排好序了的
               (describe-function (vertico-sort-function . vertico-sort-history-alpha))
               (describe-variable (vertico-sort-function . vertico-sort-history-alpha))
+              (my-project-find-file (vertico-sort-function . vertico-sort-history-length-alpha)) ;; 按file-name-history排序
               ))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
@@ -2141,8 +2142,6 @@ _c_: hide comment        _q_uit
     (use-package consult-lsp
       :commands(consult-lsp-symbols)
       )
-    (use-package consult-project-extra
-      :commands(consult-project-extra-find))
     ;; 正是我需要的，给marginalia添加yas应该不简单，这个能显示按短字符，还能看预览插入效果！
     (use-package consult-yasnippet
       :commands(consult-yasnippet
@@ -2789,12 +2788,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (defun my-project-find-file()
   (interactive)
-  (if (functionp 'consult-project-extra-find)
-      ;; 加速弹出project选择框，不然首次总感觉有点慢
-      (let ((default-directory (project-root (project-current t))))
-        (call-interactively 'consult-project-extra-find))
-    (call-interactively 'project-find-file))
-  )
+  (call-interactively 'project-find-file))
 (defun my-project-buffer()
   (interactive)
   (if (functionp 'consult-project-buffer)
