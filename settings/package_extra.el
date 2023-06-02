@@ -518,11 +518,6 @@ _q_uit
   (setq recentf-exclude
         '(".cache"
           ".cask"
-          "bookmarks"
-          "cache"
-          "recentf"
-          "undo-tree-hist"
-          "url"
           "COMMIT_EDITMSG\\'"
           "/ssh:"
           "/sudo:"
