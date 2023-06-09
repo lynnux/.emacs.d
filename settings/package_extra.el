@@ -33,6 +33,7 @@
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
+  (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -945,7 +946,7 @@ _c_: hide comment        _q_uit
 
 ;; from tabbar-ruler
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*rg*"
-                                       "*eww*" "*xref*" "*org-roam*" "*elfeed-entry*" "*elfeed-search*"))
+                                       "*eww*" "*xref*" "*org-roam*" "*elfeed-entry*" "*elfeed-search*" "*dashboard*"))
 (defun ep-tabbar-buffer-list ()
   (delq nil
         (mapcar #'(lambda (b)
@@ -1266,6 +1267,7 @@ _c_: hide comment        _q_uit
 
 ;; 一来就加载mode确实挺不爽的，还是用这个了
 (use-package wcy-desktop
+  :disabled
   ;;:defer 0.5
   :config
   (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
@@ -4432,6 +4434,44 @@ _q_uit
           (dimmer-process-all t)))))
   )
 
+(use-package dashboard
+  :load-path "~/.emacs.d/themes/emacs-dashboard-master"
+  :init
+  (setq
+   dashboard-center-content t
+   dashboard-banner-logo-title (format-time-string "%Y-%m-%d  %H:%M:%S")
+   dashboard-projects-switch-function (lambda(project)
+                                        (interactive)
+                                        (message "%S" project)
+                                        (let ((default-directory project))
+                                          (project-switch-project project)))
+   dashboard-recentf-show-base t
+   dashboard-recentf-item-format "%-30s   %s"
+   dashboard-projects-show-base t
+   dashboard-projects-item-format "%-30s   %s"
+   dashboard-set-footer nil
+   dashboard-set-init-info nil
+   dashboard-startup-banner 'logo
+   dashboard-projects-backend 'project-el
+   dashboard-items '((projects . 10)
+                     (recents   . 20)
+                          )
+   dashboard-item-shortcuts  '((recents   . "r")
+                               (projects  . "SPC")))
+  :config
+  (custom-set-faces
+   '(dashboard-items-face ((t (:weight unspecified))))
+   )
+  ;; 用god-mode的快捷键
+  (define-key dashboard-mode-map (kbd "C-r") 'dashboard-jump-to-recents)
+  (define-key dashboard-mode-map (kbd "C-SPC") 'dashboard-jump-to-projects) ;; P
+  
+  (add-hook 'dashboard-after-initialize-hook (lambda ()
+                                              (god-mode)
+                                              (dashboard-jump-to-projects) ;; 初始化直接跳到project
+                                               ))
+  (dashboard-setup-startup-hook)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
