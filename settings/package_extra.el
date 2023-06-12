@@ -824,7 +824,7 @@ _c_: hide comment        _q_uit
       (if (my-tempel-expandable-p)
           (call-interactively 'tempel-expand)
         (apply app)))
-    (advice-add #'corfu-complete :around #'corfu-complete-pass-tempel))
+    (advice-add #'corfu-insert :around #'corfu-complete-pass-tempel))
   (with-eval-after-load 'cc-mode
     (define-key c-mode-base-map [remap c-indent-line-or-region] (tab-try-tempel-first 'c-indent-line-or-region)))
   :config
