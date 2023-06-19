@@ -3229,6 +3229,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                )
          :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
          :config
+         (add-to-list 'eglot-server-programs
+                      '((c-mode c-ts-mode c++-mode c++-ts-mode) . ("clangd" "-header-insertion=never")))
          (add-to-list 'completion-category-overrides '(eglot (styles fussy))) ;; 配合cape-wrap-buster爽翻！
          (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
          (eldoc-add-command 'c-electric-paren)
