@@ -3479,12 +3479,12 @@ _q_uit
                            (let ((this-command 'self-insert-command)
                                  (last-command-event key))
                              (self-insert-command 1 key)
-                             (electric-pair-post-self-insert-function)
-                             (when my-auto-newline
-                               (when (eq key ?\{)
-                                     (call-interactively 'new-line-dwim)
-                                     ))
-                             )))
+                             (unless (minibufferp)
+                               (electric-pair-post-self-insert-function)
+                               (when my-auto-newline
+                                 (when (eq key ?\{)
+                                   (call-interactively 'new-line-dwim)
+                                   ))))))
         (global-set-key key_str key_symbol))))
   
   ;; 修复eldoc不显示参数名问题
