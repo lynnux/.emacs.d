@@ -1264,31 +1264,6 @@ _c_: hide comment        _q_uit
     (add-hook 'lsp-managed-mode-hook (enable-lsp-other-backend 'lsp-mode))) ;
   )
  
-
-;; 一来就加载mode确实挺不爽的，还是用这个了
-(use-package wcy-desktop
-  :disabled
-  ;;:defer 0.5
-  :config
-  (defadvice wcy-desktop-load-file (after my-wcy-desktop-load-file activate)
-    (setq buffer-undo-list nil) ;; 解决undo-tree冲突
-    ;; 修正buffer打开时的point
-    (when (featurep 'saveplace)
-      (save-place-find-file-hook))
-    ;; win10莫名其妙鼠标指针变圆圈，不变回来了，这个trick可以让它变回来
-    (run-with-idle-timer 0.1 nil (lambda ()
-                                 (let ((f (selected-frame)))
-                                   (set-mouse-position f (car (cdr (mouse-position))) (cdr (cdr (mouse-position))))
-                                   t)
-                                 )) 
-    )
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-	      (ignore-errors
-                (wcy-desktop-init)
-		(wcy-desktop-open-last-opened-files))))
-  )
-
 (use-package google-c-style
   :commands( google-set-c-style))
 
