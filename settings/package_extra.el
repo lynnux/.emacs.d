@@ -4430,9 +4430,8 @@ _q_uit
    dashboard-set-init-info nil
    dashboard-startup-banner 'logo
    dashboard-projects-backend 'project-el
-   dashboard-items '((projects . 10)
-                     (recents   . 20)
-                          )
+   dashboard-items '((recents   . 20)
+                     (projects . 10))
    dashboard-item-shortcuts  '((recents   . "r")
                                (projects  . "SPC")))
   :config
@@ -4445,7 +4444,8 @@ _q_uit
   
   (add-hook 'dashboard-after-initialize-hook (lambda ()
                                               (god-mode)
-                                              (dashboard-jump-to-projects) ;; 初始化直接跳到project
+                                              (dashboard-jump-to-recents)
+                                              ;; (dashboard-jump-to-projects) ;; 初始化直接跳到project
                                                ))
   (dashboard-setup-startup-hook)
   )
