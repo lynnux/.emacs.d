@@ -3224,10 +3224,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          ;; (add-to-list 'eglot-stay-out-of 'flymake)
          ;; (setq flymake-no-changes-timeout 1.0) ;; 这个是没有效果的
          (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
-         (push :documentHighlightProvider       ;; 关闭光标下sybmol加粗高亮
-               eglot-ignored-server-capabilities)
-         (push :hoverProvider
-               eglot-ignored-server-capabilities) ;; hover没什么用，在sqlite3中还会卡
+         (setq eglot-ignored-server-capabilities 
+               (list 
+                :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+                :hoverProvider ;; hover没什么用，在sqlite3中还会卡
+                :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+                :codeActionProvider ;; 当有flymake错误时，code action非常讨厌
+                :documentOnTypeFormattingProvider
+                ))
          ;; 临时禁止view-mode，使重命名可用
          (defadvice eglot--apply-workspace-edit (around my-eglot--apply-workspace-edit activate)
            (setq tmp-disable-view-mode t)
