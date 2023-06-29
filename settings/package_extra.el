@@ -496,16 +496,18 @@ _q_uit
 
 ;; 保存cursor位置
 (use-package saveplace
-  ;; 这里不加defer了，wcy加载时要run它的hook
+  :init
+  (setq save-place-file (expand-file-name ".saveplace" user-emacs-directory)
+        save-place-forget-unreadable-files t)
+  :hook (after-init . save-place-mode)
   :config
-  (setq save-place-file (expand-file-name ".saveplace" user-emacs-directory))
-  (setq save-place-forget-unreadable-files t)
-  (save-place-mode t)
-  (defadvice save-place-find-file-hook (after my-save-place-find-file-hook activate)
-    (with-current-buffer (window-buffer)
-      (recenter))
-    ;; 将位置居中，默认是goto-char可能是最下面
-    )
+  (add-hook 'save-place-after-find-file-hook
+            (lambda()
+              (if buffer-file-name
+                  ;; find-file-hook执行时，window-buffer还没有变成新buffer，这时recenter会出错，
+                  ;; 所以这里用timer来执行recenter
+                  (with-current-buffer (get-file-buffer buffer-file-name)
+                    (run-with-local-idle-timer 0.1 nil (lambda() (ignore-errors (recenter))))))))
   )
 
 ;; 还是放弃session的那个file-name-history吧，现在都用这个了
