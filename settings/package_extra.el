@@ -2203,6 +2203,7 @@ _c_: hide comment        _q_uit
      consult-xref
      :preview-key 'any
      )
+    (setq consult-ripgrep-args (concat consult-ripgrep-args " --ignore-file " (expand-file-name "rg_ignore.txt" "~/.emacs.d/bin/")))
     ;; 含中文字符搜索时添加--pre rgpre
     (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
       (if (chinese-word-chinese-string-p (ad-get-arg 0))
