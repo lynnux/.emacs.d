@@ -2052,13 +2052,13 @@ _c_: hide comment        _q_uit
       (require 'consult)
       (setq this-command 'my-consult-ripgrep)
       ;; 不忽略ignore
-      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
+      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore --ignore-file " (expand-file-name "rg_ignore.txt" "~/.emacs.d/bin/"))))
         (consult-ripgrep (or dir default-directory) initial)))
     (defun my-consult-ripgrep-only-current-dir(&optional dir)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
       (require 'consult)
       ;; 不忽略ignore
-      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore -g!*/")))
+      (let  ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore -g!*/ --ignore-file " (expand-file-name "rg_ignore.txt" "~/.emacs.d/bin/"))))
         (consult-ripgrep (or dir default-directory)))
       )
     (global-set-key [f2] 'my-consult-ripgrep)
