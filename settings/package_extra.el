@@ -1119,7 +1119,7 @@ _c_: hide comment        _q_uit
                                    (load "corfu/corfu-main/corfu"))
                                  (cl-letf (((symbol-function #'make-frame-visible)
                                             (lambda (frame))))
-                                   (corfu--popup-show (point) 0 8 '(#("No match" 0 8 (face italic))))
+                                   (corfu--popup-show (posn-at-point (point)) 0 8 '(#("No match" 0 8 (face italic))))
                                    )))
   :config
   (when nil
