@@ -1985,6 +1985,7 @@ _c_: hide comment        _q_uit
         (define-key vertico-map (kbd "C-.") 'embark-act)
         (define-key vertico-map (kbd "C-c C-o") 'embark-export)
         (define-key vertico-map (kbd "C-c C-c") 'embark-act)
+        (define-key vertico-map [?\H-m] (kbd "C-. SPC")) ; C-m选中mark当前行，之后C-. A(embark-act-all)就可以这已mark的进行操作了！
         )
       :config
       (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
