@@ -2155,6 +2155,9 @@ _c_: hide comment        _q_uit
       ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
       :config
       (defadvice consult-dir--recentf-dirs (around my-consult-dir--recentf-dirs activate)
+        (unless (boundp 'dired-recent-directories)
+          (require 'dired-recent)
+          (dired-recent-load-list))
         (setq ad-return-value dired-recent-directories)
         )
       )
