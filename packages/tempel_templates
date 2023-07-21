@@ -139,6 +139,19 @@ q n n
 (pri "private:" n >)
 (pro "protect:" n >)
 (while "while ("p") {"n > q n >"}">)
+(singleton "class " (p "" cls-name) "{
+  public:
+    static "cls-name"& getInstance() {
+        static "cls-name" a;
+        return a;
+    }
+    "q"
+  protected:
+    "cls-name"(){}
+};
+
+#define the"cls-name" ("cls-name"::getInstance())
+")
 
 cmake-mode
 
