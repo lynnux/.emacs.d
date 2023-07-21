@@ -124,8 +124,8 @@ int main()
     return 0;
 }
 ")
-(inc "#include <" (p (concat (file-name-base (or (buffer-file-name) (buffer-name))) ".h")) ">")
-(incc "#include \"" (p (concat (file-name-base (or (buffer-file-name) (buffer-name))) ".h")) "\"")
+(inc "#include " q)
+;; (incc "#include \"" (p (concat (file-name-base (or (buffer-file-name) (buffer-name))) ".h")) "\"")
 (guard (p (concat (upcase (file-name-nondirectory (file-name-sans-extension (or (buffer-file-name) "")))) "_H") guard-name t)
 "#ifndef "  guard-name n
 "#define " guard-name n n
