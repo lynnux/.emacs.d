@@ -4452,6 +4452,7 @@ _q_uit
   ;; 用god-mode的快捷键
   (define-key dashboard-mode-map (kbd "C-r") 'dashboard-jump-to-recents)
   (define-key dashboard-mode-map (kbd "C-SPC") 'dashboard-jump-to-projects) ;; P
+  (define-key dashboard-mode-map (kbd "C-g") 'revert-buffer)
   
   (add-hook 'dashboard-after-initialize-hook (lambda ()
                                               (god-mode)
