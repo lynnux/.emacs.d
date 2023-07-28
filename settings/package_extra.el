@@ -4453,12 +4453,13 @@ _q_uit
   (define-key dashboard-mode-map (kbd "C-r") 'dashboard-jump-to-recents)
   (define-key dashboard-mode-map (kbd "C-SPC") 'dashboard-jump-to-projects) ;; P
   (define-key dashboard-mode-map (kbd "C-g") 'revert-buffer)
-  
-  (add-hook 'dashboard-after-initialize-hook (lambda ()
-                                              (god-mode)
-                                              (dashboard-jump-to-recents)
-                                              ;; (dashboard-jump-to-projects) ;; 初始化直接跳到project
-                                               ))
+  (defun my-god-mode-init()
+    (god-local-mode 1)
+    (dashboard-jump-to-recents)
+    ;; (dashboard-jump-to-projects) ;; 初始化直接跳到project
+    )
+  (add-hook 'dashboard-after-initialize-hook 'my-god-mode-init)
+  (add-hook 'dashboard-mode-hook 'my-god-mode-init) ;; fix revert-buffer没有god mode
   (dashboard-setup-startup-hook)
   )
 
