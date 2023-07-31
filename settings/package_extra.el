@@ -1102,6 +1102,7 @@ _c_: hide comment        _q_uit
   :init
   (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
   (autoload 'cape-wrap-buster "corfu/cape" "" nil)
+  (autoload 'cape-wrap-noninterruptible "corfu/cape" "" nil)
   (setq corfu-cycle t
         corfu-auto t
         corfu-auto-prefix 1
@@ -3215,6 +3216,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                       '((c-mode c-ts-mode c++-mode c++-ts-mode) . ("clangd" "-header-insertion=never")))
          (add-to-list 'completion-category-overrides '(eglot (styles fussy))) ;; 配合cape-wrap-buster爽翻！
          (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+         (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible)
          (eldoc-add-command 'c-electric-paren)
          (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
          (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
@@ -4458,8 +4460,10 @@ _q_uit
     (dashboard-jump-to-recents)
     ;; (dashboard-jump-to-projects) ;; 初始化直接跳到project
     )
-  (add-hook 'dashboard-after-initialize-hook 'my-god-mode-init)
-  (add-hook 'dashboard-mode-hook 'my-god-mode-init) ;; fix revert-buffer没有god mode
+  (add-hook 'dashboard-after-initialize-hook (lambda()
+                                               (my-god-mode-init)
+                                               (add-hook 'dashboard-mode-hook 'my-god-mode-init) ;; fix revert-buffer没有god mode
+                                               ))
   (dashboard-setup-startup-hook)
   )
 
