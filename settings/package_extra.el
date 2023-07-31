@@ -4455,6 +4455,7 @@ _q_uit
   (define-key dashboard-mode-map (kbd "C-r") 'dashboard-jump-to-recents)
   (define-key dashboard-mode-map (kbd "C-SPC") 'dashboard-jump-to-projects) ;; P
   (define-key dashboard-mode-map (kbd "C-g") 'revert-buffer)
+  (define-key dashboard-mode-map (kbd "C-d") 'dashboard-remove-item-under)
   (defun my-god-mode-init()
     (god-local-mode 1)
     (dashboard-jump-to-recents)
