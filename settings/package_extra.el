@@ -968,30 +968,23 @@ _c_: hide comment        _q_uit
                      ((buffer-live-p b) b)))
                 (buffer-list))))
 
-(if (display-graphic-p)
-    ;; 之前用的tabbar-ruler在c-x 3多窗口会导致helm弹出延迟
-    
-    ;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
-    (when (functionp 'global-tab-line-mode)
-      (use-package tab-line
-        :defer 0.5
-        :init
-        (setq tab-line-tabs-function 'ep-tabbar-buffer-list
-              tab-line-new-button-show nil)
-        (unless (version< emacs-version "29")
-          ;; 28.0.50 设置后鼠标不能选择buffer了
-          (setq 
-           tab-line-close-button-show nil
-           tab-line-separator (propertize " ▶ " 'face  '(foreground-color . "cyan")) ;; 这个比close button好看 
-           ))
-        :config
-        (global-tab-line-mode 1)
-        (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
-        (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
-        ))
-  (progn
-    (global-set-key (kbd "<C-tab>") 'helm-buffers-list)
-    (global-set-key (kbd "<C-M-S-tab>") 'helm-buffers-list)
+;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
+(when (functionp 'global-tab-line-mode)
+  (use-package tab-line
+    :defer 0.5
+    :init
+    (setq tab-line-tabs-function 'ep-tabbar-buffer-list
+          tab-line-new-button-show nil)
+    (unless (version< emacs-version "29")
+      ;; 28.0.50 设置后鼠标不能选择buffer了
+      (setq 
+       tab-line-close-button-show nil
+       tab-line-separator (if (display-graphic-p) (propertize " ▶ " 'face  '(foreground-color . "cyan")) " | ") ;; 这个比close button好看 
+       ))
+    :config
+    (global-tab-line-mode 1)
+    (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
+    (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
     ))
 
 ;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
