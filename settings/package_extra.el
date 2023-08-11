@@ -3950,6 +3950,7 @@ _q_uit
                    (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
                    (magit-status-mode    :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
                    (magit-log-mode       :select t :inhibit-window-quit t :same t)
+                   ("\\*SQLite .*" :regexp t :select t :inhibit-window-quit t :same t) ;; sqlite-mode全屏
                    ("\\*gud-.*" :regexp t :select t :align 'below :other t :size 0.3)
                    ))
   :config
