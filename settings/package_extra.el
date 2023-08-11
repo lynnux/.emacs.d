@@ -1104,6 +1104,7 @@ _c_: hide comment        _q_uit
         ;; corfu-auto-delay 0.2      ;; 避免输完后马上C-n/C-p也补全
         ;; corfu-quit-at-boundary nil ;; 可以用M-空格来分词
         corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
+        corfu-min-width 30 ;; 不知道怎么回事，有时候显示不全但补全功能正常
         )
   (add-to-list 'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
   (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
