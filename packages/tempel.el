@@ -5,7 +5,7 @@
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2022
-;; Version: 0.7
+;; Version: 0.8
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Homepage: https://github.com/minad/tempel
 ;; Keywords: abbrev, languages, tools, wp
@@ -228,8 +228,9 @@ BEG and END are the boundaries of the modification."
     (let ((inhibit-modification-hooks nil)
           (tempel--inhibit-hooks t))
       (cond
-       ;; Erase default before modification if at beginning or end
-       ((and (not after) (overlay-get ov 'tempel--default)
+       ;; Erase default text before modification when typing over it at the
+       ;; beginning or end. Deleting or editing inside preserves the text.
+       ((and (not after) (overlay-get ov 'tempel--default) (eq beg end)
              (or (= beg (overlay-start ov)) (= end (overlay-end ov))))
         (delete-region (overlay-start ov) (overlay-end ov)))
        ;; Update field after modification
@@ -237,7 +238,7 @@ BEG and END are the boundaries of the modification."
         (let ((st (overlay-get ov 'tempel--field)))
           (unless undo-in-progress
             (move-overlay ov (overlay-start ov) (max end (overlay-end ov))))
-          (when-let (name (overlay-get ov 'tempel--name))
+          (when-let ((name (overlay-get ov 'tempel--name)))
             (setf (alist-get name (cdr st))
                   (buffer-substring-no-properties
                    (overlay-start ov) (overlay-end ov))))
@@ -364,7 +365,7 @@ Return the added field."
          (indent-region (car region) (cdr region) nil))))
     ;; TEMPEL EXTENSION: Quit template immediately
     ('q (overlay-put (tempel--field st) 'tempel--enter #'tempel--done))
-    (_ (if-let (ret (run-hook-with-args-until-success 'tempel-user-elements elt))
+    (_ (if-let ((ret (run-hook-with-args-until-success 'tempel-user-elements elt)))
            (tempel--element st region ret)
          ;; TEMPEL EXTENSION: Evaluate forms
          (tempel--form st elt)))))
@@ -429,7 +430,7 @@ If a field was added, return it."
   (cl-loop
    with all = nil
    for (file . _ts) in (car tempel--path-templates) do
-   (when-let (buf (get-file-buffer file))
+   (when-let ((buf (get-file-buffer file)))
      (with-current-buffer buf
        (when (and (buffer-modified-p)
                   (pcase (or all (read-answer
@@ -537,13 +538,13 @@ This is meant to be a source in `tempel-template-sources'."
 (defun tempel-beginning ()
   "Move to beginning of the template."
   (interactive)
-  (when-let (pos (tempel--beginning))
+  (when-let ((pos (tempel--beginning)))
     (if (= pos (point)) (tempel-done) (goto-char pos))))
 
 (defun tempel-end ()
   "Move to end of the template."
   (interactive)
-  (when-let (pos (tempel--end))
+  (when-let ((pos (tempel--end)))
     (if (= pos (point)) (tempel-done) (goto-char pos))))
 
 (defun tempel--field-at-point ()
@@ -558,7 +559,7 @@ This is meant to be a source in `tempel-template-sources'."
 (defun tempel-kill ()
   "Kill the field contents."
   (interactive)
-  (if-let (ov (tempel--field-at-point))
+  (if-let ((ov (tempel--field-at-point)))
       (kill-region (overlay-start ov) (overlay-end ov))
     (kill-sentence nil)))
 
@@ -566,7 +567,8 @@ This is meant to be a source in `tempel-template-sources'."
   "Move ARG fields forward and quit at the end."
   (interactive "p")
   (cl-loop for i below (abs arg) do
-           (if-let (next (tempel--find arg)) (goto-char next)
+           (if-let ((next (tempel--find arg)))
+               (goto-char next)
              (tempel-done)
              (cl-return)))
   ;; Run the enter action of the field.
@@ -592,11 +594,12 @@ This is meant to be a source in `tempel-template-sources'."
 (defun tempel-abort ()
   "Abort template insertion."
   (interactive)
-  (when-let ((beg (tempel--beginning))
-             (end (tempel--end)))
-    ;; TODO abort only the topmost template?
-    (while tempel--active (tempel--disable))
-    (delete-region beg end)))
+  ;; TODO abort only the topmost template?
+  (while-let ((st (car tempel--active)))
+    (let ((beg (overlay-start (caar st)))
+          (end (overlay-end (caar st))))
+      (tempel--disable)
+      (delete-region beg end))))
 
 (defun tempel--disable (&optional st)
   "Disable template ST, or last template."
@@ -761,7 +764,8 @@ If called interactively, select a template with `completing-read'."
 (defun tempel--abbrev-hook (name template)
   "Abbreviation expansion hook for TEMPLATE with NAME."
   (tempel--delete-word name)
-  (tempel--insert template nil))
+  (tempel--insert template nil)
+  t)
 
 ;;;###autoload
 (define-minor-mode tempel-abbrev-mode
@@ -786,8 +790,9 @@ If called interactively, select a template with `completing-read'."
                         abbrev-minor-mode-table-alist)))))
 
 ;;;###autoload
-(define-globalized-minor-mode global-tempel-abbrev-mode tempel-abbrev-mode
-  tempel--abbrev-on :group 'tempel)
+(define-globalized-minor-mode global-tempel-abbrev-mode
+  tempel-abbrev-mode tempel--abbrev-on
+  :group 'tempel)
 
 (defun tempel--abbrev-on ()
   "Enable abbrev mode locally."
