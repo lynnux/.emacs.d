@@ -961,6 +961,7 @@ _c_: hide comment        _q_uit
                      ((buffer-file-name b) b)
                      ((string-match "^\*gud-.*" (format "%s" (buffer-name b))) b) ;; gud buffer
                      ((string-match "^\*Embark .*" (format "%s" (buffer-name b))) b)
+                     ((string-match "^\*SQLite .*" (format "%s" (buffer-name b))) b) ;; *SQLite test.db*
 		     ((member (buffer-name b) EmacsPortable-included-buffers) b)
                      ((char-equal ?\  (aref (buffer-name b) 0)) nil)
                      ((char-equal ?* (aref (buffer-name b) 0)) nil)
@@ -4375,6 +4376,13 @@ _q_uit
   (global-set-key (kbd "C-x C-3") 'split-window-right)
   :config
   (define-key god-local-mode-map (kbd "i") 'view-mode)
+  (define-key god-local-mode-map (kbd "SPC") (lambda()
+                                               (interactive)
+                                               (if (eq major-mode 'dashboard-mode)
+                                                   (call-interactively 'dashboard-jump-to-projects)
+                                                 (call-interactively 'scroll-up-command))));; C-SPC也可以
+  (define-key god-local-mode-map (kbd "S-SPC") 'scroll-down-command)
+  (define-key god-local-mode-map (kbd "w") 'scroll-down-command)
   )
 
 (add-to-list 'auto-mode-alist '("\\.jsfl\\'" . js-mode))
@@ -4459,6 +4467,19 @@ _q_uit
                                                (add-hook 'dashboard-mode-hook 'my-god-mode-init) ;; fix revert-buffer没有god mode
                                                ))
   (dashboard-setup-startup-hook)
+  )
+
+;; `sqlite-mode-open-file'查看sqlite数据库很好用啊！
+(when (functionp 'sqlite-mode-open-file)
+  (use-package sqlite-mode
+    :defer t
+    :config
+    (add-hook 'sqlite-mode-hook 'god-local-mode)
+    ;; for god-mode
+    (define-key sqlite-mode-map (kbd "C-c") 'sqlite-mode-list-columns)
+    (define-key sqlite-mode-map (kbd "C-g") 'sqlite-mode-list-tables)
+    (define-key sqlite-mode-map (kbd "C-d") 'sqlite-mode-delete)
+    )
   )
 
 ;; 好的theme特点:
