@@ -82,9 +82,8 @@ INITIAL is initial input."
                                       (and (not (member "-i" cmd))
                                            (not (member "-case" cmd))))))
     (when re
-      (list :command
-            (append cmd (list (consult--join-regexps re 'orderless)) opts)
-            :highlight hl))))
+      (cons (append cmd (list (consult--join-regexps re 'orderless)) opts)
+            hl)))) ;; see consult--man-builder
 
 ;;;###autoload
 (defun consult-everything (&optional initial)

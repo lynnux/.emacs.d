@@ -5,7 +5,7 @@
 ;; Author: mohsin kaleem <mohkale@kisara.moe>
 ;; Maintainer: Mohsin Kaleem
 ;; Version: 0.2
-;; Package-Requires: ((emacs "27.1") (eglot "1.7") (consult "0.16") (project "0.3.0"))
+;; Package-Requires: ((emacs "27.1") (eglot "1.7") (consult "0.31") (project "0.3.0"))
 ;; Homepage: https://github.com/mohkale/consult-eglot
 
 ;; Copyright (c) 2021 Mohsin Kaleem
@@ -91,9 +91,18 @@ For the format see `consult--read', for the value types see the
 values in `eglot--symbol-kind-names'."
   :type '(alist :key-type character :value-type string))
 
-(defcustom consult-eglot-show-kind-name t
+(defcustom consult-eglot-show-kind-name nil
   "When true prefix completion candidates with their type."
   :type 'boolean)
+
+(defun consult-eglot--format-file-line-match (file line &optional match)
+  "Format string FILE:LINE:MATCH with faces."
+  (setq line (number-to-string line)
+        match (concat file ":" line (when match ":") match)
+        file (length file))
+  (put-text-property 0 file 'face 'consult-file match)
+  (put-text-property (1+ file) (+ 1 file (length line)) 'face 'consult-line-number match)
+  match)
 
 (defun consult-eglot--make-async-source (async server)
   "Search for symbols in a consult ASYNC source.
@@ -136,7 +145,7 @@ contains the SYMBOL-INFO as the second field instead of the file URI."
           name
           " "
           (string-remove-suffix ":"
-                                (consult--format-location
+                                (consult-eglot--format-file-line-match
                                  ;; If the src is relative to our project directory then use
                                  ;; the path from there, otherwise use the absolute file path.
                                  (let ((relative-uri-path (file-relative-name uri-path)))
@@ -177,9 +186,11 @@ rely on regexp matching to extract the relevent file and column fields."
                     (pcase-let
                         ((`(,file ,line ,col)
                           (consult-eglot--symbol-information-to-grep-params cand)))
-                      (consult--position-marker
+                      (consult--marker-from-line-column
                        (funcall (or open #'find-file) file)
                        line col)))))))
+
+(defvar consult-eglot--history nil)
 
 ;;;###autoload
 (defun consult-eglot-symbols ()
@@ -200,10 +211,10 @@ rely on regexp matching to extract the relevent file and column fields."
              (consult-eglot--make-async-source server)
              (consult--async-throttle)
              (consult--async-split))
-           :history t
            :require-match t
            :prompt "LSP Symbols: "
            :initial (consult--async-split-initial nil)
+           :history '(:input consult-eglot--history)
            :category 'consult-lsp-symbols
            :lookup #'consult--lookup-candidate
            :group (consult--type-group consult-eglot-narrow)
@@ -211,6 +222,46 @@ rely on regexp matching to extract the relevent file and column fields."
            :state (consult-eglot--state))
           (run-hooks 'consult-after-jump-hook))
      (user-error "Server doesn't support symbol search"))))
+
+;;; `consult-eglot-embark'.
+;; TODO: Extract into separate external package.
+
+(declare-function embark-consult-export-grep "embark-consult")
+(declare-function embark-consult-goto-grep "embark-consult")
+
+(defun consult-eglot-export-grep (candidates)
+  "Exporter for a `consult-eglot' session to a grep buffer."
+  (setq candidates (mapcar (apply-partially
+                            #'get-text-property
+                            0 'consult--candidate)
+                           candidates))
+  (let ((lines nil))
+    (dolist (symbol-info candidates)
+      (cl-destructuring-bind (file line _)
+          (consult-eglot--symbol-information-to-grep-params symbol-info)
+        (push (concat file
+                      ":" (number-to-string line)
+                      ;; ":" (number-to-string column)
+                      ": "
+                      (eglot--dbind ((SymbolInformation) name kind) symbol-info
+                        (concat
+                         (when consult-eglot-show-kind-name
+                           (when-let ((kind-name (alist-get kind eglot--symbol-kind-names)))
+                             kind-name))
+                         name)))
+              lines)))
+
+    (setq lines (nreverse lines))
+    (embark-consult-export-grep lines)))
+
+(with-eval-after-load 'embark-consult
+  (defvar embark-default-action-overrides)
+  (defvar embark-exporters-alist)
+
+  (setf (alist-get 'consult-lsp-symbols embark-default-action-overrides)
+        #'embark-consult-goto-grep)
+  (setf (alist-get 'consult-lsp-symbols embark-exporters-alist)
+        #'consult-eglot-export-grep))
 
 (provide 'consult-eglot)
 ;;; consult-eglot.el ends here
