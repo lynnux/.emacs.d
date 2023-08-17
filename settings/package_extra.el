@@ -144,12 +144,17 @@ _q_uit
   ;; :disabled
   :load-path "~/.emacs.d/packages/dired"
   :init
-  (setq dired-compress-files-alist
-        '(("\\.7z\\'" . "7z a -r %o %i")
-          ("\\.zip\\'" . "7z a -r %o  %i"))) ;; 按z压缩，统一用7z，解压的话是根据文件后辍调用shell，同步用!，异步用&
-  ;; 用dired+自带的
-  ;; (use-package diredfl
-  ;;   :hook(dired-mode . diredfl-mode)) ;; 对自定义time处理有bug
+  (setq 
+   dired-compress-file-alist
+   '(("\\.7z\\'" . "7z a -r %o %i")
+     ("\\.zip\\'" . "7z a -r %o  %i")) ;; 大写Z用的命令
+   dired-compress-files-alist ;; 支持多文件
+   '(("\\.7z\\'" . "7z a -r %o %i")
+     ("\\.zip\\'" . "7z a -r %o  %i")) ;; 小写z用的命令，统一用7z，解压的话是根据文件后辍调用shell，同步用!，异步用&
+   dired-compress-directory-default-suffix ".7z" ;; 大写Z对文件夹默认压缩后辍
+   dired-compress-file-default-suffix ".7z" ;; 大写Z对文件默认压缩后辍
+   dired-do-revert-buffer t
+   ) ;; 大写Z选中多个时是分别压缩，这点不如z
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   (use-package dired-recent
