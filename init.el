@@ -47,7 +47,9 @@
   ;; ls，xargs都用git里的，但git有多个bin目录，没设置/usr/bin到全局PATH，因为exe太多怕影响vs等程序(如含有link.exe)
   ;; https://emacs.stackexchange.com/questions/27326/gui-emacs-sets-the-exec-path-only-from-windows-environment-variable-but-not-from
   (add-path-to-execute-path "C:/Git/usr/bin")
-  (add-path-to-execute-path "D:/Program Files/Windows Kits/10/Debuggers/x64"))
+  (add-path-to-execute-path "D:/Program Files/Windows Kits/10/Debuggers/x64")
+  (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired
+  )
 
  ;; 
  (t

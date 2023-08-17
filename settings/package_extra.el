@@ -144,6 +144,9 @@ _q_uit
   ;; :disabled
   :load-path "~/.emacs.d/packages/dired"
   :init
+  (setq dired-compress-files-alist
+        '(("\\.7z\\'" . "7z a -r %o %i")
+          ("\\.zip\\'" . "7z a -r %o  %i"))) ;; 按z压缩，统一用7z，解压的话是根据文件后辍调用shell，同步用!，异步用&
   ;; 用dired+自带的
   ;; (use-package diredfl
   ;;   :hook(dired-mode . diredfl-mode)) ;; 对自定义time处理有bug
