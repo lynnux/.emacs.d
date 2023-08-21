@@ -3307,6 +3307,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     )
   (add-hook 'csharp-mode-hook 'my-csharp-hook))
 
+;; xml 这里https://github.com/redhat-developer/vscode-xml的下载https://download.jboss.org/jbosstools/vscode/stable/lemminx-binary/无需要java环境(好像是自动下载java环境)
+;; 主要是使用xml的格式化功能
+(defvar xml-server-path (cond ((file-exists-p "~/lemminx-win32.exe") "~/lemminx-win32.exe")
+                              (t nil)))
+(when xml-server-path
+  (with-eval-after-load 'nxml-mode
+    (add-path-to-execute-path (expand-file-name "" "~")))
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs '(nxml-mode . ("lemminx-win32")))))
+
 ;; 仅在view mode off时开启lsp，文件本身只读的(如tfs管理的)更不会开启lsp！
 (defvar-local lsp-inited nil)
 (add-hook 'view-mode-hook (lambda()
@@ -3315,7 +3325,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                                 (setq-local lsp-inited t)
                                 (when (or (memq major-mode '(c-mode c++-mode python-mode rust-mode cmake-mode))
                                           (and lua-server-path (eq major-mode 'lua-mode))
-                                          (and c-sharp-server-path (eq major-mode 'csharp-mode)))
+                                          (and c-sharp-server-path (eq major-mode 'csharp-mode))
+                                          (and xml-server-path (eq major-mode 'nxml-mode)))
                                   (lsp-ensure))))))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
