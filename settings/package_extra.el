@@ -4530,7 +4530,7 @@ _q_uit
   )
 
 (use-package ggtags
-  :commands(ggtags--xref-backend ggtags-create-tags)
+  :commands(ggtags--xref-backend ggtags-create-tags ggtags-update-tags)
   :init
   (add-hook 'xref-backend-functions #'ggtags--xref-backend 99)
   (setenv "GTAGSFORCECPP" "1") ;; 默认h不以cpp分析，导致分析不出c++类
