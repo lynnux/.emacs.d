@@ -5,6 +5,8 @@
  pop_select.dll
  readtags.exe (ctags)
  rg.exe
+ gtags.exe
+ global.exe
 
 ctags来自新版，包含readtags：
 https://github.com/universal-ctags/ctags-win32/releases

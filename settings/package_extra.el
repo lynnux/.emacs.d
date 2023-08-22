@@ -2346,6 +2346,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (shell-command "git config --global --unset https.proxy"))
 
 (use-package dumb-jump
+  :disabled ;; 对于超大项目老是卡住，不建议用了
   :commands(dumb-jump-xref-activate)
   :init
   ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
@@ -4526,6 +4527,20 @@ _q_uit
     (define-key sqlite-mode-map (kbd "C-g") 'sqlite-mode-list-tables)
     (define-key sqlite-mode-map (kbd "C-d") 'sqlite-mode-delete)
     )
+  )
+
+(use-package ggtags
+  :commands(ggtags--xref-backend ggtags-create-tags)
+  :init
+  (add-hook 'xref-backend-functions #'ggtags--xref-backend 99)
+  (setenv "GTAGSFORCECPP" "1") ;; 默认h不以cpp分析，导致分析不出c++类
+  :config
+  (defadvice ggtags--xref-find-tags (around my-ggtags--xref-find-tags activate)
+    "修复xref无效，问题出在调用`call-process'多了双引号，去掉就可以了"
+    (cl-letf (((symbol-function #'shell-quote-argument)
+               (lambda (argument &optional posix)
+                 argument)))
+      ad-do-it))
   )
 
 ;; 好的theme特点:
