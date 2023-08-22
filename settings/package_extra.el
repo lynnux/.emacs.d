@@ -4535,6 +4535,16 @@ _q_uit
   (add-hook 'xref-backend-functions #'ggtags--xref-backend 99)
   (setenv "GTAGSFORCECPP" "1") ;; 默认h不以cpp分析，导致分析不出c++类
   :config
+  (defvar force-search-variable nil)
+  (defadvice ggtags-global-build-command(after my-ggtags-global-build-command activate)
+    "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
+    (when force-search-variable
+      (setq ad-return-value (concat ad-return-value " -srax"))))
+  (defadvice ggtags--xref-backend(after my-ggtags--xref-backend activate)
+    "让支持成员变量"
+    (setq force-search-variable (not ad-return-value))
+    (setq ad-return-value 'ggtags) ;; 原版非函数时返回nil(GTAGS里没有成员变量，而GRTAGS里有，用global -sax可以查到)
+    )
   (defadvice ggtags--xref-find-tags (around my-ggtags--xref-find-tags activate)
     "修复xref无效，问题出在调用`call-process'多了双引号，去掉就可以了"
     (cl-letf (((symbol-function #'shell-quote-argument)
