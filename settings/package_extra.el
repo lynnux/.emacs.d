@@ -3258,6 +3258,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          ;; 用counsel-etags的imenu
          (add-hook 'eglot-managed-mode-hook (lambda()
                                               (remove-function (local 'imenu-create-index-function) #'eglot-imenu)))
+         ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
+         (cl-defmethod eglot-register-capability
+           (server (method (eql workspace/didChangeWatchedFiles)) id &key watchers)
+           "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
+           (eglot-unregister-capability server method id)
+           )
          )
        )
 )
