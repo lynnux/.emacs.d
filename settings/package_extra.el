@@ -2603,10 +2603,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           (let (xrefs)
             (cl-dolist (backend backends)
               (ignore-errors
+                (message (format "Xref using backend: %s to find definition." (symbol-name backend)))
                 (setq xrefs (funcall method backend arg))
                 (if xrefs
                     (cl-return)
-                  (message (format "Xref backend: %s failed to find definition." (symbol-name backend))))))
+                  ;; (message (format "Xref: failed to find definition using backend: %s." (symbol-name backend))) ;; 有错误的话是没有提示的
+                  )))
             (unless xrefs
               (xref--not-found-error kind input))
             xrefs)))))
@@ -4536,19 +4538,32 @@ _q_uit
   )
 
 (use-package ggtags
-  :commands(ggtags--xref-backend ggtags-create-tags ggtags-update-tags)
+  :commands(ggtags--xref-backend ggtags-create-tags ggtags-update-tags ggtags--xref-find-tags)
   :init
-  (add-hook 'xref-backend-functions #'ggtags--xref-backend 99)
+  (add-hook 'xref-backend-functions #'ggtags--xref-backend 98)
   (setenv "GTAGSFORCECPP" "1") ;; 默认h不以cpp分析，导致分析不出c++类
-  :config
   (defvar force-search-variable nil)
+  
+  ;; 对于找不到的如成员变量，就查reference。（其目的是为了少启动一次进程加快速度）
+  (defun ggtags-reference-backend () 'ggtags-reference)
+  (cl-defmethod xref-backend-identifier-at-point ((_backend (eql 'ggtags-reference)))
+    (find-tag--default))
+  (cl-defmethod xref-backend-identifier-completion-table ((_backend
+                                                           (eql 'ggtags-reference)))
+    ;; 参考的https://github.com/zbelial/lspce/blob/master/lspce.el，这个可以实现空白处列举所有符号，暂时不需要这个功能
+    (list (propertize (or (thing-at-point 'symbol) "")
+                      'identifier-at-point t)))
+  (cl-defmethod xref-backend-definitions ((_backend (eql 'ggtags-reference)) symbol)
+    (let ((force-search-variable t))
+      (ggtags--xref-find-tags symbol 'definition)))
+  (add-hook 'xref-backend-functions #'ggtags-reference-backend 99) ;; 非在原版后面，找不到就按global -srax查找
+  :config
   (defadvice ggtags-global-build-command(after my-ggtags-global-build-command activate)
     "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
     (when force-search-variable
       (setq ad-return-value (concat ad-return-value " -srax"))))
-  (defadvice ggtags--xref-backend(after my-ggtags--xref-backend activate)
-    "让支持成员变量"
-    (setq force-search-variable (not ad-return-value))
+  (defadvice ggtags--xref-backend(around my-ggtags--xref-backend activate)
+    "不检查`ggtags-completion-table'，避免多启动一次global进程影响速度"
     (setq ad-return-value 'ggtags) ;; 原版非函数时返回nil(GTAGS里没有成员变量，而GRTAGS里有，用global -sax可以查到)
     )
   (defadvice ggtags--xref-find-tags (around my-ggtags--xref-find-tags activate)
