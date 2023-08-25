@@ -2206,6 +2206,7 @@ _c_: hide comment        _q_uit
                        (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    (setq consult-ripgrep-args (string-replace " --search-zip" "" consult-ripgrep-args)) ;; 支持搜索el.gz，但我不需要这个功能(同时也跟--pre冲突)
     ;; 只对这部分命令开启preview，`consult-preview-key'
     (consult-customize
      consult-line
@@ -2215,12 +2216,17 @@ _c_: hide comment        _q_uit
      )
     (setq consult-ripgrep-args (concat consult-ripgrep-args " --ignore-file " (expand-file-name "rg_ignore.txt" "~/.emacs.d/bin/")))
     ;; 含中文字符搜索时添加--pre rgpre
-    (defadvice consult--ripgrep-builder (around my-consult--ripgrep-builder activate)
-      (if (chinese-word-chinese-string-p (ad-get-arg 0))
-          (let ((consult-ripgrep-args (concat consult-ripgrep-args " --pre rgpre")))
-            ad-do-it
-            )
-        ad-do-it))
+    (define-advice consult--ripgrep-make-builder (:around (fn &rest args) fallback)
+      (let ((maker (apply fn args)))
+        (lambda (input)
+          (let ((result (funcall maker input)))
+            (when (chinese-word-chinese-string-p input)
+              (let ((cmds (car result)))
+                ;; 经测试不能包含--search-zip参数，不然搜索不到
+                (setq cmds (delete "--search-zip" cmds))
+                (setq result (append (list (append (list (car cmds)) (list "--pre" "rgpre") (cdr cmds)))
+                                     (cdr result)))))
+            result))))
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)
     )
   
