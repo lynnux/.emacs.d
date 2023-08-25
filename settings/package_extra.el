@@ -4557,6 +4557,30 @@ _q_uit
     (let ((force-search-variable t))
       (ggtags--xref-find-tags symbol 'definition)))
   (add-hook 'xref-backend-functions #'ggtags-reference-backend 99) ;; 非在原版后面，找不到就按global -srax查找
+  ;; 实现xref preview对ggtags的支持，基本就是照搬`consult-xref--preview'逻辑，以后升级只要改动不大还是可以用的
+  (with-eval-after-load 'consult-xref
+    (define-advice consult-xref--preview (:around (fn &rest args) fallback)
+      (let ((result (apply fn args)))
+        (lambda (action cand)
+          (when (funcall result action cand)  ;; 经测试没有正常preview返回的是marker，正常返回nil
+            (when cand
+              (let ((consult--buffer-display (ad-get-argument args 0))
+                    (open (consult--temporary-files))
+                    (preview (consult--jump-preview)))
+                (funcall preview action 
+                         (when-let (loc (and cand (eq action 'preview)
+                                             (xref-item-location cand)))
+                           (let ((type (type-of loc)))
+                             (pcase type
+                               ('ggtags-xref-location
+                                (consult--marker-from-line-column
+                                 (funcall open
+                                          (ggtags-xref-location-file loc) ;; 要全路径不然open临时文件会失败
+                                          )
+                                 (ggtags-xref-location-line loc)
+                                 (ggtags-xref-location-column loc)
+                                 ))))))))))))
+    )
   :config
   (defadvice ggtags-global-build-command(after my-ggtags-global-build-command activate)
     "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
