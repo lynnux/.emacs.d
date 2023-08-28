@@ -1976,7 +1976,8 @@ _c_: hide comment        _q_uit
                 embark-act-with-completing-read 
                 embark-next-symbol 
                 embark-previous-symbol 
-                embark-toggle-highlight)
+                embark-toggle-highlight
+                embark-open-externally)
       :bind
       (("M-." . embark-act)  ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
        ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
@@ -1993,6 +1994,15 @@ _c_: hide comment        _q_uit
         (define-key vertico-map (kbd "C-c C-c") 'embark-act)
         (define-key vertico-map [?\H-m] (kbd "C-. SPC")) ; C-m选中mark当前行，之后C-. A(embark-act-all)就可以这已mark的进行操作了！
         )
+      (defun find-file-auto (orig-fun &rest args)
+        "对一些后辍直接用shell打开"
+        (let ((filename (car args)))
+          (if (cl-find-if
+               (lambda (regexp) (string-match regexp filename))
+               '("\\.pdf\\'" "\\.docx?\\'" "\\.xlsx?\\'" "\\.pcapn?g?\\'"))
+              (embark-open-externally filename)
+            (apply orig-fun args))))
+      (advice-add 'find-file :around 'find-file-auto)
       :config
       (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
       (define-key embark-file-map (kbd "C-x C-d") (lambda (file)
