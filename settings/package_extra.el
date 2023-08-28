@@ -162,6 +162,7 @@ _q_uit
     :commands(dired-recent-mode dired-recent-open)
     :init
     (setq dired-recent-mode-map nil);; 禁止它注册C-x C-d
+    (global-set-key (kbd "C-c d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
@@ -2145,6 +2146,7 @@ _c_: hide comment        _q_uit
       :commands(consult-everything)
       :init
       (setq consult-everything-args "es -p -r") ;; -i是区分大小写
+      (global-set-key (kbd "C-c f") 'consult-everything)
       ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
       (defun consult--with-orderless (&rest args)
         (minibuffer-with-setup-hook
