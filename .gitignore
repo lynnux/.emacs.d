@@ -106,3 +106,4 @@ packages/minibuffer/compat.el-master/*
 /packages/minibuffer/compat-main/
 /packages/org/org-roam-main/
 /themes/emacs-dashboard-master/
+/packages/cycle-at-point/

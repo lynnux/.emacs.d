@@ -187,8 +187,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (interactive "p")
   (my-insert-char-next-line (- arg)))
 
-(global-set-key (kbd "C-j") 'my-insert-char-prev-line) ;原想用C-I的，结果会影响TAB键
-(global-set-key (kbd "C-S-j") 'my-insert-char-next-line) ;
+;; (global-set-key (kbd "C-j") 'my-insert-char-prev-line) ;原想用C-I的，结果会影响TAB键
+;; (global-set-key (kbd "C-S-j") 'my-insert-char-next-line) ;
 
 ;;; m-o切换h/cpp文件
 (global-set-key (kbd "M-o") 'ff-get-other-file)

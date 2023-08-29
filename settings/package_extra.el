@@ -34,6 +34,7 @@
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
   (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
+  (ensure-latest "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip")
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -4619,6 +4620,35 @@ _q_uit
                  argument)))
       ad-do-it))
   )
+
+
+;; 这个比grugru要更灵活些，缺点是cursor会变，也没有`grugru-highlight-mode'高亮
+(use-package cycle-at-point
+  :load-path "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point"
+  :commands(cycle-at-point)
+  :init
+  (global-set-key (kbd "C-j") 'cycle-at-point)
+  :config
+  (defadvice cycle-at-point-preset-c-mode (after my-cycle-at-point-preset-c-mode activate)
+    "追加自定义的"
+    (setq ad-return-value (append
+                           ad-return-value
+                           (list
+                            (lambda () (cycle-at-point-find-include))))))
+  (defun cycle-at-point-find-include()
+    "改变include的双引号和<>切换"
+    (let ((result (list))
+          (word (bounds-of-thing-at-point 'sexp))
+          )
+      (when word
+        (setq word (buffer-substring-no-properties (car word) (cdr word)))
+        (when (string-match-p "\"\\(.*\\)\"" word)
+          (setq result
+                (list word (replace-regexp-in-string "\"\\(.*\\)\"" "<\\1>" word) 
+                 ))))
+      (list :data result)))
+  )
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
