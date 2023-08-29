@@ -721,8 +721,13 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-e") 'mwim-end-of-code-or-line)
   )
 
+(global-unset-key (kbd "C-z"))
+(global-set-key (kbd "C-z")   'undo)
+(global-set-key (kbd "C-x u") 'undo-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
+
 ;; undo-fu小巧才15K
 (use-package undo-fu
+  :disabled
   :config
   (global-unset-key (kbd "C-z"))
   (global-set-key (kbd "C-z")   'undo-fu-only-undo)

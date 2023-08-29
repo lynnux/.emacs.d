@@ -6,7 +6,7 @@
 ;; Author: Phil Hagelberg, Cornelius Mika, Campbell Barton
 ;; Maintainer: Campbell Barton <ideasman42@gmail.com>
 ;; URL: https://codeberg.org/ideasman42/emacs-idle-highlight-mode
-;; Version: 1.1.3
+;; Version: 1.1.4
 ;; Created: 2008-05-13
 ;; Keywords: convenience
 ;; EmacsWiki: IdleHighlight
@@ -15,7 +15,8 @@
 ;;; Commentary:
 
 ;; M-x idle-highlight-mode sets an idle timer that highlights all
-;; occurrences in the buffer of the symbol under the point.
+;; occurrences in the buffer of the symbol under the point
+;; (optionally highlighting in all other buffers as well).
 
 ;; Enabling it in a hook is recommended if you don't want it enabled
 ;; for all buffers, just programming ones.
@@ -41,29 +42,42 @@
 
 
 ;; ---------------------------------------------------------------------------
+;; Compatibility
+
+(when (and (version< emacs-version "29.1") (not (and (fboundp 'pos-bol) (fboundp 'pos-eol))))
+  (defun pos-bol (&optional n)
+    "Return the position at the line beginning."
+    (declare (side-effect-free t))
+    (let ((inhibit-field-text-motion t))
+      (line-beginning-position n)))
+  (defun pos-eol (&optional n)
+    "Return the position at the line end."
+    (declare (side-effect-free t))
+    (let ((inhibit-field-text-motion t))
+      (line-end-position n))))
+
+
+;; ---------------------------------------------------------------------------
 ;; Custom Variables
 
-(defgroup idle-highlight nil "Highlight other occurrences of the word at point." :group 'faces)
+(defgroup idle-highlight nil
+  "Highlight other occurrences of the word at point."
+  :group 'faces)
 
-(defface idle-highlight
-  '((t (:inherit region)))
+(defface idle-highlight '((t (:inherit region)))
   "Face used to highlight other occurrences of the word at point.")
 
 (defcustom idle-highlight-exceptions nil
   "List of words to be excepted from highlighting."
   :type
-  '
-  (choice
-    (repeat :tag "A list of string literals that will be excluded." string)
-    (function :tag "A function taking a string, non-nil result excludes.")))
+  '(choice (repeat :tag "A list of string literals that will be excluded." string)
+           (function :tag "A function taking a string, non-nil result excludes.")))
 
 (defcustom idle-highlight-exceptions-face '(font-lock-keyword-face font-lock-string-face)
   "List of exception faces."
   :type
-  '
-  (choice
-    (repeat :tag "A list of face symbols that will be ignored." symbol)
-    (function :tag "A function that takes a list of faces, non-nil result excludes.")))
+  '(choice (repeat :tag "A list of face symbols that will be ignored." symbol)
+           (function :tag "A function that takes a list of faces, non-nil result excludes.")))
 
 (defcustom idle-highlight-exceptions-syntax "^w_"
   "Syntax table to to skip.
@@ -87,18 +101,21 @@ See documentation for `skip-syntax-forward', nil to ignore."
   "List of major-modes to exclude when `idle-highlight' has been enabled globally."
   :type '(repeat symbol))
 
-(defvar-local global-idle-highlight-ignore-buffer nil
+(define-obsolete-variable-alias
+  'global-idle-highlight-ignore-buffer 'idle-highlight-global-ignore-buffer "1.1.4")
+
+(defvar-local idle-highlight-global-ignore-buffer nil
   "When non-nil, the global mode will not be enabled for this buffer.
 This variable can also be a predicate function, in which case
 it'll be called with one parameter (the buffer in question), and
 it should return non-nil to make Global `idle-highlight' Mode not
 check this buffer.")
 
-
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
 
-(defvar-local idle-highlight--overlays nil "Buffer-local list of overlays.")
+(defvar-local idle-highlight--overlays nil
+  "Buffer-local list of overlays.")
 
 
 ;; ---------------------------------------------------------------------------
@@ -107,19 +124,17 @@ check this buffer.")
 (defun idle-highlight--faces-at-point (pos)
   "Add the named faces that the `read-face-name' or `face' property use.
 Argument POS return faces at this point."
-  (let
-    ( ;; List of faces to return.
-      (faces nil)
-      ;; NOTE: use `get-text-property' instead of `get-char-property' so overlays are excluded,
-      ;; since this causes overlays with `hl-line-mode' (for example) to mask keywords, see: #1.
-      (faceprop (or (get-text-property pos 'read-face-name) (get-text-property pos 'face))))
+  (let ((faces nil) ; List of faces to return.
+        ;; NOTE: use `get-text-property' instead of `get-char-property' so overlays are excluded,
+        ;; since this causes overlays with `hl-line-mode' (for example) to mask keywords, see: #1.
+        (faceprop (or (get-text-property pos 'read-face-name) (get-text-property pos 'face))))
     (cond
-      ((facep faceprop)
-        (push faceprop faces))
-      ((face-list-p faceprop)
-        (dolist (face faceprop)
-          (when (facep face)
-            (push face faces)))))
+     ((facep faceprop)
+      (push faceprop faces))
+     ((face-list-p faceprop)
+      (dolist (face faceprop)
+        (when (facep face)
+          (push face faces)))))
     faces))
 
 (defun idle-highlight--merge-overlapping-ranges (ranges)
@@ -127,35 +142,31 @@ Argument POS return faces at this point."
 
 Where RANGES is an unordered list of (min . max) cons cells."
   (cond
-    ((cdr ranges)
-      ;; Simple < sorting of cons cells.
-      (setq ranges
-        (sort
-          ranges
-          (lambda (x y) (or (< (car x) (car y)) (and (= (car x) (car y)) (< (cdr x) (cdr y)))))))
-      ;; Step over `ranges', de-duplicating & adjusting elements as needed.
-      (let
-        (
-          (ranges-iter ranges)
+   ((cdr ranges)
+    ;; Simple < sorting of cons cells.
+    (setq ranges
+          (sort
+           ranges
+           (lambda (x y) (or (< (car x) (car y)) (and (= (car x) (car y)) (< (cdr x) (cdr y)))))))
+    ;; Step over `ranges', de-duplicating & adjusting elements as needed.
+    (let ((ranges-iter ranges)
           (ranges-next (cdr ranges)))
-        (while ranges-next
-          (let
-            (
-              (head (car ranges-iter))
+      (while ranges-next
+        (let ((head (car ranges-iter))
               (next (car ranges-next)))
-            (cond
-              ((< (cdr head) (car next))
-                (setq ranges-iter ranges-next)
-                (setq ranges-next (cdr ranges-next)))
-              (t
-                (when (< (cdr head) (cdr next))
-                  (setcdr head (cdr next)))
-                (setq ranges-next (cdr ranges-next))
-                (setcdr ranges-iter ranges-next)))))
-        ranges))
+          (cond
+           ((< (cdr head) (car next))
+            (setq ranges-iter ranges-next)
+            (setq ranges-next (cdr ranges-next)))
+           (t
+            (when (< (cdr head) (cdr next))
+              (setcdr head (cdr next)))
+            (setq ranges-next (cdr ranges-next))
+            (setcdr ranges-iter ranges-next)))))
+      ranges))
 
-    (t ;; No need for complex logic single/empty lists.
-      ranges)))
+   (t ; No need for complex logic single/empty lists.
+    ranges)))
 
 
 ;; ---------------------------------------------------------------------------
@@ -164,41 +175,41 @@ Where RANGES is an unordered list of (min . max) cons cells."
 (defun idle-highlight--check-symbol-at-point (pos)
   "Return non-nil if the symbol at POS can be used."
   (cond
-    (idle-highlight-exceptions-syntax
-      (save-excursion (zerop (skip-syntax-forward idle-highlight-exceptions-syntax (1+ pos)))))
-    (t
-      t)))
+   (idle-highlight-exceptions-syntax
+    (save-excursion (zerop (skip-syntax-forward idle-highlight-exceptions-syntax (1+ pos)))))
+   (t
+    t)))
 
 (defun idle-highlight--check-faces-at-point (pos)
   "Check if the position POS has faces that match the exclude argument."
   (cond
-    (idle-highlight-exceptions-face
-      (let ((result t))
-        (let ((faces-at-pos (idle-highlight--faces-at-point pos)))
-          (when faces-at-pos
-            (cond
-              ((functionp idle-highlight-exceptions-face)
-                (when (funcall idle-highlight-exceptions-face faces-at-pos)
-                  (setq result nil)))
-              (t
-                (while faces-at-pos
-                  (let ((face (pop faces-at-pos)))
-                    (when (memq face idle-highlight-exceptions-face)
-                      (setq result nil)
-                      ;; Break.
-                      (setq faces-at-pos nil))))))))
-        result))
-    (t ;; Default to true, if there are no exceptions.
-      t)))
+   (idle-highlight-exceptions-face
+    (let ((result t))
+      (let ((faces-at-pos (idle-highlight--faces-at-point pos)))
+        (when faces-at-pos
+          (cond
+           ((functionp idle-highlight-exceptions-face)
+            (when (funcall idle-highlight-exceptions-face faces-at-pos)
+              (setq result nil)))
+           (t
+            (while faces-at-pos
+              (let ((face (pop faces-at-pos)))
+                (when (memq face idle-highlight-exceptions-face)
+                  (setq result nil)
+                  ;; Break.
+                  (setq faces-at-pos nil))))))))
+      result))
+   (t ; Default to true, if there are no exceptions.
+    t)))
 
 (defun idle-highlight--check-word (target)
   "Return non-nil when TARGET should not be excluded."
   (not
-    (cond
-      ((functionp idle-highlight-exceptions)
-        (funcall idle-highlight-exceptions target))
-      (t
-        (member target idle-highlight-exceptions)))))
+   (cond
+    ((functionp idle-highlight-exceptions)
+     (funcall idle-highlight-exceptions target))
+    (t
+     (member target idle-highlight-exceptions)))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -216,22 +227,19 @@ Where RANGES is an unordered list of (min . max) cons cells."
 Argument VISIBLE-RANGES is a list of (min . max) ranges to highlight."
   (idle-highlight--unhighlight)
   (save-excursion
-    (let ((target-regexp (concat "\\_<" (regexp-quote target) "\\_>")))
-      (pcase-dolist (`(,beg . ,end) visible-ranges)
-        (goto-char beg)
-        (while (re-search-forward target-regexp end t)
-          (let
-            (
-              (match-beg (match-beginning 0))
-              (match-end (match-end 0)))
-            (unless
-              (and
-                idle-highlight-exclude-point
-                (eq target-beg match-beg)
-                (eq target-end match-end))
-              (let ((ov (make-overlay match-beg match-end)))
-                (overlay-put ov 'face 'idle-highlight)
-                (push ov idle-highlight--overlays)))))))))
+    (save-match-data
+      (let ((target-regexp (concat "\\_<" (regexp-quote target) "\\_>")))
+        (pcase-dolist (`(,beg . ,end) visible-ranges)
+          (goto-char beg)
+          (while (re-search-forward target-regexp end t)
+            (let ((match-beg (match-beginning 0))
+                  (match-end (match-end 0)))
+              (unless (and idle-highlight-exclude-point
+                           (eq target-beg match-beg)
+                           (eq target-end match-end))
+                (let ((ov (make-overlay match-beg match-end)))
+                  (overlay-put ov 'face 'idle-highlight)
+                  (push ov idle-highlight--overlays))))))))))
 
 (defun idle-highlight--word-at-point-args ()
   "Return arguments for `idle-highlight--highlight'."
@@ -281,21 +289,20 @@ should be the result of `idle-highlight--word-at-point-args'."
 (defun idle-highlight--time-callback-or-disable ()
   "Callback that run the repeat timer."
 
-  (let
-    ( ;; Ensure all other buffers are highlighted on request.
-      (is-mode-active (bound-and-true-p idle-highlight-mode))
-      (buf-current (current-buffer))
-      (dirty-buffer-list (list))
-      (force-all idle-highlight-visible-buffers))
+  ;; Ensure all other buffers are highlighted on request.
+  (let ((is-mode-active (bound-and-true-p idle-highlight-mode))
+        (buf-current (current-buffer))
+        (dirty-buffer-list (list))
+        (force-all idle-highlight-visible-buffers))
 
     ;; When this buffer is not in the mode, flush all other buffers.
     (cond
-      (is-mode-active
-        (setq idle-highlight--dirty t))
-      (t
-        ;; If the timer ran when in another buffer,
-        ;; a previous buffer may need a final refresh, ensure this happens.
-        (setq idle-highlight--dirty-flush-all t)))
+     (is-mode-active
+      (setq idle-highlight--dirty t))
+     (t
+      ;; If the timer ran when in another buffer,
+      ;; a previous buffer may need a final refresh, ensure this happens.
+      (setq idle-highlight--dirty-flush-all t)))
 
     (when force-all
       (setq idle-highlight--dirty-flush-all t))
@@ -305,14 +312,12 @@ should be the result of `idle-highlight--word-at-point-args'."
     (dolist (frame (frame-list))
       (dolist (win (window-list frame -1))
         (let ((buf (window-buffer win)))
-          (when
-            (cond
-              (idle-highlight--dirty-flush-all
-                (and
-                  (buffer-local-value 'idle-highlight-mode buf)
-                  (or (buffer-local-value 'idle-highlight--dirty buf) force-all)))
-              (t
-                (eq buf buf-current)))
+          (when (cond
+                 (idle-highlight--dirty-flush-all
+                  (and (buffer-local-value 'idle-highlight-mode buf)
+                       (or (buffer-local-value 'idle-highlight--dirty buf) force-all)))
+                 (t
+                  (eq buf buf-current)))
 
             (unless (memq buf dirty-buffer-list)
               (push buf dirty-buffer-list))
@@ -323,15 +328,14 @@ should be the result of `idle-highlight--word-at-point-args'."
               ;; Push a (min . max) cons cell,
               ;; expanded to line bounds (to avoid clipping words).
               (save-excursion
-                (push
-                  (cons
-                    (progn
-                      (goto-char (max (point-min) (window-start win)))
-                      (line-beginning-position))
-                    (progn
-                      (goto-char (min (point-max) (window-end win)))
-                      (line-end-position)))
-                  idle-highlight--dirty)))))))
+                (push (cons
+                       (progn
+                         (goto-char (max (point-min) (window-start win)))
+                         (pos-bol))
+                       (progn
+                         (goto-char (min (point-max) (window-end win)))
+                         (pos-eol)))
+                      idle-highlight--dirty)))))))
 
 
     (let ((target-args (and force-all (idle-highlight--word-at-point-args))))
@@ -352,37 +356,37 @@ should be the result of `idle-highlight--word-at-point-args'."
               (idle-highlight--word-at-point-highlight target target-range visible-ranges))))))
 
     (cond
-      (is-mode-active
-        ;; Always keep the current buffer dirty
-        ;; so navigating away from this buffer will refresh it.
-        (setq idle-highlight--dirty t))
-      (t ;; Cancel the timer until the current buffer uses this mode again.
-        (idle-highlight--time-ensure nil)))))
+     (is-mode-active
+      ;; Always keep the current buffer dirty
+      ;; so navigating away from this buffer will refresh it.
+      (setq idle-highlight--dirty t))
+     (t ; Cancel the timer until the current buffer uses this mode again.
+      (idle-highlight--time-ensure nil)))))
 
 (defun idle-highlight--time-ensure (state)
   "Ensure the timer is enabled when STATE is non-nil, otherwise disable."
   (cond
-    (state
-      (unless idle-highlight--global-timer
-        (setq idle-highlight--global-timer
-          (run-with-idle-timer
-            idle-highlight-idle-time
-            :repeat #'idle-highlight--time-callback-or-disable))))
-    (t
-      (when idle-highlight--global-timer
-        (cancel-timer idle-highlight--global-timer)
-        (setq idle-highlight--global-timer nil)))))
+   (state
+    (unless idle-highlight--global-timer
+      (setq idle-highlight--global-timer
+            (run-with-idle-timer
+             idle-highlight-idle-time
+             :repeat #'idle-highlight--time-callback-or-disable))))
+   (t
+    (when idle-highlight--global-timer
+      (cancel-timer idle-highlight--global-timer)
+      (setq idle-highlight--global-timer nil)))))
 
 (defun idle-highlight--time-reset ()
   "Run this when the buffer change was changed."
   ;; Ensure changing windows doesn't leave other buffers with stale highlight.
   (cond
-    ((bound-and-true-p idle-highlight-mode)
-      (setq idle-highlight--dirty-flush-all t)
-      (setq idle-highlight--dirty t)
-      (idle-highlight--time-ensure t))
-    (t
-      (idle-highlight--time-ensure nil))))
+   ((bound-and-true-p idle-highlight-mode)
+    (setq idle-highlight--dirty-flush-all t)
+    (setq idle-highlight--dirty t)
+    (idle-highlight--time-ensure t))
+   (t
+    (idle-highlight--time-ensure nil))))
 
 (defun idle-highlight--time-buffer-local-enable ()
   "Ensure buffer local state is enabled."
@@ -414,25 +418,23 @@ should be the result of `idle-highlight--word-at-point-args'."
 
 (defun idle-highlight--turn-on ()
   "Enable command `idle-highlight-mode'."
-  (when
-    (and
-      ;; Not already enabled.
-      (not (bound-and-true-p idle-highlight-mode))
-      ;; Not in the mini-buffer.
-      (not (minibufferp))
-      ;; Not a special mode (package list, tabulated data ... etc)
-      ;; Instead the buffer is likely derived from `text-mode' or `prog-mode'.
-      (not (derived-mode-p 'special-mode))
-      ;; Not explicitly ignored.
-      (not (memq major-mode idle-highlight-ignore-modes))
-      ;; Optionally check if a function is used.
-      (or
-        (null global-idle-highlight-ignore-buffer)
-        (cond
-          ((functionp global-idle-highlight-ignore-buffer)
-            (not (funcall global-idle-highlight-ignore-buffer (current-buffer))))
-          (t
-            nil))))
+  (when (and
+         ;; Not already enabled.
+         (not (bound-and-true-p idle-highlight-mode))
+         ;; Not in the mini-buffer.
+         (not (minibufferp))
+         ;; Not a special mode (package list, tabulated data ... etc)
+         ;; Instead the buffer is likely derived from `text-mode' or `prog-mode'.
+         (not (derived-mode-p 'special-mode))
+         ;; Not explicitly ignored.
+         (not (memq major-mode idle-highlight-ignore-modes))
+         ;; Optionally check if a function is used.
+         (or (null idle-highlight-global-ignore-buffer)
+             (cond
+              ((functionp idle-highlight-global-ignore-buffer)
+               (not (funcall idle-highlight-global-ignore-buffer (current-buffer))))
+              (t
+               nil))))
     (idle-highlight-mode 1)))
 
 
@@ -445,16 +447,22 @@ should be the result of `idle-highlight--word-at-point-args'."
   :global nil
 
   (cond
-    (idle-highlight-mode
-      (idle-highlight--enable))
-    (t
-      (idle-highlight--disable))))
+   (idle-highlight-mode
+    (idle-highlight--enable))
+   (t
+    (idle-highlight--disable))))
 
 ;;;###autoload
-(define-globalized-minor-mode
-  global-idle-highlight-mode
+(define-globalized-minor-mode idle-highlight-global-mode
+  idle-highlight-mode
+  idle-highlight--turn-on)
 
-  idle-highlight-mode idle-highlight--turn-on)
+(define-obsolete-function-alias 'global-idle-highlight-mode #'idle-highlight-global-mode "1.1.4")
 
 (provide 'idle-highlight-mode)
+;; Local Variables:
+;; fill-column: 99
+;; indent-tabs-mode: nil
+;; elisp-autofmt-format-quoted: nil
+;; End:
 ;;; idle-highlight-mode.el ends here
