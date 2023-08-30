@@ -3931,6 +3931,8 @@ _q_uit
   (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
   (define-key poe-popup-mode-map (kbd "<C-tab>") 'poe-popup-next)
   (define-key poe-popup-mode-map (kbd "<C-S-tab>") 'poe-popup-prev)
+  (global-set-key (kbd "M-1") 'poe-popup-next)
+  (global-set-key (kbd "M-2") 'poe-popup-next)
   (defface poe-echo-area-buried
     '((t :inherit shadow))
     "Echo area face for buried popups.")
