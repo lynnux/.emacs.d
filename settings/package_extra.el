@@ -4632,20 +4632,22 @@ _q_uit
   (defadvice cycle-at-point-preset-c-mode (after my-cycle-at-point-preset-c-mode activate)
     "追加自定义的"
     (setq ad-return-value (append
-                           ad-return-value
                            (list
-                            (lambda () (cycle-at-point-find-include))))))
+                            (lambda () (cycle-at-point-find-include))) ;; 要排在<>的前面
+                           ad-return-value
+                           )))
   (defun cycle-at-point-find-include()
     "改变include的双引号和<>切换"
     (let ((result (list))
-          (word (bounds-of-thing-at-point 'sexp))
-          )
+          (word (bounds-of-thing-at-point 'sexp))) ;; 目前仅支持在"<>所在位置
       (when word
         (setq word (buffer-substring-no-properties (car word) (cdr word)))
-        (when (string-match-p "\"\\(.*\\)\"" word)
+        (when (string-match-p "\"\\([a-z-_.]+\\)\"" word)
           (setq result
-                (list word (replace-regexp-in-string "\"\\(.*\\)\"" "<\\1>" word) 
-                 ))))
+                (list word (replace-regexp-in-string "\"\\([a-z-_.]+\\)\"" "<\\1>" word) )))
+        (when (string-match-p "<\\([a-z-_.]+\\)>" word)
+          (setq result
+                (list word (replace-regexp-in-string "<\\([a-z-_.]+\\)>" "\"\\1\"" word)))))
       (list :data result)))
   )
 
