@@ -3194,7 +3194,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            (autoload 'eglot-rename "lsp/eglot" "" nil))
          (defun lsp-ensure() (eglot-ensure))
          (setq eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
-               ;; eglot-send-changes-idle-time 0.01 ; 加快补全，实际上corfu-auto-delay的关系更大
+               eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
                eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
                eglot-events-buffer-size 0 ;; 
                )
