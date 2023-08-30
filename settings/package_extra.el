@@ -939,28 +939,6 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c e") #'aya-expand)
   )
 
-
-(use-package yasnippet
-  :disabled
-  :defer t
-  :init
-  (add-to-list 'load-path "~/.emacs.d/packages/yasnippet")
-  :diminish(yas-minor-mode)
-  :config
-  ;; copy from yasnippet-snippets.el，fix for eglot
-  (defun yasnippet-snippets--no-indent ()
-    "Set `yas-indent-line' to nil."
-    (set (make-local-variable 'yas-indent-line) nil)) 
-  (defun yasnippet-snippets--fixed-indent ()
-    "Set `yas-indent-line' to `fixed'."
-    (set (make-local-variable 'yas-indent-line) 'fixed))
-  (setq yas-snippet-dirs
-	'("~/.emacs.d/packages/yasnippet/mysnippets" ;; 自定义要在前，保存才会默认保存这里
-	  "~/.emacs.d/packages/yasnippet/yasnippet-snippets-master/snippets"
-	  ))
-  (yas-global-mode 1)
-  )
-
 ;; from tabbar-ruler
 (setq EmacsPortable-included-buffers '("*scratch*" "*shell*" "*rg*"
                                        "*eww*" "*xref*" "*org-roam*" "*elfeed-entry*" "*elfeed-search*" "*dashboard*"))
@@ -1050,8 +1028,6 @@ _c_: hide comment        _q_uit
    '(idle-highlight ((t (:inherit isearch)))) ;; 参见https://gitee.com/advanceflow/elisp/blob/main/40-Emacs%E6%98%BE%E7%A4%BA.org#40128-%E5%9F%BA%E6%9C%AC%E9%9D%A2
    )
   )
-
-
 
 (progn
   (defvar last-readonly-state t) ;; 设为t让*scratch*可以正常显示
@@ -2369,28 +2345,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (interactive)
   (shell-command "git config --global --unset http.proxy")
   (shell-command "git config --global --unset https.proxy"))
-
-(use-package dumb-jump
-  :disabled ;; 对于超大项目老是卡住，不建议用了
-  :commands(dumb-jump-xref-activate)
-  :init
-  ;; dumb-jump，使用rg查找定义！需要定义project root，添加任意这些文件都可以：.dumbjump .projectile .git .hg .fslckout .bzr _darcs .svn Makefile PkgInfo -pkg.el.
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate 100)
-  ;; (setq xref-show-definitions-function #'xref-show-definitions-completing-read) ; 不用xref，用helm，但这个C-C C-F切换follow mode有问题，暂时不管了
-  :config
-  ;; (defadvice dumb-jump-get-project-root (before my-dumb-jump-get-project-root activate)
-  ;;   ;; arount设置有问题
-  ;;   (setq dumb-jump-default-project default-directory) ; 默认设置为当前目录
-  ;;   )
-  
-  (defadvice dumb-jump-run-command (around my-dumb-jump-run-command activate)
-    "修复中文路径跳转问题，即修复`shell-command-to-string'调用"
-    (let ((cmdproxy-old-encoding (cdr (assoc "[cC][mM][dD][pP][rR][oO][xX][yY]" process-coding-system-alist))))
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . gbk-dos))
-      ad-do-it
-      (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)
-      ))
-  )
 
 (use-package which-key
   :init
