@@ -34,7 +34,7 @@
   (ensure-latest "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
   (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
-  (ensure-latest "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip")
+  (ensure-latest "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip" nil "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -62,13 +62,13 @@
                       program)))
     (apply #'call-process
            `(,emacs nil "*straight-byte-compilation*" nil ,@args))))
-(defun ensure-latest (zip &optional no-compile)
+(defun ensure-latest (zip &optional no-compile dir-name)
   "自动更新zip包，zip里的目录组织有格式要求，直接用git下载的zip就可以了"
   (interactive "P")
   (let* ((check-file (expand-file-name (concat ".cache/" (file-name-nondirectory zip)) user-emacs-directory))
          (expand-zip (expand-file-name zip))
          (extdir (file-name-directory expand-zip))
-         (target-dir (concat extdir (file-name-base expand-zip))))
+         (target-dir (concat extdir (if dir-name dir-name (file-name-base expand-zip)))))
     (when (file-newer-than-file-p expand-zip check-file)
       (delete-directory target-dir t nil) ;先删除目录
       (call-process-shell-command (concat "unzip " expand-zip " -d " extdir))
