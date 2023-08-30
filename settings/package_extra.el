@@ -1005,6 +1005,7 @@ _c_: hide comment        _q_uit
 
 ;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
 (use-package idle-highlight-mode
+  :commands(idle-highlight--faces-at-point)
   :defer 1.1
   :init
   (setq idle-highlight-idle-time 0.35 ;; 别太小，同一位置它会一直调用高亮显示
@@ -4527,6 +4528,7 @@ _q_uit
                            (list
                             (lambda () (cycle-at-point-find-include))) ;; 要排在<>的前面
                            ad-return-value
+                           (list (lambda () (cycle-at-point-name-convertion)))
                            )))
   (defun cycle-at-point-find-include()
     "改变include的双引号和<>切换"
@@ -4540,6 +4542,58 @@ _q_uit
         (when (string-match-p "<\\([a-z-_.]+\\)>" word)
           (setq result
                 (list word (replace-regexp-in-string "<\\([a-z-_.]+\\)>" "\"\\1\"" word)))))
+      (list :data result)))
+
+  ;; from https://github.com/akicho8/string-inflection/blob/master/string-inflection.el
+  (defun string-inflection-underscore-function (str)
+    "FooBar => foo_bar"
+    (let ((case-fold-search nil))
+      (setq str (replace-regexp-in-string "\\([a-z0-9]\\)\\([A-Z]\\)" "\\1_\\2" str))
+      (setq str (replace-regexp-in-string "\\([A-Z]+\\)\\([A-Z][a-z]\\)" "\\1_\\2" str))
+      (setq str (replace-regexp-in-string "-" "_" str)) ; FOO-BAR => FOO_BAR
+      (setq str (replace-regexp-in-string "_+" "_" str))
+      (downcase str)))
+  (defun string-inflection-pascal-case-function (str)
+    "foo_bar => FooBar"
+    (setq str (string-inflection-underscore-function str))
+    (mapconcat 'capitalize (split-string str "_") ""))
+  (defun string-inflection-camelcase-function (str)
+    "foo_bar => fooBar"
+    (setq str (split-string (string-inflection-underscore-function str) "_"))
+    (concat (downcase (car str))
+            (mapconcat 'capitalize (cdr str) "")))
+  (defun string-inflection-capital-underscore-function (str)
+    "foo_bar => Foo_Bar"
+    (setq str (string-inflection-underscore-function str))
+    (mapconcat 'capitalize (split-string str "_") "_"))
+  (defun string-inflection-upcase-function (str)
+    "FooBar => FOO_BAR"
+    (upcase (string-inflection-underscore-function str)))
+  (defun string-inflection-kebab-case-function (str)
+    "foo_bar => foo-bar"
+    (let ((case-fold-search nil))
+      (setq str (string-inflection-underscore-function str))
+      (setq str (replace-regexp-in-string "_" "-" str))))
+  (defun cycle-at-point-name-convertion()
+    "函数名位置"
+    (let ((result (list))
+          (word (bounds-of-thing-at-point 'symbol)))
+      ;; 当前位置在函数名
+      (when (and word (memq 'font-lock-function-name-face (idle-highlight--faces-at-point (car word)))) ;; 如果在单词末尾就取不到face，需要在单词开始取face
+        (setq word (buffer-substring-no-properties (car word) (cdr word)))
+        (setq result 
+              (append (list word) 
+                      (delete word 
+                              (list (string-inflection-pascal-case-function word)
+                                    ;; (string-inflection-camelcase-function word)
+                                    ;; (string-inflection-capital-underscore-function word)
+                                    (string-inflection-underscore-function word)
+                                    (string-inflection-upcase-function word)
+                                    (if (derived-mode-p 'emacs-lisp-mode)
+                                        (string-inflection-kebab-case-function word)
+                                      word
+                                      )
+                                    )))))
       (list :data result)))
   )
 
