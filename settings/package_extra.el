@@ -4282,44 +4282,6 @@ _q_uit
 
 (add-to-list 'auto-mode-alist '("\\.jsfl\\'" . js-mode))
 
-(use-package dimmer
-  :defer 2.0
-  :init
-  (setq dimmer-fraction 0.3
-        dimmer-watch-frame-focus-events nil
-        )
-  :config
-  ;; post-command-hook转为advice
-  (add-hook 'dimmer-mode-hook (lambda()
-                                (when dimmer-mode
-                                  (remove-hook 'post-command-hook #'dimmer-command-handler)
-                                  )))
-  (defun dimmer-command-handler1 (&rest args)
-    (dimmer-command-handler))
-  (dimmer-mode t)
-  (defvar dimmer-post-command-hook '(other-window mouse-set-point))
-  (cl-dolist (jc dimmer-post-command-hook)
-    (advice-add jc :after #'dimmer-command-handler1))
-  ;; 支持corfu，参考https://github.com/gonewest818/dimmer.el/issues/62
-  (defun corfu-frame-p ()
-    "Check if the buffer is a corfu frame buffer."
-    (or (string-match-p "\\` \\*corfu" (buffer-name))
-        (string-match-p "\\` \\*show-fun" (buffer-name))))
-  (add-to-list
-   'dimmer-prevent-dimming-predicates
-   #'corfu-frame-p)
-  (advice-add
-   'dimmer-config-change-handler
-   :override 'advise-dimmer-config-change-handler)
-  (defun advise-dimmer-config-change-handler ()
-    "Advise to only force process if no predicate is truthy."
-    (let ((ignore (cl-some (lambda (f) (and (fboundp f) (funcall f)))
-                           dimmer-prevent-dimming-predicates)))
-      (unless ignore
-        (when (fboundp 'dimmer-process-all)
-          (dimmer-process-all t)))))
-  )
-
 (use-package dashboard
   :load-path "~/.emacs.d/themes/emacs-dashboard-master"
   :init
