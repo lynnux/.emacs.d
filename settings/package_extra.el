@@ -4093,45 +4093,6 @@ _q_uit
   :init
   (add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-mode)))
 
-;; text object，一直想要的东西
-(use-package objed
-  :commands(objed-activate)
-  :init
-  (global-set-key (kbd "M-t") 'objed-activate)
-  (with-eval-after-load 'view
-    (define-key view-mode-map "t" 'objed-activate)) ;; 暂时没有全局的激活，方便view-mode
-  :config
-  (setcdr objed-mode-map nil) ;; 默认绑定不需要，只需要objed-mode的hook就够了
-  (add-to-list 'objed-keeper-commands 'undo-fu-only-undo)
-  (add-to-list 'objed-keeper-commands 'undo-fu-only-redo)  
-  (add-to-list 'objed-cmd-alist '(mwim-beginning-of-code-or-line . line))
-  (add-to-list 'objed-cmd-alist '(mwim-end-of-code-or-line . line))
-  ;; objed使用的是hl-line的overlay，这里解决overlay被symbol-overlay覆盖的问题
-  (add-to-list 'objed-init-hook (lambda ()
-                                  (when (overlayp hl-line-overlay)
-                                    (overlay-put hl-line-overlay 'priority 999))
-                                  ))
-  (add-to-list 'objed-exit-hook (lambda ()
-                                  (when (overlayp hl-line-overlay)
-                                    (overlay-put hl-line-overlay 'priority -50))
-                                  ))
-  ;; (objed-mode +1);; hook一些操作如next-line，并自动activate objed模式，用得很爽！
-  (define-key objed-map "l" 'objed-del-insert) ;; l和i互换
-  (define-key objed-map "i" (objed--call-and-switch right-char char))
-  (define-key objed-map (kbd "C-h") nil)
-  (define-key objed-map "x" 'objed-toggle-side) ;; x和j互换
-  (define-key objed-map "j" 'objed-op-map) ;; x和j互换
-  (define-key objed-map "q" 'objed-quit) ;; 这个q有点理解不了
-  ;; 默认要which-key mode才显示，这里让
-  (when (functionp 'which-key--show-keymap)
-    ;; TODO: 需要第2次调用，它才会修改which-key-replacement-alist 显示短名。暂时不管了
-    (define-key objed-map "c"
-                (lambda () (interactive)
-                  (which-key--show-keymap "keymap" objed-object-map nil nil 'no-paging)
-                  (set-transient-map objed-object-map nil 'which-key--hide-popup)
-                  )))
-  )
-
 (use-package posframe
   :commands(posframe-hide posframe-show)
   )
@@ -4145,44 +4106,6 @@ _q_uit
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
   (remove-hook 'minibuffer-setup-hook #'minibuffer-history-isearch-setup) ;; isarch不需要？
   )
-;; from https://github.com/seagle0128/.emacs.d/blob/4d0a1f0f0f6ed99e6cf9c0e0888c4e323ce2ca3a/lisp/init-highlight.el#L43
-;; 显示屏幕外的匹配行了，29自带，但是滚动时不显示，参考上面修改成posframe显示，并且不是光标附近更友好
-(use-package paren
-  :defer t
-  :init (setq show-paren-when-point-inside-paren t
-              show-paren-when-point-in-periphery t
-              )
-  :config
-  (with-no-warnings
-    (defun show-paren-off-screen (&rest _args)
-      (posframe-hide " *my-posframe-buffer*")
-      (when (and (not (or cursor-in-echo-area
-                          executing-kbd-macro
-                          noninteractive
-                          (minibufferp)
-                          this-command))
-                 (and (not (bobp))
-                      (memq (char-syntax (char-before)) '(?\) ?\$)))
-                 (= 1 (logand 1 (- (point)
-                                   (save-excursion
-                                     (forward-char -1)
-                                     (skip-syntax-backward "/\\")
-                                     (point))))))
-        ;; 屏蔽substring-no-properties的调用，有颜色好区分一些
-        (cl-letf (((symbol-function #'substring-no-properties)
-                   (lambda (msg &rest args)
-                     (posframe-show " *my-posframe-buffer*"
-                                    :string msg
-                                    :position (point)
-                                    :border-width 1
-                                    :border-color "red"
-                                    )
-                     msg
-                     )))
-          (blink-matching-open))
-        ))
-    ;;(advice-add #'show-paren-function :after #'show-paren-off-screen)
-    ))
 
 (use-package which-func
   :defer 1.0
