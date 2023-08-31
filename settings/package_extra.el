@@ -3312,9 +3312,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                             (unless lsp-inited
                               (when (not buffer-read-only)
                                 (setq-local lsp-inited t)
-                                (when (or (memq major-mode '(c-mode c++-mode python-mode rust-mode cmake-mode))
+                                (when (or (memq major-mode '(c-mode c++-mode python-mode rust-mode cmake-mode
+                                                                    c-ts-mode c++-ts-mode python-ts-mode rust-ts-mode cmake-ts-mode))
                                           (and lua-server-path (eq major-mode 'lua-mode))
-                                          (and c-sharp-server-path (eq major-mode 'csharp-mode))
+                                          (and c-sharp-server-path (memq major-mode '(csharp-mode csharp-ts-mode)))
                                           (and xml-server-path (eq major-mode 'nxml-mode)))
                                   (lsp-ensure))))))
 
@@ -3364,113 +3365,6 @@ _q_uit
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
 
-(use-package tree-sitter
-  :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
-  :defer t
-  :init
-  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
-  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
-  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
-  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
-  (setq tree-sitter-langs--testing t ;; 禁止联网check bin
-        tsc-dyn-get-from nil ;; 
-        tree-sitter-langs-git-dir nil ;; 禁止调用git
-        tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
-        tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core"
-        )
-  (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
-  :config
-  ;; elisp没有高亮
-  (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
-  (use-package tree-sitter-langs)
-  
-  (defvar tree-sitter-idle-timer nil
-    "如果不需要hl功能，只需要按需调用tree-sitter-force-update即可，如defun范围功能")
-  (defun my/tree-sitter--after-change(beg new-end old-len)
-    (when tree-sitter-idle-timer
-      (cancel-timer tree-sitter-idle-timer))
-    (setq tree-sitter-idle-timer
-          (run-with-idle-timer 0.2 nil #'tree-sitter-force-update) ))
-  (defun tree-sitter-force-update()
-    (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
-    (tree-sitter--do-parse))
-  (when use-tree-sitter-hl-mode-hack
-    (defadvice tree-sitter--setup (after my-tree-sitter--setup activate)
-      "去掉hook，改为timer模式"
-      (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
-      (remove-hook 'before-change-functions #'tree-sitter--before-change :local))
-    (defun tree-sitter-setup-timer(&optional on)
-      (if on
-          (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local)
-        (remove-hook 'after-change-functions #'my/tree-sitter--after-change :local)
-        )))
-  )
-;; tsc里的(require 'dired-aux) 导致dired被加载了
-(use-package tree-sitter-hl
-  :diminish(tree-sitter-mode)
-  :commands(tree-sitter-hl-mode)
-  ;; 来自`tree-sitter-major-mode-language-alist'
-  :hook ((agda-mode
-          sh-mode
-          c-mode
-          caml-mode
-          csharp-mode
-          c++-mode
-          d-mode
-          css-mode
-          elm-mode
-          elixir-mode
-          go-mode
-          haskell-mode
-          hcl-mode
-          terraform-mode
-          html-mode
-          mhtml-mode
-          nix-mode
-          java-mode
-          javascript-mode
-          js-mode
-          js2-mode
-          js3-mode
-          json-mode
-          jsonc-mode
-          julia-mode
-          ocaml-mode
-          perl-mode
-          php-mode
-          prisma-mode
-          python-mode
-          pygn-mode
-          rjsx-mode
-          ruby-mode
-          rust-mode
-          rustic-mode
-          scala-mode
-          swift-mode
-          tuareg-mode
-          typescript-mode
-          verilog-mode
-          yaml-mode
-          zig-mode
-          emacs-lisp-mode
-          ) . 
-            (lambda ()
-	      ;; (tree-sitter-hl-mode)
-	      (grammatical-edit-mode 1)
-	      ))
-  :config
-  ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
-  (defun remove-jit-lock-after-change()
-    (when tree-sitter-hl-mode
-      (remove-hook 'after-change-functions 'jit-lock-after-change t)))
-  (when use-tree-sitter-hl-mode-hack
-    (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
-    (add-hook 'tree-sitter-hl-mode-hook (lambda()
-                                          (tree-sitter-setup-timer tree-sitter-hl-mode)
-                                          (if tree-sitter-hl-mode
-                                              (remove-jit-lock-after-change)
-                                            (add-hook 'after-change-functions 'jit-lock-after-change nil t)))))
-  )
 
 ;; grammatical-edit bug太多了，pair用这个就够了
 (use-package elec-pair
@@ -3516,43 +3410,6 @@ _q_uit
   ;;   )
   )
 
-
-(use-package grammatical-edit
-  :commands(grammatical-edit-mode)
-  :config
-  ;; 会影响kill-ring，作者还不改，暂时不用了
-  (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
-
-  ;; 也可以C-q 选中在直接(，[等
-  (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
-  (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
-  (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
-  (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
-  (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
-
-  ;; (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
-
-  (when nil
-    ;; 支持hungry delete
-    (dolist (key '( [remap delete-char]
-		    [remap delete-forward-char]))
-      (define-key grammatical-edit-mode-map key
-                  ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-                  '(menu-item "maybe-grammatical-edit-forward-delete" nil
-		              :filter (lambda (&optional _)
-			                (unless (looking-at-p "[[:space:]\n]")
-			                  #'grammatical-edit-forward-delete)))))
-
-    (dolist (key '([remap backward-delete-char-untabify]
-		   [remap backward-delete-char]
-		   [remap delete-backward-char]))
-      (define-key grammatical-edit-mode-map key
-                  '(menu-item "maybe-grammatical-edit-backward-delete" nil
-		              :filter (lambda (&optional _)
-			                (unless (looking-back "[[:space:]\n]" 1)
-			                  #'grammatical-edit-backward-delete)))))
-    )
-  )
 
 (with-eval-after-load 'python
   (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
@@ -4443,6 +4300,258 @@ _q_uit
   :defer 0.8
   :config
   (global-goto-address-mode 1)
+  )
+
+(if (fboundp 'treesit-language-available-p)
+  ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
+    (progn
+      (use-package treesit
+        :commands(treesit-parser-create)
+        :defer t
+        :init
+        ;; M-x -ts-mode提取出来的
+        (setq all-ts-mode
+              '(
+                c++-ts-mode
+                bash-ts-mode
+                c-ts-mode
+                cmake-ts-mode
+                csharp-ts-mode
+                css-ts-mode
+                dockerfile-ts-mode
+                elixir-ts-mode
+                go-mod-ts-mode
+                go-ts-mode
+                heex-ts-mode
+                html-ts-mode
+                java-ts-mode
+                js-ts-mode
+                json-ts-mode
+                python-ts-mode
+                ruby-ts-mode
+                rust-ts-mode
+                toml-ts-mode
+                tsx-ts-mode
+                typescript-ts-mode
+                yaml-ts-mode
+                ))
+        (cl-dolist (ts all-ts-mode)
+          (add-to-list 'major-mode-remap-alist
+                       (cons (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode"))
+                             ts))
+          ;; (set (intern (concat (symbol-name ts) "-hook"))
+          ;;  (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode-hook")))
+          )
+        ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
+        (add-hook 'emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
+        (add-hook 'markdown-mode-hook #'(lambda () (treesit-parser-create 'markdown)))
+        (add-hook 'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
+        (add-hook 'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
+        )
+      (use-package fingertip
+        :commands(fingertip-mode)
+        :init
+        (dolist (hook (list
+                       'c-mode-common-hook
+                       'c-mode-hook
+                       'c++-mode-hook
+                       'java-mode-hook
+                       'haskell-mode-hook
+                       'emacs-lisp-mode-hook
+                       'lisp-interaction-mode-hook
+                       'lisp-mode-hook
+                       'maxima-mode-hook
+                       'ielm-mode-hook
+                       'sh-mode-hook
+                       'makefile-gmake-mode-hook
+                       'php-mode-hook
+                       'python-mode-hook
+                       'js-mode-hook
+                       'go-mode-hook
+                       'qml-mode-hook
+                       'jade-mode-hook
+                       'css-mode-hook
+                       'ruby-mode-hook
+                       'coffee-mode-hook
+                       'rust-mode-hook
+                       'rust-ts-mode-hook
+                       'qmake-mode-hook
+                       'lua-mode-hook
+                       'swift-mode-hook
+                       'web-mode-hook
+                       'markdown-mode-hook
+                       'llvm-mode-hook
+                       'conf-toml-mode-hook
+                       'nim-mode-hook
+                       'typescript-mode-hook
+                       'c-ts-mode-hook
+                       'c++-ts-mode-hook
+                       'cmake-ts-mode-hook
+                       'toml-ts-mode-hook
+                       'css-ts-mode-hook
+                       'js-ts-mode-hook
+                       'json-ts-mode-hook
+                       'python-ts-mode-hook
+                       'bash-ts-mode-hook
+                       'typescript-ts-mode-hook
+                       ))
+          (add-hook hook #'(lambda () (fingertip-mode 1))))
+        :config
+        (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
+
+        ;; 也可以C-q 选中在直接(，[等
+        (define-key fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
+        (define-key fingertip-mode-map (kbd "M-[") 'fingertip-wrap-bracket)
+        (define-key fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
+        (define-key fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
+        (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
+        )
+
+      )
+  (use-package tree-sitter
+    :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
+    :defer t
+    :init
+    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
+    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
+    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
+    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
+    (setq tree-sitter-langs--testing t ;; 禁止联网check bin
+          tsc-dyn-get-from nil ;; 
+          tree-sitter-langs-git-dir nil ;; 禁止调用git
+          tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
+          tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core"
+          )
+    (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
+    :config
+    ;; elisp没有高亮
+    (add-to-list 'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
+    (use-package tree-sitter-langs)
+    
+    (defvar tree-sitter-idle-timer nil
+      "如果不需要hl功能，只需要按需调用tree-sitter-force-update即可，如defun范围功能")
+    (defun my/tree-sitter--after-change(beg new-end old-len)
+      (when tree-sitter-idle-timer
+        (cancel-timer tree-sitter-idle-timer))
+      (setq tree-sitter-idle-timer
+            (run-with-idle-timer 0.2 nil #'tree-sitter-force-update) ))
+    (defun tree-sitter-force-update()
+      (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
+      (tree-sitter--do-parse))
+    (when use-tree-sitter-hl-mode-hack
+      (defadvice tree-sitter--setup (after my-tree-sitter--setup activate)
+        "去掉hook，改为timer模式"
+        (remove-hook 'after-change-functions #'tree-sitter--after-change :local)
+        (remove-hook 'before-change-functions #'tree-sitter--before-change :local))
+      (defun tree-sitter-setup-timer(&optional on)
+        (if on
+            (add-hook 'after-change-functions #'my/tree-sitter--after-change nil :local)
+          (remove-hook 'after-change-functions #'my/tree-sitter--after-change :local)
+          )))
+    )
+  ;; tsc里的(require 'dired-aux) 导致dired被加载了
+  (use-package tree-sitter-hl
+    :diminish(tree-sitter-mode)
+    :commands(tree-sitter-hl-mode)
+    ;; 来自`tree-sitter-major-mode-language-alist'
+    :hook ((agda-mode
+            sh-mode
+            c-mode
+            caml-mode
+            csharp-mode
+            c++-mode
+            d-mode
+            css-mode
+            elm-mode
+            elixir-mode
+            go-mode
+            haskell-mode
+            hcl-mode
+            terraform-mode
+            html-mode
+            mhtml-mode
+            nix-mode
+            java-mode
+            javascript-mode
+            js-mode
+            js2-mode
+            js3-mode
+            json-mode
+            jsonc-mode
+            julia-mode
+            ocaml-mode
+            perl-mode
+            php-mode
+            prisma-mode
+            python-mode
+            pygn-mode
+            rjsx-mode
+            ruby-mode
+            rust-mode
+            rustic-mode
+            scala-mode
+            swift-mode
+            tuareg-mode
+            typescript-mode
+            verilog-mode
+            yaml-mode
+            zig-mode
+            emacs-lisp-mode
+            ) . 
+              (lambda ()
+	        ;; (tree-sitter-hl-mode)
+	        (grammatical-edit-mode 1)
+	        ))
+    :config
+    ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
+    (defun remove-jit-lock-after-change()
+      (when tree-sitter-hl-mode
+        (remove-hook 'after-change-functions 'jit-lock-after-change t)))
+    (when use-tree-sitter-hl-mode-hack
+      (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
+      (add-hook 'tree-sitter-hl-mode-hook (lambda()
+                                            (tree-sitter-setup-timer tree-sitter-hl-mode)
+                                            (if tree-sitter-hl-mode
+                                                (remove-jit-lock-after-change)
+                                              (add-hook 'after-change-functions 'jit-lock-after-change nil t)))))
+    )
+  (use-package grammatical-edit
+    :commands(grammatical-edit-mode)
+    :config
+    ;; 会影响kill-ring，作者还不改，暂时不用了
+    (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
+
+    ;; 也可以C-q 选中在直接(，[等
+    (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
+    (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
+    (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
+    (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
+    (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
+
+    ;; (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+
+    (when nil
+      ;; 支持hungry delete
+      (dolist (key '( [remap delete-char]
+		      [remap delete-forward-char]))
+        (define-key grammatical-edit-mode-map key
+                    ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+                    '(menu-item "maybe-grammatical-edit-forward-delete" nil
+		                :filter (lambda (&optional _)
+			                  (unless (looking-at-p "[[:space:]\n]")
+			                    #'grammatical-edit-forward-delete)))))
+
+      (dolist (key '([remap backward-delete-char-untabify]
+		     [remap backward-delete-char]
+		     [remap delete-backward-char]))
+        (define-key grammatical-edit-mode-map key
+                    '(menu-item "maybe-grammatical-edit-backward-delete" nil
+		                :filter (lambda (&optional _)
+			                  (unless (looking-back "[[:space:]\n]" 1)
+			                    #'grammatical-edit-backward-delete)))))
+      )
+    )
+  
   )
 
 ;; 好的theme特点:
