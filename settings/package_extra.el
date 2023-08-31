@@ -4439,6 +4439,11 @@ _q_uit
       (list :data result)))
   )
 
+(use-package goto-addr
+  :defer 0.8
+  :config
+  (global-goto-address-mode 1)
+  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
