@@ -1282,21 +1282,7 @@ _c_: hide comment        _q_uit
   :config
   (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace)
   ;; (define-key c-mode-base-map ";" nil)
-
-  ;; 自带的key基本没什么用
-  ;; (setq c-mode-base-map (make-sparse-keymap)
-  ;;       c-mode-map (make-sparse-keymap)
-  ;;       c++-mode-map (make-sparse-keymap)
-  ;;       objc-mode-map (make-sparse-keymap)
-  ;;       java-mode-map (make-sparse-keymap)
-  ;;       idl-mode-map (make-sparse-keymap)
-  ;;       pike-mode-map (make-sparse-keymap)
-  ;;       awk-mode-map (make-sparse-keymap)
-  ;;       )
   )
-
-
-
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist (append '(("\\.\\([Nn][Ss][Ii]\\)$" .
@@ -3272,6 +3258,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (my-c-mode-hook-set)
               (imenu-setup-for-cpp))
             (abbrev-mode -1)))
+(setq c-ts-mode-indent-offset 4)
+(add-hook 'c-ts-base-mode-hook (lambda() (imenu-setup-for-cpp))) ;; 对于sqlite这样的文件treesit创建imenu仍然会卡死
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
 
