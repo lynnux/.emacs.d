@@ -4336,14 +4336,11 @@ _q_uit
                (setq ts ts-mode)
                (setq dll (intern (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)))))
               )
-            (if nil
-                ;; 暂不开启ts-mode，不然`fingertip'的`C-k'不正常
-                (add-to-list 'major-mode-remap-alist
-                             (cons (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode"))
-                                   ts))
-              ;; 给非ts-mode的hook上加上parser，以便正常使用fingertip
-              (add-hook (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode-hook")) #'(lambda () (treesit-parser-create dll)))
-              )))
+            ;; c++不能开ts-mode，`fingertip'的`C-k'有问题
+            (if (memq ts '(c++-ts-mode))
+                ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
+                (add-hook (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode-hook")) #'(lambda () (treesit-parser-create dll)))
+              (add-to-list 'major-mode-remap-alist (cons (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode")) ts)))))
 
         ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
         (add-hook 'emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
