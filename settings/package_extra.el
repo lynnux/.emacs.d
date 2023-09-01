@@ -3912,10 +3912,22 @@ _q_uit
   (remove-hook 'minibuffer-setup-hook #'minibuffer-history-isearch-setup) ;; isarch不需要？
   )
 
-(use-package which-func
+;; 弥补topsy没有timer机制，减少卡顿
+(use-package mode-line-idle
+  :commands(mode-line-idle))
+
+;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
+;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
+(use-package topsy
   :defer 1.0
   :config
-  (which-function-mode 1))
+  ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
+  (add-hook 'prog-mode-hook
+            (lambda()
+              (setf topsy-fn (or (alist-get major-mode topsy-mode-functions)
+                                 (alist-get nil topsy-mode-functions))
+                    header-line-format (list " " '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))
+              )))
 
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
