@@ -3206,6 +3206,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                      (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
          ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
          ;; (add-to-list 'eglot-stay-out-of 'flymake)
+         (add-to-list 'eglot-stay-out-of 'imenu) ;; 用counsel-etags的imenu
          ;; (setq flymake-no-changes-timeout 1.0) ;; 这个是没有效果的
          (setq eglot-autoshutdown t)            ;; 不关退出emacs会卡死
          (setq eglot-ignored-server-capabilities 
@@ -3225,8 +3226,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
          (define-key eglot-mode-map [(meta f8)] 'eglot-format)
          ;; 用counsel-etags的imenu
-         (add-hook 'eglot-managed-mode-hook (lambda()
-                                              (remove-function (local 'imenu-create-index-function) #'eglot-imenu)))
+         ;; (add-hook 'eglot-managed-mode-hook (lambda()
+         ;;                                      (remove-function (local 'imenu-create-index-function) #'eglot-imenu)))
          ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
          (cl-defmethod eglot-register-capability
            (server (method (eql workspace/didChangeWatchedFiles)) id &key watchers)
