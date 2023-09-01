@@ -1830,6 +1830,7 @@ _c_: hide comment        _q_uit
               (my-project-find-file (vertico-sort-function . vertico-sort-history-length-alpha)) ;; 按file-name-history排序
               (search-in-browser (vertico-sort-function . vertico-sort-history-alpha))
               (consult-bookmark (vertico-sort-function . vertico-sort-history-alpha))
+              (tempel-insert (vertico-sort-function . vertico-sort-history-alpha))
               ))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
