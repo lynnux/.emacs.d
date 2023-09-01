@@ -4294,7 +4294,7 @@ _q_uit
   )
 
 (if (fboundp 'treesit-language-available-p)
-  ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
+    ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
     (progn
       (use-package treesit
         :commands(treesit-parser-create)
@@ -4303,11 +4303,11 @@ _q_uit
         ;; M-x -ts-mode提取出来的
         (setq all-ts-mode
               '(
-                c++-ts-mode
+                (c++-ts-mode . cpp)
                 bash-ts-mode
                 c-ts-mode
                 cmake-ts-mode
-                csharp-ts-mode
+                (csharp-ts-mode. c-sharp)
                 css-ts-mode
                 dockerfile-ts-mode
                 elixir-ts-mode
@@ -4326,13 +4326,25 @@ _q_uit
                 typescript-ts-mode
                 yaml-ts-mode
                 ))
-        (cl-dolist (ts all-ts-mode)
-          (add-to-list 'major-mode-remap-alist
-                       (cons (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode"))
-                             ts))
-          ;; (set (intern (concat (symbol-name ts) "-hook"))
-          ;;  (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode-hook")))
-          )
+        (cl-dolist (ts1 all-ts-mode)
+          (let (ts dll)
+            (pcase ts1
+              (`(,ts-mode . ,ts-file)
+               (setq ts ts-mode)
+               (setq dll ts-file))
+              (`,ts-mode
+               (setq ts ts-mode)
+               (setq dll (intern (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)))))
+              )
+            (if nil
+                ;; 暂不开启ts-mode，不然`fingertip'的`C-k'不正常
+                (add-to-list 'major-mode-remap-alist
+                             (cons (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode"))
+                                   ts))
+              ;; 给非ts-mode的hook上加上parser，以便正常使用fingertip
+              (add-hook (intern (concat (replace-regexp-in-string "-ts-mode" "" (symbol-name ts)) "-mode-hook")) #'(lambda () (treesit-parser-create dll)))
+              )))
+
         ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
         (add-hook 'emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
         (add-hook 'markdown-mode-hook #'(lambda () (treesit-parser-create 'markdown)))
@@ -4396,8 +4408,15 @@ _q_uit
         (define-key fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
         (define-key fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
         (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
-        )
 
+        ;; 修复cpp`C-k'bug，同时需要关闭c++-ts-mode，不然也不正常
+        ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
+        (define-advice fingertip-common-mode-kill (:around (orig-fn &rest args) fixcpp)
+          "不知道为啥对c/cpp只调用`kill-line'了事？"
+          (cl-letf (((symbol-function #'derived-mode-p)
+                     (lambda (_)nil)))
+            (apply orig-fn args)))
+        )
       )
   (use-package tree-sitter
     :commands(tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
@@ -4407,8 +4426,8 @@ _q_uit
     (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
     (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
     (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
-    (setq tree-sitter-langs--testing t ;; 禁止联网check bin
-          tsc-dyn-get-from nil ;; 
+    (setq tree-sitter-langs--testing t  ;; 禁止联网check bin
+          tsc-dyn-get-from nil          ;; 
           tree-sitter-langs-git-dir nil ;; 禁止调用git
           tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
           tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core"
