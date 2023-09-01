@@ -1,3 +1,4 @@
+;; ä¸å¤Ÿå¯ä»¥æ¥è¿™é‡Œæ‰¾ï¼šhttps://github.com/Crandel/tempel-collection/tree/main/templates
 
 fundamental-mode ;; Available everywhere
 
@@ -86,14 +87,9 @@ rst-mode
 
 (title (make-string (length title) ?=) n (p "Title: " title) n (make-string (length title) ?=) n)
 
-java-mode
+java-mode java-ts-mode
 
 (class "public class " (p (file-name-base (or (buffer-file-name) (buffer-name)))) " {" n> r> n "}")
-
-c-mode :when (re-search-backward "^\\S-*$" (line-beginning-position) 'noerror)
-
-(inc "#include <" (p (concat (file-name-base (or (buffer-file-name) (buffer-name))) ".h")) ">")
-(incc "#include \"" (p (concat (file-name-base (or (buffer-file-name) (buffer-name))) ".h")) "\"")
 
 org-mode
 
@@ -114,7 +110,7 @@ cd TDPCSoftMgr_vs2010
 ninja
 cd ..")
 
-c++-mode
+c-mode c++-mode c-ts-mode c++-ts-mode
 
 (main "#include <stdio.h>
 #include <iostream>
@@ -132,7 +128,7 @@ int main()
 q n n
 "#endif /* " guard-name " */")
 (for "for ("(p "auto i = 0i32")"; " (p "i < N") "; "(p "++i")") {"n > q n"}">)
-(if "if ("p") {" n > q n >"}">) ;; Ä¿Ç°Ëõ½ø»¹ÓÐÐ©ÎÊÌâ
+(if "if ("p") {" n > q n >"}">) ;; ç›®å‰ç¼©è¿›è¿˜æœ‰äº›é—®é¢˜
 (struct "struct "p" {"n > q n >"};">)
 (class "class "p"{"n > q n >"};">)
 (pub "public:" n >)
@@ -153,7 +149,7 @@ q n n
 #define the"cls-name" ("cls-name"::getInstance())
 ")
 
-cmake-mode
+cmake-mode cmake-ts-mode
 
 (bin_dir "set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -201,7 +197,7 @@ end
 until "q"
 ")
 
-python-mode
+python-mode python-ts-mode
 
 (main "#!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -222,6 +218,27 @@ if __name__ == \"__main__\":
         input()
 ")
 (pathset "os.environ['PATH'] += os.pathsep + r'"q"'")
+
+rust-mode rust-ts-mode
+
+(if "if " p " {" n> q n> "}" q)
+
+(el "if " p " {" n> p n> "} else {" n> p n> "}" q)
+
+(elif "if " p " {" n> p n> "} else if " p " {" n> p n> "}" q)
+
+(fn "fn " p "(" p ") {" n> p n "}" q)
+
+(fnr "fn " p "(" p ") -> " p " {" n> p n "}" q)
+
+(crt "extern crate " q ";")
+
+(drv "#[derive(" p ")]" q)
+
+(d "dbg!(" p ")" q)
+
+(lp "loop {" n> q n> "}" q)
+
 ;; Local Variables:
 ;; mode: lisp-data
 ;; outline-regexp: "[a-z]"

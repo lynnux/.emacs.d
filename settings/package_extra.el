@@ -454,6 +454,7 @@ _q_uit
         ("q" nil "nil" :color blue))
       
       (define-key dired-mode-map "f" 'dired-filter-map-select/body)
+      (define-key dired-mode-map "/" 'dired-filter-map-select/body)
       )
     
     ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
