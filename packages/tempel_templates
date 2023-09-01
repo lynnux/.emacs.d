@@ -3,6 +3,9 @@
 fundamental-mode ;; Available everywhere
 
 (today (format-time-string "%Y-%m-%d"))
+(NOW (format-time-string "%Y-%0m-%0d %H:%0M"))
+(yesterday (format-time-string "%Y-%0m-%0d" (time-subtract nil (* 24 60 60))))
+(tomorrow (format-time-string "%Y-%0m-%0d" (time-add nil (* 24 60 60))))
 (clang-format "---
 BasedOnStyle: Google
 IndentWidth: 4
@@ -62,6 +65,8 @@ emacs-lisp-mode
         "(advice-add #'" (p "fun") " " (p ":around") " #'" (s name) ")")
 (provide "(provide '" (file-name-base (or (buffer-file-name) (buffer-name))) ")" n
          ";;; " (file-name-nondirectory (or (buffer-file-name) (buffer-name))) " ends here" n)
+(log "(message \"LOG %s " (s sexp) ": %S"
+     "\" (format-time-string \"%X\") " sexp ")")
 
 eshell-mode
 
