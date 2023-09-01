@@ -4556,10 +4556,19 @@ _q_uit
 		                :filter (lambda (&optional _)
 			                  (unless (looking-back "[[:space:]\n]" 1)
 			                    #'grammatical-edit-backward-delete)))))
-      )
-    )
-  
-  )
+      )))
+
+;; 保存当前windows配置为bookmark
+(use-package burly
+  :commands(burly-bookmark-handler 
+            burly-bookmark-windows
+            ;; burly-bookmark-frames
+            burly-kill-buffer-url
+            ;; burly-kill-frames-url
+            burly-kill-windows-url
+            burly-open-bookmark
+            burly-open-last-bookmark
+            burly-open-url))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
