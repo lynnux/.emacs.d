@@ -3927,7 +3927,12 @@ _q_uit
               (setf topsy-fn (or (alist-get major-mode topsy-mode-functions)
                                  (alist-get nil topsy-mode-functions))
                     header-line-format (list " " '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))
-              )))
+              ))
+  (define-advice mode-line-idle--tree-to-string (:around (orig-fn &rest args))
+    "解决M-x自动跳到行首问题，hook`topsy-fn'没用，好像是closure函数"
+    (when (equal (buffer-name) (buffer-name (window-buffer)))
+      (apply orig-fn args)))
+  )
 
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
