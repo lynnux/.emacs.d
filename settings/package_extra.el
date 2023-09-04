@@ -4237,6 +4237,12 @@ _q_uit
                            ad-return-value
                            (list (lambda () (cycle-at-point-name-convertion)))
                            )))
+  (define-advice cycle-at-point-preset (:around (orig-fn &rest args))
+    "修复ts-mode的规则加载"
+    (if (memq major-mode '(c-ts-mode c++-ts-mode python-ts-mode cmake-ts-mode))
+        (let ((cycle-at-point-preset-override (replace-regexp-in-string "-ts-mode" "-mode" (symbol-name major-mode))))
+          (apply orig-fn args))
+      (apply orig-fn args)))
   (defun cycle-at-point-find-include()
     "改变include的双引号和<>切换"
     (let ((result (list))
