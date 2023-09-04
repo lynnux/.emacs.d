@@ -1296,6 +1296,7 @@ _c_: hide comment        _q_uit
 				 protobuf-mode)) auto-mode-alist))
 
 (use-package jumplist
+  :disabled
   :defer 0.7
   :config
   (remove-hook 'pre-command-hook 'jl-pre-command-check) ;; 影响效率，用advice替代
@@ -1331,6 +1332,61 @@ _c_: hide comment        _q_uit
     (advice-add jc :before #'my-push-mark-wrapper)
     )  
 )
+
+;; 这个hook了`push-mark'对内置`marker'支持很好！
+(use-package backward-forward
+  :defer 0.7
+  :custom
+  (backward-forward-mark-ring-max 100)
+  :config
+  ;; from https://emacs-china.org/t/emacs/19171/17?u=lynnux
+  (defun my/backward-forward-previous-location ()
+    "A `backward-forward-previous-location' wrap for skip invalid locations."
+    (interactive)
+    (let ((purge (< backward-forward-mark-ring-traversal-position (1- (length backward-forward-mark-ring))))
+          (recent (point-marker)))
+      (backward-forward-previous-location)
+      (when (and (equal recent (point-marker)) purge)
+        (my/backward-forward-previous-location))))
+  (defun my/backward-forward-next-location ()
+    "A `backward-forward-next-location' wrap for skip invalid locations."
+    (interactive)
+    (let ((purge (> backward-forward-mark-ring-traversal-position 0))
+          (recent (point-marker)))
+      (backward-forward-next-location)
+      (when (and (equal recent (point-marker)) purge)
+        (my/backward-forward-next-location))))
+  (global-set-key (kbd "M-n") 'my/backward-forward-next-location)
+  (global-set-key (kbd "M-p") 'my/backward-forward-previous-location)
+  (defvar jump-commands '(
+                          jl-jump-backward
+                          jl-jump-forward
+                          beginning-of-buffer
+                          end-of-buffer
+                          jump-to-register
+                          mark-whole-buffer
+                          next-buffer
+                          previous-buffer
+                          switch-to-buffer
+                          describe-function
+                          describe-variable
+                          find-file-at-point
+                          xref-find-definitions
+                          session-jump-to-last-change
+                          org-roam-preview-visit
+                          consult-ripgrep consult-line
+                          avy-goto-word-1
+                          my-consult-ripgrep embark-act consult-imenu-multi keyboard-escape-quit
+                          embark-next-symbol embark-previous-symbol
+                          my-pop-select
+                          ))
+  (cl-dolist (jc jump-commands)
+    (advice-add jc :before #'backward-forward-push-mark-wrapper))
+  (advice-add 'push-mark :after #'backward-forward-after-push-mark)
+  )
+;; 其它jump包
+;; back-button global跟local是区分开的，这就很麻烦了
+;; history可能会
 
 (use-package iss-mode
   :init
