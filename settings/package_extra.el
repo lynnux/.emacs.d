@@ -112,6 +112,32 @@
 (use-package diminish
   :commands(diminish))
 
+(defvar repeat-message-function nil) ;; 必须定义，不然运行报错，因为被closure引用了
+(defmacro defrepeater (name-or-command &optional command)
+  "自定义repeat命令，不需要开启repeat-mode就能用，from https://github.com/alphapapa/defrepeater.el/blob/master/defrepeater.el"
+  (let* ((name (if command
+                   ;; `defalias' style
+                   (cadr name-or-command)
+                 ;; Automatic repeater function name
+                 (intern (concat (symbol-name (cadr name-or-command)) "-repeat"))))
+         (command (or command name-or-command))
+         (docstring (concat (format "Repeatedly call `%s'." (cadr command))
+                            "\n\n"
+                            (s-word-wrap 80 (format "You may repeatedly press the last key of the sequence bound to this command to repeatedly call `%s'."
+                                                    (cadr command))))))
+    `(progn
+       (when (fboundp ',name)
+         (warn "Function is already defined: %s" ',name))
+       (defun ,name ()
+         ,docstring
+         (interactive)
+         (let ((repeat-message-function #'ignore))
+           (setq last-repeatable-command ,command)
+           (repeat nil)))
+       ',name)))
+(use-package s
+  :commands(s-split s-word-wrap))
+
 (use-package eldoc
   :defer t
   :diminish(eldoc-mode)
@@ -725,7 +751,7 @@ _c_: hide comment        _q_uit
 
 (global-unset-key (kbd "C-z"))
 (global-set-key (kbd "C-z")   'undo)
-(global-set-key (kbd "C-x u") 'undo-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
+(global-set-key (kbd "C-x u") (defrepeater #'undo-redo)) ;; 这个其实是undo，习惯undo tree这个快捷键了
 
 ;; undo-fu小巧才15K
 (use-package undo-fu
@@ -735,7 +761,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-z")   'undo-fu-only-undo)
   (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
   (global-set-key (kbd "M-/") 'undo-fu-only-redo)
-  (global-set-key (kbd "C-x u") 'undo-fu-only-redo) ;; 这个其实是undo，习惯undo tree这个快捷键了
+  (global-set-key (kbd "C-x u") (defrepeater #'undo-fu-only-redo)) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
 
 ;; 经常C-x C-s按错，还是用这个吧
@@ -853,9 +879,6 @@ _c_: hide comment        _q_uit
         (setq ad-return-value (cons (car bounds) (nth 1 bounds)))
         )))
   )
-
-(use-package s
-  :commands(s-split))
 
 ;; 利用tempel实现yas功能
 (use-package yasnippet
