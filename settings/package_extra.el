@@ -3568,7 +3568,9 @@ _q_uit
              )
         (when p
           (pop-select/beacon-animation (car p)   ; x
-                                       (cdr p)   ; y
+                                       (if header-line-format
+                                           (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+                                         (cdr p)) ; y
                                        w
                                        h
                                        100          ; timer
