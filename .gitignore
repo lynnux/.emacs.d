@@ -107,3 +107,4 @@ packages/minibuffer/compat.el-master/*
 /packages/org/org-roam-main/
 /themes/emacs-dashboard-master/
 /packages/cycle-at-point/
+/elisp-autofmt-cache/
