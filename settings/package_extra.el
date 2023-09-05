@@ -4393,6 +4393,8 @@ _q_uit
 
 (use-package goto-addr
   :defer 0.8
+  :init
+  (global-set-key (kbd "C-c C-o") 'goto-address-at-point) ;; 跟org快捷键一致
   :config
   (global-goto-address-mode 1)
   )
