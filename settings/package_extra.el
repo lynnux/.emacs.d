@@ -4006,15 +4006,18 @@ _q_uit
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
 (use-package topsy
-  :defer 1.0
-  :config
-  ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
+  :commands(topsy--beginning-of-defun)
+  :init
   (add-hook 'prog-mode-hook
             (lambda()
+              (topsy--beginning-of-defun) ;; 使加载`topsy'
               (setf topsy-fn (or (alist-get major-mode topsy-mode-functions)
                                  (alist-get nil topsy-mode-functions))
                     header-line-format (list (propertize "Defun: " 'face  '(foreground-color . "cyan")) '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))
               ))
+  :config
+  ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
+  
   (define-advice mode-line-idle--tree-to-string (:around (orig-fn &rest args))
     "解决M-x自动跳到行首问题，hook`topsy-fn'没用，好像是closure函数"
     (when (equal (buffer-name) (buffer-name (window-buffer)))
