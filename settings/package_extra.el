@@ -5335,18 +5335,13 @@ _q_uit
 (use-package elisp-autofmt
   :defer t
   :init
-  (global-set-key
-   [(meta f8)]
-   (lambda ()
-     (interactive)
-     (if (derived-mode-p 'emacs-lisp-mode)
-         (call-interactively 'elisp-autofmt-buffer)
-       (unless (use-region-p)
-         (mark-page))
-       (call-interactively 'indent-region))))
+  (with-eval-after-load 'elisp-mode
+    (define-key emacs-lisp-mode-map [(meta f8)] 'elisp-autofmt-buffer))
   ;; 必须在打开el文件时加载`elisp-autofmt'，不然文件末尾的`elisp-autofmt-load-packages-local'无法被识别
   (add-hook
-   'emacs-lisp-mode-hook (lambda () (load "tools/elisp-autofmt.el"))))
+   'emacs-lisp-mode-hook (lambda () 
+                           (when (autoloadp (symbol-function 'elisp-autofmt-buffer))
+                             (load "tools/elisp-autofmt.el")))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
