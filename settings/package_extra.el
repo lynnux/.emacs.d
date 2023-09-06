@@ -3805,7 +3805,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      (imenu-setup-for-cpp))
    (abbrev-mode -1)))
 (setq c-ts-mode-indent-offset 4)
-(add-hook 'c-ts-base-mode-hook (lambda () (imenu-setup-for-cpp))) ;; 对于sqlite这样的文件treesit创建imenu仍然会卡死
+(add-hook
+ 'c-ts-base-mode-hook
+ (lambda ()
+   (imenu-setup-for-cpp) ;; 对于sqlite这样的文件treesit创建imenu仍然会卡死
+   (setq-local forward-sexp-function nil) ;; 修复`fingertip' `C-k'问题
+   ))
 
 ;; pip install cmake-language-server，还需要将cmake加入PATH环境变量
 
@@ -5040,8 +5045,8 @@ _q_uit
                     (intern
                      (replace-regexp-in-string
                       "-ts-mode" "" (symbol-name ts))))))
-           ;; c++不能开ts-mode，`fingertip'的`C-k'有问题
-           (if (memq ts '(c++-ts-mode))
+           ;; `fingertip'的`C-k'有问题，设置`forward-sexp-function'为nil修复
+           (if nil ;;(memq ts '(c++-ts-mode))
                ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
                (add-hook
                 (intern
@@ -5132,7 +5137,7 @@ _q_uit
          fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
         (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
 
-        ;; 修复cpp`C-k'bug，同时需要关闭c++-ts-mode，不然也不正常
+        ;; 修复cpp`C-k'bug
         ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
         (define-advice fingertip-common-mode-kill
             (:around (orig-fn &rest args) fixcpp)
