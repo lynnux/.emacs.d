@@ -42,7 +42,8 @@
   (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip"
-   nil "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
+   nil
+   "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
   )
 
 ;; 用于use-package避免自动设置:laod-path
@@ -1844,8 +1845,7 @@ _c_: hide comment        _q_uit
  (define-key
   speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
  (define-key
-  speedbar-file-key-map
-  (kbd "RET")
+  speedbar-file-key-map (kbd "RET")
   'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
  )
 
@@ -4141,10 +4141,10 @@ _q_uit
                (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
              (cdr p)) ; y
            w h
-           100 ; timer
-           50 ; timer step
+           140 ; timer
+           60 ; timer step
            233 86 120 ; r g b
-           20 ; diff min
+           20 ; diff min，根据自己需要试验
            )))))
   (add-hook 'post-command-hook 'show-cursor-animation))
 
@@ -4559,8 +4559,7 @@ _q_uit
   )
  :config
  (define-key
-  elfeed-search-mode-map
-  (kbd "RET")
+  elfeed-search-mode-map (kbd "RET")
   'elfeed-search-browse-url) ; 不需要查看简介什么的，直接打开浏览器就行了
  )
 
@@ -4601,29 +4600,34 @@ _q_uit
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
 (use-package
- topsy
- :commands (topsy--beginning-of-defun)
- :init
- (add-hook
-  'prog-mode-hook
-  (lambda ()
-    (topsy--beginning-of-defun) ;; 使加载`topsy'
-    (setf
-     topsy-fn
-     (or (alist-get major-mode topsy-mode-functions)
-         (alist-get nil topsy-mode-functions))
-     header-line-format
-     (list
-      (propertize "Defun: " 'face '(foreground-color . "cyan"))
-      '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))))
- :config
- ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
+  topsy
+  :commands (topsy--beginning-of-defun)
+  :init
+  (add-hook
+   'prog-mode-hook
+   (lambda ()
+     (when (autoloadp (symbol-function 'topsy--beginning-of-defun))
+       ;; 使加载`topsy'
+       (topsy--beginning-of-defun))
+     (setf
+      topsy-fn
+      (or (alist-get major-mode topsy-mode-functions)
+          (alist-get nil topsy-mode-functions))
+      header-line-format
+      (list
+       (propertize "Defun: " 'face '(foreground-color . "cyan"))
+       '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))))
+  (with-eval-after-load 'mode-line-idle
+    (define-advice mode-line-idle--tree-to-string
+        (:around (orig-fn &rest args))
+      "解决M-x自动跳到行首问题，hook`topsy-fn'没用，好像是closure函数"
+      (when (equal (buffer-name) (buffer-name (window-buffer)))
+        (apply orig-fn args)))
+    )
+  :config
+  ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
 
- (define-advice mode-line-idle--tree-to-string
-     (:around (orig-fn &rest args))
-   "解决M-x自动跳到行首问题，hook`topsy-fn'没用，好像是closure函数"
-   (when (equal (buffer-name) (buffer-name (window-buffer)))
-     (apply orig-fn args))))
+  )
 
 (when (string-equal system-type "windows-nt")
   (use-package
