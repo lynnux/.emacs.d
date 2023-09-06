@@ -5336,12 +5336,9 @@ _q_uit
   :defer t
   :init
   (with-eval-after-load 'elisp-mode
-    (define-key emacs-lisp-mode-map [(meta f8)] 'elisp-autofmt-buffer))
-  ;; 必须在打开el文件时加载`elisp-autofmt'，不然文件末尾的`elisp-autofmt-load-packages-local'无法被识别
-  (add-hook
-   'emacs-lisp-mode-hook (lambda () 
-                           (when (autoloadp (symbol-function 'elisp-autofmt-buffer))
-                             (load "tools/elisp-autofmt.el")))))
+    (define-key
+     emacs-lisp-mode-map [(meta f8)] 'elisp-autofmt-buffer))
+  :config (setq-default elisp-autofmt-load-packages-local '("use-package")))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
@@ -5476,7 +5473,3 @@ _q_uit
                         :foreground "Black")))
 
 ;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
-
-;; Local variables:
-;; elisp-autofmt-load-packages-local: ("use-package")
-;; end:
