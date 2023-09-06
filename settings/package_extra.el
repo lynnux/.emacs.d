@@ -4141,8 +4141,8 @@ _q_uit
                (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
              (cdr p)) ; y
            w h
-           140 ; timer
-           60 ; timer step
+           100 ; timer
+           50 ; timer step
            233 86 120 ; r g b
            20 ; diff min，根据自己需要试验
            )))))
