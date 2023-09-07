@@ -4064,40 +4064,41 @@ _q_uit
 
 (when (fboundp 'pop-select/beacon-animation)
   (defun show-cursor-animation ()
-    (unless (memq
-             this-command
-             '(up-slightly
-               down-slightly
-               mwim-beginning-of-code-or-line
-               mwim-end-of-code-or-line))
-      (ignore-errors
-        (let* ((p (window-absolute-pixel-position))
-               (pp (point))
-               (w
-                (if (equal cursor-type 'bar)
-                    1
-                  (if-let ((glyph
-                            (when (< pp (point-max))
-                              (aref
-                               (font-get-glyphs
-                                (font-at pp) pp (1+ pp))
-                               0))))
-                    (aref glyph 4)
-                    (window-font-width))))
-               (h (line-pixel-height)))
-          (when p
+    (ignore-errors
+      (let* ((p (window-absolute-pixel-position))
+             (pp (point))
+             (x (car p))
+             (w
+              (if (equal cursor-type 'bar)
+                  1
+                (if-let ((glyph
+                          (when (< pp (point-max))
+                            (aref
+                             (font-get-glyphs
+                              (font-at pp) pp (1+ pp))
+                             0))))
+                  (aref glyph 4)
+                  (window-font-width))))
+             (h (line-pixel-height))
+             (y
+              (if header-line-format
+                  (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+                (cdr p))))
+        (when p
+          (if (memq
+               this-command
+               '(up-slightly
+                 down-slightly
+                 mwim-beginning-of-code-or-line
+                 mwim-end-of-code-or-line))
+              (pop-select/beacon-animation-update-pos x y w h)
             (pop-select/beacon-animation
-             (car p) ; x
-             (if header-line-format
-                 (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
-               (cdr p)) ; y
-             w h
+             x y w h
              100 ; timer
              50 ; timer step
              233 86 120 ; r g b
              20 ; diff min，根据自己需要试验
              ))))))
-
   (add-hook 'post-command-hook #'show-cursor-animation))
 
 ;; jump后自动把屏幕居中
