@@ -4527,9 +4527,8 @@ _q_uit
   :commands (mode-line-idle)
   :config
   (setq old-mode-line-format mode-line-format)
-  (defvar my-date '(:eval (format-mode-line old-mode-line-format)))
   (setq-default mode-line-format
-                '(:eval (mode-line-idle 0.3 my-date ""))))
+                '(:eval (mode-line-idle 0.3 '(:eval (format-mode-line old-mode-line-format)) ""))))
 
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
