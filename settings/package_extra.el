@@ -3106,14 +3106,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                'identifier-at-point
                t)))
 (cl-defmethod xref-backend-definitions
-  ((_backend (eql 'xref-to-consult-rg)) symbol)
+    ((_backend (eql 'xref-to-consult-rg)) symbol)
   (let (xrefs
         column
         line)
     (run-at-time
      0 nil
      (lambda ()
-       (let ((this-command 'my-project-search)) ;; 以consult-buffer形式查看)
+       (let
+           ((this-command 'my-project-search)) ;; 以consult-buffer形式查看
          (my-project-search))))
     xrefs))
 (defun xref-to-consult-rg-backend ()
@@ -4063,34 +4064,41 @@ _q_uit
 
 (when (fboundp 'pop-select/beacon-animation)
   (defun show-cursor-animation ()
-    (ignore-errors
-      (let* ((p (window-absolute-pixel-position))
-             (pp (point))
-             (w
-              (if (equal cursor-type 'bar)
-                  1
-                (if-let ((glyph
-                          (when (< pp (point-max))
-                            (aref
-                             (font-get-glyphs
-                              (font-at pp) pp (1+ pp))
-                             0))))
-                  (aref glyph 4)
-                  (window-font-width))))
-             (h (line-pixel-height)))
-        (when p
-          (pop-select/beacon-animation
-           (car p) ; x
-           (if header-line-format
-               (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
-             (cdr p)) ; y
-           w h
-           100 ; timer
-           50 ; timer step
-           233 86 120 ; r g b
-           20 ; diff min，根据自己需要试验
-           )))))
-  (add-hook 'post-command-hook 'show-cursor-animation))
+    (unless (memq
+             this-command
+             '(up-slightly
+               down-slightly
+               mwim-beginning-of-code-or-line
+               mwim-end-of-code-or-line))
+      (ignore-errors
+        (let* ((p (window-absolute-pixel-position))
+               (pp (point))
+               (w
+                (if (equal cursor-type 'bar)
+                    1
+                  (if-let ((glyph
+                            (when (< pp (point-max))
+                              (aref
+                               (font-get-glyphs
+                                (font-at pp) pp (1+ pp))
+                               0))))
+                    (aref glyph 4)
+                    (window-font-width))))
+               (h (line-pixel-height)))
+          (when p
+            (pop-select/beacon-animation
+             (car p) ; x
+             (if header-line-format
+                 (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+               (cdr p)) ; y
+             w h
+             100 ; timer
+             50 ; timer step
+             233 86 120 ; r g b
+             20 ; diff min，根据自己需要试验
+             ))))))
+
+  (add-hook 'post-command-hook #'show-cursor-animation))
 
 ;; jump后自动把屏幕居中
 (use-package scroll-on-jump
@@ -4528,7 +4536,12 @@ _q_uit
   :config
   (setq old-mode-line-format mode-line-format)
   (setq-default mode-line-format
-                '(:eval (mode-line-idle 0.3 '(:eval (format-mode-line old-mode-line-format)) ""))))
+                '(:eval
+                  (mode-line-idle
+                   0.3
+                   '(:eval
+                     (format-mode-line old-mode-line-format))
+                   ""))))
 
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
