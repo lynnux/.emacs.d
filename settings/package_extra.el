@@ -3106,11 +3106,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                'identifier-at-point
                t)))
 (cl-defmethod xref-backend-definitions
-    ((_backend (eql 'xref-to-consult-rg)) symbol)
+  ((_backend (eql 'xref-to-consult-rg)) symbol)
   (let (xrefs
         column
         line)
-    (call-interactively 'my-project-search) ;; 这个运行后才提示xref没找到
+    (run-at-time
+     0 nil
+     (lambda ()
+       (let ((this-command 'my-project-search)) ;; 以consult-buffer形式查看)
+         (my-project-search))))
     xrefs))
 (defun xref-to-consult-rg-backend ()
   'xref-to-consult-rg)
