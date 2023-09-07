@@ -639,7 +639,11 @@ _q_uit
             0.1 nil
             (lambda ()
               (ignore-errors
-                (recenter)))))))))
+                (recenter))))))))
+  (define-advice save-place-to-alist (:around (orig-fn &rest args))
+    "不记录so-long-mode打开的文件，不然下次打开可能会很卡"
+    (unless (eq major-mode 'so-long-mode)
+      (apply orig-fn args))))
 
 ;; 还是放弃session的那个file-name-history吧，现在都用这个了
 (use-package recentf
