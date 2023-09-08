@@ -1161,7 +1161,9 @@ _c_: hide comment        _q_uit
        tab-line-close-button-show nil
        tab-line-separator
        (if (display-graphic-p)
-           (propertize "   " 'face '(foreground-color . "cyan"))
+           (propertize (format " %s " (char-to-string #o22666))
+                       'face
+                       '(foreground-color . "cyan"))
          " | ") ;; 这个比close button好看 
        ))
     :config
