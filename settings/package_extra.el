@@ -4543,7 +4543,7 @@ _q_uit
   (setq-default mode-line-format
                 '(:eval
                   (mode-line-idle
-                   0.3
+                   0.5
                    '(:eval
                      (format-mode-line old-mode-line-format))
                    ""))))
@@ -4566,7 +4566,7 @@ _q_uit
       header-line-format
       (list
        (propertize "Defun: " 'face '(foreground-color . "cyan"))
-       '(:eval (mode-line-idle 0.3 topsy-header-line-format ""))))))
+       '(:eval (mode-line-idle 0.5 topsy-header-line-format ""))))))
   (with-eval-after-load 'mode-line-idle
     (define-advice mode-line-idle--tree-to-string
         (:around (orig-fn &rest args))
