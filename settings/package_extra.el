@@ -4551,31 +4551,45 @@ _q_uit
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
 (use-package topsy
-  :commands (topsy--beginning-of-defun)
+  :commands (topsy-mode)
   :init
+  (defun my-topsy-headline ()
+    "抄的`topsy--beginning-of-defun'，加上行号跟github一样的效果"
+    ;; TODO: 对于一些c声明是两行
+    (when
+        (and
+         (> (window-start) 1)
+         (equal (buffer-name) (buffer-name (window-buffer))) ;; 这个不起效果，还是要hack`mode-line-idle--tree-to-string'
+         )
+      (save-excursion
+        (goto-char (window-start))
+        (beginning-of-defun)
+        (font-lock-ensure (point) (point-at-eol))
+        (concat
+         (propertize (format (format " %%%dd "
+                                     display-line-numbers-width)
+                             (line-number-at-pos (point)))
+                     'face '(foreground-color . "cyan"))
+         (buffer-substring (point) (point-at-eol))))))
+  (setq topsy-mode-functions '((nil . my-topsy-headline)))
   (add-hook
    'prog-mode-hook
    (lambda ()
-     (when (autoloadp (symbol-function 'topsy--beginning-of-defun))
-       ;; 使加载`topsy'
-       (topsy--beginning-of-defun))
+     (when (autoloadp (symbol-function 'topsy-mode))
+       (require 'topsy))
      (setf
       topsy-fn
       (or (alist-get major-mode topsy-mode-functions)
           (alist-get nil topsy-mode-functions))
       header-line-format
       (list
-       (propertize "Defun: " 'face '(foreground-color . "cyan"))
        '(:eval (mode-line-idle 0.5 topsy-header-line-format ""))))))
   (with-eval-after-load 'mode-line-idle
     (define-advice mode-line-idle--tree-to-string
         (:around (orig-fn &rest args))
       "解决M-x自动跳到行首问题，hook`topsy-fn'没用，好像是closure函数"
       (when (equal (buffer-name) (buffer-name (window-buffer)))
-        (apply orig-fn args))))
-  :config
-  ;; TODO: 对于一些c声明是两行，hack`topsy--beginning-of-defun'即可
-  )
+        (apply orig-fn args)))))
 
 (when (string-equal system-type "windows-nt")
   (use-package w32-browser
