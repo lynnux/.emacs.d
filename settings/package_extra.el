@@ -4096,7 +4096,9 @@ _q_uit
                '(up-slightly
                  down-slightly
                  mwim-beginning-of-code-or-line
-                 mwim-end-of-code-or-line))
+                 mwim-end-of-code-or-line
+                 backward-word
+                 forward-word))
               (pop-select/beacon-animation-update-pos x y w h)
             (pop-select/beacon-animation
              x y w h
