@@ -3778,9 +3778,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
     (define-key eglot-mode-map [(meta f8)] 'eglot-format)
     ;; cpp用counsel-etags的imenu
-    (add-hook 'eglot-managed-mode-hook (lambda()
-                                         (when (or (derived-mode-p 'c-mode 'c++-mode) (derived-mode-p 'c-ts-base-mode))
-                                           (remove-function (local 'imenu-create-index-function) #'eglot-imenu))))
+    (add-hook
+     'eglot-managed-mode-hook
+     (lambda ()
+       (when (or (derived-mode-p 'c-mode 'c++-mode)
+                 (derived-mode-p 'c-ts-base-mode))
+         (remove-function
+          (local 'imenu-create-index-function) #'eglot-imenu))))
     ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
     (cl-defmethod eglot-register-capability
         (server
