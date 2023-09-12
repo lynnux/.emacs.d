@@ -4073,7 +4073,7 @@ _q_uit
      (interactive)
      (my-pop-select t))))
 
-(when (fboundp 'pop-select/beacon-animation)
+(when (not (fboundp 'pop-select/beacon-animation))
   (defun show-cursor-animation ()
     (ignore-errors
       (let* ((p (window-absolute-pixel-position))
