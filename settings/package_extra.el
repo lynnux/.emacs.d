@@ -5386,7 +5386,15 @@ _q_uit
   :init
   (with-eval-after-load 'elisp-mode
     (define-key
-     emacs-lisp-mode-map [(meta f8)] 'elisp-autofmt-buffer))
+     emacs-lisp-mode-map [(meta f8)]
+     (lambda ()
+       "禁止message提示"
+       (interactive)
+       (if buffer-read-only
+           (signal 'text-read-only nil)
+         (let ((inhibit-message t))
+           (call-interactively 'elisp-autofmt-buffer))
+         (message "elisp format done.")))))
   :config (setq-default elisp-autofmt-load-packages-local '("use-package")))
 
 (use-package format
