@@ -4073,7 +4073,7 @@ _q_uit
      (interactive)
      (my-pop-select t))))
 
-(when (not (fboundp 'pop-select/beacon-animation))
+(when nil ;;(fboundp 'pop-select/beacon-animation)
   (defun show-cursor-animation ()
     (ignore-errors
       (let* ((p (window-absolute-pixel-position))
@@ -4260,9 +4260,7 @@ _q_uit
 
 (use-package org
   :defer t
-  :config
-  (define-key org-mode-map (kbd "M-h") nil)
-  )
+  :config (define-key org-mode-map (kbd "M-h") nil))
 
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
