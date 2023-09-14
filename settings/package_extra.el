@@ -4129,7 +4129,8 @@ _q_uit
   (scroll-on-jump-advice-add git-gutter:next-hunk)
   (scroll-on-jump-advice-add embark-next-symbol)
   (scroll-on-jump-advice-add embark-previous-symbol)
-
+  (scroll-on-jump-advice-add my/backward-forward-previous-location)
+  (scroll-on-jump-advice-add my/backward-forward-next-location)
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
 
@@ -4571,21 +4572,28 @@ _q_uit
   (defun my-topsy-headline ()
     "抄的`topsy--beginning-of-defun'，加上行号跟github一样的效果"
     ;; TODO: 对于一些c声明是两行
-    (when
-        (and
-         (> (window-start) 1)
-         (equal (buffer-name) (buffer-name (window-buffer))) ;; 这个不起效果，还是要hack`mode-line-idle--tree-to-string'
-         )
-      (save-excursion
-        (goto-char (window-start))
-        (beginning-of-defun)
-        (font-lock-ensure (point) (point-at-eol))
-        (concat
-         (propertize (format (format " %%%dd "
+    (let ((ret
+           (when (> (window-start) 1)
+             (save-excursion
+               (goto-char (window-start))
+               (beginning-of-defun)
+               (font-lock-ensure (point) (point-at-eol))
+               (concat
+                (propertize (format (format
+                                     " %%%dd "
                                      display-line-numbers-width)
-                             (line-number-at-pos (point)))
-                     'face '(foreground-color . "cyan"))
-         (buffer-substring (point) (point-at-eol))))))
+                                    (line-number-at-pos (point)))
+                            'face '(foreground-color . "cyan"))
+                (buffer-substring (point) (point-at-eol)))))))
+      (unless ret
+        (setq ret
+              (concat
+               (propertize (format (format " %%%ds "
+                                           display-line-numbers-width)
+                                   "Col")
+                           'face '(foreground-color . "cyan"))
+               "")))
+      ret))
   (setq topsy-mode-functions '((nil . my-topsy-headline)))
   (add-hook
    'prog-mode-hook
@@ -5531,7 +5539,8 @@ _q_uit
                '(hi-black-hb
                  ((t (:foreground "orange" :background "black"))))
                '(outline-2 ((t (:foreground "#f9cec3")))) ;; org-org-level-2和org-headline-done互换
-               '(org-headline-done ((t (:foreground "#6c6f93")))) ;; 
+               '(org-headline-done ((t (:foreground "#6c6f93"))))
+               '(header-line ((t (:weight bold))))
                )
               ;; region有点看不清，单独设置
               (set-face-attribute 'region nil
