@@ -4116,6 +4116,7 @@ _q_uit
 
 ;; jump后自动把屏幕居中
 (use-package scroll-on-jump
+  :defer 0.3
   :config
   (setq scroll-on-jump-duration 0.0)
   (setq scroll-on-jump-smooth nil)
