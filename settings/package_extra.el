@@ -223,6 +223,7 @@ _q_uit
     :init
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
     (global-set-key (kbd "C-c d") 'dired-recent-open)
+    (global-set-key (kbd "C-c C-d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
@@ -2486,6 +2487,9 @@ _c_: hide comment        _q_uit
       :init
       (setq consult-everything-args "es -p -r") ;; -i是区分大小写
       (global-set-key (kbd "C-c f") 'consult-everything)
+      (global-set-key (kbd "C-c C-f") 'consult-everything)
+      (with-eval-after-load 'elisp-mode
+        (define-key emacs-lisp-mode-map (kbd "C-c C-f") nil))
       ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
       (defun consult--with-orderless (&rest args)
         (minibuffer-with-setup-hook
@@ -5540,8 +5544,7 @@ _q_uit
                  ((t (:foreground "orange" :background "black"))))
                '(outline-2 ((t (:foreground "#f9cec3")))) ;; org-org-level-2和org-headline-done互换
                '(org-headline-done ((t (:foreground "#6c6f93"))))
-               '(header-line ((t (:weight bold))))
-               )
+               '(header-line ((t (:weight bold)))))
               ;; region有点看不清，单独设置
               (set-face-attribute 'region nil
                                   :background "#555555"))))
