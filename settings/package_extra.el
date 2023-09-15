@@ -1000,6 +1000,7 @@ _c_: hide comment        _q_uit
   :config
   (setq yas-global-mode t)
   (defvar yas-minor-mode t)
+  (defun yas-minor-mode ()) ;; 最新版eglot需要
   (defun yas-expand-snippet (snippet &optional start end expand-env)
     "不需要参数，只需要额外输入个()就行了，这里把参数那些都去掉"
     ;; 参数表达式：`$1`, `$2`和 `${3:foo}`
