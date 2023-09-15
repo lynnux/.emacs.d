@@ -154,6 +154,7 @@ q n n
 
 #define the"cls-name" ("cls-name"::getInstance())
 ")
+(ss "std::shared_ptr<"p">")
 
 cmake-mode cmake-ts-mode
 
