@@ -2546,6 +2546,7 @@ _c_: hide comment        _q_uit
                        "emacs china"
                        "everything"
                        "project search"
+                       "cppreference"
                        ;; "project file"
                        )
                      :prompt (format "Search %s on: " myword)
@@ -2584,6 +2585,10 @@ _c_: hide comment        _q_uit
                     ((equal backend "emacs china")
                      (concat
                       "https://emacs-china.org/search?q=" myword))
+                    ((equal backend "cppreference")
+                     (concat
+                      "https://duckduckgo.com/?sites=cppreference.com&q="
+                      myword))
                     (t
                      (concat "https://www.baidu.com/s?wd=" myword))))
                   (message "%S" myurl)
