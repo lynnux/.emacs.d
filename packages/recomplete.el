@@ -225,7 +225,7 @@ Argument FN-CACHE stores the result for reuse."
 
 
 ;; ---------------------------------------------------------------------------
-;; Implementation: Case Style Cycle
+;; Implementation: Case Style Cycle (Word Mode)
 
 (defun recomplete-impl-case-style (cycle-index fn-cache)
   "Cycle case styles using the choice at CYCLE-INDEX.
@@ -233,11 +233,34 @@ Argument FN-CACHE stores the result for reuse."
   (pcase-let ((`(,result-choices ,word-beg ,word-end) (or fn-cache '(nil nil nil))))
 
     (unless result-choices
-      (let ((word-range (bounds-of-thing-at-point 'symbol)))
+      (let ((word-range (bounds-of-thing-at-point 'word)))
         (unless word-range
           (user-error "No symbol under cursor"))
         (setq word-beg (car word-range))
-        (setq word-end (cdr word-range)))
+        (setq word-end (cdr word-range))
+
+        ;; Scan backward over "-_".
+        (let ((pos-prev (1+ word-beg)))
+          (while (not (eql pos-prev word-beg))
+            (setq pos-prev word-beg)
+            (when (memq (char-before word-beg) (list ?_ ?-))
+              (let ((range
+                     (save-excursion
+                       (goto-char (- word-beg 2))
+                       (bounds-of-thing-at-point 'word))))
+                (when (and range (eql (cdr range) (- word-beg 1)))
+                  (setq word-beg (car range)))))))
+        ;; Scan forward over "-_".
+        (let ((pos-prev (1- word-end)))
+          (while (not (eql pos-prev word-end))
+            (setq pos-prev word-end)
+            (when (memq (char-after word-end) (list ?_ ?-))
+              (let ((range
+                     (save-excursion
+                       (goto-char (+ word-end 2))
+                       (bounds-of-thing-at-point 'word))))
+                (when (and range (eql (car range) (+ word-end 1)))
+                  (setq word-end (cdr range))))))))
 
       (let* ((word-init (buffer-substring-no-properties word-beg word-end))
              (word-split
@@ -245,10 +268,12 @@ Argument FN-CACHE stores the result for reuse."
                #'downcase
                ;; `split-string' modified match-data.
                (save-match-data
-                 (split-string (string-trim (replace-regexp-in-string
-                                             "\\([[:lower:]]\\)\\([[:upper:]]\\)"
-                                             "\\1_\\2"
-                                             word-init)
+                 ;; Setting `case-fold-search' is needed for replace to work properly, see #2.
+                 (split-string (string-trim (let ((case-fold-search nil))
+                                              (replace-regexp-in-string
+                                               "\\([[:lower:]]\\)\\([[:upper:]]\\)"
+                                               "\\1_\\2"
+                                               word-init))
                                             "_")
                                "[_\\-]")))))
 
@@ -272,6 +297,83 @@ Argument FN-CACHE stores the result for reuse."
 
     (list result-choices fn-cache)))
 
+
+;; ---------------------------------------------------------------------------
+;; Implementation: Case Style Cycle (Programming Mode)
+
+(defun recomplete-impl-case-style-symbol (cycle-index fn-cache)
+  "Cycle case styles using the choice at CYCLE-INDEX.
+Argument FN-CACHE stores the result for reuse."
+  (pcase-let ((`(,result-choices ,word-beg ,word-end) (or fn-cache '(nil nil nil))))
+
+    (unless result-choices
+      (let ((word-range (bounds-of-thing-at-point 'symbol)))
+        ;; Contract around separator characters.
+        ;; This is done so conventions such as:
+        ;; `__some_identifier__' -> `__SomeIdentifier__' or...
+        ;; `_private_name' -> `_PrivateName'
+        ;; Instead of stripping them, as surrounding separator characters
+        ;; would otherwise be stripped and these characters can have a special
+        ;; meaning (depending on the language).
+        (when word-range
+          (save-excursion
+            (goto-char (car word-range))
+            (unless (zerop (skip-chars-forward "-_" (cdr word-range)))
+              (setcar word-range (point)))
+            (goto-char (cdr word-range))
+            (unless (zerop (skip-chars-backward "-_" (car word-range)))
+              (setcdr word-range (point))))
+          (when (eql (car word-range) (cdr word-range))
+            (user-error "No symbol under cursor containing non separators")))
+        (unless word-range
+          (user-error "No symbol under cursor"))
+        (setq word-beg (car word-range))
+        (setq word-end (cdr word-range)))
+
+      (let* ((do-kebab-case (memq (char-syntax ?-) (list ?_ ?w)))
+             (word-init (buffer-substring-no-properties word-beg word-end))
+             (word-split
+              (mapcar
+               #'downcase
+               ;; `split-string' modified match-data.
+               (save-match-data
+                 ;; Setting `case-fold-search' is needed for replace to work properly, see #2.
+                 (split-string (string-trim (let ((case-fold-search nil))
+                                              (replace-regexp-in-string
+                                               "\\([[:lower:]]\\)\\([[:upper:]]\\)"
+                                               "\\1_\\2"
+                                               word-init))
+                                            "_")
+                               (cond
+                                (do-kebab-case
+                                 "[_\\-]")
+                                (t
+                                 "_")))))))
+
+        (push (string-join (mapcar #'capitalize word-split) "") result-choices)
+
+        (cond
+         ;; Single word, just add lower-case.
+         ((null (cdr word-split))
+          (push (car word-split) result-choices))
+         ;; Multiple words.
+         (t
+          (dolist (ch
+                   (cond
+                    (do-kebab-case
+                     (list ?- ?_))
+                    (t
+                     (list ?_))))
+            (push (string-join word-split (char-to-string ch)) result-choices))))
+
+        ;; Exclude this word from the list of options (if it exists at all).
+        (setq result-choices (recomplete--rotate-list-by-elt result-choices word-init))
+        (setq fn-cache (list result-choices word-beg word-end))))
+
+    (let ((word-at-index (nth (mod cycle-index (length result-choices)) result-choices)))
+      (recomplete-replace-in-region word-at-index word-beg word-end))
+
+    (list result-choices fn-cache)))
 
 ;; ---------------------------------------------------------------------------
 ;; Implementation: `dabbrev'
@@ -587,6 +689,14 @@ ARG is the offset to cycle, default is 1, -1 to cycle backwards."
 ARG is the offset to cycle, default is 1, -1 to cycle backwards."
   (interactive "p")
   (recomplete-with-callback 'recomplete-impl-case-style arg))
+
+;; Case Style Cycle Programming Mode.
+;;;###autoload
+(defun recomplete-case-style-symbol (arg)
+  "Cycles over common case-styles.
+ARG is the offset to cycle, default is 1, -1 to cycle backwards."
+  (interactive "p")
+  (recomplete-with-callback 'recomplete-impl-case-style-symbol arg))
 
 ;; Abbreviations.
 ;;;###autoload

@@ -1163,9 +1163,30 @@ _c_: hide comment        _q_uit
        tab-line-close-button-show nil
        tab-line-separator
        (if (display-graphic-p)
-           (propertize (format " %s " (char-to-string #o22666))
-                       'face
-                       '(foreground-color . "cyan"))
+           ;; unicode符号展示网站 https://www.fuhaoku.net/block/Misc_Symbols
+           (propertize (format " %s "
+                               (char-to-string
+                                (let ((tl
+                                       (list
+                                        #x2618
+                                        #x266B
+                                        #x266E
+                                        #x266F
+                                        #x2665
+                                        #x2666
+                                        #x26DF
+                                        #o22666 ;; old
+                                        #x26FA
+                                        #x2691
+                                        #x267B
+                                        #x2615
+                                        #x2622
+                                        #x262F
+                                        #x26F4
+                                        #x26AB)))
+                                  (nth
+                                   (mod (random t) (length tl)) tl))))
+                       'face '(foreground-color . "cyan"))
          " | ") ;; 这个比close button好看 
        ))
     :config
@@ -2371,6 +2392,7 @@ _c_: hide comment        _q_uit
      consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
      consult-locate-args (encode-coding-string "es.exe -n 30 -p -r" 'gbk)
      consult-preview-key nil ;; 默认禁止preview，后面有设置哪些开启
+     recentf-filename-handlers nil
      )
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list
@@ -3748,9 +3770,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      '((c-mode c-ts-mode c++-mode c++-ts-mode)
        .
        ("clangd" "-header-insertion=never")))
-    (add-to-list
-     'completion-category-overrides
-     '(eglot (styles fussy))) ;; 配合cape-wrap-buster爽翻！
+    (when (featurep 'fussy)
+      ;; 配合cape-wrap-buster爽翻！
+      (add-to-list
+       'completion-category-overrides '(eglot (styles fussy))))
     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
     (advice-add
      'eglot-completion-at-point
