@@ -2261,8 +2261,8 @@ _c_: hide comment        _q_uit
        completion-styles '(orderless basic)
        completion-category-defaults nil
        completion-category-overrides
-       '((multi-category (styles +orderless-flex)) ;; consult buffer等，也会影响其它到project buffer
-         (file (styles +orderless-flex)) ;; helm是flex，orderless-flex比原版flex可以不排顺序分词
+       '((multi-category (styles orderless basic +orderless-flex)) ;; 用于consult buffer，project buffer等
+         (file (styles orderless basic +orderless-flex)) ;; 在`completion-styles'的基础上加上flex就够用了
          (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
          (variable (styles +orderless-with-initialism))
          (symbol (styles +orderless-with-initialism)))
@@ -2295,11 +2295,20 @@ _c_: hide comment        _q_uit
       :init
       (setq fussy-filter-fn 'fussy-filter-default) ;; fussy-filter-default和fussy-filter-orderless据说更快，但fussy-filter-orderless测试不支持packex匹配package_extra啊！
       :config
-      (setq
-       ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
-       ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
-       completion-category-overrides
-       '((multi-category (styles fussy)) (file (styles fussy)))))
+      (when t
+        (setq completion-category-overrides
+              (assq-delete-all
+               'multi-category completion-category-overrides))
+        (setq completion-category-overrides
+              (assq-delete-all 'file completion-category-overrides))
+        ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
+        ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
+        (add-to-list
+         'completion-category-overrides
+         '(multi-category (styles orderless basic fussy)))
+        (add-to-list
+         'completion-category-overrides
+         '(file (styles orderless basic fussy)))))
 
     ;; 美化
     (use-package marginalia
@@ -2392,8 +2401,7 @@ _c_: hide comment        _q_uit
      consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
      consult-locate-args (encode-coding-string "es.exe -n 30 -p -r" 'gbk)
      consult-preview-key nil ;; 默认禁止preview，后面有设置哪些开启
-     recentf-filename-handlers nil
-     )
+     recentf-filename-handlers nil)
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list
      'process-coding-system-alist
