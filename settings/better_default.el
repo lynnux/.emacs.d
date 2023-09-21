@@ -327,7 +327,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (define-key global-map (kbd "<S-down-mouse-1>") 'mouse-save-then-kill)
 (define-key global-map (kbd "<S-mouse-1>") 'ignore)
 
-(global-set-key (kbd "C-x C-f") 'find-file-at-point)
 (defun delete-word (arg)
   "代替kill-word，不加入kill-ring"
   (interactive "p")
