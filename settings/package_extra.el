@@ -1937,7 +1937,9 @@ _c_: hide comment        _q_uit
       consult-ripgrep
       my-consult-ripgrep
       my-consult-ripgrep-only-current-dir
-      my-consult-ripgrep-or-line))
+      my-consult-ripgrep-or-line
+      my-find-file
+      my-find-file-prj))
 
   (defvar my-ivy-fly-back-commands
     '(self-insert-command ivy-forward-char
@@ -1997,16 +1999,20 @@ _c_: hide comment        _q_uit
   (defun my-ivy-fly-time-travel ()
     (unless disable-for-vertico-repeat
       (when (memq this-command my-ivy-fly-commands)
-        (insert
-         (propertize
-          (save-excursion
-            (set-buffer (window-buffer (minibuffer-selected-window)))
-            ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
-            (or (seq-some
-                 (lambda (thing) (thing-at-point thing t))
-                 '(region symbol)) ;; url sexp
-                ""))
-          'face 'shadow))
+        (if (memq this-command '(my-find-file my-find-file-prj))
+            (insert ".*") ;; 对于文件查找命令，默认是展示所有结果
+          (insert
+           (propertize
+            (save-excursion
+              (set-buffer
+               (window-buffer (minibuffer-selected-window)))
+              ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
+              (or (seq-some
+                   (lambda (thing) (thing-at-point thing t))
+                   '(region symbol)) ;; url sexp
+                  ""))
+            'face 'shadow)))
+
         (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
         (beginning-of-line))))
 
@@ -2390,8 +2396,10 @@ _c_: hide comment        _q_uit
      consult-locate ;; everything!
      consult-find ;; minad说fd不太成熟，就用find吧
      consult--read
-     consult-bookmark)
+     consult-bookmark
+     consult-recent-file)
     :init
+    (defalias 'files-recent-visited 'consult-recent-file)
     (setq
      consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
      consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
@@ -2425,7 +2433,8 @@ _c_: hide comment        _q_uit
 
     (defun my-consult-ripgrep (&optional dir initial)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
-      (require 'consult)
+      (when (autoloadp (symbol-function 'consult-ripgrep))
+        (require 'consult))
       (setq this-command 'my-consult-ripgrep)
       ;; 不忽略ignore
       (let ((consult-ripgrep-args
@@ -2436,7 +2445,8 @@ _c_: hide comment        _q_uit
         (consult-ripgrep (or dir default-directory) initial)))
     (defun my-consult-ripgrep-only-current-dir (&optional dir)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
-      (require 'consult)
+      (when (autoloadp (symbol-function 'consult-ripgrep))
+        (require 'consult))
       ;; 不忽略ignore
       (let ((consult-ripgrep-args
              (concat
@@ -2460,14 +2470,22 @@ _c_: hide comment        _q_uit
     (global-set-key [remap bookmark-jump] 'consult-bookmark)
     ;; 默认有点问题，解决办法来自 https://github.com/minad/consult/issues/317#issuecomment-980797343，
     ;; 处理w32-quote-process-args后，上面consult--regexp-compiler设置为orderless也有效了！
-    (global-set-key
-     [(control f2)]
-     (lambda ()
-       (interactive)
-       (let
-           ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
-            )
-         (call-interactively 'consult-find))))
+    (defun my-find-file-prj (&optional dir initial)
+      (interactive)
+      (let
+          ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
+           )
+        (call-interactively 'consult-find)))
+    (global-set-key [(control f2)] 'my-find-file-prj)
+
+    ;; 试用一段时间find-file
+    (defun my-find-file (&optional dir initial)
+      (interactive)
+      (let
+          ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
+           )
+        (consult-find (or dir default-directory) initial)))
+    (global-set-key [remap find-file] 'my-find-file)
 
     (defun my-project-imenu ()
       (interactive)
