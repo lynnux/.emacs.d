@@ -156,16 +156,13 @@
 (with-eval-after-load 'view
   ;; 跟god-mode集成了，原来view单字符的功能全部加上C-，
   (define-key
-   view-mode-map
-   (kbd "C-w")
+   view-mode-map (kbd "C-w")
    'View-scroll-page-backward-set-page-size) ;; view-mode显然不能编辑
   (define-key
-   view-mode-map
-   (kbd "C-SPC")
+   view-mode-map (kbd "C-SPC")
    'View-scroll-page-forward-set-page-size) ;; 原C-spc是set-mark
   (define-key
-   view-mode-map
-   (kbd "C-v")
+   view-mode-map (kbd "C-v")
    'View-scroll-page-forward-set-page-size) ;; view-mode显然不能编辑
   ;; (define-key view-mode-map "a" 'move-beginning-of-line)
   ;; (define-key view-mode-map "e" 'move-end-of-line)
@@ -356,6 +353,7 @@ Run occur in all buffers whose names match this type for REXP."
   (add-hook 'ediff-quit-hook 'doom-ediff-restore-wconf-h)
   (add-hook 'ediff-suspend-hook 'doom-ediff-restore-wconf-h))
 
+(setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode)
 
 (setq-default compilation-scroll-output 'first-error)

@@ -5107,29 +5107,31 @@ _q_uit
         :defer t
         :init
         ;; M-x -ts-mode提取出来的
-        (setq all-ts-mode
-              '((c++-ts-mode . cpp)
-                bash-ts-mode
-                c-ts-mode
-                cmake-ts-mode
-                (csharp-ts-mode. c-sharp)
-                css-ts-mode
-                dockerfile-ts-mode
-                elixir-ts-mode
-                go-mod-ts-mode
-                go-ts-mode
-                heex-ts-mode
-                html-ts-mode
-                java-ts-mode
-                js-ts-mode
-                json-ts-mode
-                python-ts-mode
-                ruby-ts-mode
-                rust-ts-mode
-                toml-ts-mode
-                tsx-ts-mode
-                typescript-ts-mode
-                yaml-ts-mode))
+        (setq
+         treesit-font-lock-level 4 ;; 最大化高亮
+         all-ts-mode
+         '((c++-ts-mode . cpp)
+           bash-ts-mode
+           c-ts-mode
+           cmake-ts-mode
+           (csharp-ts-mode. c-sharp)
+           css-ts-mode
+           dockerfile-ts-mode
+           elixir-ts-mode
+           go-mod-ts-mode
+           go-ts-mode
+           heex-ts-mode
+           html-ts-mode
+           java-ts-mode
+           js-ts-mode
+           json-ts-mode
+           python-ts-mode
+           ruby-ts-mode
+           rust-ts-mode
+           toml-ts-mode
+           tsx-ts-mode
+           typescript-ts-mode
+           yaml-ts-mode))
         (cl-dolist
          (ts1 all-ts-mode)
          (let (ts
