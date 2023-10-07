@@ -2071,32 +2071,46 @@ _c_: hide comment        _q_uit
          minibuffer-completion-table
          minibuffer-completion-predicate)
         'category)))
+    (defun is-consult-fd ()
+      (equal
+       'file ;; TODO: 目前没有精确的方法判断是否是`consult-fd'
+       (completion-metadata-get
+        (completion-metadata
+         (minibuffer-contents)
+         minibuffer-completion-table
+         minibuffer-completion-predicate)
+        'category)))
+    (defmacro run-cmd-parent-dir (cmd)
+      ;; 参考enable-minibuffer-auto-search-at-point获取当前输入
+      `(let ((text
+              (substring-no-properties
+               (or (car-safe vertico--input) "")))
+             (dir
+              (file-name-directory
+               (directory-file-name default-directory))))
+         ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
+         ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
+         ;; minad大佬的解决办法跟我的一样 https://github.com/minad/consult/issues/596
+         (run-at-time
+          0 nil
+          (lambda ()
+            (let
+                ((this-command ',cmd) ;; 以consult-buffer形式查看
+                 (disable-for-vertico-repeat t))
+              (,cmd dir text))))
+         (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
+         ))
     (defun my/vertico-C-l ()
       "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
       (interactive)
       ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
-      (if (is-consult-ripgrep)
-          (progn
-            ;; 参考enable-minibuffer-auto-search-at-point获取当前输入
-            (let ((text
-                   (substring-no-properties
-                    (or (car-safe vertico--input) "")))
-                  (dir
-                   (file-name-directory
-                    (directory-file-name default-directory))))
-              ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
-              ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
-              ;; minad大佬的解决办法跟我的一样 https://github.com/minad/consult/issues/596
-              (run-at-time
-               0 nil
-               (lambda ()
-                 (let
-                     ((this-command 'my-consult-ripgrep) ;; 以consult-buffer形式查看
-                      (disable-for-vertico-repeat t))
-                   (my-consult-ripgrep dir text))))
-              (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
-              ))
-        (call-interactively 'vertico-directory-delete-word)))
+      (cond
+       ((is-consult-ripgrep)
+        (run-cmd-parent-dir my-consult-ripgrep))
+       ((is-consult-fd)
+        (run-cmd-parent-dir my-find-file))
+       (t
+        (call-interactively 'vertico-directory-delete-word))))
     (defun my/vertico-tab ()
       (interactive)
       (if (or (is-consult-line) (is-consult-ripgrep))
@@ -2189,6 +2203,8 @@ _c_: hide comment        _q_uit
          (consult-bookmark
           (vertico-sort-function . vertico-sort-history-alpha))
          (tempel-insert
+          (vertico-sort-function . vertico-sort-history-alpha))
+         (my-find-file
           (vertico-sort-function . vertico-sort-history-alpha))))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
@@ -2397,7 +2413,8 @@ _c_: hide comment        _q_uit
      consult-find ;; minad说fd不太成熟，就用find吧
      consult--read
      consult-bookmark
-     consult-recent-file)
+     consult-recent-file
+     consult-fd)
     :init
     (defalias 'files-recent-visited 'consult-recent-file)
     (setq
@@ -2414,6 +2431,8 @@ _c_: hide comment        _q_uit
     (add-to-list
      'process-coding-system-alist
      '("[rR][gG]" . (utf-8 . gbk-dos))) ;; rg支持中文
+    (add-to-list
+     'process-coding-system-alist '("[fF][dD]" . (utf-8 . gbk-dos)))
     (add-to-list 'process-coding-system-alist '("es" gbk . gbk))
     (add-to-list
      'process-coding-system-alist
@@ -2472,19 +2491,12 @@ _c_: hide comment        _q_uit
     ;; 处理w32-quote-process-args后，上面consult--regexp-compiler设置为orderless也有效了！
     (defun my-find-file-prj (&optional dir initial)
       (interactive)
-      (let
-          ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
-           )
-        (call-interactively 'consult-find)))
+      (call-interactively 'consult-fd))
     (global-set-key [(control f2)] 'my-find-file-prj)
-
     ;; 试用一段时间find-file
     (defun my-find-file (&optional dir initial)
       (interactive)
-      (let
-          ((w32-quote-process-args ?\\) ;; or (w32-quote-process-args ?*)
-           )
-        (consult-find (or dir default-directory) initial)))
+      (consult-fd (or dir default-directory) initial))
     (global-set-key [remap find-file] 'my-find-file)
 
     (defun my-project-imenu ()
