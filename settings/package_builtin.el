@@ -355,6 +355,23 @@ Run occur in all buffers whose names match this type for REXP."
 
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode)
+;; 修复read only状态修改后不revert的问题
+(defvar my-file-readonly-state nil
+  "记录文件的read only状态")
+(defun my-save-readonly-state ()
+  (setq-local my-file-readonly-state
+              (file-attribute-modes
+               (file-attributes buffer-file-name))))
+(add-hook 'find-file-hook #'my-save-readonly-state)
+(with-eval-after-load 'autorevert
+  (define-advice auto-revert-handler (:after (&rest args))
+    (when buffer-file-name
+      (let ((current-state
+             (file-attribute-modes
+              (file-attributes buffer-file-name))))
+        (unless (equal my-file-readonly-state current-state)
+          (setq my-file-readonly-state current-state)
+          (call-interactively 'revert-buffer-quick))))))
 
 (setq-default compilation-scroll-output 'first-error)
 (electric-indent-mode -1) ;; 貌似没什么用也没有，还占了post-self-insert-hook一席
