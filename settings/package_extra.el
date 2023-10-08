@@ -4665,19 +4665,23 @@ _q_uit
                            'face '(foreground-color . "cyan"))
                "")))
       ret))
-  (setq topsy-mode-functions '((nil . my-topsy-headline)))
-  (add-hook
-   'prog-mode-hook
-   (lambda ()
-     (when (autoloadp (symbol-function 'topsy-mode))
-       (require 'topsy))
-     (setf
-      topsy-fn
-      (or (alist-get major-mode topsy-mode-functions)
-          (alist-get nil topsy-mode-functions))
-      header-line-format
-      (list
-       '(:eval (mode-line-idle 0.5 topsy-header-line-format ""))))))
+  (defun my-topsy-headline-for-dired ()
+    (propertize dired-directory 'face '(foreground-color . "cyan")))
+  (setq topsy-mode-functions
+        '((dired-mode . my-topsy-headline-for-dired)
+          (nil . my-topsy-headline)))
+  (defun topsy-hook ()
+    (when (autoloadp (symbol-function 'topsy-mode))
+      (require 'topsy))
+    (setf
+     topsy-fn
+     (or (alist-get major-mode topsy-mode-functions)
+         (alist-get nil topsy-mode-functions))
+     header-line-format
+     (list
+      '(:eval (mode-line-idle 0.5 topsy-header-line-format "")))))
+  (add-hook 'prog-mode-hook 'topsy-hook)
+  (add-hook 'dired-mode-hook 'topsy-hook)
   (with-eval-after-load 'mode-line-idle
     (define-advice mode-line-idle--tree-to-string
         (:around (orig-fn &rest args))
