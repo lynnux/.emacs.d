@@ -368,10 +368,16 @@ Run occur in all buffers whose names match this type for REXP."
     (when buffer-file-name
       (let ((current-state
              (file-attribute-modes
-              (file-attributes buffer-file-name))))
+              (file-attributes buffer-file-name)))
+            (fn buffer-file-name))
         (unless (equal my-file-readonly-state current-state)
           (setq my-file-readonly-state current-state)
-          (call-interactively 'revert-buffer-quick))))))
+          ;; (call-interactively 'revert-buffer-quick) ;; 这个有bug，添加只读后仍然可以进入编辑模式
+          (kill-buffer)
+          (if (eq (window-buffer) (current-buffer))
+              (find-file fn) ;; find-file会切换到打开的文件buffer
+            (find-file-noselect fn) ;; 这个会把buffer置于最后小问题能接受
+            ))))))
 
 (setq-default compilation-scroll-output 'first-error)
 (electric-indent-mode -1) ;; 貌似没什么用也没有，还占了post-self-insert-hook一席
