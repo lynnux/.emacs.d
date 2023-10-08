@@ -388,3 +388,7 @@ Run occur in all buffers whose names match this type for REXP."
 (with-eval-after-load 'find-file
   (add-to-list 'cc-other-file-alist '("\\.tli\\'" (".tlh")))
   (add-to-list 'cc-other-file-alist '("\\.tlh\\'" (".tli"))))
+
+(with-eval-after-load 'nxml-mode
+  ;; C-c C-f给everything使用
+  (define-key nxml-mode-map (kbd "C-c C-f") nil))
