@@ -395,6 +395,12 @@ _q_uit
     (defun get-select-or-current-path ()
       (let ((paths (get-region-select-path))
             current)
+        (setq paths
+              (vconcat
+               paths
+               (nreverse
+                (dired-map-over-marks (dired-get-filename) nil)))) ;; 添加mark项
+        (setq paths (vconcat (-distinct (append paths nil)) [])) ;; 去重复
         (unless paths
           (setq current (dired-get-filename nil t))
           (when current
