@@ -2701,6 +2701,45 @@ symbol under cursor"
                   (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    ;; 实现consult-line定位当前行 https://github.com/minad/consult/wiki#pre-select-nearest-heading-for-consult-org-heading-and-consult-outline-using-vertico
+    (defvar consult--previous-point nil)
+    (defun consult--set-previous-point (&rest app)
+      (setq consult--previous-point (point))
+      (let ((consult-line-start-from-top t))
+        (apply app)))
+    (advice-add #'consult-line :around #'consult--set-previous-point)
+    ;; (advice-add #'my-consult-ripgrep :around #'consult--set-previous-point)
+    (advice-add
+     #'vertico--update
+     :after #'consult-vertico--update-choose)
+    (defun consult-vertico--update-choose (&rest _)
+      "Pick the nearest candidate rather than the first after updating candidates."
+      (when (and consult--previous-point
+                 (memq
+                  current-minibuffer-command
+                  '(consult-line my-consult-ripgrep)))
+        (setq
+         vertico--index
+         (max
+          0 ; if none above, choose the first below
+          (1-
+           (or
+            (seq-position
+             vertico--candidates
+             consult--previous-point
+             (lambda
+               (cand point-pos) ; counts on candidate list being sorted
+               (> (cl-case
+                   current-minibuffer-command
+                   (consult-line (car (consult--get-location cand)))
+                   (my-consult-ripgrep
+                    nil (car (consult--get-location cand)))
+                   (consult-org-heading
+                    (get-text-property 0 'consult--candidate cand)))
+                  point-pos)))
+            (length vertico--candidates))))))
+      (setq consult--previous-point nil))
+
     (setq consult-ripgrep-args
           (string-replace " --search-zip" "" consult-ripgrep-args)) ;; 支持搜索el.gz，但我不需要这个功能(同时也跟--pre冲突)
     ;; 只对这部分命令开启preview，`consult-preview-key'
