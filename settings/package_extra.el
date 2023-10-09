@@ -1956,9 +1956,7 @@ _c_: hide comment        _q_uit
       consult-ripgrep
       my-consult-ripgrep
       my-consult-ripgrep-only-current-dir
-      my-consult-ripgrep-or-line
-      my-find-file
-      my-find-file-prj))
+      my-consult-ripgrep-or-line))
 
   (defvar my-ivy-fly-back-commands
     '(self-insert-command ivy-forward-char
@@ -2018,19 +2016,16 @@ _c_: hide comment        _q_uit
   (defun my-ivy-fly-time-travel ()
     (unless disable-for-vertico-repeat
       (when (memq this-command my-ivy-fly-commands)
-        (if (memq this-command '(my-find-file my-find-file-prj))
-            (insert ".*") ;; 对于文件查找命令，默认是展示所有结果
-          (insert
-           (propertize
-            (save-excursion
-              (set-buffer
-               (window-buffer (minibuffer-selected-window)))
-              ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
-              (or (seq-some
-                   (lambda (thing) (thing-at-point thing t))
-                   '(region symbol)) ;; url sexp
-                  ""))
-            'face 'shadow)))
+        (insert
+         (propertize
+          (save-excursion
+            (set-buffer (window-buffer (minibuffer-selected-window)))
+            ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
+            (or (seq-some
+                 (lambda (thing) (thing-at-point thing t))
+                 '(region symbol)) ;; url sexp
+                ""))
+          'face 'shadow))
 
         (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
         (beginning-of-line))))
@@ -2529,12 +2524,19 @@ symbol under cursor"
     ;; 处理w32-quote-process-args后，上面consult--regexp-compiler设置为orderless也有效了！
     (defun my-find-file-prj (&optional dir initial)
       (interactive)
-      (call-interactively 'consult-fd))
+      (when (autoloadp (symbol-function 'consult-fd))
+        (require 'consult))
+      (let ((consult-async-split-style 'semicolon))
+        (consult-fd nil (or initial ".*;"))))
     (global-set-key [(control f2)] 'my-find-file-prj)
-    ;; 试用一段时间find-file
+    ;; 带递归的find-file，直接展示所有文件，并用上了consult的filter过滤无须再启动async进程
     (defun my-find-file (&optional dir initial)
       (interactive)
-      (consult-fd (or dir default-directory) initial))
+      (when (autoloadp (symbol-function 'consult-fd))
+        (require 'consult))
+      (let
+          ((consult-async-split-style 'semicolon)) ;; perl的话C-l会额外多出一个#，用`semicolon'和`comma'都可以
+        (consult-fd (or dir default-directory) (or initial ".*;"))))
     (global-set-key [remap find-file] 'my-find-file)
 
     (defun my-project-imenu ()
