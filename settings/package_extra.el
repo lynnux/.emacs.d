@@ -2457,7 +2457,9 @@ symbol under cursor"
      consult-async-split-style nil ;; 默认async是'perl会有个#在开头，而consult-eglot过滤的话还要删除那个#按f空格才可以
      consult-locate-args (encode-coding-string "es.exe -n 30 -p -r" 'gbk)
      consult-preview-key nil ;; 默认禁止preview，后面有设置哪些开启
-     recentf-filename-handlers nil)
+     recentf-filename-handlers nil
+     consult-fd-args '("fd" "--full-path --color=never") ;; 不知道是否一直执行executable-find，所以给写死
+     )
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list
      'process-coding-system-alist
