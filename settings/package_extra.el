@@ -1248,7 +1248,30 @@ _c_: hide comment        _q_uit
   (global-idle-highlight-mode)
   (custom-set-faces
    '(idle-highlight ((t (:inherit isearch)))) ;; 参见https://gitee.com/advanceflow/elisp/blob/main/40-Emacs%E6%98%BE%E7%A4%BA.org#40128-%E5%9F%BA%E6%9C%AC%E9%9D%A2
-   ))
+   )
+
+  ;; 让支持region选中高亮
+  (define-advice idle-highlight--word-at-point-args
+      (:around (orig-fn &rest args))
+    (if (use-region-p)
+        (cons
+         (buffer-substring-no-properties
+          (region-beginning) (region-end))
+         (cons (region-beginning) (region-end)))
+      (apply orig-fn args)))
+  (define-advice idle-highlight--highlight
+      (:around (orig-fn &rest args))
+    (if (use-region-p)
+        (cl-letf (((symbol-function #'concat)
+                   (lambda (&rest _)
+                     (regexp-quote (ad-get-argument args 0)))))
+          (apply orig-fn args))
+      (apply orig-fn args)))
+  ;; `cl-letf'hook`concat'会有warning提示，直接禁掉提示
+  (custom-set-variables
+   '(warning-suppress-log-types
+     '((emacs) (comp) (comp)))
+   '(warning-suppress-types '((comp)))))
 
 (progn
   (defvar last-readonly-state t) ;; 设为t让*scratch*可以正常显示
