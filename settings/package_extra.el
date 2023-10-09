@@ -1209,10 +1209,6 @@ _c_: hide comment        _q_uit
      hi-pink hi-green hi-blue hi-salmon hi-aquamarine
      hi-black-b hi-blue-b hi-red-b hi-green-b hi-black-hb) ;; 排除CTRL+F3高亮的
    )
-  ;; 没什么功能，还好embark有实现
-  (global-set-key [f3] 'embark-next-symbol)
-  (global-set-key [(shift f3)] 'embark-previous-symbol)
-  (global-set-key [(control f3)] 'embark-toggle-highlight)
   :config
   ;; 仅在编辑时才不高亮光标下的
   (with-eval-after-load 'view
@@ -2362,6 +2358,9 @@ _c_: hide comment        _q_uit
        embark-mixed-indicator-delay 0 ;; 按钮提示菜单延迟，熟练后可以设置长点
        ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
        )
+      (global-set-key [f3] 'embark-next-symbol)
+      (global-set-key [(shift f3)] 'embark-previous-symbol)
+      (global-set-key [(control f3)] 'embark-toggle-highlight)
       (with-eval-after-load 'vertico
         (define-key vertico-map (kbd "C-.") 'embark-act)
         (define-key vertico-map (kbd "C-c C-o") 'embark-export)
@@ -2396,6 +2395,22 @@ _c_: hide comment        _q_uit
               (call-interactively 'my-consult-ripgrep))
           (message "not exist! %S" target)) ; TODO: 支持buffer bookmark等
         )
+      ;; from https://github.com/glen-dai/highlight-global 
+      (defun get-thing-to-highlight ()
+        "Get thing to highlight. If active region, get reigon, else get
+symbol under cursor"
+        (if (use-region-p)
+            (buffer-substring-no-properties
+             (region-beginning) (region-end))
+          (if (thing-at-point 'symbol)
+              (buffer-substring-no-properties
+               (car (bounds-of-thing-at-point 'symbol))
+               (cdr (bounds-of-thing-at-point 'symbol))))))
+      ;; 使CTRL+F3支持region高亮
+      (define-advice embark-toggle-highlight
+          (:around (orig-fn &rest args))
+        (let ((find-tag-default-function 'get-thing-to-highlight))
+          (apply orig-fn args)))
       (define-key embark-general-map [f2] 'embark-consult-rg)))
   ;; 预览功能很快！好像不是真的加载
   (use-package consult
