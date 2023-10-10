@@ -1614,9 +1614,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-n") 'my/backward-forward-next-location)
   (global-set-key (kbd "M-p") 'my/backward-forward-previous-location)
   (defvar jump-commands
-    '(jl-jump-backward
-      jl-jump-forward
-      beginning-of-buffer
+    '(beginning-of-buffer
       end-of-buffer
       jump-to-register
       mark-whole-buffer
@@ -1629,10 +1627,7 @@ _c_: hide comment        _q_uit
       xref-find-definitions
       session-jump-to-last-change
       org-roam-preview-visit
-      consult-ripgrep
-      consult-line
       avy-goto-word-1
-      my-consult-ripgrep
       embark-act
       consult-imenu-multi
       keyboard-escape-quit
@@ -1641,8 +1636,7 @@ _c_: hide comment        _q_uit
       my-pop-select))
   (cl-dolist
    (jc jump-commands)
-   ;; 这里不能用:before，否则会影响`consult-line'的初始region判断
-   (advice-add jc :after #'backward-forward-push-mark-wrapper))
+   (advice-add jc :before #'backward-forward-push-mark-wrapper))
   (advice-add 'push-mark :after #'backward-forward-after-push-mark))
 ;; 其它jump包
 ;; back-button global跟local是区分开的，这就很麻烦了
