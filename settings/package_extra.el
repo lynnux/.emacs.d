@@ -1454,7 +1454,8 @@ _c_: hide comment        _q_uit
         (dabbrev--reset-global-variables)
         (setq dabbrev-case-fold-search nil)
         (if has-dabbrev-capf
-            (dabbrev-capf)
+            (ignore-errors
+              (dabbrev-capf))
           (cl-letf (((symbol-function #'completion-in-region)
                      (lambda (beg end table &rest args)
                        (list beg end table))))
@@ -2688,7 +2689,7 @@ symbol under cursor"
     (defun consult-delete-default-contents ()
       (remove-hook 'pre-command-hook 'consult-delete-default-contents)
       (cond
-       ((member this-command '(self-insert-command))
+       ((member this-command '(self-insert-command yank))
         (delete-minibuffer-contents))
        (t
         (put-text-property
