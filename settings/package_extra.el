@@ -360,120 +360,6 @@ _q_uit
   (define-key
    dired-mode-map [remap dired-do-rename] 'my-dired-do-rename)
 
-  (when (functionp 'pop-select/popup-shell-menu)
-    (defun get-region-select-path ()
-      "获取选中的路径，抄的dired-mark和dired-mark-files-in-region"
-      (let (paths)
-        (when (region-active-p)
-          (setq paths [])
-          (save-excursion
-            (let* ((beg (region-beginning))
-                   (end (region-end))
-                   (start
-                    (progn
-                      (goto-char beg)
-                      (line-beginning-position)))
-                   (end
-                    (progn
-                      (goto-char end)
-                      (if (if (eq dired-mark-region 'line)
-                              (not (bolp))
-                            (get-text-property
-                             (1- (point)) 'dired-filename))
-                          (line-end-position)
-                        (line-beginning-position)))))
-              (goto-char start) ; assumed at beginning of line
-              (while (< (point) end)
-                ;; Skip subdir line and following garbage like the `total' line:
-                (while (and (< (point) end) (dired-between-files))
-                  (forward-line 1))
-                (if (and (not (looking-at-p dired-re-dot))
-                         (dired-get-filename nil t))
-                    (setq paths
-                          (vconcat
-                           paths
-                           (list
-                            (replace-regexp-in-string
-                             "/"
-                             "\\\\"
-                             (dired-get-filename nil t))))))
-                (forward-line 1)))))
-        paths))
-    (defun get-select-or-current-path ()
-      (let ((paths (get-region-select-path))
-            current)
-        (setq paths
-              (vconcat
-               paths
-               (nreverse
-                (dired-map-over-marks (dired-get-filename) nil)))) ;; 添加mark项
-        (setq paths (vconcat (-distinct (append paths nil)) [])) ;; 去重复
-        (unless paths
-          (setq current (dired-get-filename nil t))
-          (when current
-            (setq paths [])
-            (setq paths
-                  (vconcat
-                   paths
-                   (list
-                    (replace-regexp-in-string "/" "\\\\" current))))))
-        paths))
-
-    (define-key
-     dired-mode-map (kbd "<mouse-3>")
-     (lambda (event)
-       (interactive "e")
-       (let ((pt (posn-point (event-end event)))
-             (paths (get-region-select-path))
-             path)
-         (if paths
-             (pop-select/popup-shell-menu paths 0 0 1)
-           ;; 单个文件直接跳过去
-           (select-window (posn-window (event-end event)))
-           (goto-char pt)
-           (setq path (dired-get-filename nil t))
-           (unless path ;可能是点击了空白处，那么就取当前目录
-             (setq path (dired-current-directory)))
-           (setq paths
-                 (vconcat
-                  paths
-                  (list (replace-regexp-in-string "/" "\\\\" path))))
-           ;; 延迟调用使当前选中项更新hl-line等
-           (run-at-time
-            0.1 nil
-            (lambda () (pop-select/popup-shell-menu paths 0 0 1)))))))
-    (defun print-paths (vec)
-      (let ((len (length vec))
-            (s "")
-            (i 0))
-        (while (< i len)
-          (setq s
-                (concat s "\n" (file-name-nondirectory (aref vec i))))
-          (setq i (1+ i)))
-        s))
-    (defun dired-w32-shell-copy ()
-      (interactive)
-      (let ((paths (get-select-or-current-path)))
-        (when paths
-          (pop-select/shell-copyfiles paths)
-          (message (concat "Copy: " (print-paths paths))))))
-    (defun dired-w32-shell-cut ()
-      (interactive)
-      (let ((paths (get-select-or-current-path)))
-        (when paths
-          (pop-select/shell-cutfiles paths)
-          (message (concat "Cut: " (print-paths paths))))))
-    (defun dired-w32-shell-paste ()
-      (interactive)
-      (let ((current-dir (dired-current-directory)))
-        (when current-dir
-          (pop-select/shell-pastefiles current-dir)
-          (message "Paste in: %S" current-dir))))
-    (define-key dired-mode-map "c" 'dired-w32-shell-copy)
-    (define-key dired-mode-map (kbd "C-c C-c") 'dired-w32-shell-copy)
-    (define-key dired-mode-map "v" 'dired-w32-shell-paste)
-    (define-key dired-mode-map (kbd "C-v") 'dired-w32-shell-paste)
-    (define-key dired-mode-map (kbd "C-w") 'dired-w32-shell-cut))
 
   ;; 给目录加上[]以便跟普通buffer区分开
   (add-hook
@@ -4240,6 +4126,144 @@ _q_uit
    (lambda ()
      (interactive)
      (my-pop-select t))))
+(when (functionp 'pop-select/popup-shell-menu)
+  (defun print-paths (vec)
+    (message "%S" vec)
+    (let ((len (length vec))
+          (s "")
+          (i 0))
+      (while (< i len)
+        (setq s (concat s "\n" (file-name-nondirectory (aref vec i))))
+        (setq i (1+ i)))
+      s))
+  (with-eval-after-load 'dired
+    (defun get-region-select-path ()
+      "获取选中的路径，抄的dired-mark和dired-mark-files-in-region"
+      (let (paths)
+        (when (region-active-p)
+          (setq paths [])
+          (save-excursion
+            (let* ((beg (region-beginning))
+                   (end (region-end))
+                   (start
+                    (progn
+                      (goto-char beg)
+                      (line-beginning-position)))
+                   (end
+                    (progn
+                      (goto-char end)
+                      (if (if (eq dired-mark-region 'line)
+                              (not (bolp))
+                            (get-text-property
+                             (1- (point)) 'dired-filename))
+                          (line-end-position)
+                        (line-beginning-position)))))
+              (goto-char start) ; assumed at beginning of line
+              (while (< (point) end)
+                ;; Skip subdir line and following garbage like the `total' line:
+                (while (and (< (point) end) (dired-between-files))
+                  (forward-line 1))
+                (if (and (not (looking-at-p dired-re-dot))
+                         (dired-get-filename nil t))
+                    (setq paths
+                          (vconcat
+                           paths
+                           (list
+                            (replace-regexp-in-string
+                             "/"
+                             "\\\\"
+                             (dired-get-filename nil t))))))
+                (forward-line 1)))))
+        paths))
+    (defun get-select-or-current-path ()
+      (let ((paths (get-region-select-path))
+            current)
+        (setq paths
+              (vconcat
+               paths
+               (nreverse
+                (dired-map-over-marks (dired-get-filename) nil)))) ;; 添加mark项
+        (setq paths (vconcat (-distinct (append paths nil)) [])) ;; 去重复
+        (unless paths
+          (setq current (dired-get-filename nil t))
+          (when current
+            (setq paths [])
+            (setq paths
+                  (vconcat
+                   paths
+                   (list
+                    (replace-regexp-in-string "/" "\\\\" current))))))
+        paths))
+    (define-key
+     dired-mode-map (kbd "<mouse-3>")
+     (lambda (event)
+       (interactive "e")
+       (let ((pt (posn-point (event-end event)))
+             (paths (get-region-select-path))
+             path)
+         (if paths
+             (pop-select/popup-shell-menu paths 0 0 1)
+           ;; 单个文件直接跳过去
+           (select-window (posn-window (event-end event)))
+           (goto-char pt)
+           (setq path (dired-get-filename nil t))
+           (unless path ;可能是点击了空白处，那么就取当前目录
+             (setq path (dired-current-directory)))
+           (setq paths
+                 (vconcat
+                  paths
+                  (list (replace-regexp-in-string "/" "\\\\" path))))
+           ;; 延迟调用使当前选中项更新hl-line等
+           (run-at-time
+            0.1 nil
+            (lambda () (pop-select/popup-shell-menu paths 0 0 1)))))))
+    (defun dired-w32-shell-copy ()
+      (interactive)
+      (let ((paths (get-select-or-current-path)))
+        (when paths
+          (pop-select/shell-copyfiles paths)
+          (message (concat "Copy: " (print-paths paths))))))
+    (defun dired-w32-shell-cut ()
+      (interactive)
+      (let ((paths (get-select-or-current-path)))
+        (when paths
+          (pop-select/shell-cutfiles paths)
+          (message (concat "Cut: " (print-paths paths))))))
+    (defun dired-w32-shell-paste ()
+      (interactive)
+      (let ((current-dir (dired-current-directory)))
+        (when current-dir
+          (pop-select/shell-pastefiles current-dir)
+          (message "Paste in: %S" current-dir))))
+    (define-key dired-mode-map "c" 'dired-w32-shell-copy)
+    (define-key dired-mode-map (kbd "C-c C-c") 'dired-w32-shell-copy)
+    (define-key dired-mode-map "v" 'dired-w32-shell-paste)
+    (define-key dired-mode-map (kbd "C-v") 'dired-w32-shell-paste)
+    (define-key dired-mode-map (kbd "C-w") 'dired-w32-shell-cut))
+
+  (with-eval-after-load 'embark
+    (define-key
+     embark-file-map (kbd "C-c C-c")
+     (lambda (file)
+       (interactive "f")
+       (setq file (string-trim file nil "[/\\]")) ;去掉结尾的\/，不然目录显示有问题
+       (message
+        (concat
+         "Copy: "
+         (print-paths (make-vector 1 (expand-file-name file)))))
+       (pop-select/shell-copyfiles
+        (make-vector 1 (expand-file-name file)))))
+    (define-key
+     embark-file-map (kbd "C-w")
+     (lambda (file)
+       (interactive "f")
+       (setq file (string-trim file nil "[/\\]")) ;去掉结尾的\/，不然目录显示有问题
+       (message
+        (concat
+         "Cut: "
+         (print-paths (make-vector 1 (expand-file-name file)))))
+       (pop-select/shell-cutfiles
+        (make-vector 1 (expand-file-name file)))))))
 
 (when nil ;;(fboundp 'pop-select/beacon-animation)
   (defun show-cursor-animation ()
