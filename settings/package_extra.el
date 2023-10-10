@@ -2689,7 +2689,10 @@ symbol under cursor"
     (defun consult-delete-default-contents ()
       (remove-hook 'pre-command-hook 'consult-delete-default-contents)
       (cond
-       ((member this-command '(self-insert-command yank))
+       ((and (member this-command '(self-insert-command yank))
+             (not
+              (and (eq this-command 'self-insert-command)
+                   (eq last-command-event 32)))) ;; 输入空格时不删除内容
         (delete-minibuffer-contents))
        (t
         (put-text-property
