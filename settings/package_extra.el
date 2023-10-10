@@ -293,7 +293,14 @@ _q_uit
   :commands (dired dired-jump)
   :config
   (when (string-equal system-type "windows-nt")
-    (define-key dired-mode-map (kbd "C-x C-d") 'dired-w32explore)
+    (define-key
+     dired-mode-map (kbd "C-x C-d")
+     (lambda ()
+       (interactive)
+       (condition-case nil
+           (call-interactively 'dired-w32explore)
+         ;; 移到最下面那行就有问题，采用`browse-file-in-explorer'解决
+         (error (call-interactively 'browse-file-in-explorer)))))
     (define-key dired-mode-map (kbd "<C-return>") 'dired-w32-browser) ;; 使用explorer打开
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
     )
