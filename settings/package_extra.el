@@ -1947,38 +1947,22 @@ _c_: hide comment        _q_uit
   ;; @see https://www.reddit.com/r/emacs/comments/b7g1px/withemacs_execute_commands_like_marty_mcfly/
   ;; 还有个更简单的https://emacs-china.org/t/xxx-thing-at-point/18047，但是不太注意细节
   (defvar my-ivy-fly-commands
-    '(query-replace-regexp
-      flush-lines keep-lines
-      ivy-read
-      swiper
-      swiper-backward
-      swiper-all
-      swiper-isearch
-      swiper-isearch-backward
-      lsp-ivy-workspace-symbol
-      lsp-ivy-global-workspace-symbol
-      my-project-search
-      my-counsel-rg ;; call-interactively 'counsel-rg的函数需要加进来
-      consult-line
-      consult-ripgrep
-      my-consult-ripgrep
-      my-consult-ripgrep-only-current-dir
-      my-consult-ripgrep-or-line))
+    '(query-replace-regexp flush-lines keep-lines
+                           my-project-search
+                           consult-line
+                           consult-ripgrep
+                           my-consult-ripgrep
+                           my-consult-ripgrep-only-current-dir))
 
   (defvar my-ivy-fly-back-commands
-    '(self-insert-command ivy-forward-char
-                          ivy-delete-char
-                          delete-forward-char
+    '(self-insert-command delete-forward-char
                           kill-word
                           kill-sexp
                           end-of-line
                           mwim-end-of-line
                           mwim-end-of-code-or-line
                           mwim-end-of-line-or-code
-                          yank
-                          ivy-yank-word
-                          ivy-yank-char
-                          ivy-yank-symbol))
+                          yank))
 
   (defvar-local my-ivy-fly--travel nil)
   (defun my-ivy-fly-back-to-present ()
@@ -2057,9 +2041,8 @@ _c_: hide comment        _q_uit
      vertico-sort-function nil ;; 对需要排序的，添加到`vertico-multiform-commands'里
      )
     :defer 0.3
-    :config
-    (vertico-mode 1)
-    (enable-minibuffer-auto-search-at-point) ;; consult有个:initial也可以设置，不过搜索其它的话要先删除
+    :config (vertico-mode 1)
+    ;; (enable-minibuffer-auto-search-at-point) ;; consult有个:initial也可以设置，不过搜索其它的话要先删除
     ;; extension说明
     ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
     ;; vertico-directory.el  测试没成功
@@ -2702,6 +2685,29 @@ symbol under cursor"
                   (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    (defun consult-delete-default-contents ()
+      (remove-hook 'pre-command-hook 'consult-delete-default-contents)
+      (cond
+       ((member this-command '(self-insert-command))
+        (delete-minibuffer-contents))
+       (t
+        (put-text-property
+         (minibuffer-prompt-end) (point-max) 'face 'default))))
+    (defmacro initial-string ()
+      `(when-let ((string
+                   (or (seq-some
+                        (lambda (thing) (thing-at-point thing t))
+                        '(region symbol)) ;; url sexp
+                       "")))
+         (add-hook 'pre-command-hook 'consult-delete-default-contents)
+         (propertize string 'face 'shadow)))
+    (consult-customize
+     consult-line
+     my-consult-ripgrep
+     my-consult-ripgrep-only-current-dir
+     my-project-search
+     :initial (initial-string))
+
     ;; 实现consult-line定位当前行 https://github.com/minad/consult/wiki#pre-select-nearest-heading-for-consult-org-heading-and-consult-outline-using-vertico
     (defvar consult--previous-point nil)
     (defun consult--set-previous-point (&rest app)
