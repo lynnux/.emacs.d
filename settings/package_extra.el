@@ -1640,7 +1640,8 @@ _c_: hide comment        _q_uit
       my-pop-select))
   (cl-dolist
    (jc jump-commands)
-   (advice-add jc :before #'backward-forward-push-mark-wrapper))
+   ;; 这里不能用:before，否则会影响`consult-line'的初始region判断
+   (advice-add jc :after #'backward-forward-push-mark-wrapper))
   (advice-add 'push-mark :after #'backward-forward-after-push-mark))
 ;; 其它jump包
 ;; back-button global跟local是区分开的，这就很麻烦了
@@ -4935,6 +4936,7 @@ _q_uit
   :commands (god-local-mode)
   :init
   (setq
+   initial-major-mode 'view-mode ;; 开启view以便使用god-mode
    god-mode-enable-function-key-translation nil ;; 禁止F1等
    god-mode-alist
    '((nil . "C-")

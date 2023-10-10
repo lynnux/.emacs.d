@@ -299,7 +299,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
  w32-pipe-buffer-size (* 64 1024))
 (setq
  inhibit-default-init t
- initial-major-mode 'view-mode ;; 开启view以便使用god-mode
  initial-scratch-message nil)
 
 ;; 恢复gc-cons-threshold
