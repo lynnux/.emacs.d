@@ -1150,9 +1150,14 @@ _c_: hide comment        _q_uit
    )
 
   ;; 让支持region选中高亮
+  (defun should-highlight-regin ()
+    (and (use-region-p)
+         (eq
+          (line-number-at-pos (region-beginning))
+          (line-number-at-pos (region-end)))))
   (define-advice idle-highlight--word-at-point-args
       (:around (orig-fn &rest args))
-    (if (use-region-p)
+    (if (should-highlight-regin)
         (cons
          (buffer-substring-no-properties
           (region-beginning) (region-end))
@@ -1160,7 +1165,7 @@ _c_: hide comment        _q_uit
       (apply orig-fn args)))
   (define-advice idle-highlight--highlight
       (:around (orig-fn &rest args))
-    (if (use-region-p)
+    (if (should-highlight-regin)
         (cl-letf (((symbol-function #'concat)
                    (lambda (&rest _)
                      (regexp-quote (ad-get-argument args 0)))))
