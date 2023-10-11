@@ -2266,7 +2266,12 @@ symbol under cursor"
       (when (autoloadp (symbol-function 'consult-fd))
         (require 'consult))
       (let
-          ((consult-async-split-style 'semicolon)) ;; perl的话C-l会额外多出一个#，用`semicolon'和`comma'都可以
+          ((consult-async-split-style 'semicolon) ;; perl的话C-l会额外多出一个#，用`semicolon'和`comma'都可以
+           (orderless-match-faces
+            [nil ;; 禁用高亮，这样embark-select选中就有效果了。最终调用`add-face-text-property'参数3填nil也没事
+             orderless-match-face-1
+             orderless-match-face-2
+             orderless-match-face-3]))
         (consult-fd (or dir default-directory) (or initial ".*;"))))
     (global-set-key [remap find-file] 'my-find-file)
 
