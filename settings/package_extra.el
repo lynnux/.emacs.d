@@ -1834,92 +1834,6 @@ _c_: hide comment        _q_uit
   "Return t if STRING is a Chinese string."
   (cl-find-if 'chinese-char-p (string-to-list string)))
 
-;; 自动搜索光标下的单词，非helm的方案都需要这个
-(defun enable-minibuffer-auto-search-at-point ()
-  ;; 参考https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-ivy.el
-  ;; @see https://www.reddit.com/r/emacs/comments/b7g1px/withemacs_execute_commands_like_marty_mcfly/
-  ;; 还有个更简单的https://emacs-china.org/t/xxx-thing-at-point/18047，但是不太注意细节
-  (defvar my-ivy-fly-commands
-    '(query-replace-regexp flush-lines keep-lines
-                           my-project-search
-                           consult-line
-                           consult-ripgrep
-                           my-consult-ripgrep
-                           my-consult-ripgrep-only-current-dir))
-
-  (defvar my-ivy-fly-back-commands
-    '(self-insert-command delete-forward-char
-                          kill-word
-                          kill-sexp
-                          end-of-line
-                          mwim-end-of-line
-                          mwim-end-of-code-or-line
-                          mwim-end-of-line-or-code
-                          yank))
-
-  (defvar-local my-ivy-fly--travel nil)
-  (defun my-ivy-fly-back-to-present ()
-    (cond
-     ((and (memq last-command my-ivy-fly-commands)
-           (equal (this-command-keys-vector) (kbd "M-p")))
-      ;; repeat one time to get straight to the first history item
-      (setq unread-command-events
-            (append
-             unread-command-events
-             (listify-key-sequence (kbd "M-p")))))
-     ((or (memq this-command my-ivy-fly-back-commands)
-          (equal (this-command-keys-vector) (kbd "M-n")))
-      (unless my-ivy-fly--travel
-        (delete-region (point) (point-max))
-        (when (memq
-               this-command
-               '(ivy-forward-char
-                 ivy-delete-char
-                 delete-forward-char
-                 kill-word
-                 kill-sexp
-                 end-of-line
-                 mwim-end-of-line
-                 mwim-end-of-code-or-line
-                 mwim-end-of-line-or-code))
-          ;; 如果是C-e之类，会重新插入搜索内容，但不再是灰的啦
-          (when (functionp 'ivy-cleanup-string)
-            (insert (ivy-cleanup-string ivy-text)))
-          (when (featurep 'vertico)
-            (insert
-             (substring-no-properties
-              (or (car-safe vertico--input) ""))))
-          (when (memq
-                 this-command
-                 '(ivy-delete-char
-                   delete-forward-char kill-word kill-sexp))
-            (beginning-of-line)))
-        (setq my-ivy-fly--travel t)))))
-
-  (defvar disable-for-vertico-repeat nil)
-  (defun my-ivy-fly-time-travel ()
-    (unless disable-for-vertico-repeat
-      (when (memq this-command my-ivy-fly-commands)
-        (insert
-         (propertize
-          (save-excursion
-            (set-buffer (window-buffer (minibuffer-selected-window)))
-            ;; 参考https://emacs-china.org/t/xxx-thing-at-point/18047，可以搜索region
-            (or (seq-some
-                 (lambda (thing) (thing-at-point thing t))
-                 '(region symbol)) ;; url sexp
-                ""))
-          'face 'shadow))
-
-        (add-hook 'pre-command-hook 'my-ivy-fly-back-to-present nil t)
-        (beginning-of-line))))
-
-  (add-hook 'minibuffer-setup-hook #'my-ivy-fly-time-travel)
-  (add-hook
-   'minibuffer-exit-hook
-   (lambda ()
-     (remove-hook 'pre-command-hook 'my-ivy-fly-back-to-present t))))
-
 (progn
   (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
@@ -1935,7 +1849,6 @@ _c_: hide comment        _q_uit
      )
     :defer 0.3
     :config (vertico-mode 1)
-    ;; (enable-minibuffer-auto-search-at-point) ;; consult有个:initial也可以设置，不过搜索其它的话要先删除
     ;; extension说明
     ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
     ;; vertico-directory.el  测试没成功
@@ -1949,82 +1862,17 @@ _c_: hide comment        _q_uit
     ;; vertico-reverse.el    reverse结果列表
 
     (define-key vertico-map (kbd "C-s") 'vertico-next) ; 不支持在结果里搜索
-    ;; (define-key vertico-map (kbd "C-r") 'vertico-previous) ;; C-r可以复制
-    (defun is-consult-ripgrep ()
-      (eq
-       'consult-grep
-       (completion-metadata-get
-        (completion-metadata
-         (minibuffer-contents)
-         minibuffer-completion-table
-         minibuffer-completion-predicate)
-        'category)))
-    (defun is-consult-line ()
-      (eq
-       'consult-location ;; 其它有几个也是这个，影响不大
-       (completion-metadata-get
-        (completion-metadata
-         (minibuffer-contents)
-         minibuffer-completion-table
-         minibuffer-completion-predicate)
-        'category)))
-    (defun is-consult-fd ()
-      (equal
-       'file ;; TODO: 目前没有精确的方法判断是否是`consult-fd'
-       (completion-metadata-get
-        (completion-metadata
-         (minibuffer-contents)
-         minibuffer-completion-table
-         minibuffer-completion-predicate)
-        'category)))
-    (defmacro run-cmd-parent-dir (cmd)
-      ;; 参考enable-minibuffer-auto-search-at-point获取当前输入
-      `(let ((text
-              (substring-no-properties
-               (or (car-safe vertico--input) "")))
-             (dir
-              (file-name-directory
-               (directory-file-name default-directory))))
-         ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
-         ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
-         ;; minad大佬的解决办法跟我的一样 https://github.com/minad/consult/issues/596
-         (run-at-time
-          0 nil
-          (lambda ()
-            (let
-                ((this-command ',cmd) ;; 以consult-buffer形式查看
-                 (disable-for-vertico-repeat t))
-              (,cmd dir text))))
-         (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
-         ))
-    (defun my/vertico-C-l ()
-      "vertico find-file和consult-ripgrep都是共用的，让C-l在consult-ripgrep执行搜索父目录"
-      (interactive)
-      ;; 判断当前是否执行consult-grep，参考(vertico-directory--completing-file-p)
-      (cond
-       ((is-consult-ripgrep)
-        (run-cmd-parent-dir my-consult-ripgrep))
-       ((is-consult-fd)
-        (run-cmd-parent-dir my-find-file))
-       (t
-        (call-interactively 'vertico-directory-delete-word))))
-    (defun my/vertico-tab ()
-      (interactive)
-      (if (or (is-consult-line) (is-consult-ripgrep))
-          (progn
-            (let
-                ((this-command 'end-of-line)) ;; 由于enable-minibuffer-auto-search-at-point的设置，只需要移动到末尾就自动填写搜索词了
-              (my-ivy-fly-back-to-present) ;; 单纯调用call-interactively C-s还是灰色的
-              ))
-        (call-interactively 'vertico-insert)))
+
     ;; 另一种设置的方法 https://github.com/minad/consult/wiki#add-category-specific-minibuffer-keybindings
-    (define-key vertico-map (kbd "C-l") 'my/vertico-C-l) ;; 转上级目录，或者搜索上级目录
-    (define-key vertico-map (kbd "<tab>") 'my/vertico-tab) ;; rg时tab是插入搜索词
+    (define-key
+     vertico-map (kbd "C-l") 'vertico-directory-delete-word)
+    (define-key vertico-map (kbd "<tab>") 'vertico-next-group)
+    (define-key vertico-map (kbd "<backtab>") 'vertico-previous-group)
     (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
     (define-key vertico-map (kbd "M-o") 'vertico-next-group) ;; 下个组,C-o给avy了
     (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
 
-    ;; 习惯只要underline，不随主题改变
+    ;; 当前行加下划线
     (custom-set-faces
      '(vertico-current
        ((t
@@ -2578,6 +2426,29 @@ symbol under cursor"
                   (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    ;; C-l命令
+    (defmacro run-cmd-parent-dir (cmd)
+      `(lambda ()
+         (interactive)
+         (let ((text
+                (substring-no-properties
+                 (or (car-safe vertico--input) "")))
+               (dir
+                (file-name-directory
+                 (directory-file-name default-directory))))
+           ;; (delete-minibuffer-contents) ;; 参考vertico-directory-up
+           ;; (insert text) ;; 只改内容，preview和RET都不正常，还是要重新搜索下
+           ;; minad大佬的解决办法跟我的一样 https://github.com/minad/consult/issues/596
+           (run-at-time
+            0 nil
+            (lambda ()
+              (let
+                  ((this-command ',cmd) ;; 以consult-buffer形式查看
+                   (disable-for-vertico-repeat t))
+                (,cmd dir text))))
+           (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
+           )))
+
     ;; C-x C-f的C-j为创建文件
     (defun my-find-file-create (&rest args)
       (interactive)
@@ -2595,8 +2466,19 @@ symbol under cursor"
     (defvar my-find-file-map
       (let ((map (make-sparse-keymap)))
         (define-key map "\C-j" #'my-find-file-create)
+        (define-key map "\C-l" (run-cmd-parent-dir my-find-file))
         map))
-    (consult-customize my-find-file :keymap my-find-file-map) ;; consult-customize也太强了吧
+    (consult-customize my-find-file :keymap my-find-file-map)
+
+    (defvar my-consult-ripgrep-map
+      (let ((map (make-sparse-keymap)))
+        (define-key
+         map "\C-l" (run-cmd-parent-dir my-consult-ripgrep))
+        map))
+    (consult-customize
+     my-consult-ripgrep
+     my-consult-ripgrep-only-current-dir
+     :keymap my-consult-ripgrep-map)
 
     ;; 想把running改为...貌似不好做到，换个颜色吧
     (custom-set-faces
