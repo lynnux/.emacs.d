@@ -2578,6 +2578,10 @@ symbol under cursor"
                   (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    ;; 想把running改为...貌似不好做到，换个颜色吧
+    (custom-set-faces
+     '(consult-async-running ((t (:inherit mode-line-inactive)))))
+
     (defun consult-delete-default-contents ()
       (remove-hook 'pre-command-hook 'consult-delete-default-contents)
       (cond
