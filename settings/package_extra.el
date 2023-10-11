@@ -2578,6 +2578,26 @@ symbol under cursor"
                   (browse-url myurl))))))))
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
+    ;; C-x C-f的C-j为创建文件
+    (defun my-find-file-create (&rest args)
+      (interactive)
+      (let* ((str
+              (buffer-substring-no-properties
+               (minibuffer-prompt-end) (point-max))))
+        ;; .*;aaa取aaa，aaa就取aaa
+        (when (string-match ".*;" str)
+          (setq str (replace-regexp-in-string ".*;" "" str)))
+        ;; (message "%S" str    )
+        (delete-minibuffer-contents)
+        (insert str)
+        (find-file str))
+      (vertico-exit-input))
+    (defvar my-find-file-map
+      (let ((map (make-sparse-keymap)))
+        (define-key map "\C-j" #'my-find-file-create)
+        map))
+    (consult-customize my-find-file :keymap my-find-file-map) ;; consult-customize也太强了吧
+
     ;; 想把running改为...貌似不好做到，换个颜色吧
     (custom-set-faces
      '(consult-async-running ((t (:inherit mode-line-inactive)))))
