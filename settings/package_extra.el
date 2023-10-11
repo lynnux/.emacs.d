@@ -2260,6 +2260,7 @@ symbol under cursor"
       (let ((consult-async-split-style 'semicolon))
         (consult-fd nil (or initial ".*;"))))
     (global-set-key [(control f2)] 'my-find-file-prj)
+
     ;; 带递归的find-file，直接展示所有文件，并用上了consult的filter过滤无须再启动async进程
     (defun my-find-file (&optional dir initial)
       (interactive)
@@ -2267,12 +2268,27 @@ symbol under cursor"
         (require 'consult))
       (let
           ((consult-async-split-style 'semicolon) ;; perl的话C-l会额外多出一个#，用`semicolon'和`comma'都可以
+           ;; 禁用高亮，这样embark-select选中就有效果了。最终调用`add-face-text-property'参数3填nil也没事
+           ;; 在`consult--async-indicator'中检测状态恢复高亮
            (orderless-match-faces
-            [nil ;; 禁用高亮，这样embark-select选中就有效果了。最终调用`add-face-text-property'参数3填nil也没事
+            [nil
              orderless-match-face-1
              orderless-match-face-2
              orderless-match-face-3]))
         (consult-fd (or dir default-directory) (or initial ".*;"))))
+    (define-advice consult--async-indicator
+        (:around (orig-fn &rest args))
+      (let ((org-ret (apply orig-fn args)))
+        (lambda (action &optional state)
+          (let ((result (funcall org-ret action state)))
+            (when (and (eq action 'indicator) (eq state 'finished))
+              ;; 恢复正常高亮匹配
+              (setq orderless-match-faces
+                    [orderless-match-face-0
+                     orderless-match-face-1
+                     orderless-match-face-2
+                     orderless-match-face-3]))
+            result))))
     (global-set-key [remap find-file] 'my-find-file)
 
     (defun my-project-imenu ()
