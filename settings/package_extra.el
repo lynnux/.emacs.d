@@ -4023,9 +4023,16 @@ _q_uit
      'electric-pair-mode-hook
      (lambda ()
        (when electric-pair-mode
+         ;; 删除无用的hook
          (remove-hook
           'post-self-insert-hook
-          #'electric-pair-post-self-insert-function))))
+          #'electric-pair-post-self-insert-function)
+         (remove-hook
+          'post-self-insert-hook
+          #'electric-pair-open-newline-between-pairs-psif)
+         (remove-hook
+          'self-insert-uses-region-functions
+          #'electric-pair-will-use-region))))
     (cl-dolist
      (key elec-pair-chars)
      (let* ((key_str (char-to-string key))
