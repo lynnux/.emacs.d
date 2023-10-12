@@ -809,57 +809,26 @@ _c_: hide comment        _q_uit
    ("<backtab>" . tempel-previous))
   :commands (tempel-insert tempel--templates tempel-expand)
   :init
-  (defun tempel-try-key-from-whitespace (_start-point)
-    (skip-chars-backward "^[:space:]\n"))
-  (defvar tempel-key-syntaxes
-    (list #'tempel-try-key-from-whitespace "w_.()" "w_." "w_" "w"))
-  (defun tempel--templates-for-key-at-point ()
-    "确定当前key，从yas偷来的"
-    ;; (interactive)
-    (save-excursion
-      (let ((original (point))
-            (methods tempel-key-syntaxes)
-            (templates)
-            (method))
-        (while (and methods (not templates))
-          (unless (eq method (car methods))
-            ;; TRICKY: `eq'-ness test means we can only be here if
-            ;; `method' is a function that returned `again', and hence
-            ;; don't revert back to original position as per
-            ;; `tempel-key-syntaxes'.
-            (goto-char original))
-          (setq method (car methods))
-          (cond
-           ((stringp method)
-            (skip-syntax-backward method)
-            (setq methods (cdr methods)))
-           ((functionp method)
-            (unless (eq (funcall method original) 'again)
-              (setq methods (cdr methods))))
-           (t
-            (setq methods (cdr methods))
-            (yas--warning
-             "Invalid element `%s' in `tempel-key-syntaxes'" method)))
-          (let ((possible-key
-                 (buffer-substring-no-properties (point) original)))
-            (save-excursion
-              (goto-char original)
-              (setq templates possible-key))))
-        (when templates
-          ;; (message templates)
-          (list templates (point) original))))) ;; 返回text start end
   (setq
    tempel-path
    (expand-file-name "packages/tempel_templates" user-emacs-directory)
    tempel-auto-reload nil ;; 不需要检测模板是否更新了
    )
+  (defun my-get-str-at-point ()
+    "lc|aaa得到lc，<aaa|>得到aaa"
+    (let* ((bounds (bounds-of-thing-at-point 'symbol))
+           (beg (car bounds))
+           (end (cdr bounds)))
+      (when (> end (point))
+        (setq end (point)))
+      (list (buffer-substring-no-properties beg end) beg end)))
   (defun my-tempel-expandable-p ()
     "from https://gitlab.com/daanturo/e/-/blob/main/autoload/16-my-functions-snippet.el#L47"
     (when (and
            t ;; (memq (char-after) '(?\C-j ?  nil)) ;; 位置必须是最后或者后面有空格
            (require 'tempel nil 'noerror))
       (let ((s
-             (car-safe (tempel--templates-for-key-at-point))
+             (car-safe (my-get-str-at-point))
              ;; (thing-at-point 'symbol)
              ))
         (when (and s (assoc (intern s) (tempel--templates)))
@@ -889,7 +858,7 @@ _c_: hide comment        _q_uit
   (defadvice tempel--prefix-bounds
       (around my-tempel--prefix-bounds activate)
     "支持lc|aaa得到lc"
-    (let ((bounds (cdr-safe (tempel--templates-for-key-at-point))))
+    (let ((bounds (cdr-safe (my-get-str-at-point))))
       (when bounds
         (setq ad-return-value (cons (car bounds) (nth 1 bounds)))))))
 
@@ -4701,7 +4670,6 @@ _q_uit
   :commands (topsy-mode)
   :init
   (defun my-topsy-headline-click (event)
-    "Like `previous-buffer', but temporarily select EVENT's window."
     (interactive "e")
     (with-selected-window (posn-window (event-start event))
       (when (> (window-start) 1)
