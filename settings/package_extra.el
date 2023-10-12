@@ -1866,8 +1866,8 @@ _c_: hide comment        _q_uit
     ;; 另一种设置的方法 https://github.com/minad/consult/wiki#add-category-specific-minibuffer-keybindings
     (define-key
      vertico-map (kbd "C-l") 'vertico-directory-delete-word)
-    (define-key vertico-map (kbd "<tab>") 'vertico-next-group)
-    (define-key vertico-map (kbd "<backtab>") 'vertico-previous-group)
+    ;; (define-key vertico-map (kbd "<tab>") 'vertico-next-group)
+    ;; (define-key vertico-map (kbd "<backtab>") 'vertico-previous-group)
     (define-key vertico-map (kbd "C-j") 'vertico-exit-input) ; 避免选中项，比如新建文件，但列表有命中项时。默认绑定M-r
     (define-key vertico-map (kbd "M-o") 'vertico-next-group) ;; 下个组,C-o给avy了
     (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
@@ -2190,7 +2190,11 @@ symbol under cursor"
      consult-preview-key nil ;; 默认禁止preview，后面有设置哪些开启
      recentf-filename-handlers nil
      consult-fd-args '("fd" "--full-path --color=never") ;; 不知道是否一直执行executable-find，所以给写死
-     )
+     bs--intern-show-never "^#xa12$" ;; consult-buffer-sources不再显示隐藏buffer，用C-x b来显示
+     bs--show-all t
+     consult-buffer-sources
+     '(consult--source-buffer
+       consult--source-recent-file consult--source-bookmark))
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list
      'process-coding-system-alist
