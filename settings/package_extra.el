@@ -1892,12 +1892,7 @@ _c_: hide comment        _q_uit
       :commands (vertico-repeat vertico-repeat-save)
       :init
       (global-set-key [f6] #'vertico-repeat) ; C-u F6还可以选择
-      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-      :config
-      ;; 避免跟enable-minibuffer-auto-search-at-point冲突
-      (defadvice vertico-repeat (around my-vertico-repeat activate)
-        (let ((disable-for-vertico-repeat t))
-          ad-do-it)))
+      (add-hook 'minibuffer-setup-hook #'vertico-repeat-save))
     (use-package vertico-directory
       :commands (vertico-directory-delete-word))
     (use-package vertico-quick
@@ -2415,8 +2410,7 @@ symbol under cursor"
                ((equal backend "everything")
                 (consult-everything myword))
                ((equal backend "project search")
-                (let ((disable-for-vertico-repeat t))
-                  (my-project-search nil myword)))
+                (my-project-search nil myword))
                ((equal backend "project file")
                 (call-interactively 'my-project-find-file))
                (t
@@ -2469,7 +2463,7 @@ symbol under cursor"
             (lambda ()
               (let
                   ((this-command ',cmd) ;; 以consult-buffer形式查看
-                   (disable-for-vertico-repeat t))
+                   )
                 (,cmd dir text))))
            (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
            )))
