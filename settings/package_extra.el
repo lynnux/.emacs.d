@@ -4698,31 +4698,54 @@ _q_uit
 (use-package topsy
   :commands (topsy-mode)
   :init
+  (defun my-topsy-headline-click (event)
+    "Like `previous-buffer', but temporarily select EVENT's window."
+    (interactive "e")
+    (with-selected-window (posn-window (event-start event))
+      (when (> (window-start) 1)
+        (goto-char (window-start))
+        (beginning-of-defun))))
+  (defvar my-topsy-headline-keymap
+    (let ((map (make-sparse-keymap)))
+      (define-key map [mode-line mouse-1] 'my-topsy-headline-click)
+      (define-key map [header-line down-mouse-1] 'ignore)
+      (define-key map [header-line mouse-1] 'my-topsy-headline-click)
+      map))
   (defun my-topsy-headline ()
     "抄的`topsy--beginning-of-defun'，加上行号跟github一样的效果"
     ;; TODO: 对于一些c声明是两行
-    (let ((ret
-           (when (> (window-start) 1)
-             (save-excursion
-               (goto-char (window-start))
-               (beginning-of-defun)
-               (font-lock-ensure (point) (point-at-eol))
-               (concat
-                (propertize (format (format
-                                     " %%%dd "
-                                     display-line-numbers-width)
-                                    (line-number-at-pos (point)))
-                            'face '(foreground-color . "cyan"))
-                (buffer-substring (point) (point-at-eol)))))))
-      (unless ret
-        (setq ret
-              (concat
-               (propertize (format (format " %%%ds "
-                                           display-line-numbers-width)
-                                   "Col")
-                           'face '(foreground-color . "cyan"))
-               "")))
-      ret))
+    (ignore-errors
+      (let ((ret
+             (when (> (window-start) 1)
+               (save-excursion
+                 (goto-char (window-start))
+                 (beginning-of-defun)
+                 (font-lock-ensure (point) (point-at-eol))
+                 (concat
+                  (propertize (format
+                               (format
+                                " %%%dd "
+                                (or display-line-numbers-width 0))
+                               (line-number-at-pos (point)))
+                              'face '(foreground-color . "cyan"))
+                  (propertize (buffer-substring
+                               (point) (point-at-eol))
+                              'mouse-face
+                              'show-paren-match
+                              'local-map
+                              my-topsy-headline-keymap))))))
+        ;; 空内容
+        (unless ret
+          (setq ret
+                (concat
+                 (propertize (format
+                              (format
+                               " %%%ds "
+                               (or display-line-numbers-width 0))
+                              "Col")
+                             'face '(foreground-color . "cyan"))
+                 "")))
+        ret)))
   (defun my-topsy-headline-for-dired ()
     (propertize dired-directory 'face '(foreground-color . "cyan")))
   (setq topsy-mode-functions
