@@ -2446,6 +2446,7 @@ symbol under cursor"
     (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
     ;; C-l命令
+    (defvar C-L-string nil)
     (defmacro run-cmd-parent-dir (cmd)
       `(lambda ()
          (interactive)
@@ -2463,7 +2464,7 @@ symbol under cursor"
             (lambda ()
               (let
                   ((this-command ',cmd) ;; 以consult-buffer形式查看
-                   )
+                   (C-L-string text))
                 (,cmd dir text))))
            (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
            )))
@@ -2516,7 +2517,8 @@ symbol under cursor"
          (minibuffer-prompt-end) (point-max) 'face 'default))))
     (defmacro initial-string ()
       `(when-let ((string
-                   (or (seq-some
+                   (or (bound-and-true-p C-L-string)
+                       (seq-some
                         (lambda (thing) (thing-at-point thing t))
                         '(region symbol)) ;; url sexp
                        "")))
