@@ -4497,7 +4497,7 @@ _q_uit
   (poe-popup "*Checkdoc Status*")
   (poe-popup "*Compile-Log*")
   (poe-popup "*Command History*")
-  (poe-popup "*Help*" :size 0.4 :shrink t)
+  (poe-popup "*Help*" :size 0.4 :shrink t :select t)
   (poe-popup "*Messages*")
   (poe-popup "*Occur*")
   (poe-popup "*Pp Eval Output*")
@@ -4508,9 +4508,9 @@ _q_uit
   (poe-popup 'comint-mode)
   (poe-popup 'compilation-mode)
   (poe-popup 'Man-mode :size 0.4 :shrink t)
-  (poe-popup "\\*gud-.*" :regexp t) ;; (poe-popup 'gud-mode) 没效果
-  (poe-popup "*eshell*")
-  (poe-popup "*shell*")
+  (poe-popup "\\*gud-.*" :regexp t :select t) ;; (poe-popup 'gud-mode) 没效果
+  (poe-popup "*eshell*" :select t)
+  (poe-popup "*shell*" :select t)
 
   (add-hook 'poe-popup-mode-hook (lambda () (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
