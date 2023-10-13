@@ -766,7 +766,7 @@ _c_: hide comment        _q_uit
   )
 
 (use-package vundo
-  :commands(vundo))
+  :commands (vundo))
 
 ;; 经常C-x C-s按错，还是用这个吧
 (setq
@@ -4963,7 +4963,15 @@ _q_uit
    dashboard-projects-backend 'project-el
    dashboard-items '((recents . 20) (projects . 10))
    dashboard-item-shortcuts '((recents . "r") (projects . "SPC")))
+  ;; bypass require 'ffap加快启动速度
+  (defun dashboard-load-bypass-ffap (orig feature &rest args)
+    (unless (eq feature 'ffap)
+      (apply orig feature args)))
+  (advice-add 'require :around 'dashboard-load-bypass-ffap)
   :config
+  (advice-remove 'require 'dashboard-load-bypass-ffap)
+  (use-package ffap
+    :commands (ffap-guesser))
   (custom-set-faces
    '(dashboard-items-face ((t (:weight unspecified)))))
   ;; 用god-mode的快捷键
