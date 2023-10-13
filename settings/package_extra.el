@@ -977,7 +977,6 @@ _c_: hide comment        _q_uit
 ;; from tabbar-ruler
 (setq EmacsPortable-included-buffers
       '("*scratch*"
-        "*shell*"
         "*rg*"
         "*eww*"
         "*xref*"
@@ -1198,6 +1197,15 @@ _c_: hide comment        _q_uit
         ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
         ))))
 
+(defun esy/file-capf ()
+  "File completion at point function."
+  (let ((bs (bounds-of-thing-at-point 'filename)))
+    (when bs
+      (let* ((start (car bs))
+             (end (cdr bs)))
+        `(,start
+          ,end completion--file-name-table . (:exclusive no))))))
+
 ;; corfu的原理是添加completion-at-point-functions，很标准的做法
 ;; company机制不清楚。eglot+ctags用corfu好配一点
 (use-package corfu
@@ -1334,14 +1342,6 @@ _c_: hide comment        _q_uit
     (add-to-list 'completion-at-point-functions 'my-dabbrev-capf)
     :config (setq has-dabbrev-capf (functionp 'dabbrev-capf)))
 
-  (defun esy/file-capf ()
-    "File completion at point function."
-    (let ((bs (bounds-of-thing-at-point 'filename)))
-      (when bs
-        (let* ((start (car bs))
-               (end (cdr bs)))
-          `(,start
-            ,end completion--file-name-table . (:exclusive no))))))
   (add-to-list 'completion-at-point-functions 'esy/file-capf t)
 
   ;; eglot的capf没有:exclusive标识，所以是独占的，这里补充tag补全
@@ -5570,6 +5570,23 @@ _q_uit
   ;; TODO：`enriched-toggle-markup'切换后字符的属性并没有去掉
   )
 
+(use-package eshell
+  :defer t
+  :config
+  ;; eshell的tab就是补全，默认很卡的，改为只枚举当前目录的文件
+  (define-advice pcomplete-completions-at-point
+      (:around (orig-fn &rest args))
+    (esy/file-capf)))
+
+;; 处理shell的补全，也改为只枚举当前目录
+(use-package comint
+  :defer t
+  :config
+  (define-advice comint-completion-at-point
+      (:around (orig-fn &rest args))
+    (if (eq major-mode 'shell-mode)
+        (esy/file-capf)
+      (apply orig-fn args))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
