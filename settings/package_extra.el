@@ -4509,6 +4509,8 @@ _q_uit
   (poe-popup 'compilation-mode)
   (poe-popup 'Man-mode :size 0.4 :shrink t)
   (poe-popup "\\*gud-.*" :regexp t) ;; (poe-popup 'gud-mode) 没效果
+  (poe-popup "*eshell*")
+  (poe-popup "*shell*")
 
   (add-hook 'poe-popup-mode-hook (lambda () (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
