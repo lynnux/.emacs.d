@@ -822,9 +822,10 @@ _c_: hide comment        _q_uit
     (let* ((bounds (bounds-of-thing-at-point 'symbol))
            (beg (car bounds))
            (end (cdr bounds)))
-      (when (> end (point))
-        (setq end (point)))
-      (list (buffer-substring-no-properties beg end) beg end)))
+      (when bounds
+        (when (> end (point))
+          (setq end (point)))
+        (list (buffer-substring-no-properties beg end) beg end))))
   (defun my-tempel-expandable-p ()
     "from https://gitlab.com/daanturo/e/-/blob/main/autoload/16-my-functions-snippet.el#L47"
     (when (and
