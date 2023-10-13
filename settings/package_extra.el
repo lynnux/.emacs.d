@@ -765,6 +765,9 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-x u") (defrepeater #'undo-fu-only-redo)) ;; 这个其实是undo，习惯undo tree这个快捷键了
   )
 
+(use-package vundo
+  :commands(vundo))
+
 ;; 经常C-x C-s按错，还是用这个吧
 (setq
  auto-save-visited-interval 1
