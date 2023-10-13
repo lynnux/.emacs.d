@@ -203,13 +203,10 @@
          `((view-mode " ") (view-mode ,view-mode-line-format))
          (delq (assq 'view-mode minor-mode-alist) minor-mode-alist))))
 (global-unset-key (kbd "C-x C-q")) ;; 偶尔遇到C-i也不能修改就是这个导致的
-(defun view-exist-file ()
-  (when (file-exists-p (buffer-file-name))
-    (view-mode)))
+
 ;; 避免wcy提示失败
 (add-hook
- 'after-init-hook
- (lambda () (add-hook 'find-file-hook 'view-exist-file)))
+ 'after-init-hook (lambda () (add-hook 'find-file-hook 'view-mode)))
 (keyboard-translate ?\C-i ?\H-i) ;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
 ;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
