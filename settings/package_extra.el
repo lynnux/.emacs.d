@@ -3690,6 +3690,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      )
     :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
     :config
+    (use-package lsp-snippet-tempel
+      :defer t
+      :config
+      (lsp-snippet-tempel-eglot-init)
+      (define-advice lsp-snippet-tempel--placeholder-fn
+          (:around (orig-fn &rest args))
+        "去掉placeholder文字提示"
+        (let ((result
+               (apply orig-fn (list (ad-get-argument args 0) ""))))
+          result)))
+    (load "lsp/lsp-snippet")
+    (load "lsp/lsp-snippet-tempel")
+
     (add-to-list
      'eglot-server-programs
      '((c-mode c-ts-mode c++-mode c++-ts-mode)
