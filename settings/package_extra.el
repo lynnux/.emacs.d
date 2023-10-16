@@ -4365,10 +4365,9 @@ _q_uit
      'buffer-list-update-hook 'maple-preview:send-to-server)))
 
 (use-package winner
-  :disabled
-  :defer 1.2
+  :defer t
+  :init
   :config
-  (winner-mode +1)
   (define-key winner-mode-map (kbd "<C-left>") #'winner-undo)
   (define-key winner-mode-map (kbd "<C-right>") #'winner-redo))
 
@@ -4914,6 +4913,69 @@ _q_uit
   (add-hook 'pdb-mode-hook 'my-gud-hook)
   (add-hook 'gud-gdb-mode-hook 'my-gud-hook))
 
+(use-package dape
+  :defer t
+  :init
+  (autoload 'dape "lsp/dape" "" t)
+  (autoload 'dape-toggle-breakpoint "lsp/dape" "" t)
+  (autoload 'dape-step-out "lsp/dape" "" t)
+  (autoload 'dape-step-in "lsp/dape" "" t)
+  (autoload 'dape-quit "lsp/dape" "" t)
+  (global-set-key (kbd "<f9>") 'dape-toggle-breakpoint)
+  (global-set-key (kbd "<f10>") 'dape-step-out)
+  (global-set-key (kbd "<f11>") 'dape-step-in)
+  (global-set-key (kbd "S-<f5>") 'dape-quit)
+  (global-set-key (kbd "<f12>") 'dape-watch-dwim)
+  (defun dape-auto ()
+    (interactive)
+    (when (autoloadp (symbol-function 'dape))
+      (load "lsp/dape"))
+    (if (dape--live-process t)
+        (call-interactively 'dape-continue)
+      (call-interactively 'dape)))
+  :config
+  (winner-mode 1) ;; C-left恢复窗口
+  ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
+
+  (setq
+   dape-cppdbg-command
+   (expand-file-name
+    "~/.emacs.d/.extension/vscode/cpptools/extension/debugAdapters/bin/OpenDebugAD7.exe"))
+  (add-to-list
+   'dape-configs
+   `(cppdbg
+     modes
+     (c-mode c-ts-mode c++-mode c++-ts-mode)
+     command-cwd
+     ,(file-name-directory dape-cppdbg-command)
+     command
+     dape-cppdbg-command
+     :type "cppdbg"
+     :request "launch"
+     :cwd dape-cwd-fn
+     :program dape-find-file
+     :MIMode
+     ,(cond
+       ((executable-find "gdb")
+        "gdb")
+       ((executable-find "lldb")
+        "lldb"))))
+
+  ;; python
+  (add-to-list
+   'dape-configs
+   `(debugpy
+     modes
+     (python-ts-mode python-mode)
+     command
+     "python"
+     command-args
+     ("-m" "debugpy.adapter")
+     :type "executable"
+     :request "launch"
+     :cwd dape-cwd-fn
+     :program dape-find-file-buffer-default)))
+
 (defvar f5-history '()) ;; session只记录list的值
 (defun my-shell-switch ()
   "最近buffer和最近shell切换"
@@ -4945,7 +5007,9 @@ _q_uit
   (unless f5-history
     (setq f5-history (list (consult--read (list "debug" "shell")))))
   (if (equal "debug" (nth 0 f5-history))
-      (call-interactively 'gud-auto)
+      (if (functionp 'dape)
+          (call-interactively 'dape-auto)
+        (call-interactively 'gud-auto))
     (call-interactively 'my-shell-switch)))
 (global-set-key (kbd "<f5>") 'my-f5)
 
