@@ -4807,7 +4807,7 @@ _q_uit
   :init
   (setq gud-chdir-before-run nil) ;; 避免gud自动设置运行目录为exe所在目录
   (defvar f5-read-command t)
-  (defun my-f5 ()
+  (defun gud-auto ()
     (interactive)
     (when current-prefix-arg ;; C-u F5重设参数
       (setq f5-read-command t))
@@ -4845,13 +4845,13 @@ _q_uit
               (buffer-name gud-comint-buffer))
          (call-interactively 'gud-jump)
        (call-interactively 'next-error))))
-  (global-set-key (kbd "<f5>") 'my-f5) ;; C-u F5改变命令行
+
   (global-set-key
    (kbd "C-<f5>")
    (lambda () ;; cdb添加-g参数直接运行，不能下断点
      (interactive)
      (let ((cdb-add-g t))
-       (call-interactively 'my-f5))))
+       (call-interactively 'gud-auto))))
   (global-set-key (kbd "<f9>") 'gud-break)
   (global-set-key (kbd "C-<f9>") 'gud-tbreak) ;; tempory breakpoint
   ;; (global-set-key (kbd "C-<f9>") 'gud-remove)
@@ -4913,6 +4913,41 @@ _q_uit
     (add-hook 'gud-cdb-mode-hook 'my-gud-hook))
   (add-hook 'pdb-mode-hook 'my-gud-hook)
   (add-hook 'gud-gdb-mode-hook 'my-gud-hook))
+
+(defvar f5-history '()) ;; session只记录list的值
+(defun my-shell-switch ()
+  "最近buffer和最近shell切换"
+  (interactive)
+  (let ((to-shell
+         (not
+          (string-match
+           "\*[e]?shell\*" (buffer-name (current-buffer)))))
+        (create-shell t)
+        (showed-buffer-list (ep-tabbar-buffer-list)))
+    ;; 当前为shell buffer，切换到最近其它buffer
+    (cl-dolist
+     (b (buffer-list))
+     (if (string-match "\*[e]?shell\*" (buffer-name b))
+         (when to-shell
+           (switch-to-buffer b)
+           (setq create-shell nil)
+           (cl-return))
+       (unless to-shell
+         (when (memq b showed-buffer-list)
+           (switch-to-buffer b)
+           (cl-return)))))
+    (when (and create-shell to-shell)
+      (call-interactively 'shell))))
+(defun my-f5 ()
+  (interactive)
+  (when current-prefix-arg
+    (setq f5-history nil))
+  (unless f5-history
+    (setq f5-history (list (consult--read (list "debug" "shell")))))
+  (if (equal "debug" (nth 0 f5-history))
+      (call-interactively 'gud-auto)
+    (call-interactively 'my-shell-switch)))
+(global-set-key (kbd "<f5>") 'my-f5)
 
 (use-package god-mode
   :diminish (god-local-mode)
