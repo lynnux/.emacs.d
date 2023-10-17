@@ -481,6 +481,7 @@ _q_uit
     ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
     ;; 但粘贴时也要一个一个粘贴
     (use-package dired-ranger
+      :commands (dired-ranger-paste dired-ranger-copy)
       :config
       (define-key dired-mode-map "z" 'dired-do-compress-to)
       (defun dired-ranger-clear ()
