@@ -4949,8 +4949,9 @@ _q_uit
   (autoload 'dape-step-in "lsp/dape" "" t)
   (autoload 'dape-quit "lsp/dape" "" t)
   (global-set-key (kbd "<f9>") 'dape-toggle-breakpoint)
-  (global-set-key (kbd "<f10>") 'dape-step-out)
+  (global-set-key (kbd "<f10>") 'dape-next)
   (global-set-key (kbd "<f11>") 'dape-step-in)
+  (global-set-key (kbd "S-<f11>") 'dape-step-out)
   (global-set-key (kbd "S-<f5>") 'dape-quit)
   (global-set-key (kbd "<f12>") 'dape-watch-dwim)
   (defun dape-auto ()
@@ -4961,6 +4962,12 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
+  ;; 目前能用lldb的办法
+  (defconst dape--content-length-re
+    "\\(?:.*: .*\r\n\\)*Content-Length: \
+*\\([[:digit:]]+\\)\n\\(?:.*: .*\r\n\\)*\n"
+    "Matches debug adapter protocol header.")
+
   (winner-mode 1) ;; C-left恢复窗口
   (setq
    lldb-cmd
@@ -4985,7 +4992,30 @@ _q_uit
      :cwd dape-cwd-fn
      :program dape-find-file))
 
+  ;; 会跑飞
+  (setq lldb-vscode-cmd "c:/LLVM/bin/lldb-vscode.exe")
+  (add-to-list
+   'dape-configs
+   '(lldb-vscode
+     modes
+     (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
+     ;; Replace vadimcn.vscode-lldb with the vsix directory you just extracted
+     command
+     lldb-vscode-cmd
+     host
+     "localhost"
+     port
+     5818
+     command-args
+     ("--port" "5818")
+     :type "lldb-vscode"
+     :stopAtEntry t
+     :request "launch"
+     :cwd dape-cwd-fn
+     :program dape-find-file))
+
   ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
+  ;; 测试在启动WindowsDebugLauncher那里卡住了
   (setq
    dape-cppdbg-command
    (expand-file-name
@@ -5003,7 +5033,8 @@ _q_uit
      :request "launch"
      :cwd dape-cwd-fn
      :program dape-find-file
-     :stopAtEntry "true"
+     :stopAtEntry t
+     :logging (:engineLogging t) ;; 开启调试
      :MIMode
      ,(cond
        ((executable-find "gdb")
@@ -5017,7 +5048,7 @@ _q_uit
        ((executable-find "lldb")
         (executable-find "lldb")))))
 
-  ;; python
+  ;; python，测试没问题
   (add-to-list
    'dape-configs
    `(debugpy
