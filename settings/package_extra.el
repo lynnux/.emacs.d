@@ -230,7 +230,7 @@ _q_uit
       (add-to-list
        'marginalia-command-categories '(dired-recent-open . file))))
 
-  ;; bug较多能用，好处是支持diredful、diff-hl显示、dired-quick-sort等
+  ;; bug较多能用，好处是支持diredful、diff-hl显示
   (use-package dired-sidebar
     :commands (dired-sidebar-toggle-sidebar)
     :init
@@ -364,7 +364,6 @@ _q_uit
    (lambda ()
      (interactive)
      (find-alternate-file ".."))) ;; 鼠标双击空白处返回上级目录，原来是选中好像也没什么用，直接替换了
-  (define-key dired-mode-map [backspace] 'dired-hist-go-back)
 
   ;; consult-find -> embark-export to dired-mode工作流无敌！这里改成跟wgrep一样的快捷键
   (define-key
@@ -421,15 +420,16 @@ _q_uit
 
     (use-package dired-hist
       :config
+      (define-key dired-mode-map [backspace] 'dired-hist-go-back)
       (define-key dired-mode-map (kbd "M-p") #'dired-hist-go-back)
       (define-key dired-mode-map (kbd "M-n") #'dired-hist-go-forward)
       (dired-hist-mode 1)
       (dired-hist--update) ;; 调用一次修复延迟加载导致的问题
       )
 
-    ;; dired-hacks功能很多
     (use-package dired-filter
-      :config
+      :commands (dired-filter-transpose)
+      :init
       (defhydra
        dired-filter-map-select
        ()
@@ -448,13 +448,13 @@ _q_uit
   _q_uit
   "
        ("TAB" dired-filter-transpose nil :color blue)
-       ("!" dired-filter-negate nil :color blue) ;; 配合rename是真牛B啊！
+       ("!" dired-filter-negate nil :color blue) ;; 饜磁rename岆淩籟B陛ㄐ
        ("*" dired-filter-decompose nil :color blue)
        ("." dired-filter-by-extension nil :color blue)
        ("/" dired-filter-pop-all nil :color blue)
-       ("A" dired-filter-add-saved-filters nil :color blue) ;; 显示不了？
+       ("A" dired-filter-add-saved-filters nil :color blue) ;; 珆尨祥賸ˋ
        ("D" dired-filter-delete-saved-filters nil :color blue)
-       ("L" dired-filter-load-saved-filters nil :color blue) ;; 不懂
+       ("L" dired-filter-load-saved-filters nil :color blue) ;; 祥雅
        ("S" dired-filter-save-filters nil :color blue)
        ("d" dired-filter-by-directory nil :color blue)
        ("e" dired-filter-by-predicate nil :color blue)
@@ -470,9 +470,13 @@ _q_uit
        ("x" dired-filter-by-executable nil :color blue)
        ("|" dired-filter-or nil :color blue)
        ("q" nil "nil" :color blue))
-
       (define-key dired-mode-map "f" 'dired-filter-map-select/body)
-      (define-key dired-mode-map "/" 'dired-filter-map-select/body))
+      (define-key dired-mode-map "/" 'dired-filter-map-select/body)
+      (define-advice dired-filter-map-select/body
+          (:around (orig-fn &rest args))
+        (when (autoloadp (symbol-function 'dired-filter-transpose))
+          (require 'dired-filter))
+        (apply orig-fn args)))
 
     ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
     ;; 但粘贴时也要一个一个粘贴
