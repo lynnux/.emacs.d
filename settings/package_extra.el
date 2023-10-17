@@ -305,8 +305,28 @@ _q_uit
     (define-key dired-mode-map (kbd "<C-enter>") 'dired-w32-browser) ;; 使用explorer打开
     )
 
-  ;; (setq dired-listing-switches "-alh --group-directories-first --time-style \"+%Y/%m/%d %H:%M\"") ;; 除了name外其它排序都是目录排最前
-  (setq dired-listing-switches "-alhX --group-directories-first") ;; 更好的文件大小，默认以后辍排序。(必须测试支持dired-sidebar)
+  (defvar dired-sort-by-history '("X")) ;; 列表session才会记录下来
+  (setq dired-listing-switches
+        (concat
+         "--group-directories-first -alh"
+         (nth 0 dired-sort-by-history))) ;; 更好的文件大小，默认以后辍排序。(必须测试支持dired-sidebar)
+  (defun dired-sort-auto ()
+    (interactive)
+    (cond
+     ((equal (nth 0 dired-sort-by-history) "S")
+      (setq dired-sort-by-history '("t")))
+     ((equal (nth 0 dired-sort-by-history) "t")
+      (setq dired-sort-by-history '("X")))
+     ((equal (nth 0 dired-sort-by-history) "X")
+      (setq dired-sort-by-history '("")))
+     ((equal (nth 0 dired-sort-by-history) "")
+      (setq dired-sort-by-history '("S"))))
+    (setq dired-listing-switches
+          (concat
+           "--group-directories-first -alh"
+           (nth 0 dired-sort-by-history)))
+    (dired-sort-other dired-listing-switches))
+  (define-key dired-mode-map "s" 'dired-sort-auto)
 
   ;; allow dired to delete or copy dir
   (setq dired-recursive-copies (quote always)) ; “always” means no asking
@@ -406,29 +426,6 @@ _q_uit
       (dired-hist-mode 1)
       (dired-hist--update) ;; 调用一次修复延迟加载导致的问题
       )
-
-    ;; dired-quick-sort，由于调用外部ls，在win10上比较慢。
-    (use-package dired-quick-sort
-      :config
-      (defun my-dired-sort ()
-        (interactive)
-        (if (eq major-mode 'dired-sidebar-mode)
-            (call-interactively 'dired-sort-toggle-or-edit)
-          (if (local-variable-p 'ls-lisp-use-insert-directory-program)
-              (call-interactively 'hydra-dired-quick-sort/body)
-            (set
-             (make-local-variable
-              'ls-lisp-use-insert-directory-program)
-             t)
-            (dired-sort-other (dired-quick-sort--format-switches)))))
-      (define-key dired-mode-map "s" 'my-dired-sort)
-      ;; 修复ls乱码
-      (defadvice dired-insert-directory
-          (around my-dired-insert-directory activate)
-        (let ((old coding-system-for-read))
-          (setq coding-system-for-read 'utf-8) ;; git里的ls是输出是utf-8
-          ad-do-it
-          (setq coding-system-for-read old))))
 
     ;; dired-hacks功能很多
     (use-package dired-filter
@@ -611,9 +608,9 @@ _q_uit
   (add-to-list 'session-globals-exclude 'consult-xref--history)
   (add-to-list 'session-globals-exclude 'kill-ring))
 
-;; 目前只给dired-quick-sort用，因为session不能保存非consp的变量
+;; 用session就够了
 (use-package savehist
-  :after (dired)
+  :disabled
   :init
   (setq savehist-file
         (expand-file-name ".savehist" user-emacs-directory))
@@ -623,9 +620,7 @@ _q_uit
   :config
   (defun my-init-savehist ()
     (savehist-mode +1)
-    (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)
-    (remove-hook 'dired-mode-hook #'my-init-savehist))
-  (add-to-list 'dired-mode-hook 'my-init-savehist))
+    (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)))
 
 
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
@@ -4733,8 +4728,34 @@ _q_uit
                              'face '(foreground-color . "cyan"))
                  "")))
         ret)))
+  (defvar my-topsy-dired-keymap
+    (let ((map (make-sparse-keymap)))
+      (define-key map [mode-line mouse-1] 'my-topsy-dired-click)
+      (define-key map [header-line down-mouse-1] 'ignore)
+      (define-key map [header-line mouse-1] 'my-topsy-dired-click)
+      map))
+  (defun my-topsy-dired-click (event)
+    (interactive "e")
+    (with-selected-window (posn-window (event-start event))
+      (dired-sort-auto)))
   (defun my-topsy-headline-for-dired ()
-    (propertize dired-directory 'face '(foreground-color . "cyan")))
+    (concat
+     (propertize dired-directory 'face '(foreground-color . "cyan"))
+     (propertize (cond
+                  ((equal (nth 0 dired-sort-by-history) "S")
+                   " Sort by size")
+                  ((equal (nth 0 dired-sort-by-history) "t")
+                   " Sort by time")
+                  ((equal (nth 0 dired-sort-by-history) "X")
+                   " Sort by extension")
+                  ((equal (nth 0 dired-sort-by-history) "")
+                   " Sort by name"))
+                 'face
+                 'show-paren-mismatch
+                 'mouse-face
+                 'isearch
+                 'local-map
+                 my-topsy-dired-keymap)))
   (setq topsy-mode-functions
         '((dired-mode . my-topsy-headline-for-dired)
           (nil . my-topsy-headline)))
@@ -4935,12 +4956,34 @@ _q_uit
       (call-interactively 'dape)))
   :config
   (winner-mode 1) ;; C-left恢复窗口
-  ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
+  (setq
+   lldb-cmd
+   (expand-file-name
+    "~/.emacs.d/.extension/codelldb-x86_64-windows/extension/adapter/codelldb.exe"))
+  (add-to-list
+   'dape-configs
+   '(codelldb
+     modes
+     (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
+     ;; Replace vadimcn.vscode-lldb with the vsix directory you just extracted
+     command
+     lldb-cmd
+     host
+     "localhost"
+     port
+     5818
+     command-args
+     ("--port" "5818")
+     :type "lldb"
+     :request "launch"
+     :cwd dape-cwd-fn
+     :program dape-find-file))
 
+  ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
   (setq
    dape-cppdbg-command
    (expand-file-name
-    "~/.emacs.d/.extension/vscode/cpptools/extension/debugAdapters/bin/OpenDebugAD7.exe"))
+    "~/.emacs.d/.extension/extension/debugAdapters/bin/OpenDebugAD7.exe"))
   (add-to-list
    'dape-configs
    `(cppdbg
@@ -4954,12 +4997,19 @@ _q_uit
      :request "launch"
      :cwd dape-cwd-fn
      :program dape-find-file
+     :stopAtEntry "true"
      :MIMode
      ,(cond
        ((executable-find "gdb")
         "gdb")
        ((executable-find "lldb")
-        "lldb"))))
+        "lldb"))
+     :miDebuggerPath
+     ,(cond
+       ((executable-find "gdb")
+        (executable-find "gdb"))
+       ((executable-find "lldb")
+        (executable-find "lldb")))))
 
   ;; python
   (add-to-list
