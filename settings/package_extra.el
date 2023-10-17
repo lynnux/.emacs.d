@@ -1117,9 +1117,7 @@ _c_: hide comment        _q_uit
      'multiple-cursors-mode-disabled-hook
      (lambda () (idle-highlight--time-callback-or-disable))))
   (global-idle-highlight-mode)
-  (custom-set-faces
-   '(idle-highlight ((t (:inherit isearch)))) ;; 参见https://gitee.com/advanceflow/elisp/blob/main/40-Emacs%E6%98%BE%E7%A4%BA.org#40128-%E5%9F%BA%E6%9C%AC%E9%9D%A2
-   )
+  (set-face-attribute 'idle-highlight nil :inverse-video t) ;; 这个是反色效果，不同的位置颜色可能不同
 
   ;; 让支持region选中高亮
   (defun should-highlight-regin ()
@@ -4969,6 +4967,8 @@ _q_uit
     "Matches debug adapter protocol header.")
 
   (winner-mode 1) ;; C-left恢复窗口
+
+  ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
   (setq
    lldb-cmd
    (expand-file-name
@@ -4978,7 +4978,6 @@ _q_uit
    '(codelldb
      modes
      (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
-     ;; Replace vadimcn.vscode-lldb with the vsix directory you just extracted
      command
      lldb-cmd
      host
@@ -4990,6 +4989,7 @@ _q_uit
      :type "lldb"
      :request "launch"
      :cwd dape-cwd-fn
+     :terminal "external" ;; 没有效果？
      :program dape-find-file))
 
   ;; 会跑飞
@@ -4999,7 +4999,6 @@ _q_uit
    '(lldb-vscode
      modes
      (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
-     ;; Replace vadimcn.vscode-lldb with the vsix directory you just extracted
      command
      lldb-vscode-cmd
      host
