@@ -2000,9 +2000,10 @@ _c_: hide comment        _q_uit
        completion-category-overrides
        '((multi-category (styles orderless basic +orderless-flex)) ;; 用于consult buffer，project buffer等
          (file (styles orderless basic +orderless-flex)) ;; 在`completion-styles'的基础上加上flex就够用了
-         (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
-         (variable (styles +orderless-with-initialism))
-         (symbol (styles +orderless-with-initialism)))
+         ;; (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
+         ;; (variable (styles +orderless-with-initialism))
+         ;; (symbol (styles +orderless-with-initialism))
+         )
        orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
        orderless-style-dispatchers
        (list
