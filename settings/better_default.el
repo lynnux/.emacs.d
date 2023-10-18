@@ -87,34 +87,34 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
            (unless (equal (nth 0 kill-ring) clip-str)
              (kill-new clip-str))))))
 
-;; 参考https://www.emacswiki.org/emacs/WholeLineOrRegion和whole-line-or-region.el改进(kill-new最新版本没有yank-handler参数了)
-(defadvice kill-ring-save (around slick-copy activate)
-  "When called interactively with no active region, copy a single line instead."
-  (if (or (use-region-p) (not (called-interactively-p 'any)))
-      ad-do-it
-    (let ((string
-           (buffer-substring
-            (line-beginning-position) (line-beginning-position 2))))
-      (when (> (length string) 0)
-        (put-text-property
-         0 (length string) 'yank-handler '(yank-line)
-         string))
-      (kill-new string nil))
-    (message "Copied line")))
+;; 参考https://www.emacswiki.org/emacs/WholeLineOrRegion 和whole-line-or-region.el改进(kill-new最新版本没有yank-handler参数了)
+;; (defadvice kill-ring-save (around slick-copy activate)
+;;   "When called interactively with no active region, copy a single line instead."
+;;   (if (or (use-region-p) (not (called-interactively-p 'any)))
+;;       ad-do-it
+;;     (let ((string
+;;            (buffer-substring
+;;             (line-beginning-position) (line-beginning-position 2))))
+;;       (when (> (length string) 0)
+;;         (put-text-property
+;;          0 (length string) 'yank-handler '(yank-line)
+;;          string))
+;;       (kill-new string nil))
+;;     (message "Copied line")))
 
-(defadvice kill-region (around slick-copy activate)
-  "When called interactively with no active region, kill a single line instead."
-  (if (or (use-region-p) (not (called-interactively-p 'any)))
-      ad-do-it
-    (let ((string
-           (filter-buffer-substring
-            (line-beginning-position) (line-beginning-position 2)
-            t)))
-      (when (> (length string) 0)
-        (put-text-property
-         0 (length string) 'yank-handler '(yank-line)
-         string))
-      (kill-new string nil))))
+;; (defadvice kill-region (around slick-copy activate)
+;;   "When called interactively with no active region, kill a single line instead."
+;;   (if (or (use-region-p) (not (called-interactively-p 'any)))
+;;       ad-do-it
+;;     (let ((string
+;;            (filter-buffer-substring
+;;             (line-beginning-position) (line-beginning-position 2)
+;;             t)))
+;;       (when (> (length string) 0)
+;;         (put-text-property
+;;          0 (length string) 'yank-handler '(yank-line)
+;;          string))
+;;       (kill-new string nil))))
 
 (defun yank-line (string)
   "Insert STRING above the current line."

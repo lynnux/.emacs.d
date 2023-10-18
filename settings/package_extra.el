@@ -1117,7 +1117,8 @@ _c_: hide comment        _q_uit
      'multiple-cursors-mode-disabled-hook
      (lambda () (idle-highlight--time-callback-or-disable))))
   (global-idle-highlight-mode)
-  (set-face-attribute 'idle-highlight nil :inverse-video t) ;; 这个是反色效果，不同的位置颜色可能不同
+  ;; (set-face-attribute 'idle-highlight nil :inverse-video t) ;; 这个是反色效果，不同的位置颜色可能不同
+  (custom-set-faces '(idle-highlight ((t (:inherit isearch)))))
 
   ;; 让支持region选中高亮
   (defun should-highlight-regin ()
@@ -2784,14 +2785,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          )
         (`(,beg . ,end) ;; begin end位置模式 
          (let ((string ad-return-value))
-           (if (eq (easy-kill-get thing) 'line-with-yank-handler)
-               (put-text-property
-                0 (length string) 'yank-handler '(yank-line)
-                string)
-             ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
-             (remove-text-properties 0 (length string) 'yank-handler
-                                     string))
-           (setq ad-return-value string))))))
+           (if (functionp 'whole-line-or-region-kill-ring-save)
+               (when (eq
+                      (easy-kill-get thing) 'line-with-yank-handler)
+                 (progn
+                   (call-interactively
+                    'whole-line-or-region-kill-ring-save)
+                   (setq ad-return-value (nth 0 kill-ring))))
+             (if (eq (easy-kill-get thing) 'line-with-yank-handler)
+                 (put-text-property
+                  0 (length string) 'yank-handler '(yank-line)
+                  string)
+               ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
+               (remove-text-properties 0 (length string) 'yank-handler
+                                       string))
+             (setq ad-return-value string)))))))
 
   (defun easy-kill-on-forward-word (n)
     (let ((beg (easy-kill-get start))
@@ -2921,6 +2929,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             (when (eq (lookup-key map "?") 'easy-kill-help)
               (ad-set-arg 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
               )))))))
+
+(use-package whole-line-or-region
+  :config
+  (define-key
+   whole-line-or-region-local-mode-map [remap kill-ring-save]
+   nil) ;; 这个仍然用`easy-kill'
+  (define-key
+   whole-line-or-region-local-mode-map
+   [remap copy-region-as-kill]
+   nil)
+  (define-key
+   whole-line-or-region-local-mode-map [remap delete-region] nil)
+  (define-key
+   whole-line-or-region-local-mode-map [remap comment-dwim] nil)
+  (define-key
+   whole-line-or-region-local-mode-map [remap comment-region] nil)
+  (define-key
+   whole-line-or-region-local-mode-map [remap uncomment-region] nil)
+  (whole-line-or-region-global-mode))
 
 ;; project内置查找会用到，支持ripgrep了！
 (use-package xref
@@ -4961,10 +4988,8 @@ _q_uit
       (call-interactively 'dape)))
   :config
   ;; 目前能用lldb的办法
-  (defconst dape--content-length-re
-    "\\(?:.*: .*\r\n\\)*Content-Length: \
-*\\([[:digit:]]+\\)\n\\(?:.*: .*\r\n\\)*\n"
-    "Matches debug adapter protocol header.")
+  (setq dape--content-length-re
+        "Content-Length: *\\([[:digit:]]+\\)\r?\n\r?\n")
 
   (winner-mode 1) ;; C-left恢复窗口
 
