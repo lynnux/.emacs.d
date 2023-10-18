@@ -1507,7 +1507,12 @@ _c_: hide comment        _q_uit
   (cl-dolist
    (jc jump-commands)
    (advice-add jc :before #'backward-forward-push-mark-wrapper))
-  (advice-add 'push-mark :after #'backward-forward-after-push-mark))
+  (advice-add 'push-mark :after #'backward-forward-after-push-mark)
+  (define-advice backward-forward-after-push-mark
+      (:around (orig-fn &rest args))
+    "poe管理的buffer不用记录，如果是help-mode，那么M-n/M-p就不正常了"
+    (unless (bound-and-true-p poe-popup-mode)
+      (apply orig-fn args))))
 ;; 其它jump包
 ;; back-button global跟local是区分开的，这就很麻烦了
 ;; history可能会
