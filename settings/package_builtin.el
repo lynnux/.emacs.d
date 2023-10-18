@@ -206,7 +206,15 @@
 
 ;; 避免wcy提示失败
 (add-hook
- 'after-init-hook (lambda () (add-hook 'find-file-hook 'view-mode)))
+ 'after-init-hook
+ (lambda ()
+   (add-hook
+    'find-file-hook
+    (lambda ()
+      ;; 排除git commit的buffer
+      (unless (string-match
+               "\\(?:COMMIT_EDITMSG\\)$" buffer-file-name)
+        (view-mode 1))))))
 (keyboard-translate ?\C-i ?\H-i) ;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
 ;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
