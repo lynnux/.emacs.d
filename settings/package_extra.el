@@ -4409,7 +4409,10 @@ _q_uit
 
 (use-package org
   :defer t
-  :config (define-key org-mode-map (kbd "M-h") nil))
+  :config
+  (define-key org-mode-map (kbd "M-h") nil)
+  (define-key org-mode-map (kbd "C-c C-d") nil)
+  (define-key org-mode-map (kbd "C-'") nil))
 
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
@@ -5062,19 +5065,18 @@ _q_uit
      :program dape-find-file
      :stopAtEntry t
      :logging (:engineLogging t) ;; 开启调试
-     :MIMode "gdb"
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    "gdb")
-     ;;   ((executable-find "lldb")
-     ;;    "lldb"))
-     :miDebuggerPath " H:\\msys64\\usr\\bin\\gdb.exe"
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    (executable-find "gdb"))
-     ;;   ((executable-find "lldb")
-     ;;    (executable-find "lldb"))))
-     ))
+     :MIMode
+     ,(cond
+       ((executable-find "gdb")
+        "gdb")
+       ((executable-find "lldb")
+        "lldb"))
+     :miDebuggerPath ;" H:\\msys64\\usr\\bin\\gdb.exe"
+     ,(cond
+       ((executable-find "gdb")
+        (executable-find "gdb"))
+       ((executable-find "lldb")
+        (executable-find "lldb")))))
 
   (defun decode-hex-string (hex-string)
     (let ((res nil))
@@ -5118,16 +5120,20 @@ _q_uit
                      nil nil t)))))
   (defun dape-request-response (process seq command body &optional cb)
     (let ((object (and body (list :body body))))
-      (dape-send-object process
-                        seq
-                        (thread-first object
-                                      (plist-put :type "response")
-                                      (plist-put :success t)
-                                      (plist-put :request_seq seq)
-                                      (plist-put :command command)))))
-  (cl-defmethod dape-handle-request (process (command (eql handshake)) arguments)
+      (dape-send-object
+       process seq
+       (thread-first
+        object
+        (plist-put :type "response")
+        (plist-put :success t)
+        (plist-put :request_seq seq)
+        (plist-put :command command)))))
+  (cl-defmethod dape-handle-request
+      (process (command (eql handshake)) arguments)
     (message "hand: %S" (plist-get arguments :value))
-    (dape-request-response process 2 "handshake" (list :signature (my-calc (plist-get arguments :value)))))
+    (dape-request-response
+     process 2 "handshake"
+     (list :signature (my-calc (plist-get arguments :value)))))
 
   (setq
    dape-cppvsdbg-command
