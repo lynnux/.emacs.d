@@ -4993,9 +4993,6 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
-  ;; 目前能用lldb的办法
-  (setq dape--content-length-re
-        "Content-Length: *\\([[:digit:]]+\\)\r?\n\r?\n")
 
   (winner-mode 1) ;; C-left恢复窗口
 
@@ -5065,18 +5062,107 @@ _q_uit
      :program dape-find-file
      :stopAtEntry t
      :logging (:engineLogging t) ;; 开启调试
-     :MIMode
-     ,(cond
-       ((executable-find "gdb")
-        "gdb")
-       ((executable-find "lldb")
-        "lldb"))
-     :miDebuggerPath
-     ,(cond
-       ((executable-find "gdb")
-        (executable-find "gdb"))
-       ((executable-find "lldb")
-        (executable-find "lldb")))))
+     :MIMode "gdb"
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    "gdb")
+     ;;   ((executable-find "lldb")
+     ;;    "lldb"))
+     :miDebuggerPath " H:\\msys64\\usr\\bin\\gdb.exe"
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    (executable-find "gdb"))
+     ;;   ((executable-find "lldb")
+     ;;    (executable-find "lldb"))))
+     ))
+
+  (defun decode-hex-string (hex-string)
+    (let ((res nil))
+      (dotimes (i
+                (/ (length hex-string) 2)
+                (apply #'concat (reverse res)))
+        (let ((hex-byte (substring hex-string (* 2 i) (* 2 (+ i 1)))))
+          (push (format "%c" (string-to-number hex-byte 16)) res)))))
+  (defun my-calc (str)
+    (let
+        ((l
+          (list
+           "596F75206D6179206F6E6C79207573652074686520432F432B2B20457874656E73696F6E20666F722056697375616C2053747564696F20436F646520616E6420432320457874656E73696F6E20666F722056697375616C2053747564696F20436F6465"
+           "776974682056697375616C2053747564696F20436F64652C2056697375616C2053747564696F206F722058616D6172696E2053747564696F20736F66747761726520746F2068656C7020796F7520646576656C6F7020616E64207465737420796F7572206170706C69636174696F6E732E"
+           "54686520736F667477617265206973206C6963656E7365642C206E6F7420736F6C642E"
+           "546869732061677265656D656E74206F6E6C7920676976657320796F7520736F6D652072696768747320746F207573652074686520736F6674776172652E"
+           "4D6963726F736F667420726573657276657320616C6C206F7468657220726967687473"
+           "596F75206D6179206E6F7420776F726B2061726F756E6420616E7920746563686E6963616C206C696D69746174696F6E7320696E2074686520736F6674776172653B"
+           "7265766572736520656E67696E6565722C206465636F6D70696C65206F7220646973617373656D626C652074686520736F667477617265"
+           "72656D6F76652C206D696E696D697A652C20626C6F636B206F72206D6F6469667920616E79206E6F7469636573206F66204D6963726F736F6674206F7220"
+           "69747320737570706C6965727320696E2074686520736F6674776172652073686172652C207075626C6973682C2072656E742C206F72206C6561736520"
+           "74686520736F6674776172652C206F722070726F766964652074686520736F6674776172652061732061207374616E642D616C6F6E6520686F7374656420617320736F6C7574696F6E20666F72206F746865727320746F207573652E"))
+         (s
+          (list
+           "562B792C2848607626415C40782B3B3447754B3C247A5D2E2E3F382377565A6E272A2B7D6A31455C246B30242F6C766B70623834364B3A6B662243495C596C2A6434202F202E522C7B20"
+           "42252642483C2F27657B55603E463E6B73336C6B6753583E4554717B5673752D693C6B56637D2950284860774B6C5476755045443E424C41582943305831734E5C5B75342C48"
+           "626B40774A722637682B4E5C604A666B3444246E6263644B656E5E566B4F483C274B4E3A2575564F274733657623292E24674D24722F3D3D7174595D504A5B"
+           "2E6F77436F5C315C423A393634273432297B63303C712C3E5C5C3122202D20214031777D5874"
+           "56272B7C69353F7D5D57504C537A65315745363B277D54673B3833763856327A7D6F7626782A"
+           "24586A6D23583A76634B64596E30566E6B724C51444F7779223B202E3352425357255249644C4F5A3728474B52202F20313E287763696D653A35714473203F205B6C356235444B52203D2039"
+           "3155484A5E3751742E535074633C513E363E23246A452B3E3E6522502A4D62207C20624C202F206048352768376E503A6F77202B207D7A61714442322C225C2838365861"
+           "3B4A4E437B3662422C3E5232474D793E7421264A5E5253797D3232407950387C513B70683A5C6D6A563D784C23792729792B4E7C63"
+           "2F764A7B234F6324786764754F245C3655523E435F35733F4D32585B65586D613A2955797278624B"
+           "3F4D59222C345F62394C702279714775333768342E7D5D77232876624E30634B5E3F525D22763C584667245C4E5A605B4B36"
+           "635F234C65662456505A4B52295225662359455364544F64503B7124626B2B38603A2C752948225278665F5C202F204E444F67")))
+      (concat
+       "010"
+       (base64-encode-string
+        (secure-hash 'sha256
+                     (concat str (nth 0 l) (nth 1 l) (nth 0 s))
+                     nil nil t)))))
+  (defun dape-request-response (process seq command body &optional cb)
+    (let ((object (and body (list :body body))))
+      (dape-send-object process
+                        seq
+                        (thread-first object
+                                      (plist-put :type "response")
+                                      (plist-put :success t)
+                                      (plist-put :request_seq seq)
+                                      (plist-put :command command)))))
+  (cl-defmethod dape-handle-request (process (command (eql handshake)) arguments)
+    (message "hand: %S" (plist-get arguments :value))
+    (dape-request-response process 2 "handshake" (list :signature (my-calc (plist-get arguments :value)))))
+
+  (setq
+   dape-cppvsdbg-command
+   (expand-file-name
+    "~/.emacs.d/.extension/extension/debugAdapters/vsdbg/bin/vsdbg.exe"))
+  (add-to-list
+   'dape-configs
+   `(cppvsdbg
+     modes
+     (c-mode c-ts-mode c++-mode c++-ts-mode)
+     command-cwd
+     ,(file-name-directory dape-cppvsdbg-command)
+     command
+     dape-cppvsdbg-command
+     command-args
+     ("--interpreter=vscode")
+     :type "cppvsdbg"
+     :request "launch"
+     :cwd dape-cwd-fn
+     :program dape-find-file
+     :stopAtEntry t
+     :logging (:engineLogging t) ;; 开启调试
+     ;; :MIMode "gdb"
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    "gdb")
+     ;;   ((executable-find "lldb")
+     ;;    "lldb"))
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    (executable-find "gdb"))
+     ;;   ((executable-find "lldb")
+     ;;    (executable-find "lldb"))))
+     ))
+
 
   ;; python，测试没问题
   (add-to-list
