@@ -4974,6 +4974,10 @@ _q_uit
   (add-hook 'pdb-mode-hook 'my-gud-hook)
   (add-hook 'gud-gdb-mode-hook 'my-gud-hook))
 
+;; 关于dap，lldb和gdb本身都不支持这个协议(gdb 14版本将会直接支持)，需要中间层处理dap协议
+;; lldb需要codelldb，或者自带lldb-vscode，它这个支持msvc编译的pdb
+;; gdb则需要cpptools，或者等14版本发布，不过不能调试msvc编译的程序对我们用处不大
+;; 而msvc调试器的dap中转有vsdbg(cpptools里包含)支持，但在dap协议里加了handshake防止其它产品使用
 (use-package dape
   :defer t
   :init
@@ -5000,6 +5004,7 @@ _q_uit
   (winner-mode 1) ;; C-left恢复窗口
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
+  ;; 测试命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
   (setq
    lldb-cmd
    (expand-file-name
@@ -5065,18 +5070,26 @@ _q_uit
      :program dape-find-file
      :stopAtEntry t
      :logging (:engineLogging t) ;; 开启调试
-     :MIMode
-     ,(cond
-       ((executable-find "gdb")
-        "gdb")
-       ((executable-find "lldb")
-        "lldb"))
-     :miDebuggerPath ;" H:\\msys64\\usr\\bin\\gdb.exe"
-     ,(cond
-       ((executable-find "gdb")
-        (executable-find "gdb"))
-       ((executable-find "lldb")
-        (executable-find "lldb")))))
+     :externalConsole t ;; 避免以WindowsDebugLauncher启动，卡住了都不知道哪里错了
+     :MIMode "gdb"
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    "gdb")
+     ;;   ((executable-find "lldb")
+     ;;    "lldb"))
+     ;; :miDebuggerPath ;" H:\\msys64\\usr\\bin\\gdb.exe"
+     ;; ,(cond
+     ;;   ((executable-find "gdb")
+     ;;    (executable-find "gdb"))
+     ;;   ((executable-find "lldb")
+     ;;    (executable-find "lldb")))
+     ))
+
+  (when t
+    (setq dape--timeout 20)
+    ;; x64dbg在WriteFile下断
+    )
+
 
   (defun decode-hex-string (hex-string)
     (let ((res nil))
@@ -5116,7 +5129,11 @@ _q_uit
        "010"
        (base64-encode-string
         (secure-hash 'sha256
-                     (concat str (nth 0 l) (nth 1 l) (nth 0 s))
+                     (concat
+                      str
+                      (decode-hex-string (nth 0 l))
+                      (decode-hex-string (nth 1 l))
+                      (decode-hex-string (nth 0 s)))
                      nil nil t)))))
   (defun dape-request-response (process seq command body &optional cb)
     (let ((object (and body (list :body body))))
@@ -5219,7 +5236,8 @@ _q_uit
       (if (functionp 'dape)
           (call-interactively 'dape-auto)
         (call-interactively 'gud-auto))
-    (call-interactively 'my-shell-switch)))
+    (let ((current-prefix-arg nil)) ;; 屏蔽C-u的副作用
+      (call-interactively 'my-shell-switch))))
 (global-set-key (kbd "<f5>") 'my-f5)
 
 (use-package god-mode

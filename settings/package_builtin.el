@@ -396,4 +396,5 @@ Run occur in all buffers whose names match this type for REXP."
 
 (with-eval-after-load 'nxml-mode
   ;; C-c C-f给everything使用
-  (define-key nxml-mode-map (kbd "C-c C-f") nil))
+  (define-key nxml-mode-map (kbd "C-c C-f") nil)
+  (define-key nxml-mode-map (kbd "C-c C-d") nil))
