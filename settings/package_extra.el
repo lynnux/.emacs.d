@@ -170,6 +170,10 @@
            (setq last-repeatable-command ,command)
            (repeat nil)))
        ',name)))
+
+(use-package dash
+  :commands (-distinct))
+
 (use-package s
   :commands (s-split s-word-wrap))
 
@@ -273,11 +277,12 @@ _q_uit
     (defun dired-sidebar-follow-to-file ()
       "直接用dired-sidebar-follow-file，hl-line的行有问题，这里修复下"
       (interactive)
-      (dired-sidebar-follow-file)
-      (when (dired-sidebar-showing-sidebar-p)
-        (with-current-buffer (dired-sidebar-buffer)
-          (hl-line-highlight) ;; dired-sidebar-theme需要设置为none或者icons，避免调用`dired-sidebar-tui-update-with-delay'来revert buffer失去hl-line效果
-          )))
+      (ignore-errors
+        (dired-sidebar-follow-file)
+        (when (dired-sidebar-showing-sidebar-p)
+          (with-current-buffer (dired-sidebar-buffer)
+            (hl-line-highlight) ;; dired-sidebar-theme需要设置为none或者icons，避免调用`dired-sidebar-tui-update-with-delay'来revert buffer失去hl-line效果
+            ))))
     (define-key
      dired-sidebar-mode-map (kbd "C-l") 'dired-sidebar-up-directory)
     (define-key
@@ -4314,7 +4319,8 @@ _q_uit
   ;; 用timer避免各种hook
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
-    (diff-hl-update))
+    (ignore-errors
+      (diff-hl-update)))
   (defun diff-hl-update-manual ()
     (interactive)
     (diff-hl-update))
