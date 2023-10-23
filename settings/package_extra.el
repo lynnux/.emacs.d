@@ -34,7 +34,7 @@
    "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
-  (ensure-latest "~/.emacs.d/packages/projectile/rg.el-master.zip")
+  (ensure-latest "~/.emacs.d/packages/tools/rg.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/use-package/use-package-master.zip")
@@ -3377,8 +3377,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package rg
   :commands (rg-define-search)
   :init
-  (add-to-list
-   'load-path "~/.emacs.d/packages/projectile/rg.el-master")
+  (add-to-list 'load-path "~/.emacs.d/packages/tools/rg.el-master")
   (defun my/rg-dwim ()
     (interactive)
     ;; type为all，不然h就会当成c从而忽略了cpp文件。要指定类型可以在rg buffer按f修改
@@ -3394,6 +3393,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq rg-ignore-case 'force) ;; 不知道为什么regex搜索的时候会区分大小，只能强制了
   (global-set-key (kbd "C-S-f") 'my/rg-dwim)
   :config
+  (define-key rg-mode-map "?" 'rg-menu)
   (define-key rg-mode-map "w" 'scroll-down-command)
   (define-key rg-mode-map (kbd "C-o") 'avy-goto-word-1)
   (use-package rg-result

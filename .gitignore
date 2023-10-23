@@ -108,3 +108,4 @@ packages/minibuffer/compat.el-master/*
 /themes/emacs-dashboard-master/
 /packages/cycle-at-point/
 /elisp-autofmt-cache/
+/packages/tools/rg.el-master/
