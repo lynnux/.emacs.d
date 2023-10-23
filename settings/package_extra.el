@@ -3107,16 +3107,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                t)))
 (cl-defmethod xref-backend-definitions
     ((_backend (eql 'xref-to-consult-rg)) symbol)
-  (let (xrefs
-        column
-        line)
-    (run-at-time
-     0 nil
-     (lambda ()
-       (let
-           ((this-command 'my-project-search)) ;; 以consult-buffer形式查看
-         (my-project-search))))
-    xrefs))
+  (run-at-time
+   0 nil
+   (lambda ()
+     (let
+         ((this-command 'my-project-search)) ;; 以consult-buffer形式查看
+       (my-project-search))))
+  nil)
 (defun xref-to-consult-rg-backend ()
   'xref-to-consult-rg)
 (add-hook 'xref-backend-functions 'xref-to-consult-rg-backend 101) ;; 排到最后，实际上这直接破坏了xref流程
@@ -4926,18 +4923,18 @@ _q_uit
   (global-set-key (kbd "<f12>") 'gud-print) ;; 打印cursor所在变量，比输入dv(cdb)要快点。支持region
   (global-set-key
    (kbd "S-<f5>")
-   '(lambda ()
-      (interactive)
-      (when (and (bound-and-true-p gud-comint-buffer)
-                 (buffer-name gud-comint-buffer))
-        (with-current-buffer gud-comint-buffer
-          (let ((quit 'comint-quit-subjob)) ; C-c C-\
-            (when (eq gud-minor-mode 'cdb)
-              ;; 测试先发送q再C-c C-c可以结束在运行的程序
-              (call-interactively 'gud-quit)
-              (setq quit 'comint-interrupt-subjob) ; C-c C-c
-              )
-            (call-interactively quit))))))
+   #'(lambda ()
+       (interactive)
+       (when (and (bound-and-true-p gud-comint-buffer)
+                  (buffer-name gud-comint-buffer))
+         (with-current-buffer gud-comint-buffer
+           (let ((quit 'comint-quit-subjob)) ; C-c C-\
+             (when (eq gud-minor-mode 'cdb)
+               ;; 测试先发送q再C-c C-c可以结束在运行的程序
+               (call-interactively 'gud-quit)
+               (setq quit 'comint-interrupt-subjob) ; C-c C-c
+               )
+             (call-interactively quit))))))
   ;; 不需要RET确认参数再运行，很多时间都是同一个项目。放gud或者gud-cdb的:config里没用，这里等等待session初始化后再设置
   (add-to-list
    'emacs-startup-hook

@@ -318,12 +318,12 @@ Run occur in all buffers whose names match this type for REXP."
 ;; 老实说gdb一点都不好用，尽量用打印输出来调试
 (add-hook
  'gdb-mode-hook
- '(lambda ()
-    (gdb-many-windows)
-    (define-key c-mode-base-map [(f5)] 'gud-go)
-    (define-key c-mode-base-map [(f10)] 'gud-step)
-    (define-key c-mode-base-map [(f11)] 'gud-next)
-    (define-key c-mode-base-map [(f9)] 'gud-break)))
+ #'(lambda ()
+     (gdb-many-windows)
+     (define-key c-mode-base-map [(f5)] 'gud-go)
+     (define-key c-mode-base-map [(f10)] 'gud-step)
+     (define-key c-mode-base-map [(f11)] 'gud-next)
+     (define-key c-mode-base-map [(f9)] 'gud-break)))
 
 ;; autosave 这个会卡
 (setq
