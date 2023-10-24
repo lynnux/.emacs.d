@@ -6049,14 +6049,15 @@ _q_uit
         ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
         (random-load-doom-theme
          (list
+          ;; 'doom-horizon
+          'modus-vivendi
+          ;; 'modus-vivendi-tritanopia
           ;; 'doom-snazzy
           ;; 'doom-city-lights
           ;; 'doom-material
-          'doom-horizon
           ;; 'doom-tomorrow-night
           ;; 'doom-one
           ;; 'spacemacs-dark
-          ;; 'modus-vivendi
           ))))
   (progn
     (set-face-attribute 'region nil
