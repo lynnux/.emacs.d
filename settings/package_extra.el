@@ -5005,6 +5005,7 @@ _q_uit
   :config
 
   (winner-mode 1) ;; C-left恢复窗口
+  (global-eldoc-mode 1) ;; 点击变量时显示值
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
   ;; 测试命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
