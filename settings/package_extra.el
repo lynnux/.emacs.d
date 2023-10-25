@@ -1194,7 +1194,6 @@ _c_: hide comment        _q_uit
 
 (when (display-graphic-p)
   (use-package hl-line
-    :disabled
     :defer 0.6
     :config
     (global-hl-line-mode t)
