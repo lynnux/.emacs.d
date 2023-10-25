@@ -6034,6 +6034,10 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
+   ((eq th 'modus-vivendi)
+    (custom-set-faces
+     '(consult-file ((t (:foreground nil))))
+     '(consult-bookmark ((t (:foreground nil))))))
    ((string-prefix-p "doom" (symbol-name th))
     ;; doom没有处理hi-lock的颜色
     (custom-set-faces
