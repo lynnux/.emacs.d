@@ -5939,131 +5939,123 @@ _q_uit
 ;; tabbar被修改的*文件有明显显示(spacemacs)
 ;; 当前buffer modeline背景色(doom-dark+)
 ;; helm occur关键字高亮明显，不明显就换了吧那个暂时还不知道如何定制
-(if (display-graphic-p)
-    (progn
 
-      ;;(add-to-list 'load-path "~/.emacs.d/themes")
 
-      ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
-      (autoload
-        'doom-themes-visual-bell-config
-        "extensions/doom-themes-ext-visual-bell"
-        ""
-        nil
-        nil)
-      (doom-themes-visual-bell-config)
+;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
+(autoload
+  'doom-themes-visual-bell-config
+  "~/.emacs.d/themes/themes-master/extensions/doom-themes-ext-visual-bell"
+  ""
+  nil
+  nil)
+(doom-themes-visual-bell-config)
 
-      ;; 这是需要最后加载
-      ;; doom搜集themes系列
-      ;; https://github.com/doomemacs/themes
-      (use-package doom-themes
-        :load-path "~/.emacs.d/themes/themes-master"
-        :config
-        (setq
-         doom-themes-enable-bold nil
-         doom-themes-enable-italic nil)
-        (autoload
-          'doom-themes-org-config "extensions/doom-themes-ext-org"
-          "" nil nil)
+;; 这是需要最后加载
+;; doom搜集themes系列
+;; https://github.com/doomemacs/themes
+(use-package doom-themes
+  :disabled
+  :if (display-graphic-p)
+  :load-path "~/.emacs.d/themes/themes-master"
+  :config
+  (setq
+   doom-themes-enable-bold nil
+   doom-themes-enable-italic nil)
+  (autoload 'doom-themes-org-config "extensions/doom-themes-ext-org"
+    ""
+    nil
+    nil)
 
-        (defun get-theme (x)
-          (intern
-           (replace-regexp-in-string
-            ".*/" ""
-            (string-replace "-theme.el" "" x))))
-        ;; 随机加载theme，不对的话建议重启emacs，不然上次的theme可能会干扰本次theme
-        (defun random-load-doom-theme (tl)
-          (interactive)
-          (let* ((th (nth (mod (random t) (length tl)) tl)))
-            (message "load-doom-theme: %s" (symbol-name th))
+  (defun get-theme (x)
+    (intern
+     (replace-regexp-in-string
+      ".*/" ""
+      (string-replace "-theme.el" "" x))))
+  ;; 随机加载theme，不对的话建议重启emacs，不然上次的theme可能会干扰本次theme
+  (defun random-load-doom-theme (tl)
+    (interactive)
+    (let* ((th (nth (mod (random t) (length tl)) tl)))
+      (message "load-doom-theme: %s" (symbol-name th))
 
-            ;; before load
-            (cond
-             ((eq th 'spacemacs-dark)
-              ;; 背景色合适，但颜色绿色太多了，部分颜色要改
-              ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
-              (custom-set-variables
-               '(spacemacs-theme-custom-colors
-                 '((base . "#bbc2cf") ;文本 tangotango
-                   (comment . "#888a85") ; 注释 tangotango
-                   (border . "#292b2e") ; border太丑了
-                   ))))
-             ((eq th 'doom-one)
-              ;; (setq doom-one-brighter-comments t)
-              ))
+      ;; before load
+      (cond
+       ((eq th 'spacemacs-dark)
+        ;; 背景色合适，但颜色绿色太多了，部分颜色要改
+        ;; https://github.com/nashamri/spacemacs-theme#override-themes-colors
+        (custom-set-variables
+         '(spacemacs-theme-custom-colors
+           '((base . "#bbc2cf") ;文本 tangotango
+             (comment . "#888a85") ; 注释 tangotango
+             (border . "#292b2e") ; border太丑了
+             ))))
+       ((eq th 'doom-one)
+        ;; (setq doom-one-brighter-comments t)
+        ))
 
-            (load-theme th t)
+      (load-theme th t)
 
-            ;; after load
-            ;; (doom-themes-org-config)
-            (cond
-             ((eq th 'spacemacs-dark)
-              (set-face-attribute 'mode-line-inactive nil
-                                  :foreground "#888a85"))
-             ((eq th 'doom-horizon)
-              (custom-set-faces
-               '(tab-line-tab-current ((t (:foreground "#fdf0ed"))))
-               '(tab-line-tab-inactive ((t (:foreground "#c7c9cb"))))
-               '(tab-line-tab-special ((t (:weight unspecified))))))
-             ((not (string-prefix-p "doom" (symbol-name th)))
-              (set-face-attribute 'doom-themes-visual-bell nil
-                                  :background "#ff6c6b"))
-             (t))
-            ;; paren加下划线，参考的spacemacs
-            (set-face-attribute 'show-paren-match nil
-                                :underline t
-                                :weight 'bold)
-            (when t
-              (custom-set-faces
-               '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
-               '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
-               '(corfu-current ((t (:foreground "red"))))
-               '(consult-preview-cursor ((t (:inherit highlight)))) ;; TODO: 整个单词高亮，虽然很多情况下不一定是一个词
-               '(hi-yellow
-                 ((t (:foreground "black" :background "yellow"))))
-               '(hi-pink
-                 ((t (:foreground "black" :background "HotPink"))))
-               '(hi-green
-                 ((t (:foreground "black" :background "green"))))
-               '(hi-blue
-                 ((t (:foreground "black" :background "DodgerBlue"))))
-               '(hi-salmon
-                 ((t
-                   (:foreground "black" :background "light salmon"))))
-               '(hi-aquamarine
-                 ((t (:foreground "black" :background "aquamarine"))))
-               '(hi-black-b
-                 ((t (:foreground "white" :background "black"))))
-               '(hi-blue-b
-                 ((t (:foreground "DodgerBlue" :background "black"))))
-               '(hi-red-b
-                 ((t (:foreground "red" :background "black"))))
-               '(hi-green-b
-                 ((t (:foreground "green" :background "black"))))
-               '(hi-black-hb
-                 ((t (:foreground "orange" :background "black"))))
-               '(outline-2 ((t (:foreground "#f9cec3")))) ;; org-org-level-2和org-headline-done互换
-               '(org-headline-done ((t (:foreground "#6c6f93"))))
-               '(header-line ((t (:weight bold)))))
-              ;; region有点看不清，单独设置
-              (set-face-attribute 'region nil
-                                  :background "#555555"))))
-        ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
-        (random-load-doom-theme
-         (list
-          ;; 'doom-horizon
-          'modus-vivendi
-          ;; 'modus-vivendi-tritanopia
-          ;; 'doom-snazzy
-          ;; 'doom-city-lights
-          ;; 'doom-material
-          ;; 'doom-tomorrow-night
-          ;; 'doom-one
-          ;; 'spacemacs-dark
-          ))))
-  (progn
-    (set-face-attribute 'region nil
-                        :background "#4C7073"
-                        :foreground "Black")))
+      ;; after load
+      ;; (doom-themes-org-config)
+      ))
+  ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
+  (random-load-doom-theme
+   (list
+    ;; 'doom-horizon
+    'modus-vivendi
+    ;; 'modus-vivendi-tritanopia
+    ;; 'doom-snazzy
+    ;; 'doom-city-lights
+    ;; 'doom-material
+    ;; 'doom-tomorrow-night
+    ;; 'doom-one
+    ;; 'spacemacs-dark
+    )))
+(load-theme 'modus-vivendi t)
 
-;; (set-face-attribute 'region nil :background "#666" :foreground "#ffffff")
+;; 各种theme修补
+(let ((th (car custom-enabled-themes)))
+  (cond
+   ((eq th 'spacemacs-dark)
+    (set-face-attribute 'mode-line-inactive nil
+                        :foreground "#888a85"))
+   ((eq th 'doom-horizon)
+    (custom-set-faces
+     '(tab-line-tab-current ((t (:foreground "#fdf0ed"))))
+     '(tab-line-tab-inactive ((t (:foreground "#c7c9cb"))))
+     '(tab-line-tab-special ((t (:weight unspecified))))
+     '(line-number ((t (:foreground "#6F6F6F")))) ;; 行号
+     '(font-lock-comment-face ((t (:foreground "#6F6F6F")))) ;; 注释 
+     '(corfu-current ((t (:foreground "red"))))
+     '(consult-preview-cursor ((t (:inherit highlight)))) ;; TODO: 整个单词高亮，虽然很多情况下不一定是一个词
+     '(outline-2 ((t (:foreground "#f9cec3")))) ;; org-org-level-2和org-headline-done互换
+     '(org-headline-done ((t (:foreground "#6c6f93")))))
+    (set-face-attribute 'region nil :background "#555555")
+    ;; (set-face-attribute 'region nil
+    ;;                     :background "#4C7073"
+    ;;                     :foreground "Black"
+    )
+   ((string-prefix-p "doom" (symbol-name th))
+    ;; doom没有处理hi-lock的颜色
+    (custom-set-faces
+     '(hi-yellow ((t (:foreground "black" :background "yellow"))))
+     '(hi-pink ((t (:foreground "black" :background "HotPink"))))
+     '(hi-green ((t (:foreground "black" :background "green"))))
+     '(hi-blue ((t (:foreground "black" :background "DodgerBlue"))))
+     '(hi-salmon
+       ((t (:foreground "black" :background "light salmon"))))
+     '(hi-aquamarine
+       ((t (:foreground "black" :background "aquamarine"))))
+     '(hi-black-b ((t (:foreground "white" :background "black"))))
+     '(hi-blue-b ((t (:foreground "DodgerBlue" :background "black"))))
+     '(hi-red-b ((t (:foreground "red" :background "black"))))
+     '(hi-green-b ((t (:foreground "green" :background "black"))))
+     '(hi-black-hb ((t (:foreground "orange" :background "black"))))))
+   ((not (string-prefix-p "doom" (symbol-name th)))
+    (set-face-attribute 'doom-themes-visual-bell nil
+                        :background "#ff6c6b"))
+   (t)))
+
+;; 所有theme共用
+;; paren加下划线，参考的spacemacs
+(set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
+(custom-set-faces '(header-line ((t (:weight bold)))))
