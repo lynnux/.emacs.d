@@ -6038,7 +6038,8 @@ _q_uit
     (custom-set-faces
      '(consult-file ((t (:foreground nil))))
      '(consult-bookmark ((t (:foreground nil))))))
-   ((string-prefix-p "doom" (symbol-name th))
+   (t))
+  (when (string-prefix-p "doom" (symbol-name th))
     ;; doom没有处理hi-lock的颜色
     (custom-set-faces
      '(hi-yellow ((t (:foreground "black" :background "yellow"))))
@@ -6054,10 +6055,9 @@ _q_uit
      '(hi-red-b ((t (:foreground "red" :background "black"))))
      '(hi-green-b ((t (:foreground "green" :background "black"))))
      '(hi-black-hb ((t (:foreground "orange" :background "black"))))))
-   ((not (string-prefix-p "doom" (symbol-name th)))
+  (when (not (string-prefix-p "doom" (symbol-name th)))
     (set-face-attribute 'doom-themes-visual-bell nil
-                        :background "#ff6c6b"))
-   (t)))
+                        :background "#ff6c6b")))
 
 ;; 所有theme共用
 ;; paren加下划线，参考的spacemacs
