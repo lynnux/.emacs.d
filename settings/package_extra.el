@@ -4275,12 +4275,15 @@ _q_uit
   :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
 (use-package diff-hl
-  :load-path "~/.emacs.d/themes/diff-hl-master"
-  :commands (diff-hl-maybe-define-bitmaps diff-hl-update)
+  :defer t
   :init
   (add-hook
    'prog-mode-hook
    (lambda ()
+     (unless (featurep 'diff-hl)
+       (delay-require-libs
+        "~/.emacs.d/themes/diff-hl-master"
+        '(diff-hl diff-hl-dired diff-hl-show-hunk)))
      (diff-hl-maybe-define-bitmaps)
      (diff-hl-update)
      (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
@@ -4303,18 +4306,6 @@ _q_uit
   (defun diff-hl-update-manual ()
     (interactive)
     (diff-hl-update))
-
-  (use-package diff-hl-margin
-    :disabled ;; 修复了show-hunk问题就不需要这个了，不过doom都用的margin模式暂时保留
-    :config
-    ;; (diff-hl-margin-mode) 这个会遍历buffer-list导致启动卡一下，所以我们手动hook
-    (progn
-      (add-hook 'diff-hl-mode-on-hook 'diff-hl-margin-local-mode)
-      (add-hook 'diff-hl-mode-off-hook 'diff-hl-margin-local-mode-off)
-      (add-hook
-       'diff-hl-dired-mode-on-hook 'diff-hl-margin-local-mode)
-      (add-hook
-       'diff-hl-dired-mode-off-hook 'diff-hl-margin-local-mode-off)))
 
   (use-package diff-hl-dired
     :commands (diff-hl-dired-mode)
