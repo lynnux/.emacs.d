@@ -109,7 +109,7 @@
       (call-process-shell-command
        (concat "touch " check-file " -r " expand-zip)))))
 
-(eval-when-compile
+(unless (symbol-function 'use-package)
   (add-to-list
    'load-path "~/.emacs.d/packages/use-package/use-package-master")
   (condition-case nil
