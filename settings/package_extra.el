@@ -19,12 +19,17 @@
 
 (defmacro dec-placeholder-fun (fn feature path list)
   "对可以延迟调用的命令，延迟设置`load-path'，并在require后还原`load-path'"
-  `(defun ,fn ()
+  `(defun ,fn (&optional arg)
      (interactive)
      (unless (featurep ',feature)
        (fmakunbound ',fn) ;; 取消本函数定义
        (delay-require-libs ,path ,list)
-       (call-interactively ',fn))))
+       (if arg
+           (,fn arg)
+         ;; 没有参数调用还区分是否是`call-interactively'调用
+         (if (called-interactively-p 'interactive)
+             (call-interactively ',fn)
+           (,fn))))))
 
 (defun update-all-packages ()
   (interactive)
@@ -2616,10 +2621,22 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; magit
 (use-package magit
+  :defer t
   :init
-  (add-to-list
-   'load-path "~/.emacs.d/packages/magit/magit-master/lisp")
-  (add-to-list 'load-path "~/.emacs.d/packages/magit")
+  (use-package magit-base
+    :defer t
+    :config
+    (delay-require-libs
+     "~/.emacs.d/packages/magit"
+     (if (symbol-function 'transient-define-prefix) ;; emacs高版本自带`transient'
+         '(with-editor)
+       '(with-editor transient))))
+  (dec-placeholder-fun
+   magit-status
+   magit
+   "~/.emacs.d/packages/magit/magit-master/lisp"
+   '(magit magit-status))
+
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq
    magit-version "3.3.0"
@@ -2657,7 +2674,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           str))))
   (with-eval-after-load 'magit-mode
     (remove-hook 'pre-command-hook #'magit-pre-command-hook))
-  :commands (magit magit-status) ;; magit-status
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
   (define-key magit-status-mode-map (kbd "<C-tab>") nil) ;; 使切换buffer
@@ -3076,12 +3092,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
 ;; 所以目前仅用它来创建TAGS文件
 (use-package citre-ctags
-  ;; :disabled ;; 输入汉子导致emacs卡死(它自己设置了capf)？Message查看提示process什么失败，还以为是corfu导致的呢。。
-  ;; :diminish(citre-mode)
-  :load-path "~/.emacs.d/packages/citre/citre-master"
-  :commands (citre-create-tags-file citre-update-this-tags-file)
+  :defer t
   :init
-
+  (dec-placeholder-fun
+   citre-create-tags-file
+   citre-ctags
+   "~/.emacs.d/packages/citre/citre-master"
+   '(citre-ctags))
+  (dec-placeholder-fun
+   citre-update-this-tags-file
+   citre-ctags
+   "~/.emacs.d/packages/citre/citre-master"
+   '(citre-ctags))
   (setq
    citre-default-create-tags-file-location 'project-cache
    citre-use-project-root-when-creating-tags t
@@ -3101,7 +3123,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; add exclude by: --exclude=target
 ")
   (use-package citre-util
-    :commands (citre-tags-file-path))
+    :defer t
+    :init
+    (dec-placeholder-fun
+     citre-tags-file-path
+     citre-util
+     "~/.emacs.d/packages/citre/citre-master"
+     '(citre-util)))
   (use-package etags
     :defer t
     :commands
