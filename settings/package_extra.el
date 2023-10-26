@@ -3480,8 +3480,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
  ((eq lsp-use-which 'lsp-mode)
   ;; 额外需要ht和spinner
   (use-package lsp-mode
-    :load-path "~/.emacs.d/packages/lsp/lsp-mode-master"
     :init
+    (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
     (add-to-list
      'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
     (defun lsp-ensure ()
@@ -4388,10 +4388,6 @@ _q_uit
   (define-key winner-mode-map (kbd "<C-left>") #'winner-undo)
   (define-key winner-mode-map (kbd "<C-right>") #'winner-redo))
 
-(use-package emacsql
-  :defer t
-  :load-path "~/.emacs.d/packages/org/emacsql-master")
-
 (use-package org
   :defer t
   :config
@@ -4403,7 +4399,6 @@ _q_uit
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
   :defer t
-  :load-path "~/.emacs.d/packages/org/org-roam-main"
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
   (setq org-roam-database-connector
@@ -4437,7 +4432,6 @@ _q_uit
               "#+title: ${title}\n")
              :unnarrowed t))))
 
-  (require 'org-roam-autoloads)
   (defun call-project-find ()
     (interactive)
     (let ((default-directory org-roam-directory))
@@ -4473,6 +4467,16 @@ _q_uit
    ("L" org-roam-buffer-toggle nil :color blue)
    ("q" nil "nil" :color blue))
   (global-set-key (kbd "C-c n") 'hydra-org-roam/body)
+  (define-advice hydra-org-roam/body (:around (orig-fn &rest args))
+    (unless (featurep 'org-roam)
+      (delay-require-libs
+       "~/.emacs.d/packages/org/emacsql-master"
+       '(emacsql emacsql-sqlite))
+      (delay-require-libs
+       "~/.emacs.d/packages/magit/magit-master/lisp" '(magit-section))
+      (delay-require-libs
+       "~/.emacs.d/packages/org/org-roam-main" '(org-roam)))
+    (apply orig-fn args))
   :config
   (unless (version< emacs-version "29")
     (use-package emacsql-sqlite-builtin))
