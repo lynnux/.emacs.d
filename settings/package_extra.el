@@ -21,8 +21,7 @@
   (ensure-latest
    "~/.emacs.d/packages/expand-region/expand-region.el-master.zip")
   (ensure-latest
-   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip"
-   t)
+   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
@@ -1423,45 +1422,6 @@ _c_: hide comment        _q_uit
 (autoload 'protobuf-mode "protobuf-mode" "protobuf mode" t)
 (setq auto-mode-alist
       (append '(("\\.proto\\'" . protobuf-mode)) auto-mode-alist))
-
-(use-package jumplist
-  :disabled
-  :defer 0.7
-  :config
-  (remove-hook 'pre-command-hook 'jl-pre-command-check) ;; 影响效率，用advice替代
-  (global-set-key (kbd "M-n") 'jl-jump-forward)
-  (global-set-key (kbd "M-p") 'jl-jump-backward)
-  (defun my-push-mark-wrapper (&rest args)
-    (when (symbolp this-command)
-      (jl-insert-marker)))
-  (defvar jump-commands
-    '(jl-jump-backward
-      jl-jump-forward
-      beginning-of-buffer
-      end-of-buffer
-      jump-to-register
-      mark-whole-buffer
-      next-buffer
-      previous-buffer
-      switch-to-buffer
-      describe-function
-      describe-variable
-      find-file-at-point
-      xref-find-definitions
-      session-jump-to-last-change
-      org-roam-preview-visit
-      consult-ripgrep
-      consult-line
-      avy-goto-word-1
-      my-consult-ripgrep
-      embark-act
-      consult-imenu-multi
-      keyboard-escape-quit
-      embark-next-symbol
-      embark-previous-symbol
-      my-pop-select))
-  (cl-dolist
-   (jc jump-commands) (advice-add jc :before #'my-push-mark-wrapper)))
 
 ;; 这个hook了`push-mark'对内置`marker'支持很好！
 (use-package backward-forward
