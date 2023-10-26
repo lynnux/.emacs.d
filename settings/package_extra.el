@@ -10,7 +10,7 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
-(defun temp-set-load-path (path list)
+(defun delay-require-libs (path list)
   "临时设置`load-path'并require需要的库"
   (add-to-list 'load-path path)
   (dolist (l list)
@@ -23,7 +23,7 @@
      (interactive)
      (unless (featurep ',feature)
        (fmakunbound ',fn) ;; 取消本函数定义
-       (temp-set-load-path ,path ,list)
+       (delay-require-libs ,path ,list)
        (call-interactively ',fn))))
 
 (defun update-all-packages ()
@@ -2739,7 +2739,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (call-interactively 'er/expand-region)
        (call-interactively 'easy-mark))))
   :config
-  (temp-set-load-path
+  (delay-require-libs
    "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master"
    (list 'easy-kill-er 'extra-things 'easy-kill-mc 'easy-kill-extras))
   ;; (add-to-list
@@ -3356,13 +3356,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
-  :commands (rg-define-search)
+  :defer t
   :init
-  (add-to-list 'load-path "~/.emacs.d/packages/tools/rg.el-master")
   (defun my/rg-dwim ()
     (interactive)
     ;; type为all，不然h就会当成c从而忽略了cpp文件。要指定类型可以在rg buffer按f修改
     (unless (functionp 'rg-dwim-project-dir-type-all)
+      (delay-require-libs
+       "~/.emacs.d/packages/tools/rg.el-master" '(rg))
       (rg-define-search
        rg-dwim-project-dir-type-all
        :query point
