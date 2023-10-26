@@ -240,7 +240,6 @@ _q_uit
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   (use-package dired-recent
-    :load-path "~/.emacs.d/packages/dired/dired-hacks-master"
     :commands (dired-recent-mode dired-recent-open)
     :init
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
@@ -437,7 +436,6 @@ _q_uit
     "因为tree-sittr加载会导致dired加载，这里把dired相关mode延迟到dired-mode-hook"
     (remove-hook 'dired-mode-hook 'delay-dired-relate-init)
 
-
     (dired-recent-mode 1)
     (dired-recent-path-save) ;; 调用一次修复延迟加载导致的问题
 
@@ -451,7 +449,7 @@ _q_uit
       )
 
     (use-package dired-filter
-      :commands (dired-filter-transpose)
+      :defer t
       :init
       (defhydra
        dired-filter-map-select
@@ -497,37 +495,11 @@ _q_uit
       (define-key dired-mode-map "/" 'dired-filter-map-select/body)
       (define-advice dired-filter-map-select/body
           (:around (orig-fn &rest args))
-        (when (autoloadp (symbol-function 'dired-filter-transpose))
-          (require 'dired-filter))
+        (unless (featurep 'dired-filter)
+          (delay-require-libs
+           "~/.emacs.d/packages/dired/dired-hacks-master"
+           '(dired-filter)))
         (apply orig-fn args)))
-
-    ;; 类似exploer的操作了，不过这个可以同时拷贝不同目录的文件放到ring里
-    ;; 但粘贴时也要一个一个粘贴
-    (use-package dired-ranger
-      :commands (dired-ranger-paste dired-ranger-copy)
-      :config
-      (define-key dired-mode-map "z" 'dired-do-compress-to)
-      (defun dired-ranger-clear ()
-        (interactive)
-        (let ((count (ring-size dired-ranger-copy-ring))
-              (s 0))
-          (while (< s count)
-            (ring-remove dired-ranger-copy-ring 0)
-            (setq s (1+ s)))))
-      ;; 显示ring里的文件，可惜没有去重复啊
-      (defun dired-ranger-show-ring ()
-        (let ((l (ring-elements dired-ranger-copy-ring))
-              (s ""))
-          (dolist (ll l)
-            (dolist (path (cdr ll))
-              (setq s (concat s (file-name-nondirectory path) "\n"))))
-          (message s)))
-      (defadvice dired-ranger-paste
-          (after my-dired-ranger-paste activate)
-        (dired-ranger-show-ring))
-      (defadvice dired-ranger-copy
-          (after my-dired-ranger-copy activate)
-        (dired-ranger-show-ring)))
 
     (use-package diredful
       :init
