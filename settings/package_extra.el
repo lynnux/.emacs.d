@@ -10,6 +10,22 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
+(defun temp-set-load-path (path list)
+  "临时设置`load-path'并require需要的库"
+  (add-to-list 'load-path path)
+  (dolist (l list)
+    (require l))
+  (setq load-path (delete path load-path)))
+
+(defmacro dec-placeholder-fun (fn feature path list)
+  "对可以延迟调用的命令，延迟设置`load-path'，并在require后还原`load-path'"
+  `(defun ,fn ()
+     (interactive)
+     (unless (featurep ',feature)
+       (fmakunbound ',fn) ;; 取消本函数定义
+       (temp-set-load-path ,path ,list)
+       (call-interactively ',fn))))
+
 (defun update-all-packages ()
   (interactive)
   "测试发现对启动速度还是有影响的，这里手动执行更新就可以了，tree-sistter那个用根目录的setup.py下载bin和解压"
@@ -2723,12 +2739,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (call-interactively 'er/expand-region)
        (call-interactively 'easy-mark))))
   :config
-  (add-to-list
-   'load-path
-   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master")
-  (require 'easy-kill-er)
-  (require 'extra-things)
-  (require 'easy-kill-extras)
+  (temp-set-load-path
+   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master"
+   (list 'easy-kill-er 'extra-things 'easy-kill-mc 'easy-kill-extras))
+  ;; (add-to-list
+  ;;  'load-path
+  ;;  "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master")
+  ;; (require 'easy-kill-er)
+  ;; (require 'extra-things)
+  ;; (require 'easy-kill-extras)
   ;; (setq easy-kill-try-things '(my-line)) ; 只复制line
   (setq easy-kill-try-things '(line-with-yank-handler)) ; 只复制line
   (defun easy-kill-on-line-with-yank-handler (n)
@@ -4628,9 +4647,10 @@ _q_uit
   )
 
 (use-package elfeed
-  :load-path "~/.emacs.d/packages/tools/elfeed-master"
-  :commands (elfeed)
+  :defer t
   :init
+  (dec-placeholder-fun
+   elfeed elfeed "~/.emacs.d/packages/tools/elfeed-master" '(elfeed))
   (setq
    elfeed-use-curl t ;; win10好像自带curl
    ;; elfeed-curl-program-name "curl"
@@ -5388,9 +5408,22 @@ _q_uit
 
 ;; 这个比grugru要更灵活些，缺点是cursor会变，也没有`grugru-highlight-mode'高亮
 (use-package cycle-at-point
-  :load-path "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point"
-  :commands (cycle-at-point)
-  :init (global-set-key (kbd "C-j") 'cycle-at-point)
+  :defer t
+  :init
+  (global-set-key (kbd "C-j") 'cycle-at-point)
+  (dec-placeholder-fun
+   cycle-at-point
+   cycle-at-point
+   "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point"
+   '(cycle-at-point
+     cycle-at-point-find-alphabet
+     cycle-at-point-find-integer
+     cycle-at-point-preset-c++-mode
+     cycle-at-point-preset-c-mode
+     cycle-at-point-preset-cmake-mode
+     cycle-at-point-preset-emacs-lisp-mode
+     cycle-at-point-preset-lang-en
+     cycle-at-point-preset-python-mode))
   :config
   (defadvice cycle-at-point-preset-c-mode
       (after my-cycle-at-point-preset-c-mode activate)
