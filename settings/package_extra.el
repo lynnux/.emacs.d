@@ -4353,26 +4353,24 @@ _q_uit
                    diff-hl-inline-popup-transient-mode-map1
                    t 'diff-hl-inline-popup-hide))))))
 
-
 (use-package maple-preview
-  :load-path "~/.emacs.d/packages/org"
   :defer t
   :init
-  (defalias 'note-preview 'maple-preview-mode)
-  (autoload
-    'maple-preview-mode "emacs-maple-preview-master/maple-preview"
-    "" t nil)
+  (defun note-preview ()
+    (interactive)
+    (unless (featurep 'maple-preview)
+      (delay-require-libs
+       "~/.emacs.d/packages/org" '(websocket simple-httpd))
+      (dec-placeholder-fun
+       maple-preview-mode
+       maple-preview
+       "~/.emacs.d/packages/org/emacs-maple-preview-master"
+       '(maple-preview)))
+    (call-interactively 'maple-preview-mode))
+
   (setq maple-preview:allow-modes
         '(org-mode markdown-mode html-mode web-mode mhtml-mode))
   :config
-  (defadvice maple-preview:open-browser
-      (around my-maple-preview:open-browser activate)
-    (if (functionp 'eaf-open-browser)
-        (eaf-open-browser
-         (format "http://%s:%s/preview"
-                 maple-preview:host
-                 maple-preview:port))
-      ad-do-it))
   (defadvice maple-preview:init (after my-maple-preview:init activate)
     ;; 这个hook还达到了自动滚屏的效果? (需要用鼠标点击不同位置)
     (add-hook 'buffer-list-update-hook 'maple-preview:send-to-server))
@@ -4472,14 +4470,15 @@ _q_uit
       (delay-require-libs
        "~/.emacs.d/packages/org/emacsql-master"
        '(emacsql emacsql-sqlite))
+      (unless (version< emacs-version "29")
+        (delay-require-libs
+         "~/.emacs.d/packages/org" '(emacsql-sqlite-builtin)))
       (delay-require-libs
        "~/.emacs.d/packages/magit/magit-master/lisp" '(magit-section))
       (delay-require-libs
        "~/.emacs.d/packages/org/org-roam-main" '(org-roam)))
     (apply orig-fn args))
   :config
-  (unless (version< emacs-version "29")
-    (use-package emacsql-sqlite-builtin))
   ;; find时列表加入tag，这么好的功能居然不加入默认？
   (setq org-roam-node-display-template
         (concat
