@@ -5856,7 +5856,12 @@ _q_uit
          (let ((inhibit-message t))
            (call-interactively 'elisp-autofmt-buffer))
          (message "elisp format done.")))))
-  :config (setq-default elisp-autofmt-load-packages-local '("use-package")))
+  :config
+  ;; 使用内置的use-package格式化会有问题，必须加把use-package加入到`load-path'
+  ;; see https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/4
+  (add-to-list
+   'load-path "~/.emacs.d/packages/use-package/use-package-master")
+  (setq-default elisp-autofmt-load-packages-local '("use-package")))
 
 (use-package format
   :defer t
