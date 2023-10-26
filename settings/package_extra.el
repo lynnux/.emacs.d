@@ -21,7 +21,8 @@
   (ensure-latest
    "~/.emacs.d/packages/expand-region/expand-region.el-master.zip")
   (ensure-latest
-   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip")
+   "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master.zip"
+   t)
   (ensure-latest
    "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/vertico-main.zip")
