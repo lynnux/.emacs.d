@@ -10,20 +10,21 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
-(defun delay-require-libs (path list)
+(defun delay-require-libs (path list &optional keep-load-path)
   "临时设置`load-path'并require需要的库"
   (add-to-list 'load-path path)
   (dolist (l list)
     (require l))
-  (setq load-path (delete path load-path)))
+  (unless keep-load-path
+    (setq load-path (delete path load-path))))
 
-(defmacro dec-placeholder-fun (fn feature path list)
+(defmacro dec-placeholder-fun (fn feature path list &optional keep-load-path)
   "对可以延迟调用的命令，延迟设置`load-path'，并在require后还原`load-path'"
   `(defun ,fn (&optional arg)
      (interactive)
      (unless (featurep ',feature)
        (fmakunbound ',fn) ;; 取消本函数定义
-       (delay-require-libs ,path ,list)
+       (delay-require-libs ,path ,list ,keep-load-path)
        (if arg
            (,fn arg)
          ;; 没有参数调用还区分是否是`call-interactively'调用
@@ -254,12 +255,12 @@ _q_uit
   (use-package dired-recent
     :defer t
     :init
-    (dec-placeholder-fun dired-recent-open dired-recent "~/.emacs.d/packages/dired" '(dired-recent))
+    (dec-placeholder-fun dired-recent-open dired-recent "~/.emacs.d/packages/dired" '(dired-recent) t)
+    (dec-placeholder-fun dired-recent-mode dired-recent "~/.emacs.d/packages/dired" '(dired-recent) t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
     (global-set-key (kbd "C-c d") 'dired-recent-open)
     (global-set-key (kbd "C-c C-d") 'dired-recent-open)
     :config
-    (add-to-list 'load-path "~/.emacs.d/packages/dired")
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
       (add-to-list
