@@ -1504,18 +1504,21 @@ _c_: hide comment        _q_uit
 (add-hook 'emacs-lisp-mode-hook 'my-elisp-hook)
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
 
-;; expand-region被 easy-kill的easy-mark替换了，但要保留会被调用 
 (use-package expand-region
-  :load-path "~/.emacs.d/packages/expand-region/expand-region.el-master"
-  :commands (er/expand-region er/contract-region)
-  :init (global-set-key (kbd "C-S-t") 'er/contract-region)
-  :config
-  ;; see https://github.com/magnars/expand-region.el/issues/229
-  ;; (global-set-key (kbd "C-q") #'(lambda (arg)
-  ;;   			                  (interactive "P")
-  ;;   			                  (setq transient-mark-mode t)
-  ;;   			                  (set-mark-command arg)))
-  )
+  :defer t
+  :init
+  (dec-placeholder-fun
+   er--expand-region-1 ;; 实际使用的是这个，被`easy-kill-er'调用
+   expand-region
+   "~/.emacs.d/packages/expand-region/expand-region.el-master"
+   '(expand-region
+     python-mode-expansions
+     cc-mode-expansions
+     text-mode-expansions
+     subword-mode-expansions
+     the-org-mode-expansions
+     python-el-fgallina-expansions)) ;; 到时有错误再添加什么吧，用得也不多
+  (global-set-key (kbd "C-S-t") 'er/contract-region))
 
 (use-package smart-region
   :commands (smart-region)
