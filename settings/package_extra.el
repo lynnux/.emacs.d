@@ -1532,9 +1532,10 @@ _c_: hide comment        _q_uit
 (use-package smart-region
   :defer t
   :init
-  (defun my-smart-region()
+  (defun smart-region()
     (interactive)
     (unless (featurep 'smart-region)
+      (fmakunbound 'smart-region)
       (save-excursion
         (with-temp-buffer (er--expand-region-1))
         (load-multiple-cursors))
@@ -1542,7 +1543,7 @@ _c_: hide comment        _q_uit
     (call-interactively 'smart-region))
   ;; C-q不动再按C-q触发expand region，移动到其它行，同一列触发multiple-cursors，不同列是rectangle-mark
   ;; 同列触发mc这个要常用，不过有bug有汉字的话判定为rectangle-mark
-  (global-set-key (kbd "C-q") 'my-smart-region)
+  (global-set-key (kbd "C-q") 'smart-region)
   :config
   (when (functionp 'which-key--show-keymap)
     (defadvice smart-region (after my-smart-region activate)
