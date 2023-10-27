@@ -244,8 +244,9 @@ _q_uit
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
   (use-package dired-recent
-    :commands (dired-recent-mode dired-recent-open)
+    :defer t
     :init
+    (dec-placeholder-fun dired-recent-open dired-recent "~/.emacs.d/packages/dired" '(dired-recent))
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
     (global-set-key (kbd "C-c d") 'dired-recent-open)
     (global-set-key (kbd "C-c C-d") 'dired-recent-open)
@@ -1209,7 +1210,6 @@ _c_: hide comment        _q_uit
 ;; company机制不清楚。eglot+ctags用corfu好配一点
 (use-package corfu
   :defer t
-  :commands (corfu-mode)
   :init
   (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
   (autoload 'cape-wrap-buster "corfu/cape" "" nil)
@@ -1224,10 +1224,7 @@ _c_: hide comment        _q_uit
    corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
    corfu-min-width 30 ;; 不知道怎么回事，有时候显示不全但补全功能正常
    )
-  (add-to-list
-   'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
-  (add-hook 'emacs-lisp-mode-hook 'corfu-mode)
-
+  
   ;; 偷偷隐藏创建corfu的frame加快首次使用
   (run-with-idle-timer
    1.5 nil
@@ -1242,6 +1239,8 @@ _c_: hide comment        _q_uit
         8
         '(#("No match" 0 8 (face italic)))))))
   :config
+  (add-to-list
+   'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
   (when nil
     (setq
      corfu-preselect-first nil
@@ -1521,11 +1520,19 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-S-t") 'er/contract-region))
 
 (use-package smart-region
-  :commands (smart-region)
+  :defer t
   :init
+  (defun my-smart-region()
+    (interactive)
+    (unless (featurep 'smart-region)
+      (save-excursion
+        (with-temp-buffer (er--expand-region-1))
+        (load-multiple-cursors))
+      (require 'smart-region))
+    (call-interactively 'smart-region))
   ;; C-q不动再按C-q触发expand region，移动到其它行，同一列触发multiple-cursors，不同列是rectangle-mark
   ;; 同列触发mc这个要常用，不过有bug有汉字的话判定为rectangle-mark
-  (global-set-key (kbd "C-q") 'smart-region)
+  (global-set-key (kbd "C-q") 'my-smart-region)
   :config
   (when (functionp 'which-key--show-keymap)
     (defadvice smart-region (after my-smart-region activate)
@@ -1552,37 +1559,35 @@ _c_: hide comment        _q_uit
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
 (use-package multiple-cursors
-  :load-path "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master"
+  :defer t
   :init
+  (defun load-multiple-cursors()
+    (unless (featurep 'multiple-cursors)
+      (delay-require-libs "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master" '(multiple-cursors))))
+  (defmacro my-mc-cmd(fn)
+    `(lambda()
+       (interactive)
+       (load-multiple-cursors)
+       (call-interactively ,fn)))
+  ;; 这个不能用`my-mc-cmd'去wrap
+  (dec-placeholder-fun mc/mark-next-like-this multiple-cursors "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master" '(multiple-cursors))
   ;; mc询问你的命令都保存在这里面了
   (setq
    mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el"
    mc/always-run-for-all t ;; 禁止提示，需要run once的在my-cmds.el里加
    )
   (global-unset-key (kbd "<M-down-mouse-1>"))
+  (global-set-key (kbd "M-<mouse-1>") (my-mc-cmd 'mc/add-cursor-on-click))
+  (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<f8>") (my-mc-cmd 'mc/mark-all-dwim)) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
+  ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
+  :config
   (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
-  (global-set-key (kbd "C-M-<mouse-1>") 'mc/unmark-next-like-this) ; 取消光标以下的mark
-  (global-set-key (kbd "M-S-<mouse-1>") 'mc/unmark-previous-like-this) ;取消光标以上的mark
   (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
   (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
-  ;; (global-set-key (kbd "C-S-t") 'mc/edit-lines)  ;居然不支持同行的range
-  (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-<f8>") 'mc/mark-all-dwim) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
   (global-set-key (kbd "S-<f8>") 'mc/skip-to-next-like-this) ;; 跳过当前选中
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this-dwim) ;; dwim的更智能
-  ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
-  :commands
-  (multiple-cursors-mode
-   mc/add-cursor-on-click
-   mc/unmark-next-like-this
-   mc/unmark-previous-like-this
-   mc/mark-previous-like-this
-   mc/mark-next-like-this
-   mc/edit-lines
-   mc/mark-all-dwim
-   mc/skip-to-next-like-this
-   mc/mark-all-like-this-dwim)
-  :config
+  
   (define-key mc/keymap (kbd "C-v") nil)
   (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode) ;; 退出，C-J输入换行
   ;; 改变指针颜色以示区别 
@@ -2732,7 +2737,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :config
   (delay-require-libs
    "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master"
-   (list 'easy-kill-er 'extra-things 'easy-kill-mc 'easy-kill-extras))
+   (list 'easy-kill-er 'extra-things 'easy-kill-extras))
+  (provide 'easy-kill-mc) ;; 避免出错提示，实际用不到这个
   ;; (add-to-list
   ;;  'load-path
   ;;  "~/.emacs.d/packages/easy-kill/easy-kill-extras.el-master")
