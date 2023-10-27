@@ -228,7 +228,6 @@ _q_uit
 ;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
   ;; :disabled
-  :load-path "~/.emacs.d/packages/dired"
   :init
   (setq
    dired-compress-file-alist
@@ -319,6 +318,7 @@ _q_uit
 
   :commands (dired dired-jump)
   :config
+  (add-to-list 'load-path "~/.emacs.d/packages/dired")
   (when (string-equal system-type "windows-nt")
     (define-key
      dired-mode-map (kbd "C-x C-d")
