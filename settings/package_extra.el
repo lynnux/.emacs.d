@@ -259,6 +259,7 @@ _q_uit
     (global-set-key (kbd "C-c d") 'dired-recent-open)
     (global-set-key (kbd "C-c C-d") 'dired-recent-open)
     :config
+    (add-to-list 'load-path "~/.emacs.d/packages/dired")
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
       (add-to-list
@@ -1792,7 +1793,7 @@ _c_: hide comment        _q_uit
   (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
-    :load-path "~/.emacs.d/packages/minibuffer/vertico-main"
+    :defer t
     :init
     (setq
      enable-recursive-minibuffers t ; 允许minibuffer里再执行命令
@@ -1801,8 +1802,12 @@ _c_: hide comment        _q_uit
      vertico-count 20 ;; 高度多少行
      vertico-sort-function nil ;; 对需要排序的，添加到`vertico-multiform-commands'里
      )
-    :defer 0.3
+    (run-with-idle-timer 0.8 nil
+     #'(lambda()
+         (add-to-list 'load-path "~/.emacs.d/packages/minibuffer/vertico-main")
+         (require 'vertico)))
     :config (vertico-mode 1)
+    (add-to-list 'load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions")
     ;; extension说明
     ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
     ;; vertico-directory.el  测试没成功
@@ -1842,7 +1847,6 @@ _c_: hide comment        _q_uit
     ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
     ;; consult-ripgrep暂时没有好方法
     (use-package vertico-repeat
-      :load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions"
       :commands (vertico-repeat vertico-repeat-save)
       :init
       (global-set-key [f6] #'vertico-repeat) ; C-u F6还可以选择
