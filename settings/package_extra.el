@@ -153,7 +153,15 @@
      (advice-remove 'require 'sanityinc/require-times-wrapper))))
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+;; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+;; https://github.com/phikal/compat.el
+(use-package compat
+  :defer t
+  :load-path "~/.emacs.d/packages/minibuffer/compat-main"
+  :config
+  ;; 加载后可以直接从`load-path'去掉了
+  (setq load-path (delete "~/.emacs.d/packages/minibuffer/compat-main" load-path)))
 
 (defvar use-my-face nil)
 
@@ -1582,6 +1590,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-<f8>") (my-mc-cmd 'mc/mark-all-dwim)) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
   ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
   :config
+  (global-set-key (kbd "C-<f8>") 'mc/mark-all-dwim) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
   (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
   (global-set-key (kbd "M-<wheel-up>") 'mc/mark-previous-like-this)
   (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
@@ -2146,18 +2155,6 @@ symbol under cursor"
     (add-to-list
      'process-coding-system-alist
      '("[fF][iI][nN][dD]" . (utf-8 . gbk-dos))) ;; find支持中文
-
-    ;; https://github.com/phikal/compat.el
-    (use-package compat
-      :defer t
-      :load-path "~/.emacs.d/packages/minibuffer/compat-main"
-      :init
-      (unless (functionp 'ensure-list)
-        (defun ensure-list (object)
-          ;; for 28.0.5
-          (if (listp object)
-              object
-            (list object)))))
 
     (defun my-consult-ripgrep (&optional dir initial)
       (interactive "P") ;; C-u F2可以选择dir，否则就是当前目录
