@@ -5620,7 +5620,10 @@ _q_uit
         (add-hook
          'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
         (add-hook
-         'json-mode-hook #'(lambda () (treesit-parser-create 'json))))
+         'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
+        (with-eval-after-load 'c-ts-mode
+          ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
+          (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
       (use-package fingertip
         :commands (fingertip-mode)
         :init
