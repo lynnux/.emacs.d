@@ -4968,8 +4968,9 @@ _q_uit
   (add-hook 'gud-gdb-mode-hook 'my-gud-hook))
 
 ;; 关于dap，lldb和gdb本身都不支持这个协议(gdb 14版本将会直接支持)，需要中间层处理dap协议
-;; lldb需要codelldb，或者自带lldb-vscode，它这个支持msvc编译的pdb
-;; gdb则需要cpptools，或者等14版本发布，不过不能调试msvc编译的程序对我们用处不大
+;; lldb需要codelldb，或者自带lldb-vscode
+;; gdb则需要cpptools，或者等14版本发布，不过不支持pdb
+;; 支持pdb只有codelldb，lldb仅支持clang编译的exe(lldb原版pdb支持有两种，1种自写的pdb解析，2种是用msdia140，测试需要设置变量LLDB_USE_NATIVE_PDB_READER=yes)。
 ;; 而msvc调试器的dap中转有vsdbg(cpptools里包含)支持，但在dap协议里加了handshake防止其它产品使用
 (use-package dape
   :defer t
