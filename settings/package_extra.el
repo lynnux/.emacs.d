@@ -2033,6 +2033,7 @@ _c_: hide comment        _q_uit
 
     ;; 美化
     (use-package marginalia
+      :disabled
       :commands (marginalia-mode)
       :bind
       (("M-A" . marginalia-cycle)
