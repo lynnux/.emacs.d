@@ -2033,7 +2033,6 @@ _c_: hide comment        _q_uit
 
     ;; 美化
     (use-package marginalia
-      :disabled
       :commands (marginalia-mode)
       :bind
       (("M-A" . marginalia-cycle)
@@ -2041,7 +2040,10 @@ _c_: hide comment        _q_uit
        minibuffer-local-map
        ("M-A" . marginalia-cycle))
       :init (marginalia-mode)
-      :config)
+      :config
+      ;; 去掉file等，因为consult-fd可能上万文件，会影响速度
+      (setf (alist-get 'file marginalia-annotator-registry) '(none))
+      )
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :commands
