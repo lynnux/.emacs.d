@@ -4996,6 +4996,18 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
+  (define-advice dape--read-config (:around (orig-fn &rest args) my)
+    "实现调试开始无须选择命令，C-u F5才需要选择命令"
+    (if (or current-prefix-arg (not dape-history))
+        (apply orig-fn args)
+      (cl-letf (((symbol-function #'completing-read)
+                 (lambda (&rest _)
+                   (car dape-history))))
+        (apply orig-fn args))))
+  (define-advice dape--add-eldoc-hook (:after (&rest args) my)
+    "只能在after开启eldoc-mode"
+    (unless (bound-and-true-p eldoc-mode)
+      (eldoc-mode 1)))
   (winner-mode 1) ;; C-left恢复窗口
   ;; (global-eldoc-mode 1) ;; 点击变量时显示值
 
@@ -5145,7 +5157,7 @@ _q_uit
       (process (command (eql handshake)) arguments)
     (message "hand: %S" (plist-get arguments :value))
     (dape-request-response
-     process 2 "handshake"
+     process 2 "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
      (list :signature (my-calc (plist-get arguments :value)))))
   (define-advice dape--handle-object (:after (&rest args))
     "修复vsdbg乱发序号问题"
