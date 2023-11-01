@@ -5077,7 +5077,7 @@ _q_uit
      :cwd dape-cwd-fn
      :program dape-find-file
      :stopAtEntry t
-     :logging (:engineLogging t) ;; 开启调试
+     ;; :logging (:engineLogging t) ;; 开启调试消息
      :externalConsole t ;; 避免以WindowsDebugLauncher启动，卡住了都不知道哪里错了
      :MIMode "gdb"
      ;; ,(cond
@@ -5148,14 +5148,14 @@ _q_uit
       (dape-send-object
        process seq
        (thread-first
-        object
-        (plist-put :type "response")
-        (plist-put :success t)
-        (plist-put :request_seq seq)
-        (plist-put :command command)))))
+         object
+         (plist-put :type "response")
+         (plist-put :success t)
+         (plist-put :request_seq seq)
+         (plist-put :command command)))))
   (cl-defmethod dape-handle-request
-      (process (command (eql handshake)) arguments)
-    (message "hand: %S" (plist-get arguments :value))
+    (process (command (eql handshake)) arguments)
+    ;; (message "hand: %S" (plist-get arguments :value))
     (dape-request-response
      process 2 "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
      (list :signature (my-calc (plist-get arguments :value)))))
@@ -5186,10 +5186,9 @@ _q_uit
      :request "launch"
      :cwd dape-cwd-fn
      :program dape-find-file
-     :stopAtEntry t
-     :logging (:engineLogging t) ;; 开启调试
+     :stopAtEntry t ;; 支持
+     ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
      ))
-
 
   ;; python，测试没问题
   (add-to-list
