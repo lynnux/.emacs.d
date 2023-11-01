@@ -202,7 +202,7 @@
        ',name)))
 
 (use-package dash
-  :commands (-distinct))
+  :commands (-distinct -replace-at))
 
 (use-package s
   :commands (s-split s-word-wrap))
@@ -4996,9 +4996,8 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
-
   (winner-mode 1) ;; C-left恢复窗口
-  (global-eldoc-mode 1) ;; 点击变量时显示值
+  ;; (global-eldoc-mode 1) ;; 点击变量时显示值
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
   ;; 测试命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
@@ -5082,7 +5081,7 @@ _q_uit
      ;;    (executable-find "lldb")))
      ))
 
-  (when t
+  (when nil
     (setq dape--timeout 20)
     ;; x64dbg在WriteFile下断
     )
@@ -5148,7 +5147,14 @@ _q_uit
     (dape-request-response
      process 2 "handshake"
      (list :signature (my-calc (plist-get arguments :value)))))
-
+  (define-advice dape--handle-object (:after (&rest args))
+    "修复vsdbg乱发序号问题"
+    (setq dape--seq-event 0))
+  (define-advice dape-request (:around (orig-fn &rest args) my)
+    "vsdbg的stackTrace要求参数startFrame，这是符合标准的 https://microsoft.github.io/debug-adapter-protocol/specification "
+    (when (equal (ad-get-argument args 1) "stackTrace")
+      (setq args (-replace-at 2 (append (ad-access-argument args 2) (list :startFrame 0)) args)))
+    (apply orig-fn args))
   (setq
    dape-cppvsdbg-command
    (expand-file-name
@@ -5170,17 +5176,6 @@ _q_uit
      :program dape-find-file
      :stopAtEntry t
      :logging (:engineLogging t) ;; 开启调试
-     ;; :MIMode "gdb"
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    "gdb")
-     ;;   ((executable-find "lldb")
-     ;;    "lldb"))
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    (executable-find "gdb"))
-     ;;   ((executable-find "lldb")
-     ;;    (executable-find "lldb"))))
      ))
 
 
