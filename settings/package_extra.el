@@ -12,17 +12,18 @@
 
 ;; 在这里开启/关闭feature，用于调试问题
 (dolist (f '(
-           enable-feature-minibuffer
-           enable-feature-win32-only
-           enable-feature-edit
-           enable-feature-lsp-dap
-           enable-feature-dired
-           enable-feature-gui
-           enable-feature-navigation
-           enable-feature-tools
-           enable-feature-prog
-           enable-feature-mode-line
-           ))
+             enable-feature-builtin
+             enable-feature-minibuffer
+             enable-feature-win32-only
+             enable-feature-edit
+             enable-feature-lsp-dap
+             enable-feature-dired
+             enable-feature-gui
+             enable-feature-navigation
+             enable-feature-tools
+             enable-feature-prog
+             enable-feature-mode-line
+             ))
   (eval `(defvar ,f t)))
 
 (when (bound-and-true-p enable-feature-win32-only)
@@ -226,6 +227,7 @@
   :commands (s-split s-word-wrap))
 
 (use-package eldoc
+  :if (bound-and-true-p enable-feature-builtin)
   :defer t
   :diminish (eldoc-mode)
   :init
@@ -553,6 +555,7 @@ _q_uit
 
 ;; 保存cursor位置
 (use-package saveplace
+  :if (bound-and-true-p enable-feature-builtin)
   :init
   (setq
    save-place-file
@@ -579,6 +582,7 @@ _q_uit
 
 ;; 还是放弃session的那个file-name-history吧，现在都用这个了
 (use-package recentf
+  :if (bound-and-true-p enable-feature-builtin)
   :init
   (setq recentf-save-file
         (expand-file-name ".recentf" user-emacs-directory))
@@ -645,6 +649,7 @@ _q_uit
 ;; 用session就够了
 (use-package savehist
   :disabled
+  :if (bound-and-true-p enable-feature-builtin)
   :init
   (setq savehist-file
         (expand-file-name ".savehist" user-emacs-directory))
@@ -764,6 +769,7 @@ _c_: hide comment        _q_uit
 
 ;; display-line-numbers是C实现的，最快！
 (use-package display-line-numbers
+  :if (bound-and-true-p enable-feature-builtin)
   :commands (display-line-numbers-mode)
   :init (setq display-line-numbers-width-start 3)
   :hook (find-file . display-line-numbers-mode))
@@ -787,6 +793,7 @@ _c_: hide comment        _q_uit
 ;; undo-fu小巧才15K
 (use-package undo-fu
   :disabled
+  :if (bound-and-true-p enable-feature-edit)
   :config
   (global-unset-key (kbd "C-z"))
   (global-set-key (kbd "C-z") 'undo-fu-only-undo)
@@ -796,6 +803,7 @@ _c_: hide comment        _q_uit
   )
 
 (use-package vundo
+  :if (bound-and-true-p enable-feature-edit)
   :commands (vundo))
 
 ;; 经常C-x C-s按错，还是用这个吧
@@ -3387,6 +3395,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout))
 
 (use-package compile
+  :if (bound-and-true-p enable-feature-builtin)
   :defer t
   :init
   (global-set-key
@@ -3497,6 +3506,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (setq tmp-disable-view-mode nil)))
 
 (use-package flymake
+  :if (bound-and-true-p enable-feature-prog)
   :defer t
   :config
   ;; 当lsp开启时，去掉自己的hook
@@ -3519,6 +3529,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (defvar flymake-list-only-diagnostics nil)))
 
 (use-package flycheck
+  :if (bound-and-true-p enable-feature-lsp-dap)
   :commands (flycheck-mode)
   :init
   (autoload 'flycheck-mode "lsp/flycheck")
@@ -3543,6 +3554,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
  ((eq lsp-use-which 'lsp-mode)
   ;; 额外需要ht和spinner
   (use-package lsp-mode
+    :if (bound-and-true-p enable-feature-lsp-dap)
     :init
     (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
     (add-to-list
@@ -4705,6 +4717,7 @@ _q_uit
   (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt))
 
 (use-package so-long
+  :if (bound-and-true-p enable-feature-builtin)
   :defer 1.3
   :config (global-so-long-mode))
 
