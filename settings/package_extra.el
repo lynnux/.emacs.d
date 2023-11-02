@@ -564,10 +564,9 @@ _q_uit
   :init
   (setq recentf-save-file
         (expand-file-name ".recentf" user-emacs-directory))
-  (setq recentf-max-saved-items 500)
-  ;; Disable recentf-cleanup on Emacs start, because it can cause problems with
-  ;; remote files.
-  ;; recentf-auto-cleanup 'never
+  (setq recentf-max-saved-items 500
+        recentf-auto-cleanup 10     ; 默认造成开机启动卡10秒！
+        )
   (setq
    recentf-exclude
    '(".cache"
@@ -5160,10 +5159,10 @@ _q_uit
      process 2 "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
      (list :signature (my-calc (plist-get arguments :value)))))
   (define-advice dape--handle-object (:after (&rest args))
-    "修复vsdbg乱发序号问题"
+    "修复乱发序号问题"
     (setq dape--seq-event 0))
   (define-advice dape-request (:around (orig-fn &rest args) my)
-    "vsdbg的stackTrace要求参数startFrame，这是符合标准的 https://microsoft.github.io/debug-adapter-protocol/specification "
+    "stackTrace要求参数startFrame，这是符合标准的 https://microsoft.github.io/debug-adapter-protocol/specification "
     (when (equal (ad-get-argument args 1) "stackTrace")
       (setq args (-replace-at 2 (append (ad-access-argument args 2) (list :startFrame 0)) args)))
     (apply orig-fn args))
