@@ -5012,7 +5012,7 @@ _q_uit
   (add-to-list
    'emacs-startup-hook
    (lambda ()
-     (when gud-cdb-history
+     (when (bound-and-true-p gud-cdb-history)
        (setq f5-read-command nil))))
   :config
   (defadvice gud-sentinel (after my-gud-sentinel activate)
