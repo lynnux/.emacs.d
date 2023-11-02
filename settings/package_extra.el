@@ -5411,7 +5411,8 @@ _q_uit
   (define-key
    dashboard-mode-map (kbd "C-d") 'dashboard-remove-item-under)
   (defun my-god-mode-init ()
-    (god-local-mode 1)
+    (when (functionp 'god-local-mode)
+      (god-local-mode 1))
     (dashboard-jump-to-recents)
     ;; (dashboard-jump-to-projects) ;; 初始化直接跳到project
     )
@@ -5428,7 +5429,9 @@ _q_uit
   (use-package sqlite-mode
     :if (bound-and-true-p enable-feature-tools)
     :defer t
-    :config (add-hook 'sqlite-mode-hook 'god-local-mode)
+    :config 
+    (when (functionp 'god-local-mode)
+      (add-hook 'sqlite-mode-hook 'god-local-mode))
     ;; for god-mode
     (define-key sqlite-mode-map (kbd "C-c") 'sqlite-mode-list-columns)
     (define-key sqlite-mode-map (kbd "C-g") 'sqlite-mode-list-tables)
