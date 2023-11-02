@@ -10,6 +10,16 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
+;; 在这里开启/关闭feature，用于调试问题
+(dolist (f '(
+           enable-feature-minibuffer
+           enable-feature-win32-only
+           ))
+  (eval `(defvar ,f t)))
+
+(when (bound-and-true-p enable-feature-win32-only)
+  (setq enable-feature-win32-only (string-equal system-type "windows-nt")))
+
 (defun delay-require-libs (path list &optional keep-load-path)
   "临时设置`load-path'并require需要的库"
   (add-to-list 'load-path path)
@@ -68,7 +78,7 @@
    "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
   )
 
-;; 用于use-package避免自动设置:laod-path
+;; 用于use-package避免自动设置:load-path
 (defun my-eval-string (string)
   (eval (car (read-from-string (format "(progn %s)" string)))))
 
@@ -4812,48 +4822,49 @@ _q_uit
       (when (equal (buffer-name) (buffer-name (window-buffer)))
         (apply orig-fn args)))))
 
-(when (string-equal system-type "windows-nt")
-  (use-package w32-browser
-    :commands
+(use-package w32-browser
+  :if (bound-and-true-p enable-feature-win32-only)
+  :commands
+  (w32explore
+   dired-mouse-w32-browser
+   dired-w32-browser
+   dired-multiple-w32-browser
+   dired-w32explore)
+  :init
+  ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
+  (defun browse-file-in-explorer (&optional file)
+    "browse file in windows explorer"
+    (interactive)
     (w32explore
-     dired-mouse-w32-browser
-     dired-w32-browser
-     dired-multiple-w32-browser
-     dired-w32explore)
-    :init
-    ;; windows中打开并选中buffer对应的文件，C-X 6 是2C mode的前辍
-    (defun browse-file-in-explorer (&optional file)
-      "browse file in windows explorer"
-      (interactive)
-      (w32explore
-       (or file
-           (buffer-file-name (current-buffer))
-           default-directory)))
-    (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
+     (or file
+         (buffer-file-name (current-buffer))
+         default-directory)))
+  (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
 
-  ;; 需要删除gud-cdb.elc，不然运行报错
-  (use-package gud-cdb
-    ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
-    ;; 唯一不足的是不支持speedbar，还有attach    
-    :commands (cdb)
-    :init
-    (defalias 'defcustom% 'defcustom)
-    (defalias 'ignore* 'ignore)
-    (defalias 'loop* 'loop)
-    (defalias 'assoc** 'assoc)
-    (defvar cdb-add-g nil)
-    :config
-    (defadvice cdb-command-line-list-source
-        (after my-cdb-command-line-list-source activate)
-      "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
-      ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
-      (setq ad-return-value
-            (append
-             ad-return-value
-             (if cdb-add-g
-                 '("-2" "-G" "-netsymsno" "-g")
-               '("-2" "-G" "-netsymsno"))))) ;; cdb /?不对啦(跟.netsyms命令对得上)
-    ))
+;; 需要删除gud-cdb.elc，不然运行报错
+(use-package gud-cdb
+  :if (bound-and-true-p enable-feature-win32-only)
+  ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
+  ;; 唯一不足的是不支持speedbar，还有attach    
+  :commands (cdb)
+  :init
+  (defalias 'defcustom% 'defcustom)
+  (defalias 'ignore* 'ignore)
+  (defalias 'loop* 'loop)
+  (defalias 'assoc** 'assoc)
+  (defvar cdb-add-g nil)
+  :config
+  (defadvice cdb-command-line-list-source
+      (after my-cdb-command-line-list-source activate)
+    "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
+    ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
+    (setq ad-return-value
+          (append
+           ad-return-value
+           (if cdb-add-g
+               '("-2" "-G" "-netsymsno" "-g")
+             '("-2" "-G" "-netsymsno"))))) ;; cdb /?不对啦(跟.netsyms命令对得上)
+  )
 
 (use-package gud
   :defer t
