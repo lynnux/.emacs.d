@@ -14,6 +14,14 @@
 (dolist (f '(
            enable-feature-minibuffer
            enable-feature-win32-only
+           enable-feature-edit
+           enable-feature-lsp-dap
+           enable-feature-dired
+           enable-feature-gui
+           enable-feature-navigation
+           enable-feature-tools
+           enable-feature-prog
+           enable-feature-mode-line
            ))
   (eval `(defvar ,f t)))
 
@@ -246,7 +254,7 @@ _q_uit
 
 ;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
-  ;; :disabled
+  :if (bound-and-true-p enable-feature-dired)
   :init
   (setq
    dired-compress-file-alist
@@ -575,7 +583,7 @@ _q_uit
   (setq recentf-save-file
         (expand-file-name ".recentf" user-emacs-directory))
   (setq recentf-max-saved-items 500
-        recentf-auto-cleanup 10     ; 默认造成开机启动卡10秒！
+        recentf-auto-cleanup 'never     ; 默认造成开机启动卡10秒！
         )
   (setq
    recentf-exclude
@@ -762,6 +770,7 @@ _c_: hide comment        _q_uit
 
 ;;; better C-A C-E
 (use-package mwim
+  :if (bound-and-true-p enable-feature-navigation)
   :commands
   (mwim-beginning-of-code-or-line
    mwim-beginning-of-line-or-code
@@ -824,6 +833,7 @@ _c_: hide comment        _q_uit
   (super-save-advise-trigger-commands))
 
 (use-package tempel
+  :if (bound-and-true-p enable-feature-edit)
   :bind
   ( ;; ("M-+" . tempel-complete)
    ("M-<return>" . tempel-insert)
@@ -888,6 +898,7 @@ _c_: hide comment        _q_uit
 
 ;; 利用tempel实现yas功能
 (use-package yasnippet
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :config
   (setq yas-global-mode t)
@@ -989,6 +1000,7 @@ _c_: hide comment        _q_uit
 (load "lsp/yasnippet") ;; lsp需要先load yas
 
 (use-package auto-yasnippet
+  :if (bound-and-true-p enable-feature-edit)
   :commands (aya-create aya-expand)
   :init
   ;; 这个其实还挺好用的，用~xxx代替要替换的，或者`xxx'，多行要选中单行不用选中
@@ -1041,52 +1053,53 @@ _c_: hide comment        _q_uit
     (buffer-list))))
 
 ;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
-(when (functionp 'global-tab-line-mode)
-  (use-package tab-line
-    :defer 0.5
-    :init
+(use-package tab-line
+  :if (and (functionp 'global-tab-line-mode) (bound-and-true-p enable-feature-gui))
+  :defer 0.5
+  :init
+  (setq
+   tab-line-tabs-function 'ep-tabbar-buffer-list
+   tab-line-new-button-show nil)
+  (unless (version< emacs-version "29")
+    ;; 28.0.50 设置后鼠标不能选择buffer了
     (setq
-     tab-line-tabs-function 'ep-tabbar-buffer-list
-     tab-line-new-button-show nil)
-    (unless (version< emacs-version "29")
-      ;; 28.0.50 设置后鼠标不能选择buffer了
-      (setq
-       tab-line-close-button-show nil
-       tab-line-separator
-       (if (display-graphic-p)
-           ;; unicode符号展示网站 https://www.fuhaoku.net/block/Misc_Symbols
-           (propertize (format " %s "
-                               (char-to-string
-                                (let ((tl
-                                       (list
-                                        #x2618
-                                        #x266B
-                                        #x266E
-                                        #x266F
-                                        #x2665
-                                        #x2666
-                                        #x26DF
-                                        #o22666 ;; old
-                                        #x26FA
-                                        #x2691
-                                        #x267B
-                                        #x2615
-                                        #x2622
-                                        #x262F
-                                        #x26F4
-                                        #x26AB)))
-                                  (nth
-                                   (mod (random t) (length tl)) tl))))
-                       'face '(foreground-color . "cyan"))
-         " | ") ;; 这个比close button好看 
-       ))
-    :config
-    (global-tab-line-mode 1)
-    (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
-    (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)))
+     tab-line-close-button-show nil
+     tab-line-separator
+     (if (display-graphic-p)
+         ;; unicode符号展示网站 https://www.fuhaoku.net/block/Misc_Symbols
+         (propertize (format " %s "
+                             (char-to-string
+                              (let ((tl
+                                     (list
+                                      #x2618
+                                      #x266B
+                                      #x266E
+                                      #x266F
+                                      #x2665
+                                      #x2666
+                                      #x26DF
+                                      #o22666 ;; old
+                                      #x26FA
+                                      #x2691
+                                      #x267B
+                                      #x2615
+                                      #x2622
+                                      #x262F
+                                      #x26F4
+                                      #x26AB)))
+                                (nth
+                                 (mod (random t) (length tl)) tl))))
+                     'face '(foreground-color . "cyan"))
+       " | ") ;; 这个比close button好看 
+     ))
+  :config
+  (global-tab-line-mode 1)
+  (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
+  (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode))
 
 ;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
 (use-package idle-highlight-mode
+  :if (bound-and-true-p enable-feature-gui)
   :commands (idle-highlight--faces-at-point)
   :defer 1.1
   :init
@@ -1205,16 +1218,16 @@ _c_: hide comment        _q_uit
 (autoload 'vline-mode "vline" nil t)
 (global-set-key [(control ?|)] 'vline-mode)
 
-(when (display-graphic-p)
-  (use-package hl-line
-    :defer 0.6
-    :config
-    (global-hl-line-mode t)
-    (when use-my-face
-      (if (display-graphic-p)
-          (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
-        ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
-        ))))
+(use-package hl-line
+  :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
+  :defer 0.6
+  :config
+  (global-hl-line-mode t)
+  (when use-my-face
+    (if (display-graphic-p)
+        (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
+      ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
+      )))
 
 (defun esy/file-capf ()
   "File completion at point function."
@@ -1228,6 +1241,7 @@ _c_: hide comment        _q_uit
 ;; corfu的原理是添加completion-at-point-functions，很标准的做法
 ;; company机制不清楚。eglot+ctags用corfu好配一点
 (use-package corfu
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
   (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
@@ -1396,9 +1410,11 @@ _c_: hide comment        _q_uit
   )
 
 (use-package google-c-style
+  :if (bound-and-true-p enable-feature-prog)
   :commands (google-set-c-style))
 
 (use-package cc-mode
+  :if (bound-and-true-p enable-feature-prog)
   :defer t
   :init
   (defun my-c-mode-hook-set ()
@@ -1437,6 +1453,7 @@ _c_: hide comment        _q_uit
 
 ;; 这个hook了`push-mark'对内置`marker'支持很好！
 (use-package backward-forward
+  :if (bound-and-true-p enable-feature-navigation)
   :defer 0.7
   :custom (backward-forward-mark-ring-max 100)
   :config
@@ -1496,6 +1513,7 @@ _c_: hide comment        _q_uit
 ;; history可能会
 
 (use-package iss-mode
+  :if (bound-and-true-p enable-feature-prog)
   :init
   (setq iss-compiler-path "D:/Programme/Inno Setup 5/")
   (setq auto-mode-alist
@@ -1523,6 +1541,7 @@ _c_: hide comment        _q_uit
 (add-hook 'lisp-interaction-mode-hook 'my-elisp-hook)
 
 (use-package expand-region
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
   (dec-placeholder-fun
@@ -1539,6 +1558,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-S-t") 'er/contract-region))
 
 (use-package smart-region
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
   (defun smart-region()
@@ -1579,6 +1599,7 @@ _c_: hide comment        _q_uit
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
 (use-package multiple-cursors
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
   (defun load-multiple-cursors()
@@ -1627,6 +1648,7 @@ _c_: hide comment        _q_uit
 
 ;; avy可以配得跟ace jump完全一样，就没必要保留ace jump了
 (use-package avy
+  :if (bound-and-true-p enable-feature-navigation)
   :commands (avy-goto-char-timer avy-goto-word-1 avy-goto-line avy-resume)
   :init
   (define-key global-map (kbd "C-o") 'avy-goto-word-1)
@@ -1683,6 +1705,7 @@ _c_: hide comment        _q_uit
 
 ;; 删除当前位置到某个位置，要学会常用啊，比选中再删除快多了
 (use-package avy-zap
+  :if (bound-and-true-p enable-feature-navigation)
   :bind (("M-z" . avy-zap-to-char-dwim) ("M-Z" . avy-zap-up-to-char-dwim)))
 
 ;;; autohotkey文件编辑
@@ -1697,6 +1720,7 @@ _c_: hide comment        _q_uit
 (modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; 带中文必须这个编码，干脆就默认
 
 (use-package sr-speedbar
+  :if (bound-and-true-p enable-feature-navigation)
   :commands (sr-speedbar-toggle)
   :init
   (setq
@@ -1737,6 +1761,7 @@ _c_: hide comment        _q_uit
 
 
 (use-package imenu-list
+  :if (bound-and-true-p enable-feature-navigation)
   :commands (imenu-list-smart-toggle)
   :init
   (setq imenu-list-idle-update-delay 0.5)
@@ -1751,6 +1776,7 @@ _c_: hide comment        _q_uit
 
 ;; imenu不能显示cpp类里的函数，而lsp mode的imenu太卡了，想用ctag只对当前文件parse，counsel-etags的实现跟我想的一致，用得很爽！
 (use-package counsel-etags
+  :if (bound-and-true-p enable-feature-prog)
   :commands (imenu-setup-for-cpp)
   :init
   (defun ivy-set-occur (a b))
@@ -1804,6 +1830,7 @@ _c_: hide comment        _q_uit
   (add-to-list 'load-path "~/.emacs.d/packages/minibuffer")
   ;; 主要参考https://github.com/purcell/emacs.d/blob/master/lisp/init-minibuffer.el
   (use-package vertico
+    :if (bound-and-true-p enable-feature-minibuffer)
     :defer t
     :init
     (setq
@@ -2129,6 +2156,7 @@ symbol under cursor"
       (define-key embark-general-map [f2] 'embark-consult-rg)))
   ;; 预览功能很快！好像不是真的加载
   (use-package consult
+    :if (bound-and-true-p enable-feature-navigation)
     :load-path "~/.emacs.d/packages/minibuffer/consult-main"
     :commands
     (consult-ripgrep
@@ -2569,6 +2597,7 @@ symbol under cursor"
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)))
 
 (use-package smart-hungry-delete
+  :if (bound-and-true-p enable-feature-edit)
   :defer 0.8
   :config
   (smart-hungry-delete-add-default-hooks)
@@ -2644,6 +2673,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; magit
 (use-package magit
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (use-package magit-base
@@ -2724,6 +2754,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (shell-command "git config --global --unset https.proxy"))
 
 (use-package which-key
+  :if (bound-and-true-p enable-feature-gui)
   :init
   (setq
    which-key-popup-type
@@ -2735,6 +2766,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; easy-kill，添加类似vim里yi/a的东西！
 (use-package easy-kill
+  :if (bound-and-true-p enable-feature-edit)
   :commands (easy-kill easy-mark)
   :init
   (autoload 'easy-kill "easy-kill/easy-kill" "" nil)
@@ -2935,6 +2967,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               )))))))
 
 (use-package whole-line-or-region
+  :if (bound-and-true-p enable-feature-edit)
   :config
   (define-key
    whole-line-or-region-local-mode-map [remap kill-ring-save]
@@ -2955,6 +2988,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; project内置查找会用到，支持ripgrep了！
 (use-package xref
+  :if (bound-and-true-p enable-feature-navigation)
   :defer t
   :init
   (setq
@@ -3116,6 +3150,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
 ;; 所以目前仅用它来创建TAGS文件
 (use-package citre-ctags
+  :if (bound-and-true-p enable-feature-navigation)
   :defer t
   :init
   (dec-placeholder-fun
@@ -3256,6 +3291,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; 没有cache查找文件也超快！
 (use-package project
+  :if (bound-and-true-p enable-feature-prog)
   :defer t
   :commands (project-compile project-find-regexp project-root)
   :init
@@ -3323,6 +3359,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   )
 
 (use-package shell
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init (setq confirm-kill-processes nil)
   :config
@@ -3380,6 +3417,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (defun my/rg-dwim ()
@@ -3447,6 +3485,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; consult-grep -> embark-export to grep-mode
 ;; grep mode里C-c C-p开启编辑，C-c C-c完成，C-c C-k放弃编辑
 (use-package wgrep
+  :if (bound-and-true-p enable-feature-tools)
   :after (grep)
   :init
   (setq wgrep-auto-save-buffer t) ;; 编辑好自动保存
@@ -3714,6 +3753,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ))
  ((eq lsp-use-which 'eglot)
   (use-package eglot
+    :if (bound-and-true-p enable-feature-lsp-dap)
     :init
     ;; 最新emacs自带eglot并依赖external-completion
     (when (featurep 'external-completion)
@@ -3951,6 +3991,7 @@ _q_uit
 
 ;; 自动转换文本中的RGB颜色
 (use-package rainbow-mode
+  :if (bound-and-true-p enable-feature-gui)
   :commands (rainbow-mode)
   :hook (help-mode . rainbow-mode)
   :config
@@ -3960,6 +4001,7 @@ _q_uit
 
 ;; grammatical-edit bug太多了，pair用这个就够了
 (use-package elec-pair
+  :if (bound-and-true-p enable-feature-edit)
   :init
   (defvar my-auto-newline nil
     "自己实现auto newline")
@@ -4272,6 +4314,7 @@ _q_uit
 
 ;; jump后自动把屏幕居中
 (use-package scroll-on-jump
+  :if (bound-and-true-p enable-feature-navigation)
   :defer 0.3
   :config
   (setq scroll-on-jump-duration 0.0)
@@ -4292,13 +4335,16 @@ _q_uit
 
 ;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
 (use-package centered-cursor-mode
+  :if (bound-and-true-p enable-feature-navigation)
   :commands (centered-cursor-mode))
 
 (use-package yaml-mode
+  :if (bound-and-true-p enable-feature-prog)
   :commands (yaml-mode)
   :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
 (use-package diff-hl
+  :if (bound-and-true-p enable-feature-gui)
   :defer t
   :init
   (add-hook
@@ -4369,6 +4415,7 @@ _q_uit
                    t 'diff-hl-inline-popup-hide))))))
 
 (use-package maple-preview
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (defun note-preview ()
@@ -4411,6 +4458,7 @@ _q_uit
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (setq org-roam-db-gc-threshold most-positive-fixnum)
@@ -4531,6 +4579,7 @@ _q_uit
 ;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去(也可以设置:select t切换到)。
 ;; 规则跟shackle是一样的，不过设置:same有bug所以还不能去掉shackle
 (use-package poe
+  :if (bound-and-true-p enable-feature-gui)
   ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
   :defer 1.0
   :commands (poe-popup poe-rule poe-popup-toggle poe-popup-close)
@@ -4609,6 +4658,7 @@ _q_uit
 
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
 (use-package shackle
+  :if (bound-and-true-p enable-feature-gui)
   :defer 1.0
   :init
   (setq
@@ -4637,6 +4687,7 @@ _q_uit
 ;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
 ;; 按两下就会跳到行尾， C-u开头会对齐注释 
 (use-package comment-dwim-2
+  :if (bound-and-true-p enable-feature-edit)
   :defer 1.1 ;; 经常首次使用时卡住，故而不要用延迟加载了
   :bind ([remap comment-dwim] . comment-dwim-2)
   :init
@@ -4645,6 +4696,7 @@ _q_uit
 
 ;; 修改光标下的数字，这个支持十六进制(shift-number不支持)
 (use-package evil-numbers
+  :if (bound-and-true-p enable-feature-edit)
   :commands (evil-numbers/inc-at-pt evil-numbers/dec-at-pt)
   :init
   (global-set-key (kbd "C-=") 'evil-numbers/inc-at-pt)
@@ -4657,6 +4709,7 @@ _q_uit
   :config (global-so-long-mode))
 
 (use-package drag-stuff
+  :if (bound-and-true-p enable-feature-edit)
   :commands (drag-stuff-up drag-stuff-down drag-stuff-right drag-stuff-left)
   :init
   (global-set-key (kbd "C-<up>") 'drag-stuff-up)
@@ -4666,6 +4719,7 @@ _q_uit
   )
 
 (use-package elfeed
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (dec-placeholder-fun
@@ -4687,6 +4741,7 @@ _q_uit
 
 ;; 删除了csharp-compilation的引用，tree-sister好像没起作用，将就用了
 (use-package csharp-mode
+  :if (bound-and-true-p enable-feature-prog)
   :commands (csharp-mode)
   :init (add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-mode)))
 
@@ -4708,6 +4763,7 @@ _q_uit
 
 ;; 弥补topsy没有timer机制，减少卡顿
 (use-package mode-line-idle
+  :if (bound-and-true-p enable-feature-mode-line)
   :defer 1.0
   :commands (mode-line-idle)
   :config
@@ -4723,6 +4779,7 @@ _q_uit
 ;; topsy不同于which-key和breadcrumb之处是，它显示不是cursor所在函数，而是顶行所在函数，这样更直观一些
 ;; breadcrumb是依赖imenu，而我们是ctags生成的，显然没lsp那么好用了
 (use-package topsy
+  :if (bound-and-true-p enable-feature-mode-line)
   :commands (topsy-mode)
   :init
   (defun my-topsy-headline-click (event)
@@ -4867,6 +4924,7 @@ _q_uit
   )
 
 (use-package gud
+  :if (bound-and-true-p enable-feature-lsp-dap)
   :defer t
   :commands (gud-quit)
   :init
@@ -4985,6 +5043,7 @@ _q_uit
 ;; 支持pdb只有codelldb，lldb仅支持clang编译的exe(lldb原版pdb支持有两种，1种自写的pdb解析，2种是用msdia140，测试需要设置变量LLDB_USE_NATIVE_PDB_READER=yes)。
 ;; 而msvc调试器的dap中转有vsdbg(cpptools里包含)支持，但在dap协议里加了handshake防止其它产品使用
 (use-package dape
+  :if (bound-and-true-p enable-feature-lsp-dap)
   :defer t
   :init
   (autoload 'dape "lsp/dape" "" t)
@@ -5254,6 +5313,7 @@ _q_uit
 (global-set-key (kbd "<f5>") 'my-f5)
 
 (use-package god-mode
+  :if (bound-and-true-p enable-feature-navigation)
   :diminish (god-local-mode)
   :commands (god-local-mode)
   :init
@@ -5296,6 +5356,7 @@ _q_uit
 (add-to-list 'auto-mode-alist '("\\.jsfl\\'" . js-mode))
 
 (use-package dashboard
+  :if (bound-and-true-p enable-feature-gui)
   :load-path "~/.emacs.d/themes/emacs-dashboard-master"
   :init
   (setq
@@ -5352,6 +5413,7 @@ _q_uit
 ;; `sqlite-mode-open-file'查看sqlite数据库很好用啊！
 (when (functionp 'sqlite-mode-open-file)
   (use-package sqlite-mode
+    :if (bound-and-true-p enable-feature-tools)
     :defer t
     :config (add-hook 'sqlite-mode-hook 'god-local-mode)
     ;; for god-mode
@@ -5360,6 +5422,7 @@ _q_uit
     (define-key sqlite-mode-map (kbd "C-d") 'sqlite-mode-delete)))
 
 (use-package ggtags
+  :if (bound-and-true-p enable-feature-navigation)
   :commands
   (ggtags--xref-backend
    ggtags-create-tags ggtags-update-tags ggtags--xref-find-tags)
@@ -5435,6 +5498,7 @@ _q_uit
 
 ;; 这个比grugru要更灵活些，缺点是cursor会变，也没有`grugru-highlight-mode'高亮
 (use-package cycle-at-point
+  :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
   (global-set-key (kbd "C-j") 'cycle-at-point)
@@ -5558,341 +5622,346 @@ _q_uit
       (list :data result))))
 
 (use-package goto-addr
+  :if (bound-and-true-p enable-feature-gui)
   :defer 0.8
   :init
   (global-set-key (kbd "C-c C-o") 'goto-address-at-point) ;; 跟org快捷键一致
   :config (global-goto-address-mode 1))
 
-(if (fboundp 'treesit-language-available-p)
     ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
-    (progn
-      (use-package treesit
-        :commands (treesit-parser-create)
-        :defer t
-        :init
-        ;; M-x -ts-mode提取出来的
-        (setq
-         treesit-font-lock-level 4 ;; 最大化高亮
-         all-ts-mode
-         '((c++-ts-mode . cpp)
-           bash-ts-mode
-           c-ts-mode
-           cmake-ts-mode
-           (csharp-ts-mode. c-sharp)
-           css-ts-mode
-           dockerfile-ts-mode
-           elixir-ts-mode
-           go-mod-ts-mode
-           go-ts-mode
-           heex-ts-mode
-           html-ts-mode
-           java-ts-mode
-           js-ts-mode
-           json-ts-mode
-           python-ts-mode
-           ruby-ts-mode
-           rust-ts-mode
-           toml-ts-mode
-           tsx-ts-mode
-           typescript-ts-mode
-           yaml-ts-mode))
-        (cl-dolist
-         (ts1 all-ts-mode)
-         (let (ts
-               dll)
-           (pcase ts1
-             (`(,ts-mode . ,ts-file)
-              (setq ts ts-mode)
-              (setq dll ts-file))
-             (`,ts-mode
-              (setq ts ts-mode)
-              (setq dll
-                    (intern
-                     (replace-regexp-in-string
-                      "-ts-mode" "" (symbol-name ts))))))
-           ;; `fingertip'的`C-k'有问题，设置`forward-sexp-function'为nil修复
-           (if nil ;;(memq ts '(c++-ts-mode))
-               ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
-               (add-hook
-                (intern
-                 (concat
-                  (replace-regexp-in-string
-                   "-ts-mode" "" (symbol-name ts))
-                  "-mode-hook"))
-                #'(lambda () (treesit-parser-create dll)))
-             (add-to-list
-              'major-mode-remap-alist
-              (cons
+(use-package treesit
+  :if (and (fboundp 'treesit-language-available-p) (bound-and-true-p enable-feature-prog))
+  :commands (treesit-parser-create)
+  :defer t
+  :init
+  ;; M-x -ts-mode提取出来的
+  (setq
+   treesit-font-lock-level 4 ;; 最大化高亮
+   all-ts-mode
+   '((c++-ts-mode . cpp)
+     bash-ts-mode
+     c-ts-mode
+     cmake-ts-mode
+     (csharp-ts-mode. c-sharp)
+     css-ts-mode
+     dockerfile-ts-mode
+     elixir-ts-mode
+     go-mod-ts-mode
+     go-ts-mode
+     heex-ts-mode
+     html-ts-mode
+     java-ts-mode
+     js-ts-mode
+     json-ts-mode
+     python-ts-mode
+     ruby-ts-mode
+     rust-ts-mode
+     toml-ts-mode
+     tsx-ts-mode
+     typescript-ts-mode
+     yaml-ts-mode))
+  (cl-dolist
+      (ts1 all-ts-mode)
+    (let (ts
+          dll)
+      (pcase ts1
+        (`(,ts-mode . ,ts-file)
+         (setq ts ts-mode)
+         (setq dll ts-file))
+        (`,ts-mode
+         (setq ts ts-mode)
+         (setq dll
                (intern
-                (concat
-                 (replace-regexp-in-string
-                  "-ts-mode" "" (symbol-name ts))
-                 "-mode"))
-               ts)))))
+                (replace-regexp-in-string
+                 "-ts-mode" "" (symbol-name ts))))))
+      ;; `fingertip'的`C-k'有问题，设置`forward-sexp-function'为nil修复
+      (if nil ;;(memq ts '(c++-ts-mode))
+          ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
+          (add-hook
+           (intern
+            (concat
+             (replace-regexp-in-string
+              "-ts-mode" "" (symbol-name ts))
+             "-mode-hook"))
+           #'(lambda () (treesit-parser-create dll)))
+        (add-to-list
+         'major-mode-remap-alist
+         (cons
+          (intern
+           (concat
+            (replace-regexp-in-string
+             "-ts-mode" "" (symbol-name ts))
+            "-mode"))
+          ts)))))
 
-        ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
-        (add-hook
-         'emacs-lisp-mode-hook
-         #'(lambda () (treesit-parser-create 'elisp)))
-        (add-hook
-         'markdown-mode-hook
-         #'(lambda () (treesit-parser-create 'markdown)))
-        (add-hook
-         'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
-        (add-hook
-         'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
-        (with-eval-after-load 'c-ts-mode
-          ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
-          (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
-      (use-package fingertip
-        :commands (fingertip-mode)
-        :init
-        (dolist (hook
-                 (list
-                  'c-mode-common-hook
-                  'c-mode-hook
-                  'c++-mode-hook
-                  'java-mode-hook
-                  'haskell-mode-hook
-                  'emacs-lisp-mode-hook
-                  'lisp-interaction-mode-hook
-                  'lisp-mode-hook
-                  'maxima-mode-hook
-                  'ielm-mode-hook
-                  'sh-mode-hook
-                  'makefile-gmake-mode-hook
-                  'php-mode-hook
-                  'python-mode-hook
-                  'js-mode-hook
-                  'go-mode-hook
-                  'qml-mode-hook
-                  'jade-mode-hook
-                  'css-mode-hook
-                  'ruby-mode-hook
-                  'coffee-mode-hook
-                  'rust-mode-hook
-                  'rust-ts-mode-hook
-                  'qmake-mode-hook
-                  'lua-mode-hook
-                  'swift-mode-hook
-                  'web-mode-hook
-                  'markdown-mode-hook
-                  'llvm-mode-hook
-                  'conf-toml-mode-hook
-                  'nim-mode-hook
-                  'typescript-mode-hook
-                  'c-ts-mode-hook
-                  'c++-ts-mode-hook
-                  'cmake-ts-mode-hook
-                  'toml-ts-mode-hook
-                  'css-ts-mode-hook
-                  'js-ts-mode-hook
-                  'json-ts-mode-hook
-                  'python-ts-mode-hook
-                  'bash-ts-mode-hook
-                  'typescript-ts-mode-hook))
-          (add-hook hook #'(lambda () (fingertip-mode 1))))
-        :config (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
-
-        ;; 也可以C-q 选中在直接(，[等
-        (define-key
-         fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
-        (define-key
-         fingertip-mode-map (kbd "M-[") 'fingertip-wrap-bracket)
-        (define-key
-         fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
-        (define-key
-         fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
-        (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
-
-        ;; 修复cpp`C-k'bug
-        ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
-        (define-advice fingertip-common-mode-kill
-            (:around (orig-fn &rest args) fixcpp)
-          "不知道为啥对c/cpp只调用`kill-line'了事？"
-          (cl-letf (((symbol-function #'derived-mode-p)
-                     (lambda (_) nil)))
-            (apply orig-fn args)))))
-  (use-package tree-sitter
-    :commands
-    (tree-sitter-mode
-     tree-sitter-force-update tree-sitter-setup-timer)
-    :defer t
+  ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
+  (add-hook
+   'emacs-lisp-mode-hook
+   #'(lambda () (treesit-parser-create 'elisp)))
+  (add-hook
+   'markdown-mode-hook
+   #'(lambda () (treesit-parser-create 'markdown)))
+  (add-hook
+   'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
+  (add-hook
+   'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
+  (with-eval-after-load 'c-ts-mode
+    ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
+    (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
+  (use-package fingertip
+    :if (and (fboundp 'treesit-language-available-p) (bound-and-true-p enable-feature-prog))
+    :commands (fingertip-mode)
     :init
-    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
-    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
-    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
-    (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
-    (setq
-     tree-sitter-langs--testing t ;; 禁止联网check bin
-     tsc-dyn-get-from nil ;; 
-     tree-sitter-langs-git-dir nil ;; 禁止调用git
-     tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
-     tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core")
-    (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
-    :config
-    ;; elisp没有高亮
-    (add-to-list
-     'tree-sitter-major-mode-language-alist
-     '(emacs-lisp-mode . elisp))
-    (use-package tree-sitter-langs)
-
-    (defvar tree-sitter-idle-timer nil
-      "如果不需要hl功能，只需要按需调用tree-sitter-force-update即可，如defun范围功能")
-    (defun my/tree-sitter--after-change (beg new-end old-len)
-      (when tree-sitter-idle-timer
-        (cancel-timer tree-sitter-idle-timer))
-      (setq tree-sitter-idle-timer
-            (run-with-idle-timer 0.2 nil #'tree-sitter-force-update)))
-    (defun tree-sitter-force-update ()
-      (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
-      (tree-sitter--do-parse))
-    (when use-tree-sitter-hl-mode-hack
-      (defadvice tree-sitter--setup
-          (after my-tree-sitter--setup activate)
-        "去掉hook，改为timer模式"
-        (remove-hook
-         'after-change-functions #'tree-sitter--after-change
-         :local)
-        (remove-hook
-         'before-change-functions #'tree-sitter--before-change
-         :local))
-      (defun tree-sitter-setup-timer (&optional on)
-        (if on
-            (add-hook
-             'after-change-functions #'my/tree-sitter--after-change
-             nil
-             :local)
-          (remove-hook
-           'after-change-functions #'my/tree-sitter--after-change
-           :local)))))
-  ;; tsc里的(require 'dired-aux) 导致dired被加载了
-  (use-package tree-sitter-hl
-    :diminish (tree-sitter-mode)
-    :commands (tree-sitter-hl-mode)
-    ;; 来自`tree-sitter-major-mode-language-alist'
-    :hook
-    ((agda-mode
-      sh-mode
-      c-mode
-      caml-mode
-      csharp-mode
-      c++-mode
-      d-mode
-      css-mode
-      elm-mode
-      elixir-mode
-      go-mode
-      haskell-mode
-      hcl-mode
-      terraform-mode
-      html-mode
-      mhtml-mode
-      nix-mode
-      java-mode
-      javascript-mode
-      js-mode
-      js2-mode
-      js3-mode
-      json-mode
-      jsonc-mode
-      julia-mode
-      ocaml-mode
-      perl-mode
-      php-mode
-      prisma-mode
-      python-mode
-      pygn-mode
-      rjsx-mode
-      ruby-mode
-      rust-mode
-      rustic-mode
-      scala-mode
-      swift-mode
-      tuareg-mode
-      typescript-mode
-      verilog-mode
-      yaml-mode
-      zig-mode
-      emacs-lisp-mode)
-     .
-     (lambda ()
-       ;; (tree-sitter-hl-mode)
-       (grammatical-edit-mode 1)))
-    :config
-    ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
-    (defun remove-jit-lock-after-change ()
-      (when tree-sitter-hl-mode
-        (remove-hook 'after-change-functions 'jit-lock-after-change
-                     t)))
-    (when use-tree-sitter-hl-mode-hack
-      (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
-      (add-hook
-       'tree-sitter-hl-mode-hook
-       (lambda ()
-         (tree-sitter-setup-timer tree-sitter-hl-mode)
-         (if tree-sitter-hl-mode
-             (remove-jit-lock-after-change)
-           (add-hook 'after-change-functions 'jit-lock-after-change
-                     nil
-                     t))))))
-  (use-package grammatical-edit
-    :commands (grammatical-edit-mode)
-    :config
-    ;; 会影响kill-ring，作者还不改，暂时不用了
-    (define-key
-     grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
+    (dolist (hook
+             (list
+              'c-mode-common-hook
+              'c-mode-hook
+              'c++-mode-hook
+              'java-mode-hook
+              'haskell-mode-hook
+              'emacs-lisp-mode-hook
+              'lisp-interaction-mode-hook
+              'lisp-mode-hook
+              'maxima-mode-hook
+              'ielm-mode-hook
+              'sh-mode-hook
+              'makefile-gmake-mode-hook
+              'php-mode-hook
+              'python-mode-hook
+              'js-mode-hook
+              'go-mode-hook
+              'qml-mode-hook
+              'jade-mode-hook
+              'css-mode-hook
+              'ruby-mode-hook
+              'coffee-mode-hook
+              'rust-mode-hook
+              'rust-ts-mode-hook
+              'qmake-mode-hook
+              'lua-mode-hook
+              'swift-mode-hook
+              'web-mode-hook
+              'markdown-mode-hook
+              'llvm-mode-hook
+              'conf-toml-mode-hook
+              'nim-mode-hook
+              'typescript-mode-hook
+              'c-ts-mode-hook
+              'c++-ts-mode-hook
+              'cmake-ts-mode-hook
+              'toml-ts-mode-hook
+              'css-ts-mode-hook
+              'js-ts-mode-hook
+              'json-ts-mode-hook
+              'python-ts-mode-hook
+              'bash-ts-mode-hook
+              'typescript-ts-mode-hook))
+      (add-hook hook #'(lambda () (fingertip-mode 1))))
+    :config (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
 
     ;; 也可以C-q 选中在直接(，[等
     (define-key
-     grammatical-edit-mode-map
-     (kbd "M-\"")
-     'grammatical-edit-wrap-double-quote)
+     fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
     (define-key
-     grammatical-edit-mode-map
-     (kbd "M-[")
-     'grammatical-edit-wrap-bracket)
+     fingertip-mode-map (kbd "M-[") 'fingertip-wrap-bracket)
     (define-key
-     grammatical-edit-mode-map
-     (kbd "M-{")
-     'grammatical-edit-wrap-curly)
+     fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
     (define-key
-     grammatical-edit-mode-map
-     (kbd "M-(")
-     'grammatical-edit-wrap-round)
-    (define-key
-     grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
+     fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
+    (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
 
-    ;; (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+    ;; 修复cpp`C-k'bug
+    ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
+    (define-advice fingertip-common-mode-kill
+        (:around (orig-fn &rest args) fixcpp)
+      "不知道为啥对c/cpp只调用`kill-line'了事？"
+      (cl-letf (((symbol-function #'derived-mode-p)
+                 (lambda (_) nil)))
+        (apply orig-fn args))))
+(use-package tree-sitter
+  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
+  :commands
+  (tree-sitter-mode
+   tree-sitter-force-update tree-sitter-setup-timer)
+  :defer t
+  :init
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/core")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
+  (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
+  (setq
+   tree-sitter-langs--testing t  ;; 禁止联网check bin
+   tsc-dyn-get-from nil          ;; 
+   tree-sitter-langs-git-dir nil ;; 禁止调用git
+   tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
+   tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core")
+  (defvar use-tree-sitter-hl-mode-hack nil) ;; 高亮用after-change-hook变timer模式
+  :config
+  ;; elisp没有高亮
+  (add-to-list
+   'tree-sitter-major-mode-language-alist
+   '(emacs-lisp-mode . elisp))
+  (use-package tree-sitter-langs)
 
-    (when nil
-      ;; 支持hungry delete
-      (dolist (key '([remap delete-char] [remap delete-forward-char]))
-        (define-key
-         grammatical-edit-mode-map key
-         ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
-         '(menu-item
-           "maybe-grammatical-edit-forward-delete" nil
-           :filter
-           (lambda (&optional _)
-             (unless (looking-at-p "[[:space:]\n]")
-               #'grammatical-edit-forward-delete)))))
+  (defvar tree-sitter-idle-timer nil
+    "如果不需要hl功能，只需要按需调用tree-sitter-force-update即可，如defun范围功能")
+  (defun my/tree-sitter--after-change (beg new-end old-len)
+    (when tree-sitter-idle-timer
+      (cancel-timer tree-sitter-idle-timer))
+    (setq tree-sitter-idle-timer
+          (run-with-idle-timer 0.2 nil #'tree-sitter-force-update)))
+  (defun tree-sitter-force-update ()
+    (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
+    (tree-sitter--do-parse))
+  (when use-tree-sitter-hl-mode-hack
+    (defadvice tree-sitter--setup
+        (after my-tree-sitter--setup activate)
+      "去掉hook，改为timer模式"
+      (remove-hook
+       'after-change-functions #'tree-sitter--after-change
+       :local)
+      (remove-hook
+       'before-change-functions #'tree-sitter--before-change
+       :local))
+    (defun tree-sitter-setup-timer (&optional on)
+      (if on
+          (add-hook
+           'after-change-functions #'my/tree-sitter--after-change
+           nil
+           :local)
+        (remove-hook
+         'after-change-functions #'my/tree-sitter--after-change
+         :local)))))
+  ;; tsc里的(require 'dired-aux) 导致dired被加载了
+(use-package tree-sitter-hl
+  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
+  :diminish (tree-sitter-mode)
+  :commands (tree-sitter-hl-mode)
+  ;; 来自`tree-sitter-major-mode-language-alist'
+  :hook
+  ((agda-mode
+    sh-mode
+    c-mode
+    caml-mode
+    csharp-mode
+    c++-mode
+    d-mode
+    css-mode
+    elm-mode
+    elixir-mode
+    go-mode
+    haskell-mode
+    hcl-mode
+    terraform-mode
+    html-mode
+    mhtml-mode
+    nix-mode
+    java-mode
+    javascript-mode
+    js-mode
+    js2-mode
+    js3-mode
+    json-mode
+    jsonc-mode
+    julia-mode
+    ocaml-mode
+    perl-mode
+    php-mode
+    prisma-mode
+    python-mode
+    pygn-mode
+    rjsx-mode
+    ruby-mode
+    rust-mode
+    rustic-mode
+    scala-mode
+    swift-mode
+    tuareg-mode
+    typescript-mode
+    verilog-mode
+    yaml-mode
+    zig-mode
+    emacs-lisp-mode)
+   .
+   (lambda ()
+     ;; (tree-sitter-hl-mode)
+     (grammatical-edit-mode 1)))
+  :config
+  ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
+  (defun remove-jit-lock-after-change ()
+    (when tree-sitter-hl-mode
+      (remove-hook 'after-change-functions 'jit-lock-after-change
+                   t)))
+  (when use-tree-sitter-hl-mode-hack
+    (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
+    (add-hook
+     'tree-sitter-hl-mode-hook
+     (lambda ()
+       (tree-sitter-setup-timer tree-sitter-hl-mode)
+       (if tree-sitter-hl-mode
+           (remove-jit-lock-after-change)
+         (add-hook 'after-change-functions 'jit-lock-after-change
+                   nil
+                   t))))))
+(use-package grammatical-edit
+  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
+  :commands (grammatical-edit-mode)
+  :config
+  ;; 会影响kill-ring，作者还不改，暂时不用了
+  (define-key
+   grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
 
-      (dolist (key
-               '([remap backward-delete-char-untabify]
-                 [remap backward-delete-char]
-                 [remap delete-backward-char]))
-        (define-key
-         grammatical-edit-mode-map key
-         '(menu-item
-           "maybe-grammatical-edit-backward-delete" nil
-           :filter
-           (lambda (&optional _)
-             (unless (looking-back "[[:space:]\n]" 1)
-               #'grammatical-edit-backward-delete))))))))
+  ;; 也可以C-q 选中在直接(，[等
+  (define-key
+   grammatical-edit-mode-map
+   (kbd "M-\"")
+   'grammatical-edit-wrap-double-quote)
+  (define-key
+   grammatical-edit-mode-map
+   (kbd "M-[")
+   'grammatical-edit-wrap-bracket)
+  (define-key
+   grammatical-edit-mode-map
+   (kbd "M-{")
+   'grammatical-edit-wrap-curly)
+  (define-key
+   grammatical-edit-mode-map
+   (kbd "M-(")
+   'grammatical-edit-wrap-round)
+  (define-key
+   grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
+
+  ;; (define-key grammatical-edit-mode-map (kbd "M-<return>") 'grammatical-edit-jump-out-pair-and-newline)
+
+  (when nil
+    ;; 支持hungry delete
+    (dolist (key '([remap delete-char] [remap delete-forward-char]))
+      (define-key
+       grammatical-edit-mode-map key
+       ;; menu-item是一个symbol，而且很有趣的是，F1-K能实时知道是调用哪个函数
+       '(menu-item
+         "maybe-grammatical-edit-forward-delete" nil
+         :filter
+         (lambda (&optional _)
+           (unless (looking-at-p "[[:space:]\n]")
+             #'grammatical-edit-forward-delete)))))
+
+    (dolist (key
+             '([remap backward-delete-char-untabify]
+               [remap backward-delete-char]
+               [remap delete-backward-char]))
+      (define-key
+       grammatical-edit-mode-map key
+       '(menu-item
+         "maybe-grammatical-edit-backward-delete" nil
+         :filter
+         (lambda (&optional _)
+           (unless (looking-back "[[:space:]\n]" 1)
+             #'grammatical-edit-backward-delete)))))))
 
 ;; 保存当前windows配置为bookmark
 (use-package burly
+  :if (bound-and-true-p enable-feature-tools)
   :commands
   (burly-bookmark-handler
    burly-bookmark-windows
@@ -5906,6 +5975,7 @@ _q_uit
 
 (autoload 'elisp-autofmt-buffer "tools/elisp-autofmt.el" "" t)
 (use-package elisp-autofmt
+  :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
   (with-eval-after-load 'elisp-mode
