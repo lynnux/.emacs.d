@@ -5390,7 +5390,7 @@ _q_uit
   (advice-add 'require :around 'dashboard-load-bypass-ffap)
   :config
   (define-advice dashboard-insert-recents (:around (orig-fn &rest args) my)
-    "避免调用`recentf-cleanup'导致首次启动时间长到10秒"
+    "避免调用`recentf-cleanup'导致首次启动时间长到10秒。新版本已含`dashboard-remove-missing-entry'开关"
     (cl-letf (((symbol-function #'recentf-cleanup)
                (lambda (&rest _))))
       (recentf-mode 1)
