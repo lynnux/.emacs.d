@@ -5397,6 +5397,14 @@ _q_uit
       (apply orig feature args)))
   (advice-add 'require :around 'dashboard-load-bypass-ffap)
   :config
+  (define-advice dashboard-insert-recents (:around (orig-fn &rest args) my)
+    "避免调用`recentf-cleanup'导致首次启动时间长到10秒"
+    (cl-letf (((symbol-function #'recentf-cleanup)
+               (lambda (&rest _))))
+      (recentf-mode 1)
+      ;; 这里临时缩短`recentf-list'确保处理时间不会太长
+      (let ((recentf-list (dashboard-subseq recentf-list 20)))
+        (apply orig-fn args))))
   (advice-remove 'require 'dashboard-load-bypass-ffap)
   (use-package ffap
     :commands (ffap-guesser))
