@@ -5069,6 +5069,9 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
+  (define-advice dape--next-like-command (:before (&rest args) my)
+    "命令运行前重置布局"
+    (run-hook-with-args 'dape-on-start-hooks))
   (define-advice dape--read-config (:around (orig-fn &rest args) my)
     "实现调试开始无须选择命令，C-u F5才需要选择命令"
     (if (or current-prefix-arg (not dape-history))
@@ -5081,8 +5084,6 @@ _q_uit
     "只能在after开启eldoc-mode"
     (unless (bound-and-true-p eldoc-mode)
       (eldoc-mode 1)))
-  (winner-mode 1) ;; C-left恢复窗口
-  ;; (global-eldoc-mode 1) ;; 点击变量时显示值
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
   ;; 测试命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
