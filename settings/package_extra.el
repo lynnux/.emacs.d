@@ -1550,19 +1550,10 @@ _c_: hide comment        _q_uit
 
 (use-package expand-region
   :if (bound-and-true-p enable-feature-edit)
+  :load-path "~/.emacs.d/packages/expand-region/expand-region.el-master"
+  :commands(er--expand-region-1 er/contract-region er/expand-region)
   :defer t
   :init
-  (dec-placeholder-fun
-   er--expand-region-1 ;; 实际使用的是这个，被`easy-kill-er'调用
-   expand-region
-   "~/.emacs.d/packages/expand-region/expand-region.el-master"
-   '(expand-region
-     python-mode-expansions
-     cc-mode-expansions
-     text-mode-expansions
-     subword-mode-expansions
-     the-org-mode-expansions
-     python-el-fgallina-expansions)) ;; 到时有错误再添加什么吧，用得也不多
   (global-set-key (kbd "C-S-t") 'er/contract-region))
 
 (use-package smart-region
