@@ -226,6 +226,11 @@
 (use-package s
   :commands (s-split s-word-wrap))
 
+(use-package f
+  :defer t
+  :init
+  (provide 'f-shortdoc))
+
 (use-package eldoc
   :if (bound-and-true-p enable-feature-builtin)
   :defer t
