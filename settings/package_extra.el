@@ -1554,7 +1554,23 @@ _c_: hide comment        _q_uit
   :commands(er--expand-region-1 er/contract-region er/expand-region)
   :defer t
   :init
-  (global-set-key (kbd "C-S-t") 'er/contract-region))
+  (global-set-key (kbd "C-S-t") 'er/contract-region)
+  :config
+  (when (and (fboundp 'treesit-language-available-p) (treesit-available-p))
+    (defun my/treesit-mark-bigger-node ()
+      "https://emacs-china.org/t/treesit-expand-region-el/23406"
+      (let* ((root (treesit-buffer-root-node))
+             (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
+             (node-start (treesit-node-start node))
+             (node-end (treesit-node-end node)))
+        ;; Node fits the region exactly. Try its parent node instead.
+        (when (and (= (region-beginning) node-start) (= (region-end) node-end))
+          (when-let ((node (treesit-node-parent node)))
+            (setq node-start (treesit-node-start node)
+                  node-end (treesit-node-end node))))
+        (set-mark node-end)
+        (goto-char node-start)))
+    (add-to-list 'er/try-expand-list 'my/treesit-mark-bigger-node)))
 
 (use-package smart-region
   :if (bound-and-true-p enable-feature-edit)
