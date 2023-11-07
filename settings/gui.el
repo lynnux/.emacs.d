@@ -142,7 +142,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S")
 
-(setq enable-local-variables :safe) ;; 关闭打开一些文件时risk local variable提示
+(setq enable-local-variables :all) ;; 关闭打开一些文件时risk local variable提示
 (setq
  ring-bell-function #'ignore
  visible-bell t) ;; ** 关闭 beep ; blink, don't bark
