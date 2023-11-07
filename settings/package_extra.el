@@ -5742,6 +5742,9 @@ _q_uit
    'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
   (add-hook
    'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
+  (add-hook
+   'lisp-data-mode-hook
+   #'(lambda () (treesit-parser-create 'elisp)))
   (with-eval-after-load 'c-ts-mode
     ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
     (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
@@ -5757,6 +5760,7 @@ _q_uit
               'java-mode-hook
               'haskell-mode-hook
               'emacs-lisp-mode-hook
+              'lisp-data-mode-hook
               'lisp-interaction-mode-hook
               'lisp-mode-hook
               'maxima-mode-hook

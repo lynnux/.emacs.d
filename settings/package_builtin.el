@@ -212,8 +212,10 @@
     'find-file-hook
     (lambda ()
       ;; 排除git commit的buffer
-      (unless (string-match
-               "\\(?:COMMIT_EDITMSG\\)$" buffer-file-name)
+      (unless (or (string-match
+                   "\\(?:COMMIT_EDITMSG\\)$" buffer-file-name)
+                  (string-match
+                   "\\(?:.dir-locals.el\\)$" buffer-file-name))
         (view-mode 1))))))
 (keyboard-translate ?\C-i ?\H-i) ;把C-I绑定为开关，terminal貌似不起作用
 (global-set-key [?\H-i] 'view-mode)
