@@ -3436,6 +3436,90 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (setq compilation-read-command nil) ;; 大部分时间都在同一个项目，无须再按RET确认了
     ))
 
+(defun get-vvcvarsall.bat (arch)
+  "参考https://github.com/scikit-build/cmake-FindVcvars/blob/master/FindVcvars.cmake"
+  ;; 目前就支持vs2010： 1600 # VS 2010
+  (let ((root
+         '(HKU ; HKEY_USERS
+           HKCU ; HKEY_CURRENT_USER
+           HKLM ; HKEY_LOCAL_MACHINE
+           HKCR ; HKEY_CLASSES_ROOT
+           ))
+        (vs_version "10.0")
+        (_suffixes (list "" "_Config"))
+        (_vc "VC")
+        _vs_registry_paths
+        path)
+    (catch 'return
+      (dolist (r root)
+        (dolist (_suffix _suffixes)
+          (setq path
+                (w32-read-registry
+                 r
+                 (concat
+                  "SOFTWARE\\Microsoft\\VisualStudio\\"
+                  vs_version
+                  _suffix
+                  "\\Setup\\"
+                  _vc)
+                 "ProductDir"))
+          (when path
+            (setq
+             path
+             (concat
+              path
+              (if (equal arch "32")
+                  "bin\\vcvars32.bat"
+                "bin\\amd64\\vcvars64.bat" ;; vs2008是vcvarsamd64.bat
+                )))
+            (throw 'return path)))))))
+(defun set-vc-env(arch)
+  (let* ((env-string (shell-command-to-string (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
+         (all (s-split "\n" env-string)))
+    (dolist (line all)
+      (setq l (s-split "=" line))
+      (when-let* ((left (car-safe l))
+                  (right (car-safe (cdr-safe l))))
+        ;; (message "letf:%S, right:%S" left right)
+        (setenv left right)))))
+(defun choose-vc-toolchain()
+  "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
+  (interactive)
+  (set-vc-env (consult--read '("32" "64"))))
+
+
+;; 测试需要msvc.bat环境，参考https://discourse.cmake.org/t/is-there-a-way-to-integrate-the-call-to-vcvarsall-bat-into-the-cmakepresets-json-file/3100/14
+(use-package cmake-integration
+  :commands(cmake-integration-save-and-compile 
+            cmake-integration-save-and-compile-no-completion
+            cmake-integration-get-codemodel-reply-json-filename
+            cmake-integration-cmake-reconfigure)
+  :init
+  ;; 像vs一样含有Debug/Release，还有个RelWithDebInfo
+  (setq cmake-integration-generator "Ninja Multi-Config") 
+  (global-set-key
+   [f7]
+   (lambda ()
+     (interactive)
+     (if (cmake-integration-get-codemodel-reply-json-filename)
+         (call-interactively (if (or (not my-cmake-integration-current-target-history) current-prefix-arg)
+                                 'cmake-integration-save-and-compile
+                               'my-cmake-integration-save-and-compile-last-target))
+       (call-interactively 'cmake-integration-cmake-reconfigure))))
+  (defvar my-cmake-integration-current-target-history nil)
+  (defun my-cmake-integration-save-and-compile-last-target ()
+    "让target能被session记录"
+    (interactive)
+    (cmake-integration-save-and-compile-no-completion
+     (or (car my-cmake-integration-current-target-history) "all")))
+  :config
+  (define-advice cmake-integration-save-and-compile-no-completion (:after ( &rest args) my)
+    (setq my-cmake-integration-current-target-history (list (or cmake-integration-current-target "all"))))
+  (define-advice cmake-integration-get-build-folder (:around (orig-fn &rest args) my)
+    (if (bound-and-true-p my-cmake-build-dir)
+        my-cmake-build-dir                ; 由`.dir-locals.el'设置
+      (apply orig-fn args))))
+
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
   :if (bound-and-true-p enable-feature-tools)
@@ -6014,22 +6098,24 @@ _q_uit
    burly-open-last-bookmark
    burly-open-url))
 
-(autoload 'elisp-autofmt-buffer "tools/elisp-autofmt.el" "" t)
 (use-package elisp-autofmt
   :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
-  (with-eval-after-load 'elisp-mode
-    (define-key
-     emacs-lisp-mode-map [(meta f8)]
-     (lambda ()
-       "禁止message提示"
-       (interactive)
-       (if buffer-read-only
-           (signal 'text-read-only nil)
-         (let ((inhibit-message t))
-           (call-interactively 'elisp-autofmt-buffer))
-         (message "elisp format done.")))))
+  (autoload 'elisp-autofmt-buffer "tools/elisp-autofmt.el" "" t)
+  (autoload 'elisp-autofmt-region "tools/elisp-autofmt.el" "" t)
+  ;; bug还是有的，不要多用，
+  ;; (with-eval-after-load 'elisp-mode
+  ;;   (define-key
+  ;;    emacs-lisp-mode-map [(meta f8)]
+  ;;    (lambda ()
+  ;;      "禁止message提示"
+  ;;      (interactive)
+  ;;      (if buffer-read-only
+  ;;          (signal 'text-read-only nil)
+  ;;        (let ((inhibit-message t))
+  ;;          (call-interactively 'elisp-autofmt-buffer))
+  ;;        (message "elisp format done.")))))
   :config
   ;; 使用内置的use-package格式化会有问题，必须加把use-package加入到`load-path'
   ;; see https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/4
