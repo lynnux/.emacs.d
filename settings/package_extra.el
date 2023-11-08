@@ -3474,6 +3474,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                 )))
             (throw 'return path)))))))
 (defun set-vc-env(arch)
+  (setq my-vc-toolchain-already-set t)
   (let* ((env-string (shell-command-to-string (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
          (all (s-split "\n" env-string)))
     (dolist (line all)
@@ -3482,11 +3483,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                   (right (car-safe (cdr-safe l))))
         ;; (message "letf:%S, right:%S" left right)
         (setenv left right)))))
+(defvar my-vc-toolchain-history nil)
+(defvar my-vc-toolchain-already-set nil)
 (defun choose-vc-toolchain()
   "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
   (interactive)
-  (set-vc-env (consult--read '("32" "64"))))
-
+  (setq my-vc-toolchain-history (list (if (equal (consult--read '("vs2010 32" "vs2010 64")) "vs2010 32") "32" "64")))
+  (set-vc-env my-vc-toolchain-history))
+(defun check-vc-toolchain-set()
+  (unless my-vc-toolchain-already-set
+    (set-vc-env (or (car-safe my-vc-toolchain-history) "32"))))
+(with-eval-after-load 'eglot
+  (check-vc-toolchain-set))
+(with-eval-after-load 'cmake-integration
+  (check-vc-toolchain-set))
 
 ;; 测试需要msvc.bat环境，参考https://discourse.cmake.org/t/is-there-a-way-to-integrate-the-call-to-vcvarsall-bat-into-the-cmakepresets-json-file/3100/14
 (use-package cmake-integration
@@ -3505,7 +3515,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (call-interactively (if (or (not my-cmake-integration-current-target-history) current-prefix-arg)
                                  'cmake-integration-save-and-compile
                                'my-cmake-integration-save-and-compile-last-target))
-       (call-interactively 'cmake-integration-cmake-reconfigure))))
+       (call-interactively 'cmake-integration-cmake-reconfigure)
+       (setq my-cmake-integration-current-target-history nil))))
   (defvar my-cmake-integration-current-target-history nil)
   (defun my-cmake-integration-save-and-compile-last-target ()
     "让target能被session记录"
@@ -3516,8 +3527,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-advice cmake-integration-save-and-compile-no-completion (:after ( &rest args) my)
     (setq my-cmake-integration-current-target-history (list (or cmake-integration-current-target "all"))))
   (define-advice cmake-integration-get-build-folder (:around (orig-fn &rest args) my)
-    (if (bound-and-true-p my-cmake-build-dir)
-        my-cmake-build-dir                ; 由`.dir-locals.el'设置
+    (or (if (equal (or (car-safe my-vc-toolchain-history) "32") "32")
+            (and (bound-and-true-p my-cmake-build-dir) my-cmake-build-dir) ; 由`.dir-locals.el'设置
+          (and (bound-and-true-p my-cmake-build-dir64) my-cmake-build-dir64))
       (apply orig-fn args))))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
