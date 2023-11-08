@@ -3436,6 +3436,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (setq compilation-read-command nil) ;; 大部分时间都在同一个项目，无须再按RET确认了
     ))
 
+;; `cmake-integration'是直接调用cmake编译的，需要集成vcvarsall.bat的环境变量
 (defun get-vvcvarsall.bat (arch)
   "参考https://github.com/scikit-build/cmake-FindVcvars/blob/master/FindVcvars.cmake"
   ;; 目前就支持vs2010： 1600 # VS 2010
@@ -3498,7 +3499,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (with-eval-after-load 'cmake-integration
   (check-vc-toolchain-set))
 
-;; 测试需要msvc.bat环境，参考https://discourse.cmake.org/t/is-there-a-way-to-integrate-the-call-to-vcvarsall-bat-into-the-cmakepresets-json-file/3100/14
 (use-package cmake-integration
   :commands(cmake-integration-save-and-compile 
             cmake-integration-save-and-compile-no-completion
