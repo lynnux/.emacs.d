@@ -295,7 +295,13 @@ _q_uit
   (use-package dired-sidebar
     :commands (dired-sidebar-toggle-sidebar)
     :init
-    (global-set-key (kbd "<C-f1>") 'dired-sidebar-toggle-sidebar)
+    (global-set-key (kbd "<C-f1>") (lambda()
+                                     (interactive)
+                                     (unless (featurep 'dired-subtree)
+                                       (delay-require-libs
+                                        "~/.emacs.d/packages/dired/dired-hacks-master"
+                                        '(dired-subtree)))
+                                     (call-interactively 'dired-sidebar-toggle-sidebar)))
     (setq
      dired-sidebar-theme 'ascii
      dired-sidebar-width 32
