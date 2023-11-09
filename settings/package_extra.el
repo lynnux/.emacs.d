@@ -1032,6 +1032,9 @@ _c_: hide comment        _q_uit
         "*rg*"
         "*eww*"
         "*xref*"
+        "*shell*"
+        "*eshell*"
+        "*PowerShell*"
         "*org-roam*"
         "*elfeed-entry*"
         "*elfeed-search*"
@@ -1932,6 +1935,7 @@ _c_: hide comment        _q_uit
       :commands (vertico-multiform-reverse vertico-reverse-mode)
       :init (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
     (use-package vertico-multiform
+      :after(vertico)
       :init
       (when nil
         ;; 调试用
@@ -3412,6 +3416,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                (kill-buffer (process-buffer process)))))))
   (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout))
 
+;; 这个比shell更好的是每行那个提示删不掉了，powershell的快捷键更好用但不支持
+(use-package powershell
+  :commands(powershell)
+  :config
+  (define-advice powershell (:after ( &rest args) my)
+    "解决kill*powershell*窗口延迟3秒的问题"
+    (remove-hook 'kill-buffer-hook 'powershell-delete-process))
+  (define-advice powershell--get-max-window-width (:around (orig-fn &rest args) my)
+    "解决启动延迟3秒问题"
+    ;; powershell里得到的是240，但emacs里得到是200，改为240有问题。写死应该是没问题的
+    (setq powershell--max-window-width 200)))
+
 (use-package compile
   :if (bound-and-true-p enable-feature-builtin)
   :defer t
@@ -4734,8 +4750,8 @@ _q_uit
   (poe-popup 'compilation-mode)
   (poe-popup 'Man-mode :size 0.4 :shrink t)
   (poe-popup "\\*gud-.*" :regexp t :select t) ;; (poe-popup 'gud-mode) 没效果
-  (poe-popup "*eshell*" :select t)
-  (poe-popup "*shell*" :select t)
+  ;; (poe-popup "*eshell*" :select t)
+  ;; (poe-popup "*shell*" :select t)
 
   (add-hook 'poe-popup-mode-hook (lambda () (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
@@ -5409,13 +5425,13 @@ _q_uit
   (let ((to-shell
          (not
           (string-match
-           "\*[e]?shell\*" (buffer-name (current-buffer)))))
+           "\*\\(Power\\)?[e]?[Ss]hell\*" (buffer-name (current-buffer)))))
         (create-shell t)
         (showed-buffer-list (ep-tabbar-buffer-list)))
     ;; 当前为shell buffer，切换到最近其它buffer
     (cl-dolist
      (b (buffer-list))
-     (if (string-match "\*[e]?shell\*" (buffer-name b))
+     (if (string-match "\*\\(Power\\)?[e]?[Ss]hell\*" (buffer-name b))
          (when to-shell
            (switch-to-buffer b)
            (setq create-shell nil)
@@ -5425,7 +5441,7 @@ _q_uit
            (switch-to-buffer b)
            (cl-return)))))
     (when (and create-shell to-shell)
-      (call-interactively 'shell))))
+      (call-interactively 'powershell))))
 (defun my-f5 ()
   (interactive)
   (when current-prefix-arg
