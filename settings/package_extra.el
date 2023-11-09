@@ -3388,46 +3388,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;;     (modify-coding-system-alist 'process "[cC][mM][dD][pP][rR][oO][xX][yY]" cmdproxy-old-encoding)))
   )
 
-(use-package shell
-  :if (bound-and-true-p enable-feature-tools)
-  :defer t
-  :init (setq confirm-kill-processes nil)
-  :config
-  ;; No confirm kill process: for *shell* and *compilation*
-  ;; https://emacs.stackexchange.com/q/24330
-  (defun set-no-process-query-on-exit ()
-    (let ((proc (get-buffer-process (current-buffer))))
-      (when (processp proc)
-        (set-process-query-on-exit-flag proc nil))))
-  (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
-  ;; Kill the buffer when the shell process exits
-  ;; https://emacs.stackexchange.com/a/48307
-  (defun kill-buffer-on-shell-logout ()
-    (let* ((proc (get-buffer-process (current-buffer)))
-           (sentinel (process-sentinel proc)))
-      (set-process-sentinel
-       proc
-       `(lambda (process signal)
-          ;; Call the original process sentinel first.
-          (funcall #',sentinel process signal)
-          ;; Kill the buffer on an exit signal.
-          (and (memq (process-status process) '(exit signal))
-               (buffer-live-p (process-buffer process))
-               (kill-buffer (process-buffer process)))))))
-  (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout))
-
-;; 这个比shell更好的是每行那个提示删不掉了，powershell的快捷键更好用但不支持
-(use-package powershell
-  :commands(powershell)
-  :config
-  (define-advice powershell (:after ( &rest args) my)
-    "解决kill*powershell*窗口延迟3秒的问题"
-    (remove-hook 'kill-buffer-hook 'powershell-delete-process))
-  (define-advice powershell--get-max-window-width (:around (orig-fn &rest args) my)
-    "解决启动延迟3秒问题"
-    ;; powershell里得到的是240，但emacs里得到是200，改为240有问题。写死应该是没问题的
-    (setq powershell--max-window-width 200)))
-
 (use-package compile
   :if (bound-and-true-p enable-feature-builtin)
   :defer t
@@ -5441,7 +5401,7 @@ _q_uit
            (switch-to-buffer b)
            (cl-return)))))
     (when (and create-shell to-shell)
-      (call-interactively 'powershell))))
+      (call-interactively 'shell)))) ;; eshell相比shell更好的是prompt删不掉
 (defun my-f5 ()
   (interactive)
   (when current-prefix-arg
@@ -6174,6 +6134,61 @@ _q_uit
   ;; TODO：`enriched-toggle-markup'切换后字符的属性并没有去掉
   )
 
+(use-package shell
+  :if (bound-and-true-p enable-feature-tools)
+  :defer t
+  :init
+  (setq confirm-kill-processes nil)
+  (setq comint-input-sender 'my-shell-simple-send)
+  (defun my-shell-simple-send (proc command)
+    "添加额外命令cls清屏"
+    (cond
+     ((string-match "^[ \t]*cls[ \t]*$" command)
+      (comint-send-string proc "\n")
+      (erase-buffer))
+     ;; Send other commands to the default handler.
+     (t (comint-simple-send proc command))))
+  :config
+  (define-key shell-mode-map (kbd "C-c C-d") nil)
+  (define-key shell-mode-map '[up] 'comint-previous-input)
+  (define-key shell-mode-map '[down] 'comint-next-input)
+
+  ;; No confirm kill process: for *shell* and *compilation*
+  ;; https://emacs.stackexchange.com/q/24330
+  (defun set-no-process-query-on-exit ()
+    (let ((proc (get-buffer-process (current-buffer))))
+      (when (processp proc)
+        (set-process-query-on-exit-flag proc nil))))
+  (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
+  ;; Kill the buffer when the shell process exits
+  ;; https://emacs.stackexchange.com/a/48307
+  (defun kill-buffer-on-shell-logout ()
+    (let* ((proc (get-buffer-process (current-buffer)))
+           (sentinel (process-sentinel proc)))
+      (set-process-sentinel
+       proc
+       `(lambda (process signal)
+          ;; Call the original process sentinel first.
+          (funcall #',sentinel process signal)
+          ;; Kill the buffer on an exit signal.
+          (and (memq (process-status process) '(exit signal))
+               (buffer-live-p (process-buffer process))
+               (kill-buffer (process-buffer process)))))))
+  (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout))
+
+
+;; 这个比shell更好的是prompt删不掉，但不支持powershell自身的快捷键
+(use-package powershell
+  :commands(powershell)
+  :config
+  (define-advice powershell (:after ( &rest args) my)
+    "解决kill*powershell*窗口延迟3秒的问题"
+    (remove-hook 'kill-buffer-hook 'powershell-delete-process))
+  (define-advice powershell--get-max-window-width (:around (orig-fn &rest args) my)
+    "解决启动延迟3秒问题"
+    ;; powershell里得到的是240，但emacs里得到是200，改为240有问题。写死应该是没问题的
+    (setq powershell--max-window-width 200)))
+
 (use-package eshell
   :defer t
   :config
@@ -6181,6 +6196,11 @@ _q_uit
   (define-advice pcomplete-completions-at-point
       (:around (orig-fn &rest args))
     (esy/file-capf)))
+
+(use-package esh-proc
+  :defer t
+  :config
+  (define-key eshell-proc-mode-map (kbd "C-c C-d") nil))
 
 ;; 处理shell的补全，也改为只枚举当前目录
 (use-package comint
