@@ -3420,8 +3420,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; `cmake-integration'是直接调用cmake编译的，需要集成vcvarsall.bat的环境变量
 (defun get-vvcvarsall.bat (arch)
-  "参考https://github.com/scikit-build/cmake-FindVcvars/blob/master/FindVcvars.cmake"
-  ;; 目前就支持vs2010： 1600 # VS 2010
+  "参考https://github.com/scikit-build/cmake-FindVcvars/blob/master/FindVcvars.cmake
+这种方法也就支持Microsoft Visual Studio 14.0之前 https://github.com/makinggamesinc/vcvarsall.bat-locations"
+  
   (let ((root
          '(HKU ; HKEY_USERS
            HKCU ; HKEY_CURRENT_USER
