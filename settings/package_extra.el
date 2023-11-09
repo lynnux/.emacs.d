@@ -6159,7 +6159,6 @@ _q_uit
     (let ((proc (get-buffer-process (current-buffer))))
       (when (processp proc)
         (set-process-query-on-exit-flag proc nil))))
-  (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
   ;; Kill the buffer when the shell process exits
   ;; https://emacs.stackexchange.com/a/48307
   (defun kill-buffer-on-shell-logout ()
@@ -6174,7 +6173,11 @@ _q_uit
           (and (memq (process-status process) '(exit signal))
                (buffer-live-p (process-buffer process))
                (kill-buffer (process-buffer process)))))))
-  (add-hook 'shell-mode-hook 'kill-buffer-on-shell-logout))
+  (add-hook 'shell-mode-hook (lambda()
+                               (make-local-variable 'comint-prompt-read-only)
+                               (setq comint-prompt-read-only t) ;; 让不删除prompt
+                               (kill-buffer-on-shell-logout)
+                               (set-no-process-query-on-exit))))
 
 
 ;; 这个比shell更好的是prompt删不掉，但不支持powershell自身的快捷键
