@@ -32,7 +32,7 @@
    org-roam-directory (file-truename "F:/doc/mynote")
    )
   (add-path-to-execute-path "C:/Git/usr/bin")
-  (add-path-to-execute-path "C:/Program Files (x86)/Windows Kits/10/Debuggers/x64"))
+  (add-path-to-execute-path "E:/green/cmake-3.23.0-rc5-windows-x86_64/bin"))
  
  ;; work
  ((and 
