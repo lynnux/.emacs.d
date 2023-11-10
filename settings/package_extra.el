@@ -3392,25 +3392,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-builtin)
   :defer t
   :init
-  (global-set-key
-   [f7]
-   (lambda ()
-     (interactive)
-     (when current-prefix-arg ;; C-u F7同S-F7
-       (setq compilation-read-command t))
-     (progn
-       (call-interactively 'project-compile)
-       (setq compilation-read-command nil) ;; 不再提示
-       )))
-  (global-set-key
-   [(shift f7)]
-   (lambda ()
-     (interactive)
-     (progn
-       (setq compilation-read-command t)
-       (call-interactively 'project-compile)
-       (setq compilation-read-command nil) ;; 不再提示
-       )))
+  (defun my-project-compile()
+    (interactive)
+    (when current-prefix-arg ;; C-u F7同S-F7
+      (setq compilation-read-command t))
+    (progn
+      (call-interactively 'project-compile)
+      (setq compilation-read-command nil) ;; 不再提示
+      ))
+  (global-set-key [f7] 'my-project-compile)
+  (global-set-key [(shift f7)] 'my-project-compile)
   :config
   (when compile-history
     ;; 自动使用最近的历史记录
@@ -3457,7 +3448,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                 )))
             (throw 'return path)))))))
 (defun set-vc-env(arch)
-  (setq my-vc-toolchain-already-set t)
+  (setq arch (string-replace "vs2010 " "" arch))
+  (setq vc-toolchain-already-set t)
   (let* ((env-string (shell-command-to-string (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
          (all (s-split "\n" env-string)))
     (dolist (line all)
@@ -3466,16 +3458,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                   (right (car-safe (cdr-safe l))))
         ;; (message "letf:%S, right:%S" left right)
         (setenv left right)))))
-(defvar my-vc-toolchain-history nil)
-(defvar my-vc-toolchain-already-set nil)
-(defun choose-vc-toolchain()
+(defvar select-compiler-history nil)
+(defvar vc-toolchain-already-set nil)
+(defun select-compiler()
   "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
   (interactive)
-  (setq my-vc-toolchain-history (list (if (equal (consult--read '("vs2010 32" "vs2010 64")) "vs2010 32") "32" "64")))
-  (set-vc-env my-vc-toolchain-history))
+  (setq select-compiler-history (list (consult--read '("vs2010 32" "vs2010 64" "project-compile"))))
+  (unless (equal (car-safe select-compiler-history) "project-compile")
+    (set-vc-env (car-safe select-compiler-history))))
 (defun check-vc-toolchain-set()
-  (unless my-vc-toolchain-already-set
-    (set-vc-env (or (car-safe my-vc-toolchain-history) "32"))))
+  (unless vc-toolchain-already-set
+    (set-vc-env (or (car-safe select-compiler-history) "32"))))
 (with-eval-after-load 'eglot
   (check-vc-toolchain-set))
 (with-eval-after-load 'cmake-integration
@@ -3488,17 +3481,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             cmake-integration-cmake-reconfigure)
   :init
   ;; 像vs一样含有Debug/Release，还有个RelWithDebInfo
-  (setq cmake-integration-generator "Ninja Multi-Config") 
-  (global-set-key
-   [f7]
-   (lambda ()
-     (interactive)
-     (if (cmake-integration-get-codemodel-reply-json-filename)
-         (call-interactively (if (or (not my-cmake-integration-current-target-history) current-prefix-arg)
-                                 'cmake-integration-save-and-compile
-                               'my-cmake-integration-save-and-compile-last-target))
-       (call-interactively 'cmake-integration-cmake-reconfigure)
-       (setq my-cmake-integration-current-target-history nil))))
+  (setq cmake-integration-generator "Ninja Multi-Config")
+  (defun cmake-compile()
+    (interactive)
+    (if (cmake-integration-get-codemodel-reply-json-filename)
+        (call-interactively (if (or (not my-cmake-integration-current-target-history) current-prefix-arg)
+                                'cmake-integration-save-and-compile
+                              'my-cmake-integration-save-and-compile-last-target))
+      (call-interactively 'cmake-integration-cmake-reconfigure)
+      (setq my-cmake-integration-current-target-history nil)))
+  (global-set-key [f7] (lambda()
+                         (interactive)
+                         (if (equal (car-safe select-compiler-history) "project-compile")
+                             (call-interactively 'my-project-compile)
+                           (call-interactively 'cmake-compile)
+                           )))
   (defvar my-cmake-integration-current-target-history nil)
   (defun my-cmake-integration-save-and-compile-last-target ()
     "让target能被session记录"
@@ -3509,7 +3506,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-advice cmake-integration-save-and-compile-no-completion (:after ( &rest args) my)
     (setq my-cmake-integration-current-target-history (list (or cmake-integration-current-target "all"))))
   (define-advice cmake-integration-get-build-folder (:around (orig-fn &rest args) my)
-    (or (if (equal (or (car-safe my-vc-toolchain-history) "32") "32")
+    (or (if (equal (or (car-safe select-compiler-history) "32") "32")
             (and (bound-and-true-p my-cmake-build-dir) my-cmake-build-dir) ; 由`.dir-locals.el'设置
           (and (bound-and-true-p my-cmake-build-dir64) my-cmake-build-dir64))
       (apply orig-fn args))))
