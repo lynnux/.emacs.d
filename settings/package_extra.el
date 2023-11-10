@@ -3464,11 +3464,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
   (interactive)
   (setq select-compiler-history (list (consult--read '("vs2010 32" "vs2010 64" "project-compile"))))
-  (unless (equal (car-safe select-compiler-history) "project-compile")
-    (set-vc-env (car-safe select-compiler-history))))
+  (let ((vc-toolchain-already-set nil))
+    (check-vc-toolchain-set)))
 (defun check-vc-toolchain-set()
   (unless vc-toolchain-already-set
-    (set-vc-env (or (car-safe select-compiler-history) "32"))))
+    (unless (equal (car-safe select-compiler-history) "project-compile")
+      (set-vc-env (car-safe select-compiler-history)))))
 (with-eval-after-load 'eglot
   (check-vc-toolchain-set))
 (with-eval-after-load 'cmake-integration
