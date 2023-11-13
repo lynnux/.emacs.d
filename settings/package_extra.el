@@ -71,8 +71,6 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/compat-main.zip")
   (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
-  (ensure-latest
-   "~/.emacs.d/packages/org/emacs-maple-preview-master.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/rg.el-master.zip")
@@ -4515,32 +4513,28 @@ _q_uit
                    diff-hl-inline-popup-transient-mode-map1
                    t 'diff-hl-inline-popup-hide))))))
 
-(use-package maple-preview
-  :if (bound-and-true-p enable-feature-tools)
+(ignore-errors (module-load "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
+(ignore-errors (module-load "f:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
+(use-package emacs-preview
+  :if (functionp 'emacs-preview-rs/web-server-start)
   :defer t
   :init
   (defun note-preview ()
     (interactive)
-    (unless (featurep 'maple-preview)
-      (delay-require-libs
-       "~/.emacs.d/packages/org" '(websocket simple-httpd))
+    (unless (featurep 'emacs-preview)
       (dec-placeholder-fun
-       maple-preview-mode
-       maple-preview
-       "~/.emacs.d/packages/org/emacs-maple-preview-master"
-       '(maple-preview)))
-    (call-interactively 'maple-preview-mode))
-
-  (setq maple-preview:allow-modes
-        '(org-mode markdown-mode html-mode web-mode mhtml-mode))
+       emacs-preview-mode
+       emacs-preview
+       "h:/prj/rust/emacs-preview-rs/src"
+       '(emacs-preview)))
+    (call-interactively 'emacs-preview-mode))
   :config
-  (defadvice maple-preview:init (after my-maple-preview:init activate)
-    ;; 这个hook还达到了自动滚屏的效果? (需要用鼠标点击不同位置)
-    (add-hook 'buffer-list-update-hook 'maple-preview:send-to-server))
-  (defadvice maple-preview:finalize
-      (after my-maple-preview:finalize activate)
-    (remove-hook
-     'buffer-list-update-hook 'maple-preview:send-to-server)))
+  (setq maple-preview:allow-modes
+        '(org-mode markdown-mode html-mode web-mode mhtml-mode css-mode)) ;; html打开后落在css上就是`css-mode'
+  (with-eval-after-load 'dired-sidebar
+    (define-advice dired-sidebar-find-file (:after (&rest args) my)
+      "解决click点击不更新preview问题"
+      (emacs-preview:send-to-server))))
 
 (use-package winner
   :defer t
