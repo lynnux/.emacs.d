@@ -4525,7 +4525,9 @@ _q_uit
       (dec-placeholder-fun
        emacs-preview-mode
        emacs-preview
-       "h:/prj/rust/emacs-preview-rs/src"
+       (if (file-exists-p "h:/prj/rust/emacs-preview-rs/src")
+           "h:/prj/rust/emacs-preview-rs/src"
+         "f:/prj/rust/emacs-preview-rs/src")
        '(emacs-preview)))
     (call-interactively 'emacs-preview-mode))
   :config
