@@ -1620,9 +1620,11 @@ _c_: hide comment        _q_uit
 (autoload 'markdown-mode "markdown-mode"
   "Major mode for editing Markdown files"
   t)
-(add-to-list 'auto-mode-alist '("\\.text\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist
+             '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode))
+(autoload 'gfm-mode "markdown-mode"
+  "Major mode for editing GitHub Flavored Markdown files" t)
+(add-to-list 'auto-mode-alist '("[Rr][Ee][Aa][Dd][Mm][Ee]\\.md\\'" . gfm-mode))
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
 (use-package multiple-cursors
