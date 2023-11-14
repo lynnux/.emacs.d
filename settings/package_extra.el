@@ -11,23 +11,23 @@
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
 ;; 在这里开启/关闭feature，用于调试问题
-(dolist (f '(
-             enable-feature-builtin
-             enable-feature-minibuffer
-             enable-feature-win32-only
-             enable-feature-edit
-             enable-feature-lsp-dap
-             enable-feature-dired
-             enable-feature-gui
-             enable-feature-navigation
-             enable-feature-tools
-             enable-feature-prog
-             enable-feature-mode-line
-             ))
+(dolist (f
+         '(enable-feature-builtin
+           enable-feature-minibuffer
+           enable-feature-win32-only
+           enable-feature-edit
+           enable-feature-lsp-dap
+           enable-feature-dired
+           enable-feature-gui
+           enable-feature-navigation
+           enable-feature-tools
+           enable-feature-prog
+           enable-feature-mode-line))
   (eval `(defvar ,f t)))
 
 (when (bound-and-true-p enable-feature-win32-only)
-  (setq enable-feature-win32-only (string-equal system-type "windows-nt")))
+  (setq enable-feature-win32-only
+        (string-equal system-type "windows-nt")))
 
 (defun delay-require-libs (path list &optional keep-load-path)
   "临时设置`load-path'并require需要的库"
@@ -37,7 +37,8 @@
   (unless keep-load-path
     (setq load-path (delete path load-path))))
 
-(defmacro dec-placeholder-fun (fn feature path list &optional keep-load-path)
+(defmacro dec-placeholder-fun
+    (fn feature path list &optional keep-load-path)
   "对可以延迟调用的命令，延迟设置`load-path'，并在require后还原`load-path'"
   `(defun ,fn (&optional arg)
      (interactive)
@@ -179,7 +180,9 @@
   :load-path "~/.emacs.d/packages/minibuffer/compat-main"
   :config
   ;; 加载后可以直接从`load-path'去掉了
-  (setq load-path (delete "~/.emacs.d/packages/minibuffer/compat-main" load-path)))
+  (setq load-path
+        (delete
+         "~/.emacs.d/packages/minibuffer/compat-main" load-path)))
 
 (defvar use-my-face nil)
 
@@ -226,8 +229,7 @@
 
 (use-package f
   :defer t
-  :init
-  (provide 'f-shortdoc))
+  :init (provide 'f-shortdoc))
 
 (use-package eldoc
   :if (bound-and-true-p enable-feature-builtin)
@@ -278,8 +280,16 @@ _q_uit
   (use-package dired-recent
     :defer t
     :init
-    (dec-placeholder-fun dired-recent-open dired-recent "~/.emacs.d/packages/dired" '(dired-recent) t)
-    (dec-placeholder-fun dired-recent-mode dired-recent "~/.emacs.d/packages/dired" '(dired-recent) t)
+    (dec-placeholder-fun dired-recent-open
+                         dired-recent
+                         "~/.emacs.d/packages/dired"
+                         '(dired-recent)
+                         t)
+    (dec-placeholder-fun dired-recent-mode
+                         dired-recent
+                         "~/.emacs.d/packages/dired"
+                         '(dired-recent)
+                         t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
     (global-set-key (kbd "C-c d") 'dired-recent-open)
     (global-set-key (kbd "C-c C-d") 'dired-recent-open)
@@ -293,13 +303,15 @@ _q_uit
   (use-package dired-sidebar
     :commands (dired-sidebar-toggle-sidebar)
     :init
-    (global-set-key (kbd "<C-f1>") (lambda()
-                                     (interactive)
-                                     (unless (featurep 'dired-subtree)
-                                       (delay-require-libs
-                                        "~/.emacs.d/packages/dired/dired-hacks-master"
-                                        '(dired-subtree)))
-                                     (call-interactively 'dired-sidebar-toggle-sidebar)))
+    (global-set-key
+     (kbd "<C-f1>")
+     (lambda ()
+       (interactive)
+       (unless (featurep 'dired-subtree)
+         (delay-require-libs
+          "~/.emacs.d/packages/dired/dired-hacks-master"
+          '(dired-subtree)))
+       (call-interactively 'dired-sidebar-toggle-sidebar)))
     (setq
      dired-sidebar-theme 'ascii
      dired-sidebar-width 32
@@ -595,9 +607,10 @@ _q_uit
   :init
   (setq recentf-save-file
         (expand-file-name ".recentf" user-emacs-directory))
-  (setq recentf-max-saved-items 500
-        recentf-auto-cleanup 'never     ; 默认造成开机启动卡10秒！
-        )
+  (setq
+   recentf-max-saved-items 500
+   recentf-auto-cleanup 'never ; 默认造成开机启动卡10秒！
+   )
   (setq
    recentf-exclude
    '(".cache"
@@ -1074,7 +1087,9 @@ _c_: hide comment        _q_uit
 
 ;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
 (use-package tab-line
-  :if (and (functionp 'global-tab-line-mode) (bound-and-true-p enable-feature-gui))
+  :if
+  (and (functionp 'global-tab-line-mode)
+       (bound-and-true-p enable-feature-gui))
   :defer 0.5
   :init
   (setq
@@ -1277,7 +1292,7 @@ _c_: hide comment        _q_uit
    corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
    corfu-min-width 30 ;; 不知道怎么回事，有时候显示不全但补全功能正常
    )
-  
+
   ;; 偷偷隐藏创建corfu的frame加快首次使用
   (run-with-idle-timer
    1.5 nil
@@ -1563,23 +1578,27 @@ _c_: hide comment        _q_uit
 (use-package expand-region
   :if (bound-and-true-p enable-feature-edit)
   :load-path "~/.emacs.d/packages/expand-region/expand-region.el-master"
-  :commands(er--expand-region-1 er/contract-region er/expand-region)
+  :commands (er--expand-region-1 er/contract-region er/expand-region)
   :defer t
-  :init
-  (global-set-key (kbd "C-S-t") 'er/contract-region)
+  :init (global-set-key (kbd "C-S-t") 'er/contract-region)
   :config
-  (when (and (fboundp 'treesit-language-available-p) (treesit-available-p))
+  (when (and (fboundp 'treesit-language-available-p)
+             (treesit-available-p))
     (defun my/treesit-mark-bigger-node ()
       "https://emacs-china.org/t/treesit-expand-region-el/23406"
       (let* ((root (treesit-buffer-root-node))
-             (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
+             (node
+              (treesit-node-descendant-for-range
+               root (region-beginning) (region-end)))
              (node-start (treesit-node-start node))
              (node-end (treesit-node-end node)))
         ;; Node fits the region exactly. Try its parent node instead.
-        (when (and (= (region-beginning) node-start) (= (region-end) node-end))
+        (when (and (= (region-beginning) node-start)
+                   (= (region-end) node-end))
           (when-let ((node (treesit-node-parent node)))
-            (setq node-start (treesit-node-start node)
-                  node-end (treesit-node-end node))))
+            (setq
+             node-start (treesit-node-start node)
+             node-end (treesit-node-end node))))
         (set-mark node-end)
         (goto-char node-start)))
     (add-to-list 'er/try-expand-list 'my/treesit-mark-bigger-node)))
@@ -1588,12 +1607,13 @@ _c_: hide comment        _q_uit
   :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
-  (defun smart-region()
+  (defun smart-region ()
     (interactive)
     (unless (featurep 'smart-region)
       (fmakunbound 'smart-region)
       (save-excursion
-        (with-temp-buffer (er--expand-region-1))
+        (with-temp-buffer
+          (er--expand-region-1))
         (load-multiple-cursors))
       (require 'smart-region))
     (call-interactively 'smart-region))
@@ -1620,34 +1640,46 @@ _c_: hide comment        _q_uit
 (autoload 'markdown-mode "markdown-mode"
   "Major mode for editing Markdown files"
   t)
-(add-to-list 'auto-mode-alist
-             '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode))
+(add-to-list
+ 'auto-mode-alist
+ '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'"
+   .
+   markdown-mode))
 (autoload 'gfm-mode "markdown-mode"
-  "Major mode for editing GitHub Flavored Markdown files" t)
-(add-to-list 'auto-mode-alist '("[Rr][Ee][Aa][Dd][Mm][Ee]\\.md\\'" . gfm-mode))
+  "Major mode for editing GitHub Flavored Markdown files"
+  t)
+(add-to-list
+ 'auto-mode-alist '("[Rr][Ee][Aa][Dd][Mm][Ee]\\.md\\'" . gfm-mode))
 
 ;;; 类似sublime的多光标功能(以M键更像是visual code)
 (use-package multiple-cursors
   :if (bound-and-true-p enable-feature-edit)
   :defer t
   :init
-  (defun load-multiple-cursors()
+  (defun load-multiple-cursors ()
     (unless (featurep 'multiple-cursors)
-      (delay-require-libs "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master" '(multiple-cursors))))
-  (defmacro my-mc-cmd(fn)
-    `(lambda()
+      (delay-require-libs
+       "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master"
+       '(multiple-cursors))))
+  (defmacro my-mc-cmd (fn)
+    `(lambda ()
        (interactive)
        (load-multiple-cursors)
        (call-interactively ,fn)))
   ;; 这个不能用`my-mc-cmd'去wrap
-  (dec-placeholder-fun mc/mark-next-like-this multiple-cursors "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master" '(multiple-cursors))
+  (dec-placeholder-fun
+   mc/mark-next-like-this
+   multiple-cursors
+   "~/.emacs.d/packages/multiple-cursors/multiple-cursors.el-master"
+   '(multiple-cursors))
   ;; mc询问你的命令都保存在这里面了
   (setq
    mc/list-file "~/.emacs.d/packages/multiple-cursors/my-cmds.el"
    mc/always-run-for-all t ;; 禁止提示，需要run once的在my-cmds.el里加
    )
   (global-unset-key (kbd "<M-down-mouse-1>"))
-  (global-set-key (kbd "M-<mouse-1>") (my-mc-cmd 'mc/add-cursor-on-click))
+  (global-set-key
+   (kbd "M-<mouse-1>") (my-mc-cmd 'mc/add-cursor-on-click))
   (global-set-key (kbd "<f8>") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<f8>") (my-mc-cmd 'mc/mark-all-dwim)) ;; 最智能！无须选中自动选中当前symbol，也支持region，多行region是选里面的！先是选中defun里的，再按是所有！
   ;; Tips: C-'可以隐藏没有选中的项，modeline有提示当前有多少mc项
@@ -1658,7 +1690,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
   (global-set-key (kbd "S-<f8>") 'mc/skip-to-next-like-this) ;; 跳过当前选中
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this-dwim) ;; dwim的更智能
-  
+
   (define-key mc/keymap (kbd "C-v") nil)
   (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode) ;; 退出，C-J输入换行
   ;; 改变指针颜色以示区别 
@@ -1869,12 +1901,17 @@ _c_: hide comment        _q_uit
      vertico-count 20 ;; 高度多少行
      vertico-sort-function nil ;; 对需要排序的，添加到`vertico-multiform-commands'里
      )
-    (run-with-idle-timer 0.8 nil
-     #'(lambda()
-         (add-to-list 'load-path "~/.emacs.d/packages/minibuffer/vertico-main")
+    (run-with-idle-timer
+     0.8 nil
+     #'(lambda ()
+         (add-to-list
+          'load-path "~/.emacs.d/packages/minibuffer/vertico-main")
          (require 'vertico)))
-    :config (vertico-mode 1)
-    (add-to-list 'load-path "~/.emacs.d/packages/minibuffer/vertico-main/extensions")
+    :config
+    (vertico-mode 1)
+    (add-to-list
+     'load-path
+     "~/.emacs.d/packages/minibuffer/vertico-main/extensions")
     ;; extension说明
     ;; vertico-buffer.el     用buffer窗口代替minibuffer，但是多个窗口不确定它会出现在什么地方
     ;; vertico-directory.el  测试没成功
@@ -1935,7 +1972,7 @@ _c_: hide comment        _q_uit
       :commands (vertico-multiform-reverse vertico-reverse-mode)
       :init (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
     (use-package vertico-multiform
-      :after(vertico)
+      :after (vertico)
       :init
       (when nil
         ;; 调试用
@@ -2108,8 +2145,7 @@ _c_: hide comment        _q_uit
       :init (marginalia-mode)
       :config
       ;; 去掉file等，因为consult-fd可能上万文件，会影响速度
-      (setf (alist-get 'file marginalia-annotator-registry) '(none))
-      )
+      (setf (alist-get 'file marginalia-annotator-registry) '(none)))
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :commands
@@ -2714,11 +2750,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      (if (symbol-function 'transient-define-prefix) ;; emacs高版本自带`transient'
          '(with-editor)
        '(with-editor transient))))
-  (dec-placeholder-fun
-   magit-status
-   magit
-   "~/.emacs.d/packages/magit/magit-master/lisp"
-   '(magit magit-status))
+  (dec-placeholder-fun magit-status
+                       magit
+                       "~/.emacs.d/packages/magit/magit-master/lisp"
+                       '(magit magit-status))
 
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq
@@ -3183,16 +3218,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-navigation)
   :defer t
   :init
-  (dec-placeholder-fun
-   citre-create-tags-file
-   citre-ctags
-   "~/.emacs.d/packages/citre/citre-master"
-   '(citre-ctags))
-  (dec-placeholder-fun
-   citre-update-this-tags-file
-   citre-ctags
-   "~/.emacs.d/packages/citre/citre-master"
-   '(citre-ctags))
+  (dec-placeholder-fun citre-create-tags-file
+                       citre-ctags
+                       "~/.emacs.d/packages/citre/citre-master"
+                       '(citre-ctags))
+  (dec-placeholder-fun citre-update-this-tags-file
+                       citre-ctags
+                       "~/.emacs.d/packages/citre/citre-master"
+                       '(citre-ctags))
   (setq
    citre-default-create-tags-file-location 'project-cache
    citre-use-project-root-when-creating-tags t
@@ -3214,11 +3247,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (use-package citre-util
     :defer t
     :init
-    (dec-placeholder-fun
-     citre-tags-file-path
-     citre-util
-     "~/.emacs.d/packages/citre/citre-master"
-     '(citre-util)))
+    (dec-placeholder-fun citre-tags-file-path
+                         citre-util
+                         "~/.emacs.d/packages/citre/citre-master"
+                         '(citre-util)))
   (use-package etags
     :defer t
     :commands
@@ -3392,7 +3424,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-builtin)
   :defer t
   :init
-  (defun my-project-compile()
+  (defun my-project-compile ()
     (interactive)
     (when current-prefix-arg ;; C-u F7同S-F7
       (setq compilation-read-command t))
@@ -3448,10 +3480,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                 "bin\\amd64\\vcvars64.bat" ;; vs2008是vcvarsamd64.bat
                 )))
             (throw 'return path)))))))
-(defun set-vc-env(arch)
+(defun set-vc-env (arch)
   (setq arch (string-replace "vs2010 " "" arch))
   (setq vc-toolchain-already-set t)
-  (let* ((env-string (shell-command-to-string (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
+  (let* ((env-string
+          (shell-command-to-string
+           (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
          (all (s-split "\n" env-string)))
     (dolist (line all)
       (setq l (s-split "=" line))
@@ -3461,15 +3495,19 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (setenv left right)))))
 (defvar select-compiler-history nil)
 (defvar vc-toolchain-already-set nil)
-(defun select-compiler()
+(defun select-compiler ()
   "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
   (interactive)
-  (setq select-compiler-history (list (consult--read '("vs2010 32" "vs2010 64" "project-compile"))))
+  (setq select-compiler-history
+        (list
+         (consult--read
+          '("vs2010 32" "vs2010 64" "project-compile"))))
   (let ((vc-toolchain-already-set nil))
     (check-vc-toolchain-set)))
-(defun check-vc-toolchain-set()
+(defun check-vc-toolchain-set ()
   (unless vc-toolchain-already-set
-    (unless (equal (car-safe select-compiler-history) "project-compile")
+    (unless (equal
+             (car-safe select-compiler-history) "project-compile")
       (set-vc-env (car-safe select-compiler-history)))))
 (with-eval-after-load 'eglot
   (check-vc-toolchain-set))
@@ -3477,27 +3515,31 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (check-vc-toolchain-set))
 
 (use-package cmake-integration
-  :commands(cmake-integration-save-and-compile 
-            cmake-integration-save-and-compile-no-completion
-            cmake-integration-get-codemodel-reply-json-filename
-            cmake-integration-cmake-reconfigure)
+  :commands
+  (cmake-integration-save-and-compile
+   cmake-integration-save-and-compile-no-completion
+   cmake-integration-get-codemodel-reply-json-filename
+   cmake-integration-cmake-reconfigure)
   :init
   ;; 像vs一样含有Debug/Release，还有个RelWithDebInfo
   (setq cmake-integration-generator "Ninja Multi-Config")
-  (defun cmake-compile()
+  (defun cmake-compile ()
     (interactive)
     (if (cmake-integration-get-codemodel-reply-json-filename)
-        (call-interactively (if (or (not my-cmake-integration-current-target-history) current-prefix-arg)
-                                'cmake-integration-save-and-compile
-                              'my-cmake-integration-save-and-compile-last-target))
+        (call-interactively
+         (if (or (not my-cmake-integration-current-target-history)
+                 current-prefix-arg)
+             'cmake-integration-save-and-compile
+           'my-cmake-integration-save-and-compile-last-target))
       (call-interactively 'cmake-integration-cmake-reconfigure)
       (setq my-cmake-integration-current-target-history nil)))
-  (global-set-key [f7] (lambda()
-                         (interactive)
-                         (if (equal (car-safe select-compiler-history) "project-compile")
-                             (call-interactively 'my-project-compile)
-                           (call-interactively 'cmake-compile)
-                           )))
+  (global-set-key
+   [f7]
+   (lambda ()
+     (interactive)
+     (if (equal (car-safe select-compiler-history) "project-compile")
+         (call-interactively 'my-project-compile)
+       (call-interactively 'cmake-compile))))
   (defvar my-cmake-integration-current-target-history nil)
   (defun my-cmake-integration-save-and-compile-last-target ()
     "让target能被session记录"
@@ -3505,13 +3547,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (cmake-integration-save-and-compile-no-completion
      (or (car my-cmake-integration-current-target-history) "all")))
   :config
-  (define-advice cmake-integration-save-and-compile-no-completion (:after ( &rest args) my)
-    (setq my-cmake-integration-current-target-history (list (or cmake-integration-current-target "all"))))
-  (define-advice cmake-integration-get-build-folder (:around (orig-fn &rest args) my)
+  (define-advice cmake-integration-save-and-compile-no-completion
+      (:after (&rest args) my)
+    (setq my-cmake-integration-current-target-history
+          (list (or cmake-integration-current-target "all"))))
+  (define-advice cmake-integration-get-build-folder
+      (:around (orig-fn &rest args) my)
     (or (if (equal (or (car-safe select-compiler-history) "32") "32")
-            (and (bound-and-true-p my-cmake-build-dir) my-cmake-build-dir) ; 由`.dir-locals.el'设置
-          (and (bound-and-true-p my-cmake-build-dir64) my-cmake-build-dir64))
-      (apply orig-fn args))))
+            (and (bound-and-true-p my-cmake-build-dir)
+                 my-cmake-build-dir) ; 由`.dir-locals.el'设置
+          (and (bound-and-true-p my-cmake-build-dir64)
+               my-cmake-build-dir64))
+        (apply orig-fn args))))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
@@ -4515,8 +4562,12 @@ _q_uit
                    diff-hl-inline-popup-transient-mode-map1
                    t 'diff-hl-inline-popup-hide))))))
 
-(ignore-errors (module-load "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
-(ignore-errors (module-load "f:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
+(ignore-errors
+  (module-load
+   "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
+(ignore-errors
+  (module-load
+   "f:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
 (use-package emacs-preview
   :if (functionp 'emacs-preview-rs/web-server-start)
   :defer t
@@ -4524,17 +4575,17 @@ _q_uit
   (defun note-preview ()
     (interactive)
     (unless (featurep 'emacs-preview)
-      (dec-placeholder-fun
-       emacs-preview-mode
-       emacs-preview
-       (if (file-exists-p "h:/prj/rust/emacs-preview-rs/src")
-           "h:/prj/rust/emacs-preview-rs/src"
-         "f:/prj/rust/emacs-preview-rs/src")
-       '(emacs-preview)))
+      (dec-placeholder-fun emacs-preview-mode emacs-preview
+                           (if (file-exists-p
+                                "h:/prj/rust/emacs-preview-rs/src")
+                               "h:/prj/rust/emacs-preview-rs/src"
+                             "f:/prj/rust/emacs-preview-rs/src")
+                           '(emacs-preview)))
     (call-interactively 'emacs-preview-mode))
   :config
   (setq maple-preview:allow-modes
-        '(org-mode markdown-mode html-mode web-mode mhtml-mode css-mode)) ;; html打开后落在css上就是`css-mode'
+        '(org-mode
+          markdown-mode html-mode web-mode mhtml-mode css-mode)) ;; html打开后落在css上就是`css-mode'
   (with-eval-after-load 'dired-sidebar
     (define-advice dired-sidebar-find-file (:after (&rest args) my)
       "解决click点击不更新preview问题"
@@ -4993,9 +5044,7 @@ _q_uit
     "browse file in windows explorer"
     (interactive)
     (w32explore
-     (or file
-         (buffer-file-name (current-buffer))
-         default-directory)))
+     (or file (buffer-file-name (current-buffer)) default-directory)))
   (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
 
 ;; 需要删除gud-cdb.elc，不然运行报错
@@ -5173,8 +5222,7 @@ _q_uit
     (if (or current-prefix-arg (not dape-history))
         (apply orig-fn args)
       (cl-letf (((symbol-function #'completing-read)
-                 (lambda (&rest _)
-                   (car dape-history))))
+                 (lambda (&rest _) (car dape-history))))
         (apply orig-fn args))))
   (define-advice dape--add-eldoc-hook (:after (&rest args) my)
     "只能在after开启eldoc-mode"
@@ -5318,13 +5366,13 @@ _q_uit
       (dape-send-object
        process seq
        (thread-first
-         object
-         (plist-put :type "response")
-         (plist-put :success t)
-         (plist-put :request_seq seq)
-         (plist-put :command command)))))
+        object
+        (plist-put :type "response")
+        (plist-put :success t)
+        (plist-put :request_seq seq)
+        (plist-put :command command)))))
   (cl-defmethod dape-handle-request
-    (process (command (eql handshake)) arguments)
+      (process (command (eql handshake)) arguments)
     ;; (message "hand: %S" (plist-get arguments :value))
     (dape-request-response
      process 2 "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
@@ -5335,7 +5383,12 @@ _q_uit
   (define-advice dape-request (:around (orig-fn &rest args) my)
     "stackTrace要求参数startFrame，这是符合标准的 https://microsoft.github.io/debug-adapter-protocol/specification "
     (when (equal (ad-get-argument args 1) "stackTrace")
-      (setq args (-replace-at 2 (append (ad-access-argument args 2) (list :startFrame 0)) args)))
+      (setq args
+            (-replace-at
+             2
+             (append
+              (ad-access-argument args 2) (list :startFrame 0))
+             args)))
     (apply orig-fn args))
   (setq
    dape-cppvsdbg-command
@@ -5382,7 +5435,8 @@ _q_uit
   (let ((to-shell
          (not
           (string-match
-           "\*\\(Power\\)?[e]?[Ss]hell\*" (buffer-name (current-buffer)))))
+           "\*\\(Power\\)?[e]?[Ss]hell\*"
+           (buffer-name (current-buffer)))))
         (create-shell t)
         (showed-buffer-list (ep-tabbar-buffer-list)))
     ;; 当前为shell buffer，切换到最近其它buffer
@@ -5485,7 +5539,8 @@ _q_uit
       (apply orig feature args)))
   (advice-add 'require :around 'dashboard-load-bypass-ffap)
   :config
-  (define-advice dashboard-insert-recents (:around (orig-fn &rest args) my)
+  (define-advice dashboard-insert-recents
+      (:around (orig-fn &rest args) my)
     "避免调用`recentf-cleanup'导致首次启动时间长到10秒。新版本已含`dashboard-remove-missing-entry'开关"
     (cl-letf (((symbol-function #'recentf-cleanup)
                (lambda (&rest _))))
@@ -5525,7 +5580,7 @@ _q_uit
   (use-package sqlite-mode
     :if (bound-and-true-p enable-feature-tools)
     :defer t
-    :config 
+    :config
     (when (functionp 'god-local-mode)
       (add-hook 'sqlite-mode-hook 'god-local-mode))
     ;; for god-mode
@@ -5740,9 +5795,11 @@ _q_uit
   (global-set-key (kbd "C-c C-o") 'goto-address-at-point) ;; 跟org快捷键一致
   :config (global-goto-address-mode 1))
 
-    ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
+;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
 (use-package treesit
-  :if (and (fboundp 'treesit-language-available-p) (bound-and-true-p enable-feature-prog))
+  :if
+  (and (fboundp 'treesit-language-available-p)
+       (bound-and-true-p enable-feature-prog))
   :commands (treesit-parser-create)
   :defer t
   :init
@@ -5773,132 +5830,125 @@ _q_uit
      typescript-ts-mode
      yaml-ts-mode))
   (cl-dolist
-      (ts1 all-ts-mode)
-    (let (ts
-          dll)
-      (pcase ts1
-        (`(,ts-mode . ,ts-file)
-         (setq ts ts-mode)
-         (setq dll ts-file))
-        (`,ts-mode
-         (setq ts ts-mode)
-         (setq dll
-               (intern
-                (replace-regexp-in-string
-                 "-ts-mode" "" (symbol-name ts))))))
-      ;; `fingertip'的`C-k'有问题，设置`forward-sexp-function'为nil修复
-      (if nil ;;(memq ts '(c++-ts-mode))
-          ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
-          (add-hook
-           (intern
-            (concat
-             (replace-regexp-in-string
-              "-ts-mode" "" (symbol-name ts))
-             "-mode-hook"))
-           #'(lambda () (treesit-parser-create dll)))
-        (add-to-list
-         'major-mode-remap-alist
-         (cons
+   (ts1 all-ts-mode)
+   (let (ts
+         dll)
+     (pcase ts1
+       (`(,ts-mode . ,ts-file) (setq ts ts-mode) (setq dll ts-file))
+       (`,ts-mode
+        (setq ts ts-mode)
+        (setq dll
+              (intern
+               (replace-regexp-in-string
+                "-ts-mode" "" (symbol-name ts))))))
+     ;; `fingertip'的`C-k'有问题，设置`forward-sexp-function'为nil修复
+     (if nil ;;(memq ts '(c++-ts-mode))
+         ;; 不开`ts-mode'的仍然加上treesit的parser，不然`fingertip'不能用
+         (add-hook
           (intern
            (concat
             (replace-regexp-in-string
              "-ts-mode" "" (symbol-name ts))
-            "-mode"))
-          ts)))))
+            "-mode-hook"))
+          #'(lambda () (treesit-parser-create dll)))
+       (add-to-list
+        'major-mode-remap-alist
+        (cons
+         (intern
+          (concat
+           (replace-regexp-in-string
+            "-ts-mode" "" (symbol-name ts))
+           "-mode"))
+         ts)))))
 
   ;; 对于一些没有`-ts-mode'的，需要下面这样，不然用`fingertip'会报错。 参考https://github.com/manateelazycat/lazycat-emacs/blob/master/site-lisp/config/init-treesit.el
   (add-hook
-   'emacs-lisp-mode-hook
-   #'(lambda () (treesit-parser-create 'elisp)))
+   'emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
   (add-hook
    'markdown-mode-hook
    #'(lambda () (treesit-parser-create 'markdown)))
-  (add-hook
-   'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
+  (add-hook 'zig-mode-hook #'(lambda () (treesit-parser-create 'zig)))
   (add-hook
    'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
   (add-hook
-   'lisp-data-mode-hook
-   #'(lambda () (treesit-parser-create 'elisp)))
+   'lisp-data-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
   (with-eval-after-load 'c-ts-mode
     ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
     (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
-  (use-package fingertip
-    :if (and (fboundp 'treesit-language-available-p) (bound-and-true-p enable-feature-prog))
-    :commands (fingertip-mode)
-    :init
-    (dolist (hook
-             (list
-              'c-mode-common-hook
-              'c-mode-hook
-              'c++-mode-hook
-              'java-mode-hook
-              'haskell-mode-hook
-              'emacs-lisp-mode-hook
-              'lisp-data-mode-hook
-              'lisp-interaction-mode-hook
-              'lisp-mode-hook
-              'maxima-mode-hook
-              'ielm-mode-hook
-              'sh-mode-hook
-              'makefile-gmake-mode-hook
-              'php-mode-hook
-              'python-mode-hook
-              'js-mode-hook
-              'go-mode-hook
-              'qml-mode-hook
-              'jade-mode-hook
-              'css-mode-hook
-              'ruby-mode-hook
-              'coffee-mode-hook
-              'rust-mode-hook
-              'rust-ts-mode-hook
-              'qmake-mode-hook
-              'lua-mode-hook
-              'swift-mode-hook
-              'web-mode-hook
-              'markdown-mode-hook
-              'llvm-mode-hook
-              'conf-toml-mode-hook
-              'nim-mode-hook
-              'typescript-mode-hook
-              'c-ts-mode-hook
-              'c++-ts-mode-hook
-              'cmake-ts-mode-hook
-              'toml-ts-mode-hook
-              'css-ts-mode-hook
-              'js-ts-mode-hook
-              'json-ts-mode-hook
-              'python-ts-mode-hook
-              'bash-ts-mode-hook
-              'typescript-ts-mode-hook))
-      (add-hook hook #'(lambda () (fingertip-mode 1))))
-    :config (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
+(use-package fingertip
+  :if
+  (and (fboundp 'treesit-language-available-p)
+       (bound-and-true-p enable-feature-prog))
+  :commands (fingertip-mode)
+  :init
+  (dolist (hook
+           (list
+            'c-mode-common-hook
+            'c-mode-hook
+            'c++-mode-hook
+            'java-mode-hook
+            'haskell-mode-hook
+            'emacs-lisp-mode-hook
+            'lisp-data-mode-hook
+            'lisp-interaction-mode-hook
+            'lisp-mode-hook
+            'maxima-mode-hook
+            'ielm-mode-hook
+            'sh-mode-hook
+            'makefile-gmake-mode-hook
+            'php-mode-hook
+            'python-mode-hook
+            'js-mode-hook
+            'go-mode-hook
+            'qml-mode-hook
+            'jade-mode-hook
+            'css-mode-hook
+            'ruby-mode-hook
+            'coffee-mode-hook
+            'rust-mode-hook
+            'rust-ts-mode-hook
+            'qmake-mode-hook
+            'lua-mode-hook
+            'swift-mode-hook
+            'web-mode-hook
+            'markdown-mode-hook
+            'llvm-mode-hook
+            'conf-toml-mode-hook
+            'nim-mode-hook
+            'typescript-mode-hook
+            'c-ts-mode-hook
+            'c++-ts-mode-hook
+            'cmake-ts-mode-hook
+            'toml-ts-mode-hook
+            'css-ts-mode-hook
+            'js-ts-mode-hook
+            'json-ts-mode-hook
+            'python-ts-mode-hook
+            'bash-ts-mode-hook
+            'typescript-ts-mode-hook))
+    (add-hook hook #'(lambda () (fingertip-mode 1))))
+  :config (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
 
-    ;; 也可以C-q 选中在直接(，[等
-    (define-key
-     fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
-    (define-key
-     fingertip-mode-map (kbd "M-[") 'fingertip-wrap-bracket)
-    (define-key
-     fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
-    (define-key
-     fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
-    (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
+  ;; 也可以C-q 选中在直接(，[等
+  (define-key
+   fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
+  (define-key fingertip-mode-map (kbd "M-[") 'fingertip-wrap-bracket)
+  (define-key fingertip-mode-map (kbd "M-{") 'fingertip-wrap-curly)
+  (define-key fingertip-mode-map (kbd "M-(") 'fingertip-wrap-round)
+  (define-key fingertip-mode-map (kbd "M-s") 'fingertip-unwrap)
 
-    ;; 修复cpp`C-k'bug
-    ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
-    (define-advice fingertip-common-mode-kill
-        (:around (orig-fn &rest args) fixcpp)
-      "不知道为啥对c/cpp只调用`kill-line'了事？"
-      (cl-letf (((symbol-function #'derived-mode-p)
-                 (lambda (_) nil)))
-        (apply orig-fn args))))
+  ;; 修复cpp`C-k'bug
+  ;; 测试for(auto | xxx)在|位置(fingertip-end-of-list-p (point) (line-end-position))执行为nil，而正常返回t(关闭ts-mode就正常了)
+  (define-advice fingertip-common-mode-kill
+      (:around (orig-fn &rest args) fixcpp)
+    "不知道为啥对c/cpp只调用`kill-line'了事？"
+    (cl-letf (((symbol-function #'derived-mode-p) (lambda (_) nil)))
+      (apply orig-fn args))))
 (use-package tree-sitter
-  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
-  :commands
-  (tree-sitter-mode
-   tree-sitter-force-update tree-sitter-setup-timer)
+  :if
+  (and (not (fboundp 'treesit-language-available-p))
+       (bound-and-true-p enable-feature-prog))
+  :commands (tree-sitter-mode tree-sitter-force-update tree-sitter-setup-timer)
   :defer t
   :init
   (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter")
@@ -5906,8 +5956,8 @@ _q_uit
   (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/lisp")
   (add-to-list 'load-path "~/.emacs.d/packages/tree-sitter/langs")
   (setq
-   tree-sitter-langs--testing t  ;; 禁止联网check bin
-   tsc-dyn-get-from nil          ;; 
+   tree-sitter-langs--testing t ;; 禁止联网check bin
+   tsc-dyn-get-from nil ;; 
    tree-sitter-langs-git-dir nil ;; 禁止调用git
    tree-sitter-langs--dir "~/.emacs.d/packages/tree-sitter/langs"
    tsc-dyn-dir "~/.emacs.d/packages/tree-sitter/core")
@@ -5915,8 +5965,7 @@ _q_uit
   :config
   ;; elisp没有高亮
   (add-to-list
-   'tree-sitter-major-mode-language-alist
-   '(emacs-lisp-mode . elisp))
+   'tree-sitter-major-mode-language-alist '(emacs-lisp-mode . elisp))
   (use-package tree-sitter-langs)
 
   (defvar tree-sitter-idle-timer nil
@@ -5933,9 +5982,8 @@ _q_uit
     (defadvice tree-sitter--setup
         (after my-tree-sitter--setup activate)
       "去掉hook，改为timer模式"
-      (remove-hook
-       'after-change-functions #'tree-sitter--after-change
-       :local)
+      (remove-hook 'after-change-functions #'tree-sitter--after-change
+                   :local)
       (remove-hook
        'before-change-functions #'tree-sitter--before-change
        :local))
@@ -5948,9 +5996,11 @@ _q_uit
         (remove-hook
          'after-change-functions #'my/tree-sitter--after-change
          :local)))))
-  ;; tsc里的(require 'dired-aux) 导致dired被加载了
+;; tsc里的(require 'dired-aux) 导致dired被加载了
 (use-package tree-sitter-hl
-  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
+  :if
+  (and (not (fboundp 'treesit-language-available-p))
+       (bound-and-true-p enable-feature-prog))
   :diminish (tree-sitter-mode)
   :commands (tree-sitter-hl-mode)
   ;; 来自`tree-sitter-major-mode-language-alist'
@@ -6006,8 +6056,7 @@ _q_uit
   ;; 必须去掉jit-lock-after-change，否则一输入会造成后面显示不正常
   (defun remove-jit-lock-after-change ()
     (when tree-sitter-hl-mode
-      (remove-hook 'after-change-functions 'jit-lock-after-change
-                   t)))
+      (remove-hook 'after-change-functions 'jit-lock-after-change t)))
   (when use-tree-sitter-hl-mode-hack
     (add-hook 'font-lock-mode-hook 'remove-jit-lock-after-change) ;; font-lock-mode是较后开启，所以需要hook
     (add-hook
@@ -6020,7 +6069,9 @@ _q_uit
                    nil
                    t))))))
 (use-package grammatical-edit
-  :if (and (not (fboundp 'treesit-language-available-p)) (bound-and-true-p enable-feature-prog))
+  :if
+  (and (not (fboundp 'treesit-language-available-p))
+       (bound-and-true-p enable-feature-prog))
   :commands (grammatical-edit-mode)
   :config
   ;; 会影响kill-ring，作者还不改，暂时不用了
@@ -6037,13 +6088,9 @@ _q_uit
    (kbd "M-[")
    'grammatical-edit-wrap-bracket)
   (define-key
-   grammatical-edit-mode-map
-   (kbd "M-{")
-   'grammatical-edit-wrap-curly)
+   grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
   (define-key
-   grammatical-edit-mode-map
-   (kbd "M-(")
-   'grammatical-edit-wrap-round)
+   grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
   (define-key
    grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
 
@@ -6144,7 +6191,8 @@ _q_uit
       (comint-send-string proc "\n")
       (erase-buffer))
      ;; Send other commands to the default handler.
-     (t (comint-simple-send proc command))))
+     (t
+      (comint-simple-send proc command))))
   :config
   (define-key shell-mode-map (kbd "C-c C-d") nil)
   (define-key shell-mode-map '[up] 'comint-previous-input)
@@ -6170,21 +6218,24 @@ _q_uit
           (and (memq (process-status process) '(exit signal))
                (buffer-live-p (process-buffer process))
                (kill-buffer (process-buffer process)))))))
-  (add-hook 'shell-mode-hook (lambda()
-                               (make-local-variable 'comint-prompt-read-only)
-                               (setq comint-prompt-read-only t) ;; 让不删除prompt
-                               (kill-buffer-on-shell-logout)
-                               (set-no-process-query-on-exit))))
+  (add-hook
+   'shell-mode-hook
+   (lambda ()
+     (make-local-variable 'comint-prompt-read-only)
+     (setq comint-prompt-read-only t) ;; 让不删除prompt
+     (kill-buffer-on-shell-logout)
+     (set-no-process-query-on-exit))))
 
 
 ;; 这个比shell更好的是prompt删不掉，但不支持powershell自身的快捷键
 (use-package powershell
-  :commands(powershell)
+  :commands (powershell)
   :config
-  (define-advice powershell (:after ( &rest args) my)
+  (define-advice powershell (:after (&rest args) my)
     "解决kill*powershell*窗口延迟3秒的问题"
     (remove-hook 'kill-buffer-hook 'powershell-delete-process))
-  (define-advice powershell--get-max-window-width (:around (orig-fn &rest args) my)
+  (define-advice powershell--get-max-window-width
+      (:around (orig-fn &rest args) my)
     "解决启动延迟3秒问题"
     ;; powershell里得到的是240，但emacs里得到是200，改为240有问题。写死应该是没问题的
     (setq powershell--max-window-width 200)))
@@ -6199,8 +6250,7 @@ _q_uit
 
 (use-package esh-proc
   :defer t
-  :config
-  (define-key eshell-proc-mode-map (kbd "C-c C-d") nil))
+  :config (define-key eshell-proc-mode-map (kbd "C-c C-d") nil))
 
 ;; 处理shell的补全，也改为只枚举当前目录
 (use-package comint
