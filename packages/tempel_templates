@@ -156,6 +156,14 @@ q n n
 ")
 (ss "std::shared_ptr<"p">")
 (str "std::string")
+(cplus "#ifdef __cplusplus
+extern \"C\" {
+#endif
+"q"
+#ifdef __cplusplus
+}
+#endif
+")
 
 cmake-mode cmake-ts-mode
 

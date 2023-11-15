@@ -136,7 +136,7 @@
     (when (file-newer-than-file-p expand-zip check-file)
       (delete-directory target-dir t nil) ;先删除目录
       (call-process-shell-command
-       (concat "unzip " expand-zip " -d " extdir))
+       (concat "7z x -o" extdir " " expand-zip))
       (unless no-compile
         (message (format "Building %s ..." target-dir))
         (straight--build-compile target-dir))
