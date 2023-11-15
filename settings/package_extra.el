@@ -2107,32 +2107,53 @@ _c_: hide comment        _q_uit
       (setq consult--regexp-compiler
             #'consult--orderless-regexp-compiler))
 
-    (use-package fzf-native
+    (defmacro common-fuzz-bakcend-setting (backend)
+      `(progn
+         (with-eval-after-load 'eglot
+           (add-to-list
+            'completion-category-overrides
+            '(eglot (styles ,backend))))
+         (setq completion-category-overrides
+               (assq-delete-all
+                'multi-category completion-category-overrides))
+         (setq completion-category-overrides
+               (assq-delete-all 'file completion-category-overrides))
+         ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
+         ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
+         (add-to-list
+          'completion-category-overrides
+          '(multi-category (styles orderless basic ,backend)))
+         (add-to-list
+          'completion-category-overrides
+          '(file (styles orderless basic ,backend)))))
+    ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
+    ;; 测试有时加了空格反而找不到
+    (use-package hotfuzz
       :init
-      ;; 这个lspmodeel匹配比lsp-mode.el比fussy好，毕竟是fzf算法
-      (setq fussy-score-fn 'fussy-fzf-native-score)
       (ignore-errors
         (module-load
          (expand-file-name
-          "~/.emacs.d/packages/minibuffer/fzf-native-module.dll"))))
-    (use-package fussy
-      :init
-      (setq fussy-filter-fn 'fussy-filter-default) ;; fussy-filter-default和fussy-filter-orderless据说更快，但fussy-filter-orderless测试不支持packex匹配package_extra啊！
+          "f:/prj/test/hotfuzz-for-windows/hotfuzz-module.dll")))
       :config
-      (when t
-        (setq completion-category-overrides
-              (assq-delete-all
-               'multi-category completion-category-overrides))
-        (setq completion-category-overrides
-              (assq-delete-all 'file completion-category-overrides))
-        ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
-        ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
-        (add-to-list
-         'completion-category-overrides
-         '(multi-category (styles orderless basic fussy)))
-        (add-to-list
-         'completion-category-overrides
-         '(file (styles orderless basic fussy)))))
+      (with-eval-after-load 'consult
+        ;; 修复hotfuzz报错 https://github.com/axelf4/hotfuzz/issues/12#issuecomment-1615621506
+        (setq consult--tofu-char #x20000)
+        (setq consult--tofu-range #x90000))
+      (common-fuzz-bakcend-setting hotfuzz))
+
+    (use-package fussy
+      :disabled
+      :init
+      (use-package fzf-native
+        :init
+        ;; 这个lspmodeel匹配比lsp-mode.el比fussy好，毕竟是fzf算法
+        (setq fussy-score-fn 'fussy-fzf-native-score)
+        (ignore-errors
+          (module-load
+           (expand-file-name
+            "~/.emacs.d/packages/minibuffer/fzf-native-module.dll"))))
+      (setq fussy-filter-fn 'fussy-filter-default) ;; fussy-filter-default和fussy-filter-orderless据说更快，但fussy-filter-orderless测试不支持packex匹配package_extra啊！
+      :config (common-fuzz-bakcend-setting fussy))
 
     ;; 美化
     (use-package marginalia
@@ -3936,10 +3957,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      '((c-mode c-ts-mode c++-mode c++-ts-mode)
        .
        ("clangd" "-header-insertion=never")))
-    (when (featurep 'fussy)
-      ;; 配合cape-wrap-buster爽翻！
-      (add-to-list
-       'completion-category-overrides '(eglot (styles fussy))))
     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
     (advice-add
      'eglot-completion-at-point
