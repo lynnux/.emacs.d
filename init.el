@@ -26,9 +26,9 @@
    (equal (list 6 1 7601) (w32-version)) ;; win7 64
    )
   (setq
-   org-directory "D:/autosync/autosync/ts/org"
-   org-agenda-files (list "D:/autosync/autosync/ts/org/idea.org" "D:/autosync/autosync/ts/org/todo.org")   
-   org-default-notes-file "D:/autosync/autosync/ts/org/default.org"
+   org-directory "D:/autosync/autosync/org"
+   org-agenda-files (list "D:/autosync/autosync/org/idea.org" "D:/autosync/autosync/org/todo.org")   
+   org-default-notes-file "D:/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "F:/doc/mynote")
    )
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
@@ -41,9 +41,9 @@
    (equal (list 10 0 19044) (w32-version))
    )
   (setq
-   org-directory "H:/doc/autosync/autosync/ts/org"
-   org-agenda-files (list "H:/doc/autosync/autosync/ts/org/idea.org" "H:/doc/autosync/autosync/ts/org/todo.org")
-   org-default-notes-file "H:/doc/autosync/autosync/ts/org/default.org"
+   org-directory "H:/doc/autosync/autosync/org"
+   org-agenda-files (list "H:/doc/autosync/autosync/org/idea.org" "H:/doc/autosync/autosync/org/todo.org")
+   org-default-notes-file "H:/doc/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "G:/doc/mynote")
    )
   (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\IDE\\TF.exe")
