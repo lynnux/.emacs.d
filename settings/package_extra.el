@@ -2142,7 +2142,13 @@ _c_: hide comment        _q_uit
       (common-fuzz-bakcend-setting hotfuzz)
       ;; (setq completion-styles '(hotfuzz)) ;; 这个速度真的跟得上！但是不是乱序就不行了
       ;; (setq completion-category-overrides nil)
-      )
+      ;; 这几个经常卡住，换hotfuzz试试
+      (add-to-list
+       'completion-category-overrides '(command (styles hotfuzz))) ;; 有副作用是影响排序，不会按历史记录排序
+      (add-to-list
+       'completion-category-overrides '(variable (styles hotfuzz)))
+      (add-to-list
+       'completion-category-overrides '(symbol (styles hotfuzz))))
 
     (use-package fussy
       :disabled
@@ -6162,18 +6168,17 @@ _q_uit
   :init
   (autoload 'elisp-autofmt-buffer "tools/elisp-autofmt.el" "" t)
   (autoload 'elisp-autofmt-region "tools/elisp-autofmt.el" "" t)
-  ;; bug还是有的，不要多用，
-  ;; (with-eval-after-load 'elisp-mode
-  ;;   (define-key
-  ;;    emacs-lisp-mode-map [(meta f8)]
-  ;;    (lambda ()
-  ;;      "禁止message提示"
-  ;;      (interactive)
-  ;;      (if buffer-read-only
-  ;;          (signal 'text-read-only nil)
-  ;;        (let ((inhibit-message t))
-  ;;          (call-interactively 'elisp-autofmt-buffer))
-  ;;        (message "elisp format done.")))))
+  (with-eval-after-load 'elisp-mode
+    (define-key
+     emacs-lisp-mode-map [(meta f8)]
+     (lambda ()
+       "禁止message提示"
+       (interactive)
+       (if buffer-read-only
+           (signal 'text-read-only nil)
+         (let ((inhibit-message t))
+           (call-interactively 'elisp-autofmt-buffer))
+         (message "elisp format done.")))))
   :config
   ;; 使用内置的use-package格式化会有问题，必须加把use-package加入到`load-path'
   ;; see https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/4
