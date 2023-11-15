@@ -2086,9 +2086,9 @@ _c_: hide comment        _q_uit
        completion-category-overrides
        '((multi-category (styles orderless basic +orderless-flex)) ;; 用于consult buffer，project buffer等
          (file (styles orderless basic +orderless-flex)) ;; 在`completion-styles'的基础上加上flex就够用了
-         ;; (command (styles +orderless-with-initialism)) ; 相当于ivy的^吧？
-         ;; (variable (styles +orderless-with-initialism))
-         ;; (symbol (styles +orderless-with-initialism))
+         (command (styles basic)) ; 这几个命令经常卡，去掉orderless，但测试乱序仍然可以？
+         (variable (styles basic))
+         (symbol (styles basic))
          )
        orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
        orderless-style-dispatchers
@@ -2126,6 +2126,7 @@ _c_: hide comment        _q_uit
          (add-to-list
           'completion-category-overrides
           '(file (styles orderless basic ,backend)))))
+
     ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
     ;; 测试有时加了空格反而找不到
     (use-package hotfuzz
@@ -2139,16 +2140,7 @@ _c_: hide comment        _q_uit
         ;; 修复hotfuzz报错 https://github.com/axelf4/hotfuzz/issues/12#issuecomment-1615621506
         (setq consult--tofu-char #x20000)
         (setq consult--tofu-range #x90000))
-      (common-fuzz-bakcend-setting hotfuzz)
-      ;; (setq completion-styles '(hotfuzz)) ;; 这个速度真的跟得上！但是不是乱序就不行了
-      ;; (setq completion-category-overrides nil)
-      ;; 这几个经常卡住，换hotfuzz试试
-      (add-to-list
-       'completion-category-overrides '(command (styles hotfuzz))) ;; 有副作用是影响排序，不会按历史记录排序
-      (add-to-list
-       'completion-category-overrides '(variable (styles hotfuzz)))
-      (add-to-list
-       'completion-category-overrides '(symbol (styles hotfuzz))))
+      (common-fuzz-bakcend-setting hotfuzz))
 
     (use-package fussy
       :disabled
