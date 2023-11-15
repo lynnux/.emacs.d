@@ -2135,6 +2135,10 @@ _c_: hide comment        _q_uit
         (module-load
          (expand-file-name
           "f:/prj/test/hotfuzz-for-windows/hotfuzz-module.dll")))
+      (ignore-errors
+        (module-load
+         (expand-file-name
+          "F:/prj/cpp/hotfuzz-for-windows/hotfuzz-module.dll")))
       :config
       (with-eval-after-load 'consult
         ;; 修复hotfuzz报错 https://github.com/axelf4/hotfuzz/issues/12#issuecomment-1615621506
