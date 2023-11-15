@@ -2139,7 +2139,9 @@ _c_: hide comment        _q_uit
         ;; 修复hotfuzz报错 https://github.com/axelf4/hotfuzz/issues/12#issuecomment-1615621506
         (setq consult--tofu-char #x20000)
         (setq consult--tofu-range #x90000))
-      (common-fuzz-bakcend-setting hotfuzz))
+      ;; (common-fuzz-bakcend-setting hotfuzz)
+      (setq completion-styles '(hotfuzz)) ;; 这个速度真的跟得上！
+      (setq completion-category-overrides nil))
 
     (use-package fussy
       :disabled
