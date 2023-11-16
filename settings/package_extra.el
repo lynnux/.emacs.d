@@ -671,11 +671,16 @@ _q_uit
   :init
   (setq session-initialize (list 'session))
   (defun goto-last-change-check-in-session ()
-    "对于新打开的文件，找不到修改位置就调用session找，因为session也记录了最后的保存位置"
+    "对于新打开的文件，就在session的`session-file-alist'找(`session-jump-to-last-change'使用有bug)"
     (interactive)
     (condition-case nil
         (call-interactively 'goto-last-change)
-      (error (call-interactively 'session-jump-to-last-change))))
+      (error
+       (ignore-errors
+         (goto-char
+          (nth
+           6
+           (assoc (session-buffer-file-name) session-file-alist)))))))
   (global-set-key (kbd "C-x C-/") 'goto-last-change-check-in-session))
 
 ;; 用session就够了
