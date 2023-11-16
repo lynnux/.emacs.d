@@ -3686,6 +3686,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package flymake
   :if (bound-and-true-p enable-feature-prog)
   :defer t
+  :init
+  (setq flymake-show-diagnostics-at-end-of-line t) ;; 用overlay在行尾显示错误！
   :config
   ;; 当lsp开启时，去掉自己的hook
   (add-hook
