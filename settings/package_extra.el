@@ -1282,6 +1282,8 @@ _c_: hide comment        _q_uit
   (autoload 'corfu-mode "corfu/corfu-main/corfu" "" nil)
   (autoload 'cape-wrap-buster "corfu/cape" "" nil)
   (autoload 'cape-wrap-noninterruptible "corfu/cape" "" nil)
+  (autoload 'cape-capf-buster "corfu/cape" "" nil)
+  (autoload 'cape-capf-noninterruptible "corfu/cape" "" nil)
   (setq
    corfu-cycle t
    corfu-auto t
@@ -3962,10 +3964,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      '((c-mode c-ts-mode c++-mode c++-ts-mode)
        .
        ("clangd" "-header-insertion=never")))
-    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
-    (advice-add
-     'eglot-completion-at-point
-     :around #'cape-wrap-noninterruptible)
     (eldoc-add-command 'c-electric-paren)
     (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
     (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
@@ -3998,10 +3996,26 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (setq tmp-disable-view-mode nil))
     ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
     (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-    ;; cpp用counsel-etags的imenu
+
+    ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
+    ;; (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+    ;; (advice-add
+    ;;  'eglot-completion-at-point
+    ;;  :around #'cape-wrap-noninterruptible)
+
     (add-hook
      'eglot-managed-mode-hook
      (lambda ()
+       ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
+       (setq-local eldoc-documentation-strategy ; eglot has it's own strategy by default
+		   'eldoc-documentation-compose-eagerly
+		   completion-at-point-functions
+		   (cl-nsubst
+		    (cape-capf-noninterruptible
+		     (cape-capf-buster #'eglot-completion-at-point #'string-prefix-p))
+ 		    'eglot-completion-at-point
+ 		    completion-at-point-functions))
+       ;; cpp用ctags生成的imenu，够用且不卡
        (when (or (derived-mode-p 'c-mode 'c++-mode)
                  (derived-mode-p 'c-ts-base-mode))
          (remove-function

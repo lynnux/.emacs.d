@@ -55,7 +55,7 @@
 
 ;;; Code:
 
-(require 'cl-lib)
+(eval-when-compile (require 'cl-lib))
 
 (defgroup orderless nil
   "Completion method that matches space-separated regexps in any order."
@@ -93,13 +93,13 @@
   "Component separators for orderless completion.
 This can either be a string, which is passed to `split-string',
 or a function of a single string argument."
-  :type '(choice (const :tag "Spaces" " +")
+  :type `(choice (const :tag "Spaces" " +")
                  (const :tag "Spaces, hyphen or slash" " +\\|[-/]")
                  (const :tag "Escapable space"
-                        orderless-escapable-split-on-space)
-                 (const :tag "Quotable spaces" split-string-and-unquote)
+                        ,#'orderless-escapable-split-on-space)
+                 (const :tag "Quotable spaces" ,#'split-string-and-unquote)
                  (regexp :tag "Custom regexp")
-                 (function : tag "Custom function")))
+                 (function :tag "Custom function")))
 
 (defcustom orderless-match-faces
   [orderless-match-face-0
@@ -110,7 +110,7 @@ or a function of a single string argument."
   :type '(vector face))
 
 (defcustom orderless-matching-styles
-  '(orderless-literal orderless-regexp)
+  (list #'orderless-literal #'orderless-regexp)
   "List of component matching styles.
 If this variable is nil, regexp matching is assumed.
 
@@ -121,11 +121,11 @@ highlighted, otherwise just the captured groups are.  Several are
 provided with this package: try customizing this variable to see
 a list of them."
   :type 'hook
-  :options '(orderless-regexp
-             orderless-literal
-             orderless-initialism
-             orderless-prefixes
-             orderless-flex))
+  :options (list #'orderless-regexp
+                 #'orderless-literal
+                 #'orderless-initialism
+                 #'orderless-prefixes
+                 #'orderless-flex))
 
 (defcustom orderless-affix-dispatch-alist
   `((?% . ,#'char-fold-to-regexp)
@@ -139,16 +139,16 @@ determine how to match a pattern component: if the component
 either starts or ends with a character used as a key in this
 alist, the character is removed from the component and the rest is
 matched according the style associated to it."
-  :type '(alist
+  :type `(alist
           :key-type character
           :value-type (choice
-                       (const :tag "Literal" orderless-literal)
-                       (const :tag "Regexp" orderless-regexp)
-                       (const :tag "Without" orderless-without-literal)
-                       (const :tag "Flex" orderless-flex)
-                       (const :tag "Initialism" orderless-initialism)
-                       (const :tag "Prefixes" orderless-prefixes)
-                       (const :tag "Ignore diacritics" char-fold-to-regexp)
+                       (const :tag "Literal" ,#'orderless-literal)
+                       (const :tag "Regexp" ,#'orderless-regexp)
+                       (const :tag "Without" ,#'orderless-without-literal)
+                       (const :tag "Flex" ,#'orderless-flex)
+                       (const :tag "Initialism" ,#'orderless-initialism)
+                       (const :tag "Prefixes" ,#'orderless-prefixes)
+                       (const :tag "Ignore diacritics" ,#'char-fold-to-regexp)
                        (function :tag "Custom matching style"))))
 
 (defun orderless-affix-dispatch (component _index _total)
@@ -173,7 +173,7 @@ style associated to the character."
                                  orderless-affix-dispatch-alist)))
       (cons style (substring component 0 -1))))))
 
-(defcustom orderless-style-dispatchers '(orderless-affix-dispatch)
+(defcustom orderless-style-dispatchers (list #'orderless-affix-dispatch)
   "List of style dispatchers.
 Style dispatchers are used to override the matching styles
 based on the actual component and its place in the list of
@@ -199,7 +199,7 @@ information on how this variable is used, see
 If this variable is t, then case-sensitivity is decided as
 follows: if any component contains upper case letters, the
 matches are case sensitive; otherwise case-insensitive.  This
-like the behavior of `isearch' when `search-upper-case' is
+is like the behavior of `isearch' when `search-upper-case' is
 non-nil.
 
 On the other hand, if this variable is nil, then case-sensitivity
@@ -207,10 +207,6 @@ is determined by the values of `completion-ignore-case',
 `read-file-name-completion-ignore-case' and
 `read-buffer-completion-ignore-case', as usual for completion."
   :type 'boolean)
-
-(defvar orderless-skip-highlighting nil)
-(make-obsolete-variable 'orderless-skip-highlighting
-                        "Use `orderless-filter' directly." "1.0")
 
 ;;; Matching styles
 
@@ -277,9 +273,11 @@ at a word boundary in the candidate.  This is similar to the
 
 ;;; Highlighting matches
 
-(defun orderless--highlight (regexps string)
-  "Propertize STRING to highlight a match of each of the REGEXPS."
-  (cl-loop with n = (length orderless-match-faces)
+(defun orderless--highlight (regexps ignore-case string)
+  "Destructively propertize STRING to highlight a match of each of the REGEXPS.
+The search is case insensitive if IGNORE-CASE is non-nil."
+  (cl-loop with case-fold-search = ignore-case
+           with n = (length orderless-match-faces)
            for regexp in regexps and i from 0
            when (string-match regexp string) do
            (cl-loop
@@ -299,14 +297,9 @@ converted to a list of regexps according to the value of
 `orderless-matching-styles'."
   (when (stringp regexps)
     (setq regexps (orderless-pattern-compiler regexps)))
-  (let ((case-fold-search
-         (if orderless-smart-case
-             (cl-loop for regexp in regexps
-                      always (isearch-no-upper-case-p regexp t))
-           completion-ignore-case)))
-    (cl-loop for original in strings
-             for string = (copy-sequence original)
-             collect (orderless--highlight regexps string))))
+  (cl-loop with ignore-case = (orderless--ignore-case-p regexps)
+           for str in strings
+           collect (orderless--highlight regexps ignore-case (substring str))))
 
 ;;; Compiling patterns to lists of regexps
 
@@ -376,7 +369,7 @@ dispatchers.
 
 The STYLES default to `orderless-matching-styles', and the
 DISPATCHERS default to `orderless-dipatchers'.  Since nil gets you
-the default, if want to no dispatchers to be run, use \\='(ignore)
+the default, if you want no dispatchers to be run, use \\='(ignore)
 as the value of DISPATCHERS."
   (unless styles (setq styles orderless-matching-styles))
   (unless dispatchers (setq dispatchers orderless-style-dispatchers))
@@ -418,6 +411,13 @@ then return (cons REGEXP u); else return nil."
               (replace-regexp-in-string "\\\\\\([$*+.?[\\^]\\)" "\\1"
                                         trimmed 'fixedcase))))))
 
+(defun orderless--ignore-case-p (regexps)
+  "Return non-nil if case should be ignored for REGEXPS."
+  (if orderless-smart-case
+      (cl-loop for regexp in regexps
+               always (isearch-no-upper-case-p regexp t))
+    completion-ignore-case))
+
 ;;;###autoload
 (defun orderless-filter (string table &optional pred)
   "Split STRING into components and find entries TABLE matching all.
@@ -428,14 +428,11 @@ The predicate PRED is used to constrain the entries in TABLE."
                  (completion-regexp-list
                   (orderless-pattern-compiler pattern))
                  (completion-ignore-case
-                  (if orderless-smart-case
-                      (cl-loop for regexp in completion-regexp-list
-                               always (isearch-no-upper-case-p regexp t))
-                    completion-ignore-case)))
+                  (orderless--ignore-case-p completion-regexp-list)))
       ;; If there is a regexp of the form \(?:^quoted-regexp\) then
       ;; remove the first such and add the unquoted form to the prefix.
-      (pcase (cl-some #'orderless--anchored-quoted-regexp
-                      completion-regexp-list)
+      (pcase (cl-loop for r in completion-regexp-list
+                      thereis (orderless--anchored-quoted-regexp r))
         (`(,regexp . ,literal)
          (setq prefix (concat prefix literal)
                completion-regexp-list (delete regexp completion-regexp-list))))
@@ -447,12 +444,17 @@ The predicate PRED is used to constrain the entries in TABLE."
 The predicate PRED is used to constrain the entries in TABLE.  The
 matching portions of each candidate are highlighted.
 This function is part of the `orderless' completion style."
-  (let ((completions (orderless-filter string table pred)))
-    (when completions
-      (pcase-let ((`(,prefix . ,pattern)
-                   (orderless--prefix+pattern string table pred)))
-        (nconc (orderless-highlight-matches pattern completions)
-               (length prefix))))))
+  (defvar completion-lazy-hilit-fn)
+  (when-let ((completions (orderless-filter string table pred)))
+    (pcase-let ((`(,prefix . ,pattern)
+                 (orderless--prefix+pattern string table pred)))
+      (if (bound-and-true-p completion-lazy-hilit)
+          (let ((regexps (orderless-pattern-compiler pattern)))
+            (setq completion-lazy-hilit-fn
+                  (apply-partially #'orderless--highlight regexps
+                                   (orderless--ignore-case-p regexps))))
+        (setq completions (orderless-highlight-matches pattern completions)))
+      (nconc completions (length prefix)))))
 
 ;;;###autoload
 (defun orderless-try-completion (string table pred point)
@@ -481,10 +483,21 @@ This function is part of the `orderless' completion style."
            (setq one args)
            t)))
       (when one
+        ;; Prepend prefix if the candidate does not already have the same
+        ;; prefix.  This workaround is needed since the predicate may either
+        ;; receive an unprefixed or a prefixed candidate as argument.  Most
+        ;; completion tables consistently call the predicate with unprefixed
+        ;; candidates, for example `completion-file-name-table'.  In contrast,
+        ;; `completion-table-with-context' calls the predicate with prefixed
+        ;; candidates.  This could be an unintended bug or oversight in
+        ;; `completion-table-with-context'.
+        (let ((prefix (car (orderless--prefix+pattern string table pred))))
+          (unless (or (equal prefix "")
+                      (and (string-prefix-p prefix one)
+                           (test-completion one table pred)))
+            (setq one (concat prefix one))))
         (if (equal string one)
             t ;; unique exact match
-          (setq one (concat (car (orderless--prefix+pattern string table pred))
-                            one))
           (cons one (length one)))))))
 
 ;;;###autoload
@@ -547,7 +560,7 @@ a value in `ivy-re-builders-alist'."
 (defun orderless-ivy-highlight (str)
   "Highlight a match in STR of each regexp in `ivy-regex'.
 This function is for integration of orderless with ivy."
-  (orderless--highlight (mapcar #'car ivy-regex) str) str)
+  (orderless--highlight (mapcar #'car ivy-regex) t str) str)
 
 (provide 'orderless)
 ;;; orderless.el ends here
