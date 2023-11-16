@@ -647,8 +647,19 @@ _q_uit
      query-replace-defaults ;; M-r replace-string默认值
      )
    session-locals-include nil)
-
-  :config (add-hook 'after-init-hook 'session-initialize)
+  (defvar initial-scratch-message-history nil) ;; 测试大于`session-globals-max-string'(默认1024保存不下)
+  :config
+  (define-advice session-initialize (:after (&rest args) my)
+    (when initial-scratch-message-history
+      (with-current-buffer (get-buffer-create "*scratch*")
+        (insert (car initial-scratch-message-history))
+        (set-buffer-modified-p nil)
+        ;; 这里开启view-mode还不行，只能设置`initial-major-mode'有效
+        )))
+  (define-advice session-save-session (:before (&rest args) my)
+    (with-current-buffer (get-buffer-create "*scratch*")
+      (setq initial-scratch-message-history (list (buffer-string)))))
+  (add-hook 'after-init-hook 'session-initialize)
   ;; 使用一段时间后，可以自行查看~/.emacs.d/.session里占用太多，然后添加到排除列表里
   (add-to-list 'session-globals-exclude 'rg-history)
   (add-to-list 'session-globals-exclude 'helm-grep-ag-history)
