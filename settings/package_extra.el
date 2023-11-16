@@ -2089,9 +2089,7 @@ _c_: hide comment        _q_uit
        '((multi-category (styles orderless basic +orderless-flex)) ;; 用于consult buffer，project buffer等
          (file (styles orderless basic +orderless-flex)) ;; 在`completion-styles'的基础上加上flex就够用了
          (command (styles basic)) ; 这几个命令经常卡，去掉orderless，但测试乱序仍然可以？
-         (variable (styles basic))
-         (symbol (styles basic))
-         )
+         (variable (styles basic)) (symbol (styles basic)))
        orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
        orderless-style-dispatchers
        (list
@@ -2105,7 +2103,7 @@ _c_: hide comment        _q_uit
         (cons
          (mapcar
           (lambda (r) (consult--convert-regexp r type)) input)
-         (lambda (str) (orderless--highlight input str))))
+         (lambda (str) (orderless--highlight input t str))))
       (setq consult--regexp-compiler
             #'consult--orderless-regexp-compiler))
 
@@ -2122,12 +2120,13 @@ _c_: hide comment        _q_uit
                (assq-delete-all 'file completion-category-overrides))
          ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
          ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
-         (add-to-list
-          'completion-category-overrides
-          '(multi-category (styles orderless basic ,backend)))
-         (add-to-list
-          'completion-category-overrides
-          '(file (styles orderless basic ,backend)))))
+         (when (featurep 'orderless)
+           (add-to-list
+            'completion-category-overrides
+            '(multi-category (styles orderless basic ,backend)))
+           (add-to-list
+            'completion-category-overrides
+            '(file (styles orderless basic ,backend))))))
 
     ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
     ;; 测试有时加了空格反而找不到
@@ -4007,14 +4006,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      'eglot-managed-mode-hook
      (lambda ()
        ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
-       (setq-local eldoc-documentation-strategy ; eglot has it's own strategy by default
-		   'eldoc-documentation-compose-eagerly
-		   completion-at-point-functions
-		   (cl-nsubst
-		    (cape-capf-noninterruptible
-		     (cape-capf-buster #'eglot-completion-at-point #'string-prefix-p))
- 		    'eglot-completion-at-point
- 		    completion-at-point-functions))
+       (setq-local
+        eldoc-documentation-strategy ; eglot has it's own strategy by default
+        'eldoc-documentation-compose-eagerly
+        completion-at-point-functions
+        (cl-nsubst
+         (cape-capf-noninterruptible
+          (cape-capf-buster
+           #'eglot-completion-at-point #'string-prefix-p))
+         'eglot-completion-at-point completion-at-point-functions))
        ;; cpp用ctags生成的imenu，够用且不卡
        (when (or (derived-mode-p 'c-mode 'c++-mode)
                  (derived-mode-p 'c-ts-base-mode))
