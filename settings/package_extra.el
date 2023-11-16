@@ -638,14 +638,12 @@ _q_uit
   ;; test (string-match session-name-disable-regexp "COMMIT_EDITMSG")
   (setq session-name-disable-regexp
         "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\|COMMIT_EDITMSG\\)")
-  ;; (setq session-set-file-name-exclude-regexp ) ; 过滤 file-name-history
   (setq session-save-file-coding-system 'utf-8)
   (setq
    session-globals-include
    '(
      ;;(kill-ring 50) ;; 用ditto就行了
      (session-file-alist 100 t)
-     (file-name-history 300)
      query-replace-defaults ;; M-r replace-string默认值
      )
    session-locals-include nil)
@@ -667,6 +665,18 @@ _q_uit
   (add-to-list 'session-globals-exclude 'buffer-name-history) ;; 这个wcy已经记录了
   (add-to-list 'session-globals-exclude 'consult-xref--history)
   (add-to-list 'session-globals-exclude 'kill-ring))
+
+(use-package goto-chg
+  :commands (goto-last-change)
+  :init
+  (setq session-initialize (list 'session))
+  (defun goto-last-change-check-in-session ()
+    "对于新打开的文件，找不到修改位置就调用session找，因为session也记录了最后的保存位置"
+    (interactive)
+    (condition-case nil
+        (call-interactively 'goto-last-change)
+      (error (call-interactively 'session-jump-to-last-change))))
+  (global-set-key (kbd "C-x C-/") 'goto-last-change-check-in-session))
 
 ;; 用session就够了
 (use-package savehist
