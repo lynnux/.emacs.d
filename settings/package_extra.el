@@ -3495,66 +3495,37 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ))
 
 ;; `cmake-integration'是直接调用cmake编译的，需要集成vcvarsall.bat的环境变量
-(defun get-vvcvarsall.bat (arch)
-  "参考https://github.com/scikit-build/cmake-FindVcvars/blob/master/FindVcvars.cmake
-这种方法也就支持Microsoft Visual Studio 14.0之前 https://github.com/makinggamesinc/vcvarsall.bat-locations"
 
-  (let ((root
-         '(HKU ; HKEY_USERS
-           HKCU ; HKEY_CURRENT_USER
-           HKLM ; HKEY_LOCAL_MACHINE
-           HKCR ; HKEY_CLASSES_ROOT
-           ))
-        (vs_version "10.0")
-        (_suffixes (list "" "_Config"))
-        (_vc "VC")
-        _vs_registry_paths
-        path)
-    (catch 'return
-      (dolist (r root)
-        (dolist (_suffix _suffixes)
-          (setq path
-                (w32-read-registry
-                 r
-                 (concat
-                  "SOFTWARE\\Microsoft\\VisualStudio\\"
-                  vs_version
-                  _suffix
-                  "\\Setup\\"
-                  _vc)
-                 "ProductDir"))
-          (when path
-            (setq
-             path
-             (concat
-              path
-              (if (equal arch "32")
-                  "bin\\vcvars32.bat"
-                "bin\\amd64\\vcvars64.bat" ;; vs2008是vcvarsamd64.bat
-                )))
-            (throw 'return path)))))))
-(defun set-vc-env (arch)
-  (setq arch (string-replace "vs2010 " "" arch))
+(defvar vc-toolchain
+  '(("vs2010 x86"
+     "c:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/vcvars32.bat")
+    ("vs2010 x64"
+     "c:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/amd64/vcvars64.bat")
+    ("vs2019 x86"
+     "c:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars32.bat")
+    ("vs2019 x64"
+     "c:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars64.bat"))
+  "目前写死路径自己够用，这个路径本身就没什么规律")
+(defun set-vc-env (name)
   (setq vc-toolchain-already-set t)
   (let* ((env-string
           (shell-command-to-string
-           (format "\"%s\" && set" (get-vvcvarsall.bat arch))))
+           (format "\"%s\" && set"
+                   (second (assoc name vc-toolchain)))))
          (all (s-split "\n" env-string)))
     (dolist (line all)
       (setq l (s-split "=" line))
       (when-let* ((left (car-safe l))
                   (right (car-safe (cdr-safe l))))
-        ;; (message "letf:%S, right:%S" left right)
         (setenv left right)))))
 (defvar select-compiler-history nil)
 (defvar vc-toolchain-already-set nil)
 (defun select-compiler ()
-  "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前，所幸切换用得不多，应该没问题"
+  "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前。介意可以重启emacs"
   (interactive)
-  (setq select-compiler-history
-        (list
-         (consult--read
-          '("vs2010 32" "vs2010 64" "project-compile"))))
+  (let ((cp-list (mapcar (lambda (x) (car x)) vc-toolchain)))
+    (setq cp-list (append cp-list '("project-compile")))
+    (setq select-compiler-history (list (consult--read cp-list))))
   (let ((vc-toolchain-already-set nil))
     (check-vc-toolchain-set)))
 (defun check-vc-toolchain-set ()
