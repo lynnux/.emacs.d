@@ -4531,13 +4531,8 @@ _q_uit
   :config
   (setq scroll-on-jump-duration 0.0)
   (setq scroll-on-jump-smooth nil)
-  (with-eval-after-load 'session
-    (scroll-on-jump-advice-add session-jump-to-last-change))
-  (scroll-on-jump-advice-add jl-jump-backward)
-  (scroll-on-jump-advice-add jl-jump-forward)
+  (scroll-on-jump-advice-add goto-last-change-check-in-session)
   (scroll-on-jump-advice-add push-button)
-  (scroll-on-jump-advice-add git-gutter:previous-hunk)
-  (scroll-on-jump-advice-add git-gutter:next-hunk)
   (scroll-on-jump-advice-add embark-next-symbol)
   (scroll-on-jump-advice-add embark-previous-symbol)
   (scroll-on-jump-advice-add my/backward-forward-previous-location)
