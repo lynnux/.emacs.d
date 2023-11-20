@@ -228,7 +228,7 @@
   :commands (s-split s-word-wrap))
 
 (use-package f
-  :defer t
+  :commands(f-mkdir-full-path)
   :init (provide 'f-shortdoc))
 
 (use-package eldoc
@@ -3587,7 +3587,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  my-cmake-build-dir) ; 由`.dir-locals.el'设置
           (and (bound-and-true-p my-cmake-build-dir64)
                my-cmake-build-dir64))
-        (apply orig-fn args))))
+        (apply orig-fn args)))
+  (define-advice cmake-integration-create-empty-codemodel-file
+      (:around (orig-fn &rest args) my)
+    "解决windows上调用问题"
+    (unless (file-exists-p
+             (cmake-integration-get-path-of-codemodel-query-file))
+      ;; Create the folder if it does not exists yet
+      (unless (file-exists-p (cmake-integration-get-query-folder))
+        (f-mkdir-full-path (cmake-integration-get-query-folder)))
+      ;; Create the codemodel file
+      (f-touch
+       (cmake-integration-get-path-of-codemodel-query-file)))))
 
 ;; rg，这个还挺好用的，带修改搜索的功能(需要buffer可写)，更多功能看菜单
 (use-package rg
