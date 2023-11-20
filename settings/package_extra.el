@@ -4560,6 +4560,16 @@ _q_uit
                         2 nil #'diff-hl-update-timer-function)))
                nil t)))
   :config
+  (defhydra
+   hydra-diff-hl
+   ()
+   "goto hunk: "
+   ("p" diff-hl-previous-hunk "previous")
+   ("n" diff-hl-next-hunk "next")
+   ("q" nil "quit"))
+  (global-set-key (kbd "C-c h") #'hydra-diff-hl/body)
+  (global-set-key (kbd "C-c C-h") #'hydra-diff-hl/body)
+
   (with-eval-after-load 'magit
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
   ;; 用timer避免各种hook
@@ -4573,41 +4583,8 @@ _q_uit
 
   (use-package diff-hl-dired
     :commands (diff-hl-dired-mode)
-    :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
-
-  ;; 点击fringe或margin时，弹出菜单可以转到下一个chunk，很方便！
-  (use-package diff-hl-show-hunk
-    :commands (diff-hl-show-hunk)
-    :init
-    (global-set-key (kbd "C-c h") #'diff-hl-show-hunk)
-    (global-set-key (kbd "C-c C-h") #'diff-hl-show-hunk) ;; 目前还没有绑定这个的
-    :config
-    ;; 解决相关按钮被view mode覆盖的问题，如q。这里用set-transient-map完全覆盖了原来的按键！
-    (defvar set-transient-map-exit-func nil)
-    (defun my-diff-hl-inline-popup-hide ()
-      (interactive)
-      (diff-hl-inline-popup-hide)
-      (when (functionp set-transient-map-exit-func)
-        (funcall set-transient-map-exit-func)))
-    (defvar diff-hl-inline-popup-transient-mode-map1
-      (let ((map (make-sparse-keymap)))
-        (define-key map (kbd "C-g") #'my-diff-hl-inline-popup-hide)
-        (define-key map [escape] #'my-diff-hl-inline-popup-hide)
-        (define-key map (kbd "q") #'my-diff-hl-inline-popup-hide)
-        (define-key map (kbd "RET") #'my-diff-hl-inline-popup-hide)
-        map))
-    (set-keymap-parent
-     diff-hl-inline-popup-transient-mode-map1 diff-hl-show-hunk-map)
-    (setq diff-hl-show-hunk-function
-          (lambda (buffer &optional _ignored-line)
-            (funcall 'diff-hl-show-hunk-inline-popup
-                     buffer
-                     _ignored-line)
-            (setq set-transient-map-exit-func
-                  (set-transient-map
-                   diff-hl-inline-popup-transient-mode-map1
-                   t 'diff-hl-inline-popup-hide))))))
-
+    :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
+ 
 (ignore-errors
   (module-load
    "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
@@ -6462,4 +6439,4 @@ _q_uit
     ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
     (browse-url
      (replace-regexp-in-string
-      "https://github.com" "https://download.fastgit.org" url))))
+      "https://github.com" "https://download.fastgit.org" url)))) 
