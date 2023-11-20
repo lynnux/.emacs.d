@@ -3523,11 +3523,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (defun select-compiler ()
   "TODO：如果设置两次，前次的环境变量将会保留，但是后面设置会靠前。介意可以重启emacs"
   (interactive)
-  (let ((cp-list (mapcar (lambda (x) (car x))
-                         (-filter (lambda(x) (file-exists-p (second x)))
-                                  vc-toolchain))))
+  (let ((cp-list
+         (mapcar
+          (lambda (x) (car x))
+          (-filter
+           (lambda (x) (file-exists-p (second x))) vc-toolchain))))
     (setq cp-list (append cp-list '("project-compile")))
     (setq select-compiler-history (list (consult--read cp-list))))
+  (setq compilation-read-command t) ;; 重新提示compile命令
   (let ((vc-toolchain-already-set nil))
     (check-vc-toolchain-set)))
 (defun check-vc-toolchain-set ()
