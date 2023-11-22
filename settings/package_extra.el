@@ -654,6 +654,7 @@ _q_uit
       (with-current-buffer (get-buffer-create "*scratch*")
         (insert (car initial-scratch-message-history))
         (set-buffer-modified-p nil)
+        (setq buffer-undo-list nil) ;; 防止undo
         ;; 这里开启view-mode还不行，只能设置`initial-major-mode'有效
         )))
   (define-advice session-save-session (:before (&rest args) my)
@@ -4317,12 +4318,7 @@ _q_uit
              (if backward
                  (1- (length vec_name))
                1)))
-      (let ((buf (switch-to-buffer (nth sel myswitch-buffer-list))))
-        (when (and (bufferp buf) (featurep 'wcy-desktop))
-          (with-current-buffer buf
-            (when (eq major-mode 'not-loaded-yet)
-              (let ((inhibit-message t))
-                (wcy-desktop-load-file))))))))
+      (switch-to-buffer (nth sel myswitch-buffer-list))))
   (global-set-key (kbd "<C-tab>") 'my-pop-select)
   (global-set-key
    (if (string-equal system-type "windows-nt")
