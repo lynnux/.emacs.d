@@ -3686,7 +3686,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-prog)
   :defer t
   :init
-  (setq flymake-show-diagnostics-at-end-of-line t) ;; 用overlay在行尾显示错误！
+  ;; (setq flymake-show-diagnostics-at-end-of-line t) ;; 用overlay在行尾显示错误！但是太卡
   :config
   ;; 当lsp开启时，去掉自己的hook
   (add-hook
