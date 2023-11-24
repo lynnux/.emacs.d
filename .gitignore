@@ -109,3 +109,4 @@ packages/minibuffer/compat.el-master/*
 /packages/cycle-at-point/
 /elisp-autofmt-cache/
 /packages/tools/rg.el-master/
+/packages/tools/zhengma/

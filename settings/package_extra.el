@@ -4581,6 +4581,13 @@ _q_uit
       "解决click点击不更新preview问题"
       (emacs-preview:send-to-server))))
 
+(use-package zhengma
+  :defer t
+  :if (functionp 'emacs-preview-rs/web-server-start)
+  :init
+  (dec-placeholder-fun
+   zhengma:start zhengma "~/.emacs.d/packages/tools" '(zhengma)))
+
 (use-package winner
   :defer t
   :init
