@@ -1243,38 +1243,9 @@ _c_: hide comment        _q_uit
      '((emacs) (comp) (comp)))
    '(warning-suppress-types '((comp)))))
 
-(progn
-  (defvar last-readonly-state t) ;; 设为t让*scratch*可以正常显示
-  (defun my-cursor-chg ()
-    (when (not (eq last-readonly-state buffer-read-only))
-      (setq last-readonly-state buffer-read-only)
-      (let ((cursor-type
-             (if last-readonly-state
-                 'box
-               'bar)))
-        (modify-frame-parameters
-         (selected-frame) (list (cons 'cursor-type cursor-type))))))
-  (add-hook 'view-mode-hook 'my-cursor-chg)
-  (defvar disable-cursor-chg nil)
-  (defvar cursor-chg-timer nil)
-  (defun cursor-chg-function ()
-    (when (and
-           (not disable-cursor-chg)
-           ;; (not (minibufferp)) ;; minibuffer有bug没有变，但C-s回来又变了
-           (not (eq (current-buffer) eldoc--doc-buffer)) ;; 排除eldoc
-           )
-      ;; (when buffer-read-only
-      ;;   (message (buffer-name));; 补全时dabbrev会扫描其它buffer导致调用buffer-list-update-hook
-      ;;   )
-      (my-cursor-chg)))
-
-  (add-hook
-   'buffer-list-update-hook
-   (lambda ()
-     (when cursor-chg-timer
-       (cancel-timer cursor-chg-timer))
-     (setq cursor-chg-timer
-           (run-with-idle-timer 0.1 nil 'cursor-chg-function)))))
+(use-package cursor-chg
+  :init (setq curchg-change-cursor-on-input-method-flag nil)
+  :config (change-cursor-mode 1))
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
