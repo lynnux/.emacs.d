@@ -1129,29 +1129,29 @@ _c_: hide comment        _q_uit
      tab-line-separator
      (if (display-graphic-p)
          ;; unicode符号展示网站 https://www.fuhaoku.net/block/Misc_Symbols
-         (propertize (format " %s "
-                             (char-to-string
-                              (let ((tl
-                                     (list
-                                      #x2618
-                                      #x266B
-                                      #x266E
-                                      #x266F
-                                      #x2665
-                                      #x2666
-                                      #x26DF
-                                      #o22666 ;; old
-                                      #x26FA
-                                      #x2691
-                                      #x267B
-                                      #x2615
-                                      #x2622
-                                      #x262F
-                                      #x26F4
-                                      #x26AB)))
-                                (nth
-                                 (mod (random t) (length tl)) tl))))
-                     'face '(foreground-color . "cyan"))
+         ;; (propertize 
+         ;;             'face '(foreground-color . "cyan"))
+         (format " %s "
+                 (char-to-string
+                  (let ((tl
+                         (list
+                          #x2618
+                          #x266B
+                          #x266E
+                          #x266F
+                          #x2665
+                          #x2666
+                          #x26DF
+                          #o22666 ;; old
+                          #x26FA
+                          #x2691
+                          #x267B
+                          #x2615
+                          #x2622
+                          #x262F
+                          #x26F4
+                          #x26AB)))
+                    (nth (mod (random t) (length tl)) tl))))
        " | ") ;; 这个比close button好看 
      ))
   :config
