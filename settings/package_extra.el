@@ -84,7 +84,7 @@
    "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip"
    nil
    "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
-  )
+  (ensure-latest "~/.emacs.d/packages/tools/zhengma.zip" t))
 
 ;; 用于use-package避免自动设置:load-path
 (defun my-eval-string (string)
@@ -146,8 +146,10 @@
         (make-directory (expand-file-name ".cache"
                                           user-emacs-directory)
                         t))
-      (call-process-shell-command
-       (concat "touch " check-file " -r " expand-zip)))))
+      (f-touch check-file)
+      ;; (call-process-shell-command
+      ;;  (concat "touch " check-file " -r " expand-zip))
+      )))
 
 (unless (symbol-function 'use-package)
   (add-to-list
@@ -228,7 +230,7 @@
   :commands (s-split s-word-wrap))
 
 (use-package f
-  :commands(f-mkdir-full-path)
+  :commands(f-mkdir-full-path f-touch)
   :init (provide 'f-shortdoc))
 
 (use-package eldoc
