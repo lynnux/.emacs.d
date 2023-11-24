@@ -1,11 +1,11 @@
 (require 'json)
-(defvar zhengma-data nil
+(defvar zhengma:data nil
   "")
-(setq zhengma-data
+(setq zhengma:data
       (json-read-file
        (concat
         (file-name-directory load-file-name) "zhengma/zhengma.json")))
-(setq zhengma-data (mapcar #'identity zhengma-data))
+(setq zhengma:data (mapcar #'identity zhengma:data))
 
 (defcustom zhengma:host "127.0.0.1"
   "Preview http host."
@@ -57,21 +57,26 @@
   (call-interactively 'zhengma:next))
 
 (defun zhengma:next- ()
+  ;; TODO: 跳过376及以后
   (setq zhengma:current
-        (nth (mod (random t) (length zhengma-data)) zhengma-data))
+        (nth (mod (random t) (length zhengma:data)) zhengma:data))
   (zhengma:send-preview (cdr (assoc 'index zhengma:current))))
 
 (defun zhengma:next (&optional input)
   (interactive "s请输入图示字根: ")
-  (if (equal
+  (if (string-equal-ignore-case
        input
-       (cdr (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen)))
+       (or (cdr
+            (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen))
+           ""))
       (zhengma:next-)
     (when (functionp 'doom-themes-visual-bell-fn)
       (doom-themes-visual-bell-fn)))
   (call-interactively 'zhengma:next))
 
-(defvar zhengma:gen '(("0" . "a") ("1" . "a") ("57" . "du"))
+;; 376开始，后面几个都是至至郑码新增的字根
+(defvar zhengma:gen
+  '(("0" . "a") ("1" . "a") ("57" . "du") ("57" . "du"))
   "")
 
 (defun zhengma:stop ()
