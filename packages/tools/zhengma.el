@@ -6,6 +6,7 @@
        (concat
         (file-name-directory load-file-name) "zhengma/zhengma.json")))
 (setq zhengma:data (mapcar #'identity zhengma:data))
+(push '((index . "383")) zhengma:data) ;; 追加，鹿
 
 (defcustom zhengma:host "127.0.0.1"
   "Preview http host."
@@ -34,9 +35,10 @@
 
 (defun zhengma:send-preview (num)
   (emacs-preview-rs/web-server-set-content
-   zhengma:web-index
-   "/get_content"
-   (format "<img src=\"%s.png\"/>" num)))
+   zhengma:web-index "/get_content"
+   (if (equal num "383")
+       "鹿"
+     (format "<img src=\"%s.png\"/>" num))))
 
 (defun zhengma:start ()
   "Preview init."
@@ -177,7 +179,7 @@
     ("95" . "uu")
     ("96" . "uO")
     ("97" . "n")
-    ("98" . "n")
+    ;; ("98" . "n"); 中是一级简码
     ("99" . "ns")
     ("100" . "ns")
     ("101" . "nu")
@@ -187,7 +189,7 @@
     ("105" . "e")
     ("106" . "e")
     ("107" . "e")
-    ("108" . "e")
+    ;; ("108" . "e") 是一级简码
     ("109" . "es")
     ("110" . "es")
     ("111" . "es")
@@ -367,8 +369,8 @@
     ("285" . "V")
     ("286" . "V")
     ("287" . "Vs")
-    ;; ("288" . "V")四点水
-    ;; ("289" . "V")四点水
+    ("288" . "uo") ; 更正四点水
+    ;; ("289" . "V"); 三点水底没找到
     ("290" . "W")
     ("291" . "W")
     ("292" . "W")
