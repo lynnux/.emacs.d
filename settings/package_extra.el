@@ -96,6 +96,11 @@
   (time-convert (file-attribute-modification-time
                  (file-attributes file))
                 'integer))
+(defun get-file-times (file)
+  "获取文件的修改时间"
+  (interactive "P")
+  (file-attribute-modification-time
+   (file-attributes file)))
 
 (defun straight--build-compile (dir)
   "核心就是调用byte-recompile-directory，但只有跨进程才不报错"
@@ -147,8 +152,7 @@
                                           user-emacs-directory)
                         t))
       (f-touch check-file)
-      ;; (call-process-shell-command
-      ;;  (concat "touch " check-file " -r " expand-zip))
+      (set-file-times check-file (get-file-times expand-zip)) ;; 修改文件时间为zip的时间
       )))
 
 (unless (symbol-function 'use-package)
