@@ -483,8 +483,12 @@ shuffling is done in place."
     ;; ("380" . "rn")
     ;; ("381" . "iM")
     ;; ("382" . "kM")
-    )
+    ("383" . "gx"))
   "")
+(dolist (item zhengma:data)
+  (let ((x (assoc (cdr (assoc 'index item)) zhengma:gen)))
+    (when (and x (assoc 'word item))
+      (setcdr (assoc 'word item) (cdr x)))))
 
 (defun zhengma:stop ()
   (interactive)
