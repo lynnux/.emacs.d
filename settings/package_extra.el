@@ -6365,7 +6365,7 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
-   ((eq th 'modus-vivendi)
+   ((or (eq th 'modus-vivendi) (eq th 'modus-vivendi-tritanopia))
     (custom-set-faces
      '(consult-file ((t (:foreground nil))))
      '(consult-bookmark ((t (:foreground nil))))))

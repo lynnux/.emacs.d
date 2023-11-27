@@ -54,7 +54,7 @@ shuffling is done in place."
   (emacs-preview-rs/web-server-set-content
    zhengma:web-index "/get_content"
    (if (equal num "383")
-       "鹿"
+       "鹿(及鹿下面没有比)"
      (format "<img src=\"%s.png\"/>" num))))
 
 (defun zhengma:start ()
@@ -108,7 +108,7 @@ shuffling is done in place."
     ("5" . "Au")
     ("6" . "B")
     ("7" . "B")
-    ("8" . "BD")
+    ("8" . "Bs")
     ("9" . "Bu")
     ("10" . "BU")
     ("11" . "BE")
