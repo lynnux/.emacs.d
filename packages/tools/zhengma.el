@@ -8,6 +8,21 @@
 (setq zhengma:data (mapcar #'identity zhengma:data))
 (push '((index . "383")) zhengma:data) ;; 追加，鹿
 
+(defun zhengma:swap (LIST el1 el2)
+  "in LIST swap indices EL1 and EL2 in place"
+  (let ((tmp (elt LIST el1)))
+    (setf (elt LIST el1) (elt LIST el2))
+    (setf (elt LIST el2) tmp)))
+(defun zhengma:shuffle (LIST)
+  "Shuffle the elements in LIST.
+shuffling is done in place."
+  (loop
+   for i in (reverse (number-sequence 1 (1- (length LIST)))) do
+   (let ((j (random (+ i 1))))
+     (zhengma:swap LIST i j)))
+  LIST)
+(zhengma:shuffle zhengma:data) ;; 随机乱序
+
 (defcustom zhengma:host "127.0.0.1"
   "Preview http host."
   :type 'string
@@ -22,6 +37,8 @@
 (defvar zhengma:preview-file
   (concat zhengma:home-path "zhengma.html"))
 (defvar zhengma:current nil
+  "")
+(defvar zhengma:current-index 0
   "")
 
 (defun zhengma:preview-template ()
@@ -61,8 +78,10 @@
 (defun zhengma:next- ()
   (while (not
           (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen))
-    (setq zhengma:current
-          (nth (mod (random t) (length zhengma:data)) zhengma:data)))
+    (setq zhengma:current-index (+ 1 zhengma:current-index))
+    (when (>= zhengma:current-index (length zhengma:data))
+      (setq zhengma:current-index 0))
+    (setq zhengma:current (nth zhengma:current-index zhengma:data)))
   (zhengma:send-preview (cdr (assoc 'index zhengma:current))))
 
 (defun zhengma:next (&optional input)
