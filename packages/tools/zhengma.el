@@ -85,17 +85,27 @@ shuffling is done in place."
   (zhengma:send-preview (cdr (assoc 'index zhengma:current))))
 
 (defun zhengma:next (&optional input)
-  (interactive "s请输入图示字根: ")
-  (if (string-equal-ignore-case
-       input
-       (or (cdr
-            (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen))
-           ""))
+  (interactive "s请输入图示字根(直接回车查看帮助): ")
+  (if (equal input "")
       (progn
-        (setq zhengma:current nil)
-        (zhengma:next-))
-    (when (functionp 'doom-themes-visual-bell-fn)
-      (doom-themes-visual-bell-fn)))
+        (let ((inhibit-message t)
+              (buf (current-buffer)))
+          (describe-variable 'zhengma:current)
+          ;; describe-variable会切换到帮助buffer，导致doom-themes-visual-bell-fn失效
+          (switch-to-buffer buf)))
+
+    (if (string-equal-ignore-case
+         input
+         (or (cdr
+              (assoc
+               (cdr (assoc 'index zhengma:current)) zhengma:gen))
+             ""))
+        (progn
+          (delete-other-windows) ;; 关闭帮助窗口
+          (setq zhengma:current nil)
+          (zhengma:next-))
+      (when (functionp 'doom-themes-visual-bell-fn)
+        (doom-themes-visual-bell-fn))))
   (call-interactively 'zhengma:next))
 
 ;; 很多至至新加的字根
