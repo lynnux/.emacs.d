@@ -3674,7 +3674,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :init
   ;; (setq flymake-show-diagnostics-at-end-of-line t) ;; 用overlay在行尾显示错误！但是太卡
+  (setq flymake-no-changes-timeout nil) ;; 禁止eglot的flymake，因为它不是idle timer更新的
   :config
+  (define-advice flymake--schedule-timer-maybe
+      (:around (orig-fn &rest args) my)
+    "配合eglot实现idle timer更新"
+    (let (timer
+          (flymake-no-changes-timeout 1.0))
+      (setq timer (apply orig-fn args))
+      (when timer
+        ;; timer的callback lambda无法改变`flymake-no-changes-timeout'，所以直接重写timer的callback，照抄就行
+        (timer-set-function timer
+                            (lambda (buffer)
+                              (when (buffer-live-p buffer)
+                                (with-current-buffer buffer
+                                  (when flymake-mode
+                                    (flymake-start t))
+                                  (setq flymake-timer nil))))
+                            (list (current-buffer))))
+      timer))
   ;; 当lsp开启时，去掉自己的hook
   (add-hook
    'flymake-mode-hook
@@ -3682,9 +3700,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      (when (and flymake-mode
                 (or (bound-and-true-p eglot--managed-mode)
                     (bound-and-true-p lsp-managed-mode)))
-       (remove-hook
-        'after-change-functions 'flymake-after-change-function
-        t)
+       ;; (remove-hook
+       ;;  'after-change-functions 'flymake-after-change-function
+       ;;  t) ;; `flymake-no-changes-timeout'改为nil就需要这个了
        (remove-hook 'after-save-hook 'flymake-after-save-hook t)
        (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
        (remove-hook
