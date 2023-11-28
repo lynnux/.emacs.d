@@ -628,8 +628,13 @@ _q_uit
      "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
      "^/tmp/"
      (lambda (file) (file-in-directory-p file package-user-dir))))
+  :hook (after-init . recentf-mode)
   :config
-  :hook (after-init . recentf-mode))
+  ;; 去掉不必要的hook
+  (defconst recentf-used-hooks
+    '((find-file-hook recentf-track-opened-file)
+      (kill-emacs-hook recentf-save-list))
+    "Hooks used by recentf."))
 
 ;; session的C-x C-/貌似好用一点？
 (use-package session
@@ -1370,7 +1375,6 @@ _c_: hide comment        _q_uit
     :commands (corfu-info-documentation corfu-info-location)
     :init
     ;; 对于elisp-completion-at-point后端，这两个是可以用的，但是提示是Dabbrev的话就无法用了
-    (define-key corfu-map (kbd "<f1>") 'corfu-info-documentation)
     (define-key corfu-map "\M-l" 'corfu-info-location))
 
   (global-set-key (kbd "<C-return>") 'completion-at-point)
@@ -2769,7 +2773,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (use-package vc-hooks
   :defer t
+  :init (setq vc-handled-backends '(Git))
   :config
+  ;; TODO: vc的modeline并不好用，直接去掉他的hook，自己写mode-line
+  ;; TODO: vc-after-save被`basic-save-buffer'调用，emacs背后居然干了那么多事
+  ;; (remove-hook 'find-file-hook #'vc-refresh-state)
+  ;; (remove-hook 'kill-buffer-hook #'vc-kill-buffer-hook)
   (defface vc-mode-face '((t :foreground "#6ae4b9"))
     "")
   (define-advice vc-call-backend (:around (orig-fn &rest args) my)
@@ -2781,6 +2790,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (setq result (string-replace "Git" pn result)))
             (propertize result 'face 'vc-mode-face))
         result))))
+
 ;; magit
 (use-package magit
   :if (bound-and-true-p enable-feature-tools)
