@@ -21,7 +21,6 @@ shuffling is done in place."
    (let ((j (random (+ i 1))))
      (zhengma:swap LIST i j)))
   LIST)
-(zhengma:shuffle zhengma:data) ;; 随机乱序
 
 (defcustom zhengma:host "127.0.0.1"
   "Preview http host."
@@ -48,6 +47,7 @@ shuffling is done in place."
     (buffer-string)))
 (defun zhengma:open-browser ()
   "Open browser."
+  (interactive)
   (browse-url (format "http://%s:%s" zhengma:host zhengma:port)))
 
 (defun zhengma:send-preview (num)
@@ -72,31 +72,48 @@ shuffling is done in place."
         (emacs-preview-rs/web-server-set-content
          zhengma:web-index "/" (zhengma:preview-template)))))
   (zhengma:open-browser)
-  (zhengma:next-)
-  (call-interactively 'zhengma:next))
+  (zhengma:reset)
+  (zhengma:next)
+  (call-interactively 'zhengma:answer))
 
-(defun zhengma:next- ()
+(defun zhengma:reset ()
+  (setq zhengma:current-index 0)
+  (setq zhengma:current nil)
+  (zhengma:shuffle zhengma:data) ;; 随机乱序
+  (zhengma:next))
+
+(defun zhengma:next ()
   (while (not
           (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen))
-    (setq zhengma:current-index (+ 1 zhengma:current-index))
     (when (>= zhengma:current-index (length zhengma:data))
-      (setq zhengma:current-index 0))
-    (setq zhengma:current (nth zhengma:current-index zhengma:data)))
+      (zhengma:reset)
+      (error "恭喜你已经完成一轮！"))
+    (setq zhengma:current (nth zhengma:current-index zhengma:data))
+    (setq zhengma:current-index (+ 1 zhengma:current-index)))
   (zhengma:send-preview (cdr (assoc 'index zhengma:current))))
 
-(defun zhengma:next (&optional input)
-  (interactive "s请输入图示字根: ")
-  (if (string-equal-ignore-case
-       input
-       (or (cdr
-            (assoc (cdr (assoc 'index zhengma:current)) zhengma:gen))
-           ""))
+(defun zhengma:answer (&optional input)
+  (interactive "s请输入图示字根(直接回车查看帮助): ")
+  (if (equal input "")
       (progn
-        (setq zhengma:current nil)
-        (zhengma:next-))
-    (when (functionp 'doom-themes-visual-bell-fn)
-      (doom-themes-visual-bell-fn)))
-  (call-interactively 'zhengma:next))
+        (let ((inhibit-message t)
+              (buf (current-buffer)))
+          (describe-variable 'zhengma:current)
+          ;; describe-variable会切换到帮助buffer，导致doom-themes-visual-bell-fn失效
+          (switch-to-buffer buf)))
+    (if (string-equal-ignore-case
+         input
+         (or (cdr
+              (assoc
+               (cdr (assoc 'index zhengma:current)) zhengma:gen))
+             ""))
+        (progn
+          (delete-other-windows) ;; 关闭帮助窗口
+          (setq zhengma:current nil)
+          (zhengma:next))
+      (when (functionp 'doom-themes-visual-bell-fn)
+        (doom-themes-visual-bell-fn))))
+  (call-interactively 'zhengma:answer))
 
 ;; 很多至至新加的字根
 (defvar zhengma:gen
@@ -483,8 +500,12 @@ shuffling is done in place."
     ;; ("380" . "rn")
     ;; ("381" . "iM")
     ;; ("382" . "kM")
-    )
+    ("383" . "gx"))
   "")
+(dolist (item zhengma:data)
+  (let ((x (assoc (cdr (assoc 'index item)) zhengma:gen)))
+    (when (and x (assoc 'word item))
+      (setcdr (assoc 'word item) (cdr x)))))
 
 (defun zhengma:stop ()
   (interactive)
