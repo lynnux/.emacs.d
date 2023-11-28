@@ -99,8 +99,7 @@
 (defun get-file-times (file)
   "获取文件的修改时间"
   (interactive "P")
-  (file-attribute-modification-time
-   (file-attributes file)))
+  (file-attribute-modification-time (file-attributes file)))
 
 (defun straight--build-compile (dir)
   "核心就是调用byte-recompile-directory，但只有跨进程才不报错"
@@ -234,7 +233,7 @@
   :commands (s-split s-word-wrap))
 
 (use-package f
-  :commands(f-mkdir-full-path f-touch)
+  :commands (f-mkdir-full-path f-touch)
   :init (provide 'f-shortdoc))
 
 (use-package eldoc
@@ -2768,6 +2767,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'go-mode "go-mode" nil t)
 (add-to-list 'auto-mode-alist (cons "\\.go\\'" 'go-mode))
 
+(use-package vc-hooks
+  :defer t
+  :config
+  (define-advice vc-call-backend (:around (orig-fn &rest args) my)
+    "给`vc-mode'添加颜色"
+    (let ((result (apply orig-fn args)))
+      (if (eq (ad-get-argument args 1) 'mode-line-string)
+          (propertize result 'face 'bookmark-face)
+        result))))
 ;; magit
 (use-package magit
   :if (bound-and-true-p enable-feature-tools)
@@ -4557,7 +4565,7 @@ _q_uit
   (use-package diff-hl-dired
     :commands (diff-hl-dired-mode)
     :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
- 
+
 (ignore-errors
   (module-load
    "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
@@ -6154,7 +6162,9 @@ _q_uit
        (if buffer-read-only
            (signal 'text-read-only nil)
          (let ((inhibit-message t))
-           (call-interactively 'elisp-autofmt-buffer))
+           (if (use-region-p)
+               (call-interactively 'elisp-autofmt-region)
+             (call-interactively 'elisp-autofmt-buffer)))
          (message "elisp format done.")))))
   :config
   ;; 使用内置的use-package格式化会有问题，必须加把use-package加入到`load-path'
@@ -6419,4 +6429,4 @@ _q_uit
     ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
     (browse-url
      (replace-regexp-in-string
-      "https://github.com" "https://download.fastgit.org" url)))) 
+      "https://github.com" "https://download.fastgit.org" url))))
