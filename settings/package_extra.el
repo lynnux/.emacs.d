@@ -2770,11 +2770,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package vc-hooks
   :defer t
   :config
+  (defface vc-mode-face '((t :foreground "#6ae4b9"))
+    "")
   (define-advice vc-call-backend (:around (orig-fn &rest args) my)
     "给`vc-mode'添加颜色"
     (let ((result (apply orig-fn args)))
       (if (eq (ad-get-argument args 1) 'mode-line-string)
-          (propertize result 'face 'bookmark-face)
+          (propertize result 'face 'vc-mode-face)
         result))))
 ;; magit
 (use-package magit
