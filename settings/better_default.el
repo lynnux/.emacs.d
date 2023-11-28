@@ -279,7 +279,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; (setq highlight-nonselected-windows nil) 有些不自然，比如diff的时候
 (setq fast-but-imprecise-scrolling t)
 (setq ffap-machine-p-known 'reject)
-(setq frame-inhibit-implied-resize t)
 (setq
  gcmh-idle-delay 'auto
  gcmh-auto-idle-delay-factor 10
