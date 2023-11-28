@@ -2773,10 +2773,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defface vc-mode-face '((t :foreground "#6ae4b9"))
     "")
   (define-advice vc-call-backend (:around (orig-fn &rest args) my)
-    "给`vc-mode'添加颜色"
+    "给`vc-mode'添加颜色，并把Git替换为项目名"
     (let ((result (apply orig-fn args)))
       (if (eq (ad-get-argument args 1) 'mode-line-string)
-          (propertize result 'face 'vc-mode-face)
+          (let ((pn (project-name (project-current t))))
+            (when pn
+              (setq result (string-replace "Git" pn result)))
+            (propertize result 'face 'vc-mode-face))
         result))))
 ;; magit
 (use-package magit
