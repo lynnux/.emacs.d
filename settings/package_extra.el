@@ -2117,23 +2117,19 @@ _c_: hide comment        _q_uit
     (defmacro common-fuzz-bakcend-setting (backend)
       `(progn
          (with-eval-after-load 'eglot
-           (add-to-list
-            'completion-category-overrides
-            '(eglot (styles ,backend))))
-         (setq completion-category-overrides
-               (assq-delete-all
-                'multi-category completion-category-overrides))
-         (setq completion-category-overrides
-               (assq-delete-all 'file completion-category-overrides))
-         ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
-         ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
+           (setcdr
+            (assoc 'eglot completion-category-overrides)
+            '((styles ,backend))))
          (when (featurep 'orderless)
-           (add-to-list
-            'completion-category-overrides
-            '(multi-category (styles orderless basic ,backend)))
-           (add-to-list
-            'completion-category-overrides
-            '(file (styles orderless basic ,backend))))))
+           ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
+           ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
+           (setcdr
+            (assoc
+             'multi-category completion-category-overrides)
+            '((styles orderless basic ,backend)))
+           (setcdr
+            (assoc 'file completion-category-overrides)
+            '((styles orderless basic ,backend))))))
 
     ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
     ;; 测试有时加了空格反而找不到
