@@ -2802,7 +2802,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     "给`vc-mode'添加颜色，并把Git替换为项目名"
     (let ((result (apply orig-fn args)))
       (if (eq (ad-get-argument args 1) 'mode-line-string)
-          (let ((pn (project-name (project-current t))))
+          (let ((pn
+                 (file-name-nondirectory
+                  (directory-file-name
+                   (project-root (project-current t))))))
             (when pn
               (setq result (string-replace "Git" pn result)))
             (propertize result 'face 'vc-mode-face))
