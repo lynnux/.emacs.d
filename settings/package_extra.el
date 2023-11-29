@@ -4663,6 +4663,10 @@ _q_uit
 (use-package org
   :defer t
   :config
+  ;; org的C-c C-o居然不走find-file
+  (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
+  (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
+  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default))
   (define-key org-mode-map (kbd "M-h") nil)
   (define-key org-mode-map (kbd "C-c C-d") nil)
   (define-key org-mode-map (kbd "C-'") nil))
