@@ -925,9 +925,10 @@ _c_: hide comment        _q_uit
       (list (buffer-substring-no-properties beg end) beg end)))
   (defun my-tempel-expandable-p ()
     "from https://gitlab.com/daanturo/e/-/blob/main/autoload/16-my-functions-snippet.el#L47"
-    (when (and
-           t ;; (memq (char-after) '(?\C-j ?  nil)) ;; 位置必须是最后或者后面有空格
-           (require 'tempel nil 'noerror))
+    (when
+        (and
+         t ;; (memq (char-after) '(?\C-j ?  nil)) ;; 位置必须是最后或者后面有空格
+         (require 'tempel nil 'noerror))
       (let ((s
              (car-safe (my-get-str-at-point))
              ;; (thing-at-point 'symbol)
@@ -1346,7 +1347,8 @@ _c_: hide comment        _q_uit
 
   (global-corfu-mode t)
   (defadvice corfu--update (around my-corfu--update activate)
-    (let ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
+    (let
+        ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
       ad-do-it))
 
   (defadvice corfu--make-frame (after my-corfu--make-frame activate)
@@ -2096,7 +2098,8 @@ _c_: hide comment        _q_uit
        '((multi-category (styles orderless basic +orderless-flex)) ;; 用于consult buffer，project buffer等
          (file (styles orderless basic +orderless-flex)) ;; 在`completion-styles'的基础上加上flex就够用了
          (command (styles basic)) ; 这几个命令经常卡，去掉orderless，但测试乱序仍然可以？
-         (variable (styles basic)) (symbol (styles basic)))
+         (variable (styles basic))
+         (function (styles basic))) ;; 分类category可以在marginalia看到一些，目前只需要M-x(command)，F1-v(variable), F1-f(function)
        orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
        orderless-style-dispatchers
        (list
@@ -2129,11 +2132,22 @@ _c_: hide comment        _q_uit
             '((styles orderless basic ,backend)))
            (setcdr
             (assoc 'file completion-category-overrides)
-            '((styles orderless basic ,backend))))))
+            '((styles orderless basic ,backend))))
+         ;; 实测basic也经常卡，直接flex了
+         (setcdr
+          (assoc 'command completion-category-overrides)
+          '((styles ,backend)))
+         (setcdr
+          (assoc 'variable completion-category-overrides)
+          '((styles ,backend)))
+         (setcdr
+          (assoc 'function completion-category-overrides)
+          '((styles ,backend)))))
 
     ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
-    ;; 测试有时加了空格反而找不到
+    ;; 缺点：测试有时加了空格反而找不到。function/command/variable设置后排序有问题
     (use-package hotfuzz
+      :disabled
       :init
       (ignore-errors
         (module-load
@@ -2151,7 +2165,6 @@ _c_: hide comment        _q_uit
       (common-fuzz-bakcend-setting hotfuzz))
 
     (use-package fussy
-      :disabled
       :init
       (use-package fzf-native
         :init
@@ -2272,7 +2285,8 @@ symbol under cursor"
     :init
     (defalias 'files-recent-visited 'consult-recent-file)
     (setq
-     consult-line-start-from-top nil ;; nil前面行会排后面，但t初始行是最前面那个
+     consult-line-start-from-top
+     nil ;; nil前面行会排后面，但t初始行是最前面那个
      consult-line-point-placement 'match-beginning ; jump后跳到匹配词的开头
      consult-async-min-input 1 ;; 确保单个汉字也可以搜索
      ;; consult-fontify-max-size 1024 ;; 不设置的话大文件第1次用consult-line会卡几秒，设置consult-fontify-preserve就不需要设置这个了
@@ -2473,24 +2487,25 @@ symbol under cursor"
           (setq myword (read-string "请输入要搜索的内容：")))
         (if myword
             (progn
-              (setq backend
-                    (consult--read
-                     '("baidu"
-                       "google"
-                       "rust winapi"
-                       "msdn"
-                       "emacs china"
-                       "everything"
-                       "project search"
-                       "cppreference"
-                       ;; "project file"
-                       )
-                     :prompt (format "Search %s on: " myword)
-                     ;; :history t ;; 不需要这个，选择会记录在minibuffer-history里
-                     :require-match t
-                     :sort t ; 这个会方住上次的选择
-                     :category 'file ;; 按前面的设置这个是flex匹配
-                     ))
+              (setq
+               backend
+               (consult--read
+                '("baidu"
+                  "google"
+                  "rust winapi"
+                  "msdn"
+                  "emacs china"
+                  "everything"
+                  "project search"
+                  "cppreference"
+                  ;; "project file"
+                  )
+                :prompt (format "Search %s on: " myword)
+                ;; :history t ;; 不需要这个，选择会记录在minibuffer-history里
+                :require-match t
+                :sort t ; 这个会方住上次的选择
+                :category 'file ;; 按前面的设置这个是flex匹配
+                ))
               (cond
                ((equal backend "everything")
                 (consult-everything myword))
@@ -2779,9 +2794,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (remove-hook 'find-file-hook #'vc-refresh-state)
     (remove-hook 'kill-buffer-hook #'vc-kill-buffer-hook)
     (define-advice vc-mode (:around (orig-fn &rest args) my))
-    (define-advice vc-after-save (:around (orig-fn &rest args) my))
-    )
-  
+    (define-advice vc-after-save (:around (orig-fn &rest args) my)))
+
   (defface vc-mode-face '((t :foreground "#6ae4b9"))
     "")
   (define-advice vc-call-backend (:around (orig-fn &rest args) my)
@@ -3975,7 +3989,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (defun lsp-ensure ()
       (eglot-ensure))
     (setq
-     eglot-confirm-server-initiated-edits nil ; 避免code action的yes/no提示
+     eglot-confirm-server-initiated-edits
+     nil ; 避免code action的yes/no提示
      eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
      eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
      eglot-events-buffer-size 0 ;; 
@@ -5422,7 +5437,8 @@ _q_uit
       (process (command (eql handshake)) arguments)
     ;; (message "hand: %S" (plist-get arguments :value))
     (dape-request-response
-     process 2 "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
+     process 2
+     "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
      (list :signature (my-calc (plist-get arguments :value)))))
   (define-advice dape--handle-object (:after (&rest args))
     "修复乱发序号问题"
@@ -5684,10 +5700,11 @@ _q_uit
                            (pcase type
                              ('ggtags-xref-location
                               (consult--marker-from-line-column
-                               (funcall open
-                                        (ggtags-xref-location-file
-                                         loc) ;; 要全路径不然open临时文件会失败
-                                        )
+                               (funcall
+                                open
+                                (ggtags-xref-location-file
+                                 loc) ;; 要全路径不然open临时文件会失败
+                                )
                                (ggtags-xref-location-line loc)
                                (ggtags-xref-location-column
                                 loc)))))))))))))
@@ -5751,8 +5768,9 @@ _q_uit
       (apply orig-fn args)))
   (defun cycle-at-point-find-include ()
     "改变include的双引号和<>切换"
-    (let ((result (list))
-          (word (bounds-of-thing-at-point 'sexp))) ;; 目前仅支持在"<>所在位置
+    (let
+        ((result (list))
+         (word (bounds-of-thing-at-point 'sexp))) ;; 目前仅支持在"<>所在位置
       (when word
         (setq word
               (buffer-substring-no-properties (car word) (cdr word)))
