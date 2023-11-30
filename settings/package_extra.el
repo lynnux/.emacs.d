@@ -3985,10 +3985,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :if (bound-and-true-p enable-feature-lsp-dap)
     :init
     ;; 最新emacs自带eglot并依赖external-completion
-    (when (featurep 'external-completion)
-      (autoload 'eglot-ensure "lsp/eglot" "" nil)
-      (autoload 'eglot "lsp/eglot" "" nil)
-      (autoload 'eglot-rename "lsp/eglot" "" nil))
+    (let ((eglot-load-path
+           (if (featurep 'external-completion)
+               "eglot"
+             "lsp/eglot")))
+      (autoload 'eglot-ensure eglot-load-path "" nil)
+      (autoload 'eglot eglot-load-path "" nil)
+      (autoload 'eglot-rename eglot-load-path "" nil)
+      (autoload 'eglot-completion-at-point eglot-load-path "" nil))
     (defun lsp-ensure ()
       (eglot-ensure))
     (setq
