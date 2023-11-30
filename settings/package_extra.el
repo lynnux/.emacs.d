@@ -6270,6 +6270,12 @@ _q_uit
   (define-key shell-mode-map '[up] 'comint-previous-input)
   (define-key shell-mode-map '[down] 'comint-next-input)
 
+  ;; 在任何位置按M-p/n都可以自动跳到命令输入位置
+  (define-advice comint-previous-input (:before (&rest args) my)
+    (comint-goto-process-mark))
+  (define-advice comint-next-input (:before (&rest args) my)
+    (comint-goto-process-mark))
+
   ;; No confirm kill process: for *shell* and *compilation*
   ;; https://emacs.stackexchange.com/q/24330
   (defun set-no-process-query-on-exit ()
