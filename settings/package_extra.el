@@ -2132,22 +2132,11 @@ _c_: hide comment        _q_uit
             '((styles orderless basic ,backend)))
            (setcdr
             (assoc 'file completion-category-overrides)
-            '((styles orderless basic ,backend))))
-         ;; 实测basic也经常卡，直接flex了
-         (setcdr
-          (assoc 'command completion-category-overrides)
-          '((styles ,backend)))
-         (setcdr
-          (assoc 'variable completion-category-overrides)
-          '((styles ,backend)))
-         (setcdr
-          (assoc 'function completion-category-overrides)
-          '((styles ,backend)))))
+            '((styles orderless basic ,backend))))))
 
     ;; hotfuzz比fussy更快，fussy有时候会卡(如M-x`load-theme')
     ;; 缺点：测试有时加了空格反而找不到。function/command/variable设置后排序有问题
     (use-package hotfuzz
-      :disabled
       :init
       (ignore-errors
         (module-load
@@ -2165,6 +2154,7 @@ _c_: hide comment        _q_uit
       (common-fuzz-bakcend-setting hotfuzz))
 
     (use-package fussy
+      :disabled ;; 28上测试command/variable/function等速度确实不如hotfuzz
       :init
       (use-package fzf-native
         :init
@@ -2655,8 +2645,7 @@ symbol under cursor"
           (1-
            (or
             (seq-position
-             vertico--candidates
-             consult--previous-point
+             vertico--candidates consult--previous-point
              (lambda
                (cand point-pos) ; counts on candidate list being sorted
                (> (cl-case
