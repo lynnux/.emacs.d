@@ -2120,9 +2120,12 @@ _c_: hide comment        _q_uit
     (defmacro common-fuzz-bakcend-setting (backend)
       `(progn
          (with-eval-after-load 'eglot
-           (add-to-list
-            'completion-category-overrides
-            '(eglot (styles ,backend))))
+           ;; 新版eglot的改名为eglot-capf了
+           (dolist (l completion-category-defaults)
+             (when (string-prefix-p "eglot" (symbol-name (car l)))
+               (add-to-list
+                'completion-category-overrides
+                (list (car l) '(styles ,backend))))))
          (when (featurep 'orderless)
            ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
            ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
@@ -2645,7 +2648,8 @@ symbol under cursor"
           (1-
            (or
             (seq-position
-             vertico--candidates consult--previous-point
+             vertico--candidates
+             consult--previous-point
              (lambda
                (cand point-pos) ; counts on candidate list being sorted
                (> (cl-case
@@ -3975,7 +3979,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :init
     ;; 最新emacs自带eglot并依赖external-completion
     (let ((eglot-load-path
-           (if (featurep 'external-completion)
+           (if (autoloadp (symbol-function 'eglot))
                "eglot"
              "lsp/eglot")))
       (autoload 'eglot-ensure eglot-load-path "" nil)
