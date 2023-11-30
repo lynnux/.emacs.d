@@ -851,7 +851,6 @@ _c_: hide comment        _q_uit
 
 ;; undo-fu小巧才15K
 (use-package undo-fu
-  :disabled
   :if (bound-and-true-p enable-feature-edit)
   :config
   (global-unset-key (kbd "C-z"))
@@ -3210,7 +3209,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             xrefs)))))
   (advice-add
    #'xref--create-fetcher
-   :override #'zjy/xref--create-fetcher))
+   :override #'zjy/xref--create-fetcher)
+  (with-eval-after-load 'eglot
+    ;; 禁止eglot的错误提示，让其它xref可以继续找下去
+    (cl-defmethod xref-backend-identifier-at-point
+        ((_backend (eql eglot)))
+      (find-tag--default))))
 
 ;; 利用imenu信息实现xref，对cpp比较好，因为用的counsel-etags是根据单个文件生成的。对elisp貌似也有不错的效果
 (cl-defmethod xref-backend-identifier-at-point
@@ -3277,11 +3281,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   'xref-to-consult-rg)
 (add-hook 'xref-backend-functions 'xref-to-consult-rg-backend 101) ;; 排到最后，实际上这直接破坏了xref流程
 
-
 ;; TODO: ctags生成好像还含有外部引用？另外--exclude需要自己加上
 ;; 测试问题：xref空白处会卡死，补全时也会卡死emacs(尤其是el文件写注释的时候，会创建process并提示失败)
 ;; 所以目前仅用它来创建TAGS文件
 (use-package citre-ctags
+  :disabled ;; ggtags支持xref了更好用，这个项目大就不行了
   :if (bound-and-true-p enable-feature-navigation)
   :defer t
   :init
@@ -3343,10 +3347,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; 最坑的是eglot定义了个xref-backend-identifier-at-point，却只是用来在找不到时提示找不到"LSP identifier at point."
     ;; 这样传给etags去查找的就是"LSP identifier at point."
     (with-eval-after-load 'eglot
-      ;; 重新定义eglot的xref-backend-identifier-at-point，避免上面xref--create-fetcher传给etags搜索词错误
-      (cl-defmethod xref-backend-identifier-at-point
-          ((_backend (eql eglot)))
-        (find-tag--default))
       ;; 在空白处运行M-. eglot提示没实现，那就直接换成etags的了。此功能用consult-eglot也可以(C-,)
       (cl-defmethod xref-backend-identifier-completion-table
           ((_backend (eql eglot)))
