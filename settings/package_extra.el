@@ -4276,10 +4276,11 @@ _q_uit
                      (last-command-event key))
                  (self-insert-command 1 key)
                  (unless (minibufferp)
-                   (electric-pair-post-self-insert-function)
-                   (when my-auto-newline
-                     (when (eq key ?\{)
-                       (call-interactively 'new-line-dwim)))))))
+                   (ignore-errors
+                     (electric-pair-post-self-insert-function)
+                     (when my-auto-newline
+                       (when (eq key ?\{)
+                         (call-interactively 'new-line-dwim))))))))
        (global-set-key key_str key_symbol))))
 
   ;; 修复eldoc不显示参数名问题
