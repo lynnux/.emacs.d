@@ -2198,7 +2198,7 @@ _c_: hide comment        _q_uit
        )
       :init
       (setq
-       embark-mixed-indicator-delay 0 ;; 按钮提示菜单延迟，熟练后可以设置长点
+       embark-mixed-indicator-delay 1.0 ;; 按钮提示菜单延迟，熟练后可以设置长点
        ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
        )
       (global-set-key [f3] 'embark-next-symbol)
