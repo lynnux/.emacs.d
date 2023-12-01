@@ -3324,78 +3324,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                          citre-util
                          "~/.emacs.d/packages/citre/citre-master"
                          '(citre-util)))
-  (use-package etags
-    :defer t
-    :commands
-    (find-tag--default ;; 修复eglot的xref at-point
-     tags-lazy-completion-table ;; 空白处M-.
-     tags-completion-at-point-function ;; etags的capf
-     )
-    :init
-    ;; xref有bug，`xref-backend-functions'只支持一个backend(无论local hook或者全局)
-    ;; https://github.com/seagle0128/.emacs.d/blob/3eabad00e75605ad1277fb37ebc1bf0619e44180/lisp/init-ctags.el#L62
-    ;; (define-advice xref--create-fetcher (:around (fn &rest args) fallback)
-    ;;   (let ((fetcher (apply fn args))
-    ;;         (etag-fetcher
-    ;;          (let ((xref-backend-functions '(etags--xref-backend t)))
-    ;;            (ignore xref-backend-functions)
-    ;;            (apply fn args))))
-    ;;     ;; 这个需要开启-*- lexical-binding: t -*-，写在开头就可以了
-    ;;     (lambda ()
-    ;;       (or (with-demoted-errors "%s, fallback to etag"
-    ;;             (funcall fetcher))
-    ;;           (funcall etag-fetcher)
-    ;;           ))))
-    ;; 最坑的是eglot定义了个xref-backend-identifier-at-point，却只是用来在找不到时提示找不到"LSP identifier at point."
-    ;; 这样传给etags去查找的就是"LSP identifier at point."
-    (with-eval-after-load 'eglot
-      ;; 在空白处运行M-. eglot提示没实现，那就直接换成etags的了。此功能用consult-eglot也可以(C-,)
-      (cl-defmethod xref-backend-identifier-completion-table
-          ((_backend (eql eglot)))
-        (tags-lazy-completion-table)))
-    ;; 避免每次都提示查找TAG文件
-    (defconst ask-when-to-tag nil) ;; xref-find-definitions advise没成功。
-    (defun check_tags ()
-      ;; 参考`citre-update-this-tags-file'
-      (if-let* ((tagsfile (citre-tags-file-path)))
-        (visit-tags-table tagsfile t)
-        (when
-            (and
-             ask-when-to-tag
-             (y-or-n-p
-              "Can't find tags file for this buffer.  Create one? "))
-          (citre-create-tags-file)
-          (setq tagsfile (citre-tags-file-path))
-          (when tagsfile
-            (visit-tags-table tagsfile t)))))
-    (add-hook 'prog-mode-hook 'check_tags)
-    (setq
-     tags-add-tables nil ;; 打开其它工程时保留tag提示，不保留，否则会混起
-     tags-revert-without-query t ;; 当TAGS更新后不提示是否revert TAGS buffer
-     )
-    (defun tag-find-definition (identifier)
-      "有时如duilib的头文件里eglot就不行，用tag还行"
-      (interactive (list
-                    (xref--read-identifier "Find definitions of: ")))
-      (let ((xref-backend-functions '(etags--xref-backend)))
-        (xref--find-definitions identifier nil)))
-    :config
-    ;; 跟citre生成的TAGS兼容(头两行带有更新TAGS的命令)
-    (defadvice etags-verify-tags-table
-        (around my-etags-verify-tags-table activate)
-      ;; 原来的判断是开头0xC字符
-      (setq ad-return-value t))
-    (defadvice visit-tags-table-buffer
-        (around my-visit-tags-table activate)
-      "屏蔽xref提示选择TAGS"
-      (cl-letf
-          (((symbol-function #'read-file-name)
-            (lambda (prompt
-                     &optional dir default-filename &rest others)
-              ;; (message "dir:%S, default-filename:%S" dir default-filename)
-              ;; 直播返回，相当于按RET
-              default-filename)))
-        ad-do-it)))
   :config
   ;; 强制tag名
   (defadvice citre--path-to-cache-tags-file-name
@@ -3405,6 +3333,61 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    citre-edit-cmd-buf-map
    (kbd "C-c C-l")
    'citre-edit-cmd-buf-add-lang))
+
+(use-package etags
+  :defer t
+  :commands
+  (find-tag--default ;; 修复eglot的xref at-point
+   tags-lazy-completion-table ;; 空白处M-.
+   tags-completion-at-point-function ;; etags的capf
+   )
+  :init
+  (with-eval-after-load 'eglot
+    ;; 在空白处运行M-. eglot提示没实现，那就直接换成etags的了。此功能用consult-eglot也可以(C-,)
+    (cl-defmethod xref-backend-identifier-completion-table
+        ((_backend (eql eglot)))
+      (tags-lazy-completion-table)))
+  ;; 避免每次都提示查找TAG文件
+  (defconst ask-when-to-tag nil) ;; xref-find-definitions advise没成功。
+  (defun check_tags ()
+    ;; 参考`citre-update-this-tags-file'
+    (if-let* ((tagsfile (citre-tags-file-path)))
+      (visit-tags-table tagsfile t)
+      (when (and
+             ask-when-to-tag
+             (y-or-n-p
+              "Can't find tags file for this buffer.  Create one? "))
+        (citre-create-tags-file)
+        (setq tagsfile (citre-tags-file-path))
+        (when tagsfile
+          (visit-tags-table tagsfile t)))))
+  ;; (add-hook 'prog-mode-hook 'check_tags)
+  (setq
+   tags-add-tables nil ;; 打开其它工程时保留tag提示，不保留，否则会混起
+   tags-revert-without-query t ;; 当TAGS更新后不提示是否revert TAGS buffer
+   )
+  (defun tag-find-definition (identifier)
+    "有时如duilib的头文件里eglot就不行，用tag还行"
+    (interactive (list
+                  (xref--read-identifier "Find definitions of: ")))
+    (let ((xref-backend-functions '(etags--xref-backend)))
+      (xref--find-definitions identifier nil)))
+  :config
+  ;; 跟citre生成的TAGS兼容(头两行带有更新TAGS的命令)
+  (defadvice etags-verify-tags-table
+      (around my-etags-verify-tags-table activate)
+    ;; 原来的判断是开头0xC字符
+    (setq ad-return-value t))
+  (defadvice visit-tags-table-buffer
+      (around my-visit-tags-table activate)
+    "屏蔽xref提示选择TAGS"
+    (cl-letf
+        (((symbol-function #'read-file-name)
+          (lambda (prompt &optional dir default-filename &rest others)
+            ;; (message "dir:%S, default-filename:%S" dir default-filename)
+            ;; 直播返回，相当于按RET
+            default-filename)))
+      ad-do-it)))
 
 (defun my-project-search (&optional dir initial)
   (interactive)
