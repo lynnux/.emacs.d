@@ -2198,7 +2198,8 @@ _c_: hide comment        _q_uit
        )
       :init
       (setq
-       embark-mixed-indicator-delay 1.0 ;; 按钮提示菜单延迟，熟练后可以设置长点
+       embark-mixed-indicator-delay
+       1.0 ;; 按钮提示菜单延迟，熟练后可以设置长点
        ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
        )
       (global-set-key [f3] 'embark-next-symbol)
@@ -2798,8 +2799,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  (file-name-nondirectory
                   (directory-file-name
                    (project-root (project-current t))))))
-            (when pn
-              (setq result (string-replace "Git" pn result)))
+            (unless (boundp 'project-mode-line)
+              (when pn
+                (setq result (string-replace "Git" pn result))))
             (propertize result 'face 'vc-mode-face))
         result))))
 
@@ -3462,6 +3464,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key project-prefix-map "b" 'my-project-buffer)
 
   :config
+  (when (boundp 'project-mode-line)
+    (setq project-mode-line t) ;; mode line显示项目名，30.1版本才有
+    (setq project-mode-line-face '(foreground-color . "#6ae4b9")))
   ;; 子目录有.project就以子目录为prj root
   (defun my-project-find-functions (dir)
     (let ((override (locate-dominating-file dir ".project")))
