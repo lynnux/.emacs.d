@@ -3449,7 +3449,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :config
   (when (boundp 'project-mode-line)
     (setq project-mode-line t) ;; mode line显示项目名，30.1版本才有
-    (setq project-mode-line-face '(foreground-color . "#6ae4b9")))
+    (setq project-mode-line-face '(foreground-color . "orange")))
   ;; 子目录有.project就以子目录为prj root
   (defun my-project-find-functions (dir)
     (let ((override (locate-dominating-file dir ".project")))
