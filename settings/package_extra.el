@@ -6328,6 +6328,144 @@ _q_uit
         (esy/file-capf)
       (apply orig-fn args))))
 
+(use-package cal-china
+  :defer 0.5 ;; 不知为何，直接加载会报错
+  :init
+  (use-package calendar
+    :commands (calendar-absolute-from-gregorian calendar-current-date))
+  (setq calendar-chinese-celestial-stem
+        ["甲" "乙" "丙" "丁" "戊" "己" "庚" "辛" "壬" "癸"])
+  (setq calendar-chinese-terrestrial-branch
+        ["子" "丑" "寅" "卯" "辰" "巳" "午" "未" "申" "酉" "戌" "亥"])
+  ;; from https://github.com/xwl/cal-china-x/blob/master/cal-china-x.el
+  (defconst cal-china-x-day-name
+    ["初一"
+     "初二"
+     "初三"
+     "初四"
+     "初五"
+     "初六"
+     "初七"
+     "初八"
+     "初九"
+     "初十"
+     "十一"
+     "十二"
+     "十三"
+     "十四"
+     "十五"
+     "十六"
+     "十七"
+     "十八"
+     "十九"
+     "廿"
+     "廿一"
+     "廿二"
+     "廿三"
+     "廿四"
+     "廿五"
+     "廿六"
+     "廿七"
+     "廿八"
+     "廿九"
+     "三十"
+     "卅一"
+     "卅二"
+     "卅三"
+     "卅四"
+     "卅五"
+     "卅六"
+     "卅七"
+     "卅八"
+     "卅九"
+     "卅十"])
+  (defun my-calendar-chinese-sexagesimal-name (n)
+    (format "%s%s"
+            (aref calendar-chinese-celestial-stem (% (1- n) 10))
+            (aref calendar-chinese-terrestrial-branch (% (1- n) 12))))
+  (defun get-chinese-wannianli (&optional date)
+    "获取万年历，参考`calendar-chinese-date-string'实现"
+    (let* ((a-date
+            (calendar-absolute-from-gregorian
+             (or date (calendar-current-date))))
+           (c-date (calendar-chinese-from-absolute a-date))
+           (cycle (car c-date))
+           (year (cadr c-date))
+           (month (nth 2 c-date))
+           (day (nth 3 c-date))
+           (cn-month-string
+            (concat
+             (aref
+              calendar-chinese-month-name-array (1- (floor month)))
+             (if (integerp month)
+                 ""
+               "(闰月)")))
+           (this-month
+            (calendar-chinese-to-absolute (list cycle year month 1)))
+           (next-month
+            (calendar-chinese-to-absolute
+             (list
+              (if (= year 60)
+                  (1+ cycle)
+                cycle)
+              (if (= (floor month) 12)
+                  (1+ year)
+                year)
+              ;; Remainder of (1+(floor month))/12, with
+              ;; 12 instead of 0.
+              (1+ (mod (floor month) 12)) 1))))
+      ;; TODO: 这个对1号是对的，但是月变更是在节气的时候变，所以还是有问题
+      (if (not (integerp month))
+          ;; 闰月
+          (setq month (floor month))
+        (if (< 30 (- next-month this-month))
+            ;; 闰月的前一个月
+            (setq month (1- month))
+          ;; 正常月
+          (ignore)))
+      (format "%s%s日, %s年, %s月, %s日"
+              cn-month-string
+              (seq-elt cal-china-x-day-name (1- day))
+              (my-calendar-chinese-sexagesimal-name year)
+              (format "%s"
+                      (my-calendar-chinese-sexagesimal-name
+                       (+ (* 12 year) month 50)))
+              (my-calendar-chinese-sexagesimal-name (+ a-date 15)))))
+  ;; (get-chinese-wannianli '(5 4 2020))
+  ;; (get-chinese-wannianli '(5 5 2020)) ;; 立夏变更月干支
+  ;; (get-chinese-wannianli '(5 22 2020))
+  ;; (get-chinese-wannianli '(5 23 2020))
+  ;; (get-chinese-wannianli '(7 22 2017))
+  ;; (get-chinese-wannianli '(7 23 2017))
+  ;; (calendar-chinese-date-string '(5 4 2021))
+  ;; (calendar-chinese-date-string '(5 5 2021))
+  ;; (calendar-chinese-date-string '(5 1 2021)) ;; 非闰月正常
+  ;; (calendar-chinese-date-string '(5 1 2020)) ;; 闰月前一个月的日的干支是错的！
+  ;; (calendar-chinese-date-string '(6 1 2020)) ;; 闰月当月的日干支甚至没有！
+  :config
+  (setq calendar-chinese-month-name-array
+        ["正月"
+         "二月"
+         "三月"
+         "四月"
+         "五月"
+         "六月"
+         "七月"
+         "八月"
+         "九月"
+         "十月"
+         "冬月"
+         "腊月"])
+  (setq display-time-string-forms
+        '((concat
+           (propertize (format-time-string display-time-format now)
+                       'face
+                       'display-time-date-and-time
+                       'help-echo
+                       (format-time-string "%a %b %e, %Y" now))
+           " " (get-chinese-wannianli))))
+  (display-time-update))
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
