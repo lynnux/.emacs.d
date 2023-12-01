@@ -4,8 +4,9 @@
  '(blink-cursor-mode nil) ;光标是否闪烁
  '(column-number-mode t) ;状态栏里显示行号和列号
  '(line-number-mode t)
- '(size-indication-mode t) ; 显示文件大小
- ;; '(display-time-mode t) ;显示时间
+ '(mode-line-percent-position nil) ;; 不显示位置百分比
+ ;; '(size-indication-mode t) ; 显示文件大小
+ '(display-time-mode t) ;显示时间
  '(inhibit-startup-screen t) ;禁止显示启动画面
  '(show-paren-mode t) ;()匹配提示
  '(tooltip-mode nil) ;windows会卡，不用
@@ -15,6 +16,26 @@
  '(warning-suppress-types '((comp)))
  '(minibuffer-prompt-properties ;; 禁止光标移动到在minibuffer的prompt里去，不然输入会提示Text readonly
    (quote (read-only t cursor-intangible t face minibuffer-prompt))))
+
+;; 位置百分比变为总行数
+(add-hook
+ 'after-init-hook
+ (lambda ()
+   (setq mode-line-percent-position
+         '(:eval
+           (format "all:%d" (line-number-at-pos (point-max)))))))
+
+(setq display-time-24hr-format t) ; 24小时格式
+;; (setq display-time-day-and-date t) ; 显示日期
+(setq display-time-format " %Y-%m-%d %H:%M")
+(setq display-time-default-load-average nil)
+(custom-set-faces
+ '(display-time-date-and-time ((t (:foreground "#f78fe7")))))
+(setq frame-title-format
+      '("%f" (:eval
+         (if (buffer-modified-p)
+             " *"
+           ""))))
 
 (setq confirm-nonexistent-file-or-buffer nil)
 (setq
@@ -72,15 +93,6 @@
     (kill-buffer (current-buffer))))
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
 (global-set-key "\M-r" 'replace-string)
-
-(setq display-time-24hr-format t) ; 24小时格式
-(setq display-time-day-and-date t) ; 显示日期
-(setq frame-title-format
-      '("%f" (:eval
-         (if (buffer-modified-p)
-             " *"
-           ""))))
-
 
 (when (display-graphic-p)
   ;; 字体设置，下载Consolas字体，很好看，据说是ms专门给vs studio用的
