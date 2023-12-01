@@ -12,7 +12,9 @@
  ;'(tool-bar-mode nil)          		;不显示toolbar
  ;'(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
  '(warning-suppress-log-types '((comp) (comp)))
- '(warning-suppress-types '((comp))))
+ '(warning-suppress-types '((comp)))
+ '(minibuffer-prompt-properties ;; 禁止光标移动到在minibuffer的prompt里去，不然输入会提示Text readonly
+   (quote (read-only t cursor-intangible t face minibuffer-prompt))))
 
 (setq confirm-nonexistent-file-or-buffer nil)
 (setq
