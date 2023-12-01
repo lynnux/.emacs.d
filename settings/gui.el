@@ -5,7 +5,7 @@
  '(column-number-mode t) ;状态栏里显示行号和列号
  '(line-number-mode t)
  '(size-indication-mode t) ; 显示文件大小
- '(display-time-mode t) ;显示时间
+ ;; '(display-time-mode t) ;显示时间
  '(inhibit-startup-screen t) ;禁止显示启动画面
  '(show-paren-mode t) ;()匹配提示
  '(tooltip-mode nil) ;windows会卡，不用
