@@ -6414,7 +6414,7 @@ _q_uit
               ;; Remainder of (1+(floor month))/12, with
               ;; 12 instead of 0.
               (1+ (mod (floor month) 12)) 1))))
-      ;; TODO: 这个对1号是对的，但是月变更是在节气的时候变，所以还是有问题
+      ;; TODO: 月干支有疑问，有些八字排盘按节气月排。目前月干支不是按节气月，跟元享利贞一致。
       (if (not (integerp month))
           ;; 闰月
           (setq month (floor month))
