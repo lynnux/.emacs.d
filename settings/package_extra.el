@@ -2841,6 +2841,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 ;; 延迟vc调用到特定函数，副作用mode line没有vc-mode了
 (use-package vc-defer
+  :diminish
   :defer t
   :init
   (autoload 'vc-defer-mode "magit/vc-defer" "" nil)
