@@ -2816,6 +2816,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    (interactive)
    (call-interactively 'log-view-diff))
  (setq log-view-expanded-log-entry-function 'log-view-show-diff)
+ (define-advice magit-log-current (:around (orig-fn &rest args) my)
+   "调用`vc-print-root-log'还弹窗"
+   (vc-print-log-internal 'Git (list (project-root (project-current t))) nil nil vc-log-show-limit nil))
  (with-eval-after-load 'vc-git
    (add-to-list
     'vc-git-log-view-mode-hook
