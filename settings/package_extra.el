@@ -4681,7 +4681,11 @@ _q_uit
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
   (with-eval-after-load 'log-edit
     ;; vc checkin后也需要更新状态
-    (add-hook 'log-edit-done-hook 'diff-hl-reset-reference-rev))
+    (add-hook 'log-edit-done-hook (lambda()
+                                    (run-with-idle-timer
+                                     0.5
+                                     nil
+                                     #'diff-hl-reset-reference-rev))))
   ;; 用timer避免各种hook
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
