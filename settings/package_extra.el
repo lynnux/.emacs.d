@@ -4646,34 +4646,34 @@ _q_uit
   :if (bound-and-true-p enable-feature-gui)
   :defer t
   :init
-  (defun diff-hl-after-save-hook-local()
+  (defun diff-hl-after-save-hook-local ()
     (when diff-hl-update-timer
       (cancel-timer diff-hl-update-timer))
     (setq diff-hl-update-timer
           (run-with-idle-timer
            1.0 nil #'diff-hl-update-timer-function)))
-  (defun diff-hl-prog-mode-hook()
+  (defun diff-hl-prog-mode-hook ()
     (unless (featurep 'diff-hl)
       (delay-require-libs
        "~/.emacs.d/themes/diff-hl-master"
        '(diff-hl diff-hl-dired diff-hl-show-hunk)))
     ;; 不在file加载过程中显示，避免跟vc-defer冲突
     (run-with-local-idle-timer
-     0.5 nil (lambda()
-               (diff-hl-maybe-define-bitmaps)
-               (diff-hl-update)))
+     0.5 nil
+     (lambda ()
+       (diff-hl-maybe-define-bitmaps)
+       (diff-hl-update)))
     (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
-    (add-hook 'after-save-hook 'diff-hl-after-save-hook-local
-              nil t))
+    (add-hook 'after-save-hook 'diff-hl-after-save-hook-local nil t))
   (add-hook 'prog-mode-hook 'diff-hl-prog-mode-hook)
   :config
   (defhydra
-   hydra-diff-hl
-   ()
-   "goto hunk: "
-   ("p" diff-hl-previous-hunk "previous")
-   ("n" diff-hl-next-hunk "next")
-   ("q" nil "quit"))
+    hydra-diff-hl
+    ()
+    "goto hunk: "
+    ("p" diff-hl-previous-hunk "previous")
+    ("n" diff-hl-next-hunk "next")
+    ("q" nil "quit"))
   (global-set-key (kbd "C-c h") #'hydra-diff-hl/body)
   (global-set-key (kbd "C-c C-h") #'hydra-diff-hl/body)
 
@@ -4681,11 +4681,11 @@ _q_uit
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
   (with-eval-after-load 'log-edit
     ;; vc checkin后也需要更新状态
-    (add-hook 'log-edit-done-hook (lambda()
-                                    (run-with-idle-timer
-                                     0.5
-                                     nil
-                                     #'diff-hl-reset-reference-rev))))
+    (add-hook
+     'log-edit-done-hook
+     (lambda ()
+       ;; 立即调用没效果，需要timer
+       (run-with-idle-timer 0.5 nil #'diff-hl-reset-reference-rev))))
   ;; 用timer避免各种hook
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
@@ -4698,7 +4698,8 @@ _q_uit
     (interactive)
     (diff-hl-update))
 
-  (use-package diff-hl-dired
+  (use-package
+    diff-hl-dired
     :commands (diff-hl-dired-mode)
     :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
 
