@@ -6569,6 +6569,13 @@ _q_uit
     ;; 'spacemacs-dark
     )))
 
+(load-file "~/.emacs.d/themes/dracula-theme.el")
+(setq dracula-height-title-1 1.0)
+(setq dracula-height-title-2 1.0)
+(setq dracula-height-title-3 1.0)
+(setq dracula-height-doc-title 1.0)
+(load-theme 'dracula t)
+;; (load-theme 'modus-vivendi t)
 
 ;; 各种theme修补
 (let ((th (car custom-enabled-themes)))
@@ -6592,7 +6599,7 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
-   ((or (eq th 'modus-vivendi) (eq th 'modus-vivendi-tritanopia))
+   ((or (eq th 'modus-vivendi) (eq th 'modus-vivendi-tritanopia) (eq th 'dracula))
     (custom-set-faces
      '(consult-file ((t (:foreground nil))))
      '(consult-bookmark ((t (:foreground nil))))))
@@ -6621,11 +6628,3 @@ _q_uit
 ;; paren加下划线，参考的spacemacs
 (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
 (custom-set-faces '(header-line ((t (:weight bold)))))
-
-(load-file "~/.emacs.d/themes/dracula-theme.el")
-(setq dracula-height-title-1 1.0)
-(setq dracula-height-title-2 1.0)
-(setq dracula-height-title-3 1.0)
-(setq dracula-height-doc-title 1.0)
-(load-theme 'dracula t)
-;; (load-theme 'modus-vivendi t)
