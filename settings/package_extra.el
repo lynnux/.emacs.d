@@ -2778,6 +2778,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (autoload 'go-mode "go-mode" nil t)
 (add-to-list 'auto-mode-alist (cons "\\.go\\'" 'go-mode))
 
+(use-package vc
+  :defer t
+  :init
+  (setq vc-log-show-limit 100) ;; 默认2000太多了
+  )
+
 (use-package vc-hooks
   :defer t
   :init (setq vc-handled-backends '(Git))
@@ -2825,6 +2831,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (lambda ()
       (setq-local log-view-expanded-log-entry-function
                   'log-view-show-diff)))))
+
+(use-package log-edit
+  :defer t
+  :config
+  (load "magit/agitate")
+  (agitate-log-edit-informative-mode))
 
 ;; magit
 (use-package magit
