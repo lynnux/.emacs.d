@@ -1253,9 +1253,12 @@ _c_: hide comment        _q_uit
      '((emacs) (comp) (comp)))
    '(warning-suppress-types '((comp)))))
 
-(use-package cursor-chg
-  :init (setq curchg-change-cursor-on-input-method-flag nil)
-  :config (change-cursor-mode 1))
+(use-package
+ cursor-chg
+ :init (setq curchg-change-cursor-on-input-method-flag nil)
+ :config
+ (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
+ (change-cursor-mode 1))
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
