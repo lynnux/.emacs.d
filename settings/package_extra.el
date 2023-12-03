@@ -2783,21 +2783,26 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :init
   (setq vc-log-show-limit 100) ;; 默认2000太多了
   )
+(use-package vc-dir
+  :defer t
+  :init
+  (defun vc-dir-no-select()
+    "让`vc-dir'不选择目录"
+    (interactive)
+    (vc-dir (project-root (project-current t))))
+  (global-set-key [remap vc-dir] 'vc-dir-no-select)
+  :config
+  (define-key vc-dir-mode-map (kbd "k") 'vc-revert)
+  (define-key vc-dir-mode-map (kbd "d") 'vc-diff)
+  (define-key vc-dir-mode-map (kbd "<tab>") 'vc-diff)
+  (define-key vc-dir-mode-map (kbd "s") 'vc-next-action)
+  )
 
 (use-package vc-hooks
   :defer t
   :init (setq vc-handled-backends '(Git))
   ;; bindings.el里直接就把vc-mode写死在`mode-line-format'里了
   :config
-  ;; TODO: vc的modeline并不好用，直接去掉他的hook，自己写mode-line
-  ;; TODO: `vc-after-save'被`basic-save-buffer'调用，emacs背后居然干了那么多事
-  (when nil
-    ;; 完全禁用vc的mode-line
-    (remove-hook 'find-file-hook #'vc-refresh-state)
-    (remove-hook 'kill-buffer-hook #'vc-kill-buffer-hook)
-    (define-advice vc-mode (:around (orig-fn &rest args) my))
-    (define-advice vc-after-save (:around (orig-fn &rest args) my)))
-
   (defface vc-mode-face '((t :foreground "#6ae4b9"))
     "")
   (define-advice vc-call-backend (:around (orig-fn &rest args) my)
@@ -2813,7 +2818,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                 (setq result (string-replace "Git" pn result))))
             (propertize result 'face 'vc-mode-face))
         result))))
-
 (use-package log-view
  :defer t
  :config
@@ -2831,10 +2835,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (lambda ()
       (setq-local log-view-expanded-log-entry-function
                   'log-view-show-diff)))))
-
 (use-package log-edit
   :defer t
   :config
+  ;; 在checkin时显示diff
   (load "magit/agitate")
   (agitate-log-edit-informative-mode))
 
