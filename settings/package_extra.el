@@ -6466,13 +6466,38 @@ _q_uit
            " " (get-chinese-wannianli))))
   (display-time-update))
 
+(defun github-download (&optional url downdir)
+  (interactive "sDownload url: ")
+  ;; win10自带的curl不行，需要git里的curl
+  ;; 遇到curl 60错误就需要创建~/.curlrc，内容insecure（powershell创建的含bom不行）
+  ;; "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -oH:/download/test.zip https://download.fastgit.org/antlr/antlr4/archive/refs/heads/dev.zip"
+  (let* ((filename (file-name-nondirectory (directory-file-name url)))
+         (downdir "H:/download/")
+         command
+         (default-directory downdir))
+    ;; (let ((us (s-split "/" url)))
+    ;;   (setq filename (concat (nth 4 us) "-" filename)))
+    ;; (setq
+    ;;  command
+    ;;  (concat
+    ;;   "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -o"
+    ;;   downdir
+    ;;   filename
+    ;;   " "
+    ;;   (replace-regexp-in-string
+    ;;    "https://github.com" "https://download.fastgit.org" url)))
+    ;; (shell-command command)
+    ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
+    (browse-url
+     (replace-regexp-in-string
+      "https://github.com" "https://download.fastgit.org" url))))
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显
 ;; tabbar被修改的*文件有明显显示(spacemacs)
 ;; 当前buffer modeline背景色(doom-dark+)
 ;; helm occur关键字高亮明显，不明显就换了吧那个暂时还不知道如何定制
-
 
 ;; 在modeline提示bell，这个功能太实用了，因为bell被禁止发声了
 (autoload
@@ -6543,7 +6568,7 @@ _q_uit
     ;; 'doom-one
     ;; 'spacemacs-dark
     )))
-(load-theme 'modus-vivendi t)
+
 
 ;; 各种theme修补
 (let ((th (car custom-enabled-themes)))
@@ -6597,28 +6622,10 @@ _q_uit
 (set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
 (custom-set-faces '(header-line ((t (:weight bold)))))
 
-(defun github-download (&optional url downdir)
-  (interactive "sDownload url: ")
-  ;; win10自带的curl不行，需要git里的curl
-  ;; 遇到curl 60错误就需要创建~/.curlrc，内容insecure（powershell创建的含bom不行）
-  ;; "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -oH:/download/test.zip https://download.fastgit.org/antlr/antlr4/archive/refs/heads/dev.zip"
-  (let* ((filename (file-name-nondirectory (directory-file-name url)))
-         (downdir "H:/download/")
-         command
-         (default-directory downdir))
-    ;; (let ((us (s-split "/" url)))
-    ;;   (setq filename (concat (nth 4 us) "-" filename)))
-    ;; (setq
-    ;;  command
-    ;;  (concat
-    ;;   "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -o"
-    ;;   downdir
-    ;;   filename
-    ;;   " "
-    ;;   (replace-regexp-in-string
-    ;;    "https://github.com" "https://download.fastgit.org" url)))
-    ;; (shell-command command)
-    ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
-    (browse-url
-     (replace-regexp-in-string
-      "https://github.com" "https://download.fastgit.org" url))))
+(load-file "~/.emacs.d/themes/dracula-theme.el")
+(setq dracula-height-title-1 1.0)
+(setq dracula-height-title-2 1.0)
+(setq dracula-height-title-3 1.0)
+(setq dracula-height-doc-title 1.0)
+(load-theme 'dracula t)
+;; (load-theme 'modus-vivendi t)
