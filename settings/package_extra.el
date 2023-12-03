@@ -4683,9 +4683,6 @@ _q_uit
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
     (ignore-errors
-      ;; (when (featurep 'vc-defer)
-      ;;   ;; 修复修改后不更新问题。同时mode line也有vc-mode了
-      ;;   (vc-refresh-state))
       (diff-hl-update)))
   (defun diff-hl-update-manual ()
     (interactive)
