@@ -2839,7 +2839,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (load "magit/agitate")
   (agitate-log-edit-informative-mode))
 
-;; 延迟vc调用到特定函数，副作用mode line没有vc-mode了
+;; 延迟vc调用加快文件加载，副作用mode line没有vc-mode了
 (use-package vc-defer
   :diminish
   :defer t
@@ -4679,10 +4679,16 @@ _q_uit
 
   (with-eval-after-load 'magit
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+  (with-eval-after-load 'log-edit
+    ;; vc checkin后也需要更新状态
+    (add-hook 'log-edit-done-hook 'diff-hl-reset-reference-rev))
   ;; 用timer避免各种hook
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
     (ignore-errors
+      (when (featurep 'vc-defer)
+        ;; 有时候状态不更新
+        (vc-refresh-state))
       (diff-hl-update)))
   (defun diff-hl-update-manual ()
     (interactive)
