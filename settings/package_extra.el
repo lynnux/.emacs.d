@@ -6569,13 +6569,14 @@ _q_uit
     ;; 'spacemacs-dark
     )))
 
-(load-file "~/.emacs.d/themes/dracula-theme.el")
-(setq dracula-height-title-1 1.0)
-(setq dracula-height-title-2 1.0)
-(setq dracula-height-title-3 1.0)
-(setq dracula-height-doc-title 1.0)
-(load-theme 'dracula t)
-;; (load-theme 'modus-vivendi t)
+(when nil
+  (load-file "~/.emacs.d/themes/dracula-theme.el")
+  (setq dracula-height-title-1 1.0)
+  (setq dracula-height-title-2 1.0)
+  (setq dracula-height-title-3 1.0)
+  (setq dracula-height-doc-title 1.0)
+  (load-theme 'dracula t))
+(load-theme 'modus-vivendi t)
 
 ;; 各种theme修补
 (let ((th (car custom-enabled-themes)))
