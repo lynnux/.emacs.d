@@ -2849,15 +2849,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :config
   (add-to-list 'vc-defer-backends 'Git)
   (with-eval-after-load 'diff-hl
-    ;; 修复diff-hl不能用的问题，但只在修改后会显示
+    ;; (vc-backend buffer-file-name)总是返回nil
     (define-advice diff-hl-changes (:around (orig-fn &rest args) my)
       (cl-letf (((symbol-function #'vc-backend)
                  (lambda (file)
-                   ;; project-try-vc是可用的
-                   (car-safe (cdr-safe (project-try-vc (file-name-directory file)))))))
-        (apply orig-fn args)
-        )))
-  )
+                   (when file
+                     ;; project-try-vc是可用的
+                     (car-safe
+                      (cdr-safe
+                       (project-try-vc
+                        (file-name-directory file))))))))
+        (apply orig-fn args)))))
 
 ;; magit
 (use-package magit
@@ -4644,24 +4646,26 @@ _q_uit
   :if (bound-and-true-p enable-feature-gui)
   :defer t
   :init
-  (add-hook
-   'prog-mode-hook
-   (lambda ()
-     (unless (featurep 'diff-hl)
-       (delay-require-libs
-        "~/.emacs.d/themes/diff-hl-master"
-        '(diff-hl diff-hl-dired diff-hl-show-hunk)))
-     (diff-hl-maybe-define-bitmaps)
-     (diff-hl-update)
-     (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
-     (add-hook 'after-save-hook
-               (lambda ()
-                 (when diff-hl-update-timer
-                   (cancel-timer diff-hl-update-timer))
-                 (setq diff-hl-update-timer
-                       (run-with-idle-timer
-                        2 nil #'diff-hl-update-timer-function)))
-               nil t)))
+  (defun diff-hl-after-save-hook-local()
+    (when diff-hl-update-timer
+      (cancel-timer diff-hl-update-timer))
+    (setq diff-hl-update-timer
+          (run-with-idle-timer
+           1.0 nil #'diff-hl-update-timer-function)))
+  (defun diff-hl-prog-mode-hook()
+    (unless (featurep 'diff-hl)
+      (delay-require-libs
+       "~/.emacs.d/themes/diff-hl-master"
+       '(diff-hl diff-hl-dired diff-hl-show-hunk)))
+    ;; 不在file加载过程中显示，避免跟vc-defer冲突
+    (run-with-local-idle-timer
+     0.5 nil (lambda()
+               (diff-hl-maybe-define-bitmaps)
+               (diff-hl-update)))
+    (setq-local diff-hl-mode t) ;; for 'diff-hl-magit-post-refresh
+    (add-hook 'after-save-hook 'diff-hl-after-save-hook-local
+              nil t))
+  (add-hook 'prog-mode-hook 'diff-hl-prog-mode-hook)
   :config
   (defhydra
    hydra-diff-hl
