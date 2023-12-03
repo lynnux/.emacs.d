@@ -2786,11 +2786,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package vc-dir
   :defer t
   :init
-  (defun vc-dir-no-select()
-    "让`vc-dir'不选择目录"
-    (interactive)
-    (vc-dir (project-root (project-current t))))
-  (global-set-key [remap vc-dir] 'vc-dir-no-select)
+  ;; "让`vc-dir'不选择目录"
+  (global-set-key [remap vc-dir] 'project-vc-dir)
   :config
   (define-key vc-dir-mode-map (kbd "k") 'vc-revert)
   (define-key vc-dir-mode-map (kbd "d") 'vc-diff)
@@ -2841,6 +2838,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; 在checkin时显示diff
   (load "magit/agitate")
   (agitate-log-edit-informative-mode))
+
+;; 延迟vc调用到特定函数，副作用mode line没有vc-mode了
+(use-package vc-defer
+  :defer t
+  :init
+  (autoload 'vc-defer-mode "magit/vc-defer" "" nil)
+  (vc-defer-mode 1)
+  :config
+  (add-to-list 'vc-defer-backends 'Git)
+  (with-eval-after-load 'diff-hl
+    ;; 修复diff-hl不能用的问题，但只在修改后会显示
+    (define-advice diff-hl-changes (:around (orig-fn &rest args) my)
+      (cl-letf (((symbol-function #'vc-backend)
+                 (lambda (file)
+                   ;; project-try-vc是可用的
+                   (car-safe (cdr-safe (project-try-vc (file-name-directory file)))))))
+        (apply orig-fn args)
+        )))
+  )
 
 ;; magit
 (use-package magit
