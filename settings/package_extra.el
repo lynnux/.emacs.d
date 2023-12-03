@@ -2938,6 +2938,34 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (interactive)
   (shell-command "git config --global --unset http.proxy")
   (shell-command "git config --global --unset https.proxy"))
+(defun github-download (&optional url downdir)
+  (interactive "sDownload url: ")
+  ;; win10自带的curl不行，需要git里的curl
+  ;; 遇到curl 60错误就需要创建~/.curlrc，内容insecure（powershell创建的含bom不行）
+  ;; "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -oH:/download/test.zip https://download.fastgit.org/antlr/antlr4/archive/refs/heads/dev.zip"
+  (let* ((filename (file-name-nondirectory (directory-file-name url)))
+         (downdir "H:/download/")
+         command
+         (default-directory downdir))
+    ;; (let ((us (s-split "/" url)))
+    ;;   (setq filename (concat (nth 4 us) "-" filename)))
+    ;; (setq
+    ;;  command
+    ;;  (concat
+    ;;   "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -o"
+    ;;   downdir
+    ;;   filename
+    ;;   " "
+    ;;   (replace-regexp-in-string
+    ;;    "https://github.com" "https://download.fastgit.org" url)))
+    ;; (shell-command command)
+    ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
+    (browse-url
+     (replace-regexp-in-string
+      "https://github.com" "https://download.fastgit.org" url))))
+(defun git-add-repo-to-origin (&optional repo)
+  (interactive "sAdd another repo to origin: ")
+  (shell-command (concat "git remote set-url --add origin " repo)))
 
 (use-package which-key
   :if (bound-and-true-p enable-feature-gui)
@@ -6520,31 +6548,6 @@ _q_uit
            " " (get-chinese-wannianli))))
   (display-time-update))
 
-(defun github-download (&optional url downdir)
-  (interactive "sDownload url: ")
-  ;; win10自带的curl不行，需要git里的curl
-  ;; 遇到curl 60错误就需要创建~/.curlrc，内容insecure（powershell创建的含bom不行）
-  ;; "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -oH:/download/test.zip https://download.fastgit.org/antlr/antlr4/archive/refs/heads/dev.zip"
-  (let* ((filename (file-name-nondirectory (directory-file-name url)))
-         (downdir "H:/download/")
-         command
-         (default-directory downdir))
-    ;; (let ((us (s-split "/" url)))
-    ;;   (setq filename (concat (nth 4 us) "-" filename)))
-    ;; (setq
-    ;;  command
-    ;;  (concat
-    ;;   "c:/Git/mingw64/bin/curl.exe -L --ssl-no-revoke --http1.1 -o"
-    ;;   downdir
-    ;;   filename
-    ;;   " "
-    ;;   (replace-regexp-in-string
-    ;;    "https://github.com" "https://download.fastgit.org" url)))
-    ;; (shell-command command)
-    ;; fastgit服务端有问题，需要不断重试才能下载下来，所以跳浏览器下载
-    (browse-url
-     (replace-regexp-in-string
-      "https://github.com" "https://download.fastgit.org" url))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
