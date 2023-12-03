@@ -2839,7 +2839,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (load "magit/agitate")
   (agitate-log-edit-informative-mode))
 
-;; 延迟vc调用加快文件加载，副作用mode line没有vc-mode了
+;; 让文件加载过程中vc失效，从而加快文件加载
 (use-package vc-defer
   :diminish
   :defer t
@@ -2851,7 +2851,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-hook
    'prog-mode-hook
    (lambda ()
-     ;; 修复diff-hl及mode-line的vc-mode等各种问题
+     ;; 恢复vc状态，修复diff-hl及mode-line的vc-mode等显示
      (run-with-local-idle-timer 0.3 nil #'vc-refresh-state))))
 
 ;; magit
