@@ -1257,7 +1257,7 @@ _c_: hide comment        _q_uit
  cursor-chg
  :init (setq curchg-change-cursor-on-input-method-flag nil)
  :config
- (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
+ ;; (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
  (change-cursor-mode 1))
 
 ;;crosshairs不好用，只要vline就行了		
@@ -2807,6 +2807,21 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                 (setq result (string-replace "Git" pn result))))
             (propertize result 'face 'vc-mode-face))
         result))))
+
+(use-package log-view
+ :defer t
+ :config
+ (defun log-view-show-diff (&rest args)
+   "让log窗口按RET显示diff，跟magit的log RET一致"
+   (interactive)
+   (call-interactively 'log-view-diff))
+ (setq log-view-expanded-log-entry-function 'log-view-show-diff)
+ (with-eval-after-load 'vc-git
+   (add-to-list
+    'vc-git-log-view-mode-hook
+    (lambda ()
+      (setq-local log-view-expanded-log-entry-function
+                  'log-view-show-diff)))))
 
 ;; magit
 (use-package magit
@@ -4867,7 +4882,7 @@ _q_uit
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
 (use-package shackle
   :if (bound-and-true-p enable-feature-gui)
-  :defer 1.0
+  :defer 0.3
   :init
   (setq
    shackle-default-size 0.4
@@ -4879,6 +4894,7 @@ _q_uit
      (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
      (magit-status-mode :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
      (magit-log-mode :select t :inhibit-window-quit t :same t)
+     (vc-git-log-view-mode :same t)
      ("\\*SQLite .*"
       :regexp t
       :select t
