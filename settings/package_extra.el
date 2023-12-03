@@ -2848,18 +2848,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (vc-defer-mode 1)
   :config
   (add-to-list 'vc-defer-backends 'Git)
-  (with-eval-after-load 'diff-hl
-    ;; (vc-backend buffer-file-name)总是返回nil
-    (define-advice diff-hl-changes (:around (orig-fn &rest args) my)
-      (cl-letf (((symbol-function #'vc-backend)
-                 (lambda (file)
-                   (when file
-                     ;; project-try-vc是可用的
-                     (car-safe
-                      (cdr-safe
-                       (project-try-vc
-                        (file-name-directory file))))))))
-        (apply orig-fn args)))))
+  (add-hook
+   'prog-mode-hook
+   (lambda ()
+     ;; 修复diff-hl及mode-line的vc-mode等各种问题
+     (run-with-local-idle-timer 0.3 nil #'vc-refresh-state))))
 
 ;; magit
 (use-package magit
@@ -4657,7 +4650,7 @@ _q_uit
       (delay-require-libs
        "~/.emacs.d/themes/diff-hl-master"
        '(diff-hl diff-hl-dired diff-hl-show-hunk)))
-    ;; 不在file加载过程中显示，避免跟vc-defer冲突
+    ;; 不在file加载过程中显示，因为vc-defer的hack会导致vc相关调用无效
     (run-with-local-idle-timer
      0.5 nil
      (lambda ()
@@ -4690,9 +4683,9 @@ _q_uit
   (defvar diff-hl-update-timer nil)
   (defun diff-hl-update-timer-function ()
     (ignore-errors
-      (when (featurep 'vc-defer)
-        ;; 有时候状态不更新
-        (vc-refresh-state))
+      ;; (when (featurep 'vc-defer)
+      ;;   ;; 修复修改后不更新问题。同时mode line也有vc-mode了
+      ;;   (vc-refresh-state))
       (diff-hl-update)))
   (defun diff-hl-update-manual ()
     (interactive)
