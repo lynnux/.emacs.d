@@ -2832,34 +2832,38 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (lambda ()
       (setq-local log-view-expanded-log-entry-function
                   'log-view-show-diff)))))
-(use-package vc-git
-  :defer t
-  :config
-  (defun git-conventionalcommits-capf (&optional interactive)
-    "capf的写法参考`completion-at-point-functions'说明"
-    (let ((bounds
-           (or (bounds-of-thing-at-point 'symbol)
-               (cons (point) (point)))))
-      `(,(car bounds)
-        ,(cdr bounds)
-        ("feat: "
-         "fix: "
-         "docs: "
-         "style: "
-         "refactor: "
-         "perf: "
-         "test: "
-         "build: "
-         "chore: "
-         "ci: "
-         "revert: ")
-        :exclusive no)))
+
+;; 给commit添加conventionalcommits关键字 https://www.conventionalcommits.org/
+(defun git-conventionalcommits-capf (&optional interactive)
+  "capf的写法参考`completion-at-point-functions'说明"
+  (let ((bounds
+         (or (bounds-of-thing-at-point 'symbol)
+             (cons (point) (point)))))
+    `(,(car bounds)
+      ,(cdr bounds)
+      ("feat: "
+       "fix: "
+       "docs: "
+       "style: "
+       "refactor: "
+       "perf: "
+       "test: "
+       "build: "
+       "chore: "
+       "ci: "
+       "revert: ")
+      :exclusive no)))
+(defun git-conventionalcommits-capf-setup ()
   (add-hook
-   'vc-git-log-edit-mode-hook
-   (lambda ()
-     (add-hook
-      'completion-at-point-functions #'git-conventionalcommits-capf
-      nil t))))
+   'completion-at-point-functions #'git-conventionalcommits-capf
+   nil t))
+(with-eval-after-load 'with-editor
+  (add-to-list
+   'with-editor-mode-hook 'git-conventionalcommits-capf-setup))
+(with-eval-after-load 'vc-git
+  (add-hook
+   'vc-git-log-edit-mode-hook 'git-conventionalcommits-capf-setup))
+
 (use-package log-edit
   :defer t
   :config
