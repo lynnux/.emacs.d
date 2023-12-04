@@ -2832,6 +2832,34 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (lambda ()
       (setq-local log-view-expanded-log-entry-function
                   'log-view-show-diff)))))
+(use-package vc-git
+  :defer t
+  :config
+  (defun git-conventionalcommits-capf (&optional interactive)
+    "capf的写法参考`completion-at-point-functions'说明"
+    (let ((bounds
+           (or (bounds-of-thing-at-point 'symbol)
+               (cons (point) (point)))))
+      `(,(car bounds)
+        ,(cdr bounds)
+        ("feat: "
+         "fix: "
+         "docs: "
+         "style: "
+         "refactor: "
+         "perf: "
+         "test: "
+         "build: "
+         "chore: "
+         "ci: "
+         "revert: ")
+        :exclusive no)))
+  (add-hook
+   'vc-git-log-edit-mode-hook
+   (lambda ()
+     (add-hook
+      'completion-at-point-functions #'git-conventionalcommits-capf
+      nil t))))
 (use-package log-edit
   :defer t
   :config
