@@ -27,7 +27,7 @@
 
 (setq display-time-24hr-format t) ; 24小时格式
 ;; (setq display-time-day-and-date t) ; 显示日期
-(setq display-time-format " %Y-%m-%d %H:%M")
+(setq display-time-format " %a %H:%M %Y-%m-%d")
 (setq display-time-default-load-average nil)
 (custom-set-faces
  '(display-time-date-and-time ((t (:foreground "#f78fe7")))))
