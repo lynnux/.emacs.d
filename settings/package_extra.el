@@ -2793,7 +2793,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key vc-dir-mode-map (kbd "<tab>") 'vc-diff)
   (define-key vc-dir-mode-map (kbd "s") 'vc-next-action)
   (define-key vc-dir-mode-map (kbd "l") 'vc-print-root-log) ;; 习惯看root而不是单文件的
-  (define-key vc-dir-mode-map (kbd "L") 'vc-print-log))
+  (define-key vc-dir-mode-map (kbd "L") 'vc-print-log)
+  (define-key vc-dir-mode-map (kbd "F") 'vc-pull)
+  (define-key vc-dir-mode-map (kbd "f") 'vc-pull)
+  (define-key vc-dir-mode-map (kbd "i") 'vc-dir-ignore)
+  (define-advice vc-dir-ignore (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
+      (apply orig-fn args))))
 
 (use-package vc-hooks
   :defer t
@@ -3793,10 +3799,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq wgrep-auto-save-buffer t) ;; 编辑好自动保存
   :config
   ;; 使wrep可编辑
-  (defadvice wgrep-commit-file (around my-wgrep-commit-file activate)
-    (setq tmp-disable-view-mode t)
-    ad-do-it
-    (setq tmp-disable-view-mode nil)))
+  (define-advice wgrep-commit-file (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode t))
+      (apply orig-fn args))))
 
 (use-package flymake
   :if (bound-and-true-p enable-feature-prog)
@@ -3907,11 +3912,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :commands (lsp lsp-deferred lsp-completion-at-point)
     :config
     ;; 使重命名可用
-    (defadvice lsp--apply-workspace-edit
-        (around my-lsp--apply-workspace-edit activate)
-      (setq tmp-disable-view-mode t)
-      ad-do-it
-      (setq tmp-disable-view-mode nil))
+    (define-advice lsp--apply-workspace-edit
+        (:around (orig-fn &rest args) my)
+      (let ((tmp-disable-view-mode t))
+        (apply orig-fn args)))
     (setq lsp-diagnostics-provider :flycheck) ;; 实测flymake是server返回就马上刷新可能会造成输入卡，而flycheck是idle（查看代码知道)时刷新
     (require 'lsp-diagnostics) ;; flymake
     (define-key
@@ -4010,12 +4014,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       ;;   )
       ;; 避免treemacs persistence文件变成只读
       ;; (with-eval-after-load 'treemacs-persistence
-      ;;   (defadvice treemacs--persist (around my-treemacs--persist activate)
-      ;;     (setq tmp-disable-view-mode 2);; 2不恢复只读
-      ;;     ad-do-it
-      ;;     (setq tmp-disable-view-mode nil)
-      ;;     )
-      ;;   )
+      ;;   (define-advice treemacs--persist (:around (orig-fn &rest args) my)
+      ;;     (let ((tmp-disable-view-mode 2));; 2不恢复只读
+      ;;       (apply orig-fn args))))
       ;; (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
       ;; (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
       ;; (treemacs-filewatch-mode t)          ; 监视系统文件变化
@@ -4143,11 +4144,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
            :codeActionProvider ;; 当有flymake错误时，code action非常讨厌
            :documentOnTypeFormattingProvider))
     ;; 临时禁止view-mode，使重命名可用
-    (defadvice eglot--apply-workspace-edit
-        (around my-eglot--apply-workspace-edit activate)
-      (setq tmp-disable-view-mode t)
-      ad-do-it
-      (setq tmp-disable-view-mode nil))
+    (define-advice eglot--apply-workspace-edit
+        (:around (orig-fn &rest args) my)
+      (let ((tmp-disable-view-mode t))
+        (apply orig-fn args)))
     ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
     (define-key eglot-mode-map [(meta f8)] 'eglot-format)
 
