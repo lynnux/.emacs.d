@@ -2791,7 +2791,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key vc-dir-mode-map (kbd "k") 'vc-revert)
   (define-key vc-dir-mode-map (kbd "d") 'vc-diff)
   (define-key vc-dir-mode-map (kbd "<tab>") 'vc-diff)
-  (define-key vc-dir-mode-map (kbd "s") 'vc-next-action))
+  (define-key vc-dir-mode-map (kbd "s") 'vc-next-action)
+  (define-key vc-dir-mode-map (kbd "l") 'vc-print-root-log) ;; 习惯看root而不是单文件的
+  (define-key vc-dir-mode-map (kbd "L") 'vc-print-log))
 
 (use-package vc-hooks
   :defer t
