@@ -5376,11 +5376,11 @@ _q_uit
   :defer t
   :init
   (autoload 'dape "lsp/dape" "" t)
-  (autoload 'dape-toggle-breakpoint "lsp/dape" "" t)
+  (autoload 'dape-breakpoint-toggle "lsp/dape" "" t)
   (autoload 'dape-step-out "lsp/dape" "" t)
   (autoload 'dape-step-in "lsp/dape" "" t)
   (autoload 'dape-quit "lsp/dape" "" t)
-  (global-set-key (kbd "<f9>") 'dape-toggle-breakpoint)
+  (global-set-key (kbd "<f9>") 'dape-breakpoint-toggle)
   (global-set-key (kbd "<f10>") 'dape-next)
   (global-set-key (kbd "<f11>") 'dape-step-in)
   (global-set-key (kbd "S-<f11>") 'dape-step-out)
@@ -5415,87 +5415,17 @@ _q_uit
    lldb-cmd
    (expand-file-name
     "~/.emacs.d/.extension/codelldb-x86_64-windows/extension/adapter/codelldb.exe"))
-  (add-to-list
-   'dape-configs
-   '(codelldb
-     modes
-     (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
-     command
-     lldb-cmd
-     host
-     "localhost"
-     port
-     5818
-     command-args
-     ("--port" "5818")
-     :type "lldb"
-     :request "launch"
-     :cwd dape-cwd-fn
-     :terminal "external" ;; 没有效果？
-     :program dape-find-file))
-
+  
   ;; 会跑飞
   (setq lldb-vscode-cmd "c:/LLVM/bin/lldb-vscode.exe")
-  (add-to-list
-   'dape-configs
-   '(lldb-vscode
-     modes
-     (c-mode c-ts-mode c++-mode c++-ts-mode rust-ts-mode rust-mode)
-     command
-     lldb-vscode-cmd
-     host
-     "localhost"
-     port
-     5818
-     command-args
-     ("--port" "5818")
-     :type "lldb-vscode"
-     :stopAtEntry t
-     :request "launch"
-     :cwd dape-cwd-fn
-     :program dape-find-file))
-
+  
   ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
   ;; 测试在启动WindowsDebugLauncher那里卡住了
   (setq
    dape-cppdbg-command
    (expand-file-name
     "~/.emacs.d/.extension/extension/debugAdapters/bin/OpenDebugAD7.exe"))
-  (add-to-list
-   'dape-configs
-   `(cppdbg
-     modes
-     (c-mode c-ts-mode c++-mode c++-ts-mode)
-     command-cwd
-     ,(file-name-directory dape-cppdbg-command)
-     command
-     dape-cppdbg-command
-     :type "cppdbg"
-     :request "launch"
-     :cwd dape-cwd-fn
-     :program dape-find-file
-     :stopAtEntry t
-     ;; :logging (:engineLogging t) ;; 开启调试消息
-     :externalConsole t ;; 避免以WindowsDebugLauncher启动，卡住了都不知道哪里错了
-     :MIMode "gdb"
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    "gdb")
-     ;;   ((executable-find "lldb")
-     ;;    "lldb"))
-     ;; :miDebuggerPath ;" H:\\msys64\\usr\\bin\\gdb.exe"
-     ;; ,(cond
-     ;;   ((executable-find "gdb")
-     ;;    (executable-find "gdb"))
-     ;;   ((executable-find "lldb")
-     ;;    (executable-find "lldb")))
-     ))
-
-  (when nil
-    (setq dape--timeout 20)
-    ;; x64dbg在WriteFile下断
-    )
-
+  ;; :logging (:engineLogging t) ;; 开启调试消息
 
   (defun decode-hex-string (hex-string)
     (let ((res nil))
@@ -5541,23 +5471,11 @@ _q_uit
                       (decode-hex-string (nth 1 l))
                       (decode-hex-string (nth 0 s)))
                      nil nil t)))))
-  (defun dape-request-response (process seq command body &optional cb)
-    (let ((object (and body (list :body body))))
-      (dape-send-object
-       process seq
-       (thread-first
-        object
-        (plist-put :type "response")
-        (plist-put :success t)
-        (plist-put :request_seq seq)
-        (plist-put :command command)))))
   (cl-defmethod dape-handle-request
       (process (command (eql handshake)) arguments)
     ;; (message "hand: %S" (plist-get arguments :value))
-    (dape-request-response
-     process 2
-     "handshake" ;; TODO：目前没有方法得到seq，好在handshake目前总是2
-     (list :signature (my-calc (plist-get arguments :value)))))
+      ;; TODO：目前没有方法得到seq，好在handshake目前总是2
+      (dape--response process "handshake" 2 t (list :signature (my-calc (plist-get arguments :value)))))
   (define-advice dape--handle-object (:after (&rest args))
     "修复乱发序号问题"
     (setq dape--seq-event 0))
@@ -5575,39 +5493,25 @@ _q_uit
    dape-cppvsdbg-command
    (expand-file-name
     "~/.emacs.d/.extension/extension/debugAdapters/vsdbg/bin/vsdbg.exe"))
-  (add-to-list
-   'dape-configs
-   `(cppvsdbg
-     modes
-     (c-mode c-ts-mode c++-mode c++-ts-mode)
-     command-cwd
-     ,(file-name-directory dape-cppvsdbg-command)
-     command
-     dape-cppvsdbg-command
-     command-args
-     ("--interpreter=vscode")
-     :type "cppvsdbg"
-     :request "launch"
-     :cwd dape-cwd-fn
-     :program dape-find-file
-     :stopAtEntry t ;; 支持
-     ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
-     ))
-
-  ;; python，测试没问题
-  (add-to-list
-   'dape-configs
-   `(debugpy
-     modes
-     (python-ts-mode python-mode)
-     command
-     "python"
-     command-args
-     ("-m" "debugpy.adapter")
-     :type "executable"
-     :request "launch"
-     :cwd dape-cwd-fn
-     :program dape-find-file-buffer-default)))
+  ;; (add-to-list
+  ;;  'dape-configs
+  ;;  `(cppvsdbg
+  ;;    modes
+  ;;    (c-mode c-ts-mode c++-mode c++-ts-mode)
+  ;;    command-cwd
+  ;;    ,(file-name-directory dape-cppvsdbg-command)
+  ;;    command
+  ;;    dape-cppvsdbg-command
+  ;;    command-args
+  ;;    ("--interpreter=vscode")
+  ;;    :type "cppvsdbg"
+  ;;    :request "launch"
+  ;;    :cwd dape-cwd-fn
+  ;;    :program dape-find-file
+  ;;    :stopAtEntry t ;; 支持
+  ;;    ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
+  ;;    ))
+  )
 
 (defvar f5-history '()) ;; session只记录list的值
 (defun my-shell-switch ()
