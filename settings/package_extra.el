@@ -1253,12 +1253,11 @@ _c_: hide comment        _q_uit
      '((emacs) (comp) (comp)))
    '(warning-suppress-types '((comp)))))
 
-(use-package
- cursor-chg
- :init (setq curchg-change-cursor-on-input-method-flag nil)
- :config
- ;; (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
- (change-cursor-mode 1))
+(use-package cursor-chg
+  :init (setq curchg-change-cursor-on-input-method-flag nil)
+  :config
+  ;; (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
+  (change-cursor-mode 1))
 
 ;;crosshairs不好用，只要vline就行了		
 (autoload 'vline-mode "vline" nil t)
@@ -2792,8 +2791,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (define-key vc-dir-mode-map (kbd "k") 'vc-revert)
   (define-key vc-dir-mode-map (kbd "d") 'vc-diff)
   (define-key vc-dir-mode-map (kbd "<tab>") 'vc-diff)
-  (define-key vc-dir-mode-map (kbd "s") 'vc-next-action)
-  )
+  (define-key vc-dir-mode-map (kbd "s") 'vc-next-action))
 
 (use-package vc-hooks
   :defer t
@@ -2816,22 +2814,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             (propertize result 'face 'vc-mode-face))
         result))))
 (use-package log-view
- :defer t
- :config
- (defun log-view-show-diff (&rest args)
-   "让log窗口按RET显示diff，跟magit的log RET一致"
-   (interactive)
-   (call-interactively 'log-view-diff))
- (setq log-view-expanded-log-entry-function 'log-view-show-diff)
- (define-advice magit-log-current (:around (orig-fn &rest args) my)
-   "调用`vc-print-root-log'还弹窗"
-   (vc-print-log-internal 'Git (list (project-root (project-current t))) nil nil vc-log-show-limit nil))
- (with-eval-after-load 'vc-git
-   (add-to-list
-    'vc-git-log-view-mode-hook
-    (lambda ()
-      (setq-local log-view-expanded-log-entry-function
-                  'log-view-show-diff)))))
+  :defer t
+  :config
+  (defun log-view-show-diff (&rest args)
+    "让log窗口按RET显示diff，跟magit的log RET一致"
+    (interactive)
+    (call-interactively 'log-view-diff))
+  (setq log-view-expanded-log-entry-function 'log-view-show-diff)
+  (define-advice magit-log-current (:around (orig-fn &rest args) my)
+    "调用`vc-print-root-log'还弹窗"
+    (vc-print-log-internal
+     'Git
+     (list (project-root (project-current t)))
+     nil
+     nil
+     vc-log-show-limit
+     nil))
+  (with-eval-after-load 'vc-git
+    (add-to-list
+     'vc-git-log-view-mode-hook
+     (lambda ()
+       (setq-local log-view-expanded-log-entry-function
+                   'log-view-show-diff)))))
 
 ;; 给commit添加conventionalcommits关键字 https://www.conventionalcommits.org/
 (defun git-conventionalcommits-capf (&optional interactive)
@@ -4693,12 +4697,12 @@ _q_uit
   (add-hook 'prog-mode-hook 'diff-hl-prog-mode-hook)
   :config
   (defhydra
-    hydra-diff-hl
-    ()
-    "goto hunk: "
-    ("p" diff-hl-previous-hunk "previous")
-    ("n" diff-hl-next-hunk "next")
-    ("q" nil "quit"))
+   hydra-diff-hl
+   ()
+   "goto hunk: "
+   ("p" diff-hl-previous-hunk "previous")
+   ("n" diff-hl-next-hunk "next")
+   ("q" nil "quit"))
   (global-set-key (kbd "C-c h") #'hydra-diff-hl/body)
   (global-set-key (kbd "C-c C-h") #'hydra-diff-hl/body)
 
@@ -4720,8 +4724,7 @@ _q_uit
     (interactive)
     (diff-hl-update))
 
-  (use-package
-    diff-hl-dired
+  (use-package diff-hl-dired
     :commands (diff-hl-dired-mode)
     :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
 
@@ -6695,7 +6698,9 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
-   ((or (eq th 'modus-vivendi) (eq th 'modus-vivendi-tritanopia) (eq th 'dracula))
+   ((or (eq th 'modus-vivendi)
+        (eq th 'modus-vivendi-tritanopia)
+        (eq th 'dracula))
     (custom-set-faces
      '(consult-file ((t (:foreground nil))))
      '(consult-bookmark ((t (:foreground nil))))))
