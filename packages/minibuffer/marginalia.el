@@ -5,7 +5,7 @@
 ;; Author: Omar Antolín Camarena <omar@matem.unam.mx>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Omar Antolín Camarena <omar@matem.unam.mx>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2020
-;; Version: 1.3
+;; Version: 1.4
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Homepage: https://github.com/minad/marginalia
 ;; Keywords: docs, help, matching, completion
@@ -74,6 +74,15 @@ This value is adjusted depending on the `window-width'."
 Set to `most-positive-fixnum' to always use a relative age, or 0 to never show
 a relative age."
   :type 'natnum)
+
+(defcustom marginalia-remote-file-regexps
+  '("\\`/\\([^/|:]+\\):") ;; Tramp path
+  "List of remote file regexps where the files should not be annotated.
+
+The first match group is displayed instead of the detailed file
+attribute information.  For Tramp paths, the protocol is
+displayed instead."
+  :type '(repeat regexp))
 
 (defcustom marginalia-annotator-registry
   (mapcar
@@ -357,8 +366,6 @@ for performance profiling of the annotators.")
 (defun marginalia--ellipsis ()
   "Return ellipsis."
   (with-memoization marginalia--ellipsis
-    ;; TODO Emacs 28 offers the function `truncate-string-ellipsis'.
-    ;; It must be backported in Compat.
     (cond
      ((bound-and-true-p truncate-string-ellipsis))
      ((char-displayable-p ?…) "…")
@@ -407,6 +414,15 @@ FACE is the name of the face, with which the field should be propertized."
                `((marginalia--field ,@(cdr field)))))
            fields))))
 
+(defmacro marginalia--in-minibuffer (&rest body)
+  "Run BODY inside minibuffer if minibuffer is active.
+Otherwise stay within current buffer."
+  (declare (indent 0))
+  `(with-current-buffer (if-let (win (active-minibuffer-window))
+                            (window-buffer win)
+                          (current-buffer))
+     ,@body))
+
 (defun marginalia--documentation (str)
   "Format documentation string STR."
   (when str
@@ -433,8 +449,8 @@ FACE is the name of the face, with which the field should be propertized."
       ;; Use the Marginalia annotator corresponding to the multi category.
       (funcall annotate (cdr multi))
     ;; Apply the original annotation function on the original candidate, if
-    ;; there is one.  NOTE: Use `alist-get' instead of `completion-metadata-get'
-    ;; to bypass our `marginalia--completion-metadata-get' advice!
+    ;; there is one.  Use `alist-get' instead of `completion-metadata-get' to
+    ;; bypass our `marginalia--completion-metadata-get' advice!
     (when-let (annotate (alist-get 'annotation-function marginalia--metadata))
       (funcall annotate cand))))
 
@@ -599,7 +615,7 @@ keybinding since CAND includes it."
   "Annotate imenu CAND with its documentation string."
   (when (derived-mode-p 'emacs-lisp-mode)
     ;; Strip until the last whitespace in order to support flat imenu
-    (marginalia-annotate-symbol (replace-regexp-in-string "^.* " "" cand))))
+    (marginalia-annotate-symbol (replace-regexp-in-string "\\`.* " "" cand))))
 
 (defun marginalia-annotate-function (cand)
   "Annotate function CAND with its documentation string."
@@ -647,9 +663,10 @@ keybinding since CAND includes it."
                  (and (fboundp 'oclosure-type) (oclosure-type val))))
         ((pred byte-code-function-p) (propertize "#<byte-code-function>" 'face 'marginalia-function))
         ((and (pred functionp) (pred symbolp))
-         ;; NOTE: We are not consistent here, values are generally printed unquoted. But we
-         ;; make an exception for function symbols to visually distinguish them from symbols.
-         ;; I am not entirely happy with this, but we should not add quotation to every type.
+         ;; We are not consistent here, values are generally printed
+         ;; unquoted. But we make an exception for function symbols to visually
+         ;; distinguish them from symbols.  I am not entirely happy with this,
+         ;; but we should not add quotation to every type.
          (format (propertize "#'%s" 'face 'marginalia-function) val))
         ((pred recordp) (format (propertize "#<record %s>" 'face 'marginalia-value) (type-of val)))
         ((pred symbolp) (propertize (symbol-name val) 'face 'marginalia-symbol))
@@ -745,6 +762,7 @@ keybinding since CAND includes it."
 (defun marginalia-annotate-minor-mode (cand)
   "Annotate minor-mode CAND with status and documentation string."
   (let* ((sym (intern-soft cand))
+         (message-log-max nil)
          (mode (if (and sym (boundp sym))
                    sym
                  (lookup-minor-mode-from-indicator cand)))
@@ -885,47 +903,51 @@ component of a full file path."
     ;; necessary information (there's not much else we can do)
     cand))
 
-(defun marginalia--remote-protocol (path)
-  "Return the remote protocol of PATH."
+(defun marginalia--remote-file-p (file)
+  "Return non-nil if FILE is remote.
+The return value is a string describing the remote location,
+e.g., the protocol."
   (save-match-data
-    (setq path (substitute-in-file-name path))
-    (and (string-match "\\`/\\([^/|:]+\\):" path)
-         (match-string 1 path))))
+    (setq file (substitute-in-file-name file))
+    (cl-loop for r in marginalia-remote-file-regexps
+             if (string-match r file)
+             return (or (match-string 1 file) "remote"))))
 
 (defun marginalia--annotate-local-file (cand)
   "Annotate local file CAND."
-  (when-let (attrs (ignore-errors
-                     ;; may throw permission denied errors
-                     (file-attributes (substitute-in-file-name
-                                       (marginalia--full-candidate cand))
-                                      'integer)))
-    ;; HACK: Format differently accordingly to alignment, since the file owner
-    ;; is usually not displayed. Otherwise we will see an excessive amount of
-    ;; whitespace in front of the file permissions. Furthermore the alignment
-    ;; in `consult-buffer' will look ugly. TODO: Find a better solution!
-    (if (eq marginalia-align 'right)
+  (marginalia--in-minibuffer
+    (when-let (attrs (ignore-errors
+                       ;; may throw permission denied errors
+                       (file-attributes (substitute-in-file-name
+                                         (marginalia--full-candidate cand))
+                                        'integer)))
+      ;; HACK: Format differently accordingly to alignment, since the file owner
+      ;; is usually not displayed. Otherwise we will see an excessive amount of
+      ;; whitespace in front of the file permissions. Furthermore the alignment
+      ;; in `consult-buffer' will look ugly. Find a better solution!
+      (if (eq marginalia-align 'right)
+          (marginalia--fields
+           ;; File owner at the left
+           ((marginalia--file-owner attrs) :face 'marginalia-file-owner)
+           ((marginalia--file-modes attrs))
+           ((marginalia--file-size attrs) :face 'marginalia-size :width -7)
+           ((marginalia--time (file-attribute-modification-time attrs))
+            :face 'marginalia-date :width -12))
         (marginalia--fields
-         ;; File owner at the left
-         ((marginalia--file-owner attrs) :face 'marginalia-file-owner)
          ((marginalia--file-modes attrs))
          ((marginalia--file-size attrs) :face 'marginalia-size :width -7)
          ((marginalia--time (file-attribute-modification-time attrs))
-          :face 'marginalia-date :width -12))
-      (marginalia--fields
-       ((marginalia--file-modes attrs))
-       ((marginalia--file-size attrs) :face 'marginalia-size :width -7)
-       ((marginalia--time (file-attribute-modification-time attrs))
-        :face 'marginalia-date :width -12)
-       ;; File owner at the right
-       ((marginalia--file-owner attrs) :face 'marginalia-file-owner)))))
+          :face 'marginalia-date :width -12)
+         ;; File owner at the right
+         ((marginalia--file-owner attrs) :face 'marginalia-file-owner))))))
 
 (defun marginalia-annotate-file (cand)
   "Annotate file CAND with its size, modification time and other attributes.
 These annotations are skipped for remote paths."
-  (if-let (remote (or (marginalia--remote-protocol cand)
+  (if-let (remote (or (marginalia--remote-file-p cand)
                       (when-let (win (active-minibuffer-window))
                         (with-current-buffer (window-buffer win)
-                          (marginalia--remote-protocol (minibuffer-contents-no-properties))))))
+                          (marginalia--remote-file-p (minibuffer-contents-no-properties))))))
       (marginalia--fields (remote :format "*%s*" :face 'marginalia-documentation))
     (marginalia--annotate-local-file cand)))
 
@@ -1006,10 +1028,7 @@ These annotations are skipped for remote paths."
 (defvar-local marginalia--project-root 'unset)
 (defun marginalia--project-root ()
   "Return project root."
-  (with-current-buffer
-      (if-let (win (active-minibuffer-window))
-          (window-buffer win)
-        (current-buffer))
+  (marginalia--in-minibuffer
     (when (eq marginalia--project-root 'unset)
       (setq marginalia--project-root
             (or (let ((prompt (minibuffer-prompt))
@@ -1035,10 +1054,7 @@ These annotations are skipped for remote paths."
 (defvar-local marginalia--library-cache nil)
 (defun marginalia--library-cache ()
   "Return hash table from library name to library file."
-  (with-current-buffer
-      (if-let (win (active-minibuffer-window))
-          (window-buffer win)
-        (current-buffer))
+  (marginalia--in-minibuffer
     ;; `locate-file' and `locate-library' are bottlenecks for the
     ;; annotator. Therefore we compute all the library paths first.
     (unless marginalia--library-cache
@@ -1117,8 +1133,8 @@ These annotations are skipped for remote paths."
     (let* ((tab (nth index tabs))
            (ws (alist-get 'ws tab))
            (bufs (window-state-buffers ws)))
-      ;; NOTE: When the buffer key is present in the window state
-      ;; it is added in front of the window buffer list and gets duplicated.
+      ;; When the buffer key is present in the window state it is added in front
+      ;; of the window buffer list and gets duplicated.
       (when (cadr (assq 'buffer ws)) (pop bufs))
       (marginalia--fields
        (:left index :format " (%s)" :face 'marginalia-key)
@@ -1143,7 +1159,7 @@ These annotations are skipped for remote paths."
 
 (defun marginalia-classify-original-category ()
   "Return original category reported by completion metadata."
-  ;; NOTE: Use `alist-get' instead of `completion-metadata-get' to bypass our
+  ;; Use `alist-get' instead of `completion-metadata-get' to bypass our
   ;; `marginalia--completion-metadata-get' advice!
   (when-let (cat (alist-get 'category marginalia--metadata))
     ;; Ignore Emacs 28 symbol-help category in order to ensure that the
@@ -1274,7 +1290,7 @@ Remember `this-command' for `marginalia-classify-by-command-name'."
 
 (defun marginalia--base-position (completions)
   "Record the base position of COMPLETIONS."
-  ;; NOTE: As a small optimization we track the base position only for file
+  ;; As a small optimization we track the base position only for file
   ;; completions, since `marginalia--full-candidate' is currently used only by
   ;; the file annotation function.
   (when minibuffer-completing-file-name
@@ -1305,33 +1321,32 @@ Remember `this-command' for `marginalia-classify-by-command-name'."
 (defun marginalia-cycle ()
   "Cycle between annotators in `marginalia-annotator-registry'."
   (interactive)
-  (if-let ((win (active-minibuffer-window))
-           (buf (window-buffer win)))
-      (with-current-buffer buf
-        (let* ((pt (max 0 (- (point) (minibuffer-prompt-end))))
-               (metadata (completion-metadata (buffer-substring-no-properties
-                                               (minibuffer-prompt-end)
-                                               (+ (minibuffer-prompt-end) pt))
-                                              minibuffer-completion-table
-                                              minibuffer-completion-predicate))
-               (cat (or (completion-metadata-get metadata 'category)
-                        (user-error "Marginalia: Unknown completion category")))
-               (ann (or (assq cat marginalia-annotator-registry)
-                        (user-error "Marginalia: No annotators found for category `%s'" cat))))
-          (marginalia--cache-reset)
-          (setcdr ann (append (cddr ann) (list (cadr ann))))
-          ;; When the builtin annotator is selected and no builtin function is
-          ;; available, skip to the next annotator. Note that we cannot use
-          ;; `completion-metadata-get' to access the metadata since we must
-          ;; bypass the `marginalia--completion-metadata-get' advice.
-          (when (and (eq (cadr ann) 'builtin)
-                     (not (assq 'annotation-function metadata))
-                     (not (assq 'affixation-function metadata))
-                     (not (plist-get completion-extra-properties :annotation-function))
-                     (not (plist-get completion-extra-properties :affixation-function)))
-            (setcdr ann (append (cddr ann) (list (cadr ann)))))
-          (message "Marginalia: Use annotator `%s' for category `%s'" (cadr ann) (car ann))))
-    (user-error "Marginalia: No active minibuffer")))
+  (with-current-buffer (window-buffer
+                        (or (active-minibuffer-window)
+                            (user-error "Marginalia: No active minibuffer")))
+    (let* ((pt (max 0 (- (point) (minibuffer-prompt-end))))
+           (metadata (completion-metadata (buffer-substring-no-properties
+                                           (minibuffer-prompt-end)
+                                           (+ (minibuffer-prompt-end) pt))
+                                          minibuffer-completion-table
+                                          minibuffer-completion-predicate))
+           (cat (or (completion-metadata-get metadata 'category)
+                    (user-error "Marginalia: Unknown completion category")))
+           (ann (or (assq cat marginalia-annotator-registry)
+                    (user-error "Marginalia: No annotators found for category `%s'" cat))))
+      (marginalia--cache-reset)
+      (setcdr ann (append (cddr ann) (list (cadr ann))))
+      ;; When the builtin annotator is selected and no builtin function is
+      ;; available, skip to the next annotator. Note that we cannot use
+      ;; `completion-metadata-get' to access the metadata since we must
+      ;; bypass the `marginalia--completion-metadata-get' advice.
+      (when (and (eq (cadr ann) 'builtin)
+                 (not (assq 'annotation-function metadata))
+                 (not (assq 'affixation-function metadata))
+                 (not (plist-get completion-extra-properties :annotation-function))
+                 (not (plist-get completion-extra-properties :affixation-function)))
+        (setcdr ann (append (cddr ann) (list (cadr ann)))))
+      (message "Marginalia: Use annotator `%s' for category `%s'" (cadr ann) (car ann)))))
 
 ;; Emacs 28: Only show `marginalia-cycle' in M-x in recursive minibuffers
 (put #'marginalia-cycle 'completion-predicate
