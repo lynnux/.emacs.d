@@ -5,7 +5,7 @@
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
-;; Version: 0.17
+;; Version: 1.0
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2"))
 ;; Homepage: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, wp
@@ -121,7 +121,7 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (function :tag "Custom function")))
 
 (defcustom cape-elisp-symbol-wrapper
-  '((org-mode ?= ?=)
+  '((org-mode ?~ ?~)
     (markdown-mode ?` ?`)
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
@@ -186,6 +186,11 @@ BODY is the wrapping expression."
   "Create completion TABLE which accepts all input."
   (cape--wrapped-table cape--accept-all-table
     (or (eq action 'lambda))))
+
+(defun cape--passthrough-table (table)
+  "Create completion TABLE disabling any filtering."
+  (cape--wrapped-table cape--passthrough-table
+    (let (completion-ignore-case completion-regexp-list (_ (setq str ""))))))
 
 (defun cape--noninterruptible-table (table)
   "Create non-interruptible completion TABLE."
@@ -258,7 +263,7 @@ NAME is the name of the Capf, BEG and END are the input markers."
          (cape--debug-print result)))
       result)))
 
-(cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
+(cl-defun cape--properties-table (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
@@ -356,7 +361,7 @@ See also `consult-history' for a more flexible variant based on
         (setq history (ring-elements history)))
       (when history
         `(,bol ,(point)
-          ,(cape--table-with-properties history :sort nil)
+          ,(cape--properties-table history :sort nil)
           ,@cape--history-properties)))))
 
 ;;;;; cape-file
@@ -395,7 +400,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                      (file-exists-p (file-name-directory file))))
         `(,beg ,end
           ,(cape--nonessential-table
-            (if (derived-mode-p 'comint-mode 'eshell-mode)
+            (if (or (derived-mode-p 'comint-mode) (derived-mode-p 'eshell-mode))
                 (completion-table-with-quoting
                  #'read-file-name-internal
                  comint-unquote-function
@@ -466,7 +471,7 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
       `(,beg ,end
-        ,(cape--table-with-properties obarray :category 'symbol)
+        ,(cape--properties-table obarray :category 'symbol)
         ,@cape--symbol-properties))))
 
 ;;;;; cape-elisp-block
@@ -564,7 +569,7 @@ See the user options `cape-dabbrev-min-length' and
       (cape-interactive '((cape-dabbrev-min-length 0)) #'cape-dabbrev)
     (when-let ((bounds (cape--dabbrev-bounds)))
       `(,(car bounds) ,(cdr bounds)
-        ,(cape--table-with-properties
+        ,(cape--properties-table
           (completion-table-case-fold
            (cape--dynamic-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
            (not (cape--case-fold-p dabbrev-case-fold-search)))
@@ -613,7 +618,7 @@ INTERACTIVE is nil the function acts like a Capf."
       (cape-interactive #'cape-dict)
     (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
       `(,beg ,end
-        ,(cape--table-with-properties
+        ,(cape--properties-table
           (completion-table-case-fold
            (cape--dynamic-table beg end #'cape--dict-list)
            (not (cape--case-fold-p cape-dict-case-fold)))
@@ -670,7 +675,7 @@ If INTERACTIVE is nil the function acts like a Capf."
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
-          ,(cape--table-with-properties abbrevs :category 'cape-abbrev)
+          ,(cape--properties-table abbrevs :category 'cape-abbrev)
           ,@cape--abbrev-properties)))))
 
 ;;;;; cape-line
@@ -717,7 +722,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       (cape-interactive #'cape-line)
     `(,(pos-bol) ,(point)
-      ,(cape--table-with-properties (cape--line-list) :sort nil)
+      ,(cape--properties-table (cape--line-list) :sort nil)
       ,@cape--line-properties)))
 
 ;;;; Capf combinators
@@ -788,7 +793,7 @@ changed.  The function `cape-company-to-capf' is experimental."
                (if (cape--company-call backend 'ignore-case)
                    #'completion-table-case-fold
                  #'identity)
-               (cape--table-with-properties
+               (cape--properties-table
                 (cape--dynamic-table
                  beg end
                  (lambda (input)
@@ -832,7 +837,7 @@ changed.  The function `cape-company-to-capf' is experimental."
                              capfs ", ")))))
 
 ;;;###autoload
-(defun cape-interactive-capf (capf)
+(defun cape-capf-interactive (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)
     (interactive (list t))
@@ -918,13 +923,15 @@ meaningful debugging output."
   (setq name (format "%s@%s" name (cl-incf cape--debug-id)))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     (let* (completion-ignore-case completion-regexp-list
-            (limit (1+ cape--debug-length))
+     (let* ((limit (1+ cape--debug-length))
             (pred (plist-get plist :predicate))
-            (cands (all-completions
-                    "" table
-                    (lambda (&rest args)
-                      (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0)))))
+            (cands
+             ;; Reset regexps for `all-completions'
+             (let (completion-ignore-case completion-regexp-list)
+               (all-completions
+                "" table
+                (lambda (&rest args)
+                  (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0))))))
             (plist-str "")
             (plist-elt plist))
        (while (cdr plist-elt)
@@ -985,6 +992,13 @@ completion table is refreshed on every input change."
        ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-passthrough (capf)
+  "Call CAPF and make sure that no completion style filtering takes place."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
+
+;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
   "Call CAPF and add additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function and
@@ -993,7 +1007,7 @@ completion :category symbol can be specified."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end
-            ,(apply #'cape--table-with-properties table properties)
+            ,(apply #'cape--properties-table table properties)
             ,@properties ,@plist))))
 
 ;;;###autoload
@@ -1061,6 +1075,16 @@ If the prefix is long enough, enforce auto completion."
          ,@plist)))))
 
 ;;;###autoload
+(defun cape-wrap-inside-faces (capf &rest faces)
+  "Call CAPF only if inside FACES.
+This function can be used as an advice around an existing Capf."
+  (when-let ((fs (get-text-property (point) 'face))
+             ((if (listp fs)
+                  (cl-loop for f in fs thereis (memq f faces))
+                (memq fs faces))))
+    (funcall capf)))
+
+;;;###autoload
 (defun cape-wrap-inside-comment (capf)
   "Call CAPF only if inside comment.
 This function can be used as an advice around an existing Capf."
@@ -1117,6 +1141,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper debug)
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")
 (cape--capf-wrapper inside-comment)
+;;;###autoload (autoload 'cape-capf-inside-faces "cape")
+(cape--capf-wrapper inside-faces)
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
 (cape--capf-wrapper inside-string)
 ;;;###autoload (autoload 'cape-capf-super "cape")
@@ -1125,6 +1151,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper noninterruptible)
 ;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
 (cape--capf-wrapper nonexclusive)
+;;;###autoload (autoload 'cape-capf-passthrough "cape")
+(cape--capf-wrapper passthrough)
 ;;;###autoload (autoload 'cape-capf-predicate "cape")
 (cape--capf-wrapper predicate)
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
@@ -1135,6 +1163,9 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper purify)
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 (cape--capf-wrapper silent)
+
+;;;###autoload
+(define-obsolete-function-alias 'cape-interactive-capf #'cape-capf-interactive "0.17")
 
 ;;;###autoload
 (define-obsolete-function-alias 'cape-super-capf #'cape-capf-super "0.17")
