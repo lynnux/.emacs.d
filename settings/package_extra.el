@@ -1312,7 +1312,7 @@ _c_: hide comment        _q_uit
      (let ((inhibit-message t))
        (load "corfu/corfu-main/corfu"))
      (cl-letf (((symbol-function #'make-frame-visible)
-                (lambda (frame))))
+                (lambda (frame) frame)))
        (corfu--popup-show
         (posn-at-point (point))
         0
