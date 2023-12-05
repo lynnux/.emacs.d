@@ -1167,7 +1167,13 @@ _c_: hide comment        _q_uit
   :config
   (global-tab-line-mode 1)
   (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
-  (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode))
+  (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-info-breakpoints-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-info-stack-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-info-scope-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-repl-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-info-threads-mode)
+  (add-to-list 'tab-line-exclude-modes 'dape-info-watch-mode))
 
 ;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
 (use-package idle-highlight-mode
