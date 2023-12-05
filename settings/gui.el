@@ -3,19 +3,22 @@
 (custom-set-variables
  '(blink-cursor-mode nil) ;光标是否闪烁
  '(column-number-mode t) ;状态栏里显示行号和列号
- '(line-number-mode t)
+ '(line-number-mode nil)
  '(mode-line-percent-position nil) ;; 不显示位置百分比
  ;; '(size-indication-mode t) ; 显示文件大小
  '(display-time-mode t) ;显示时间
  '(inhibit-startup-screen t) ;禁止显示启动画面
  '(show-paren-mode t) ;()匹配提示
  '(tooltip-mode nil) ;windows会卡，不用
- ;'(tool-bar-mode nil)          		;不显示toolbar
- ;'(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
+ '(tool-bar-mode nil)          		;不显示toolbar
+ '(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
  '(warning-suppress-log-types '((comp) (comp)))
  '(warning-suppress-types '((comp)))
  '(minibuffer-prompt-properties ;; 禁止光标移动到在minibuffer的prompt里去，不然输入会提示Text readonly
-   (quote (read-only t cursor-intangible t face minibuffer-prompt))))
+   (quote (read-only t cursor-intangible t face minibuffer-prompt)))
+ '(auto-compression-mode nil)
+ '(auto-encryption-mode nil)
+ '(auto-composition-mode nil))
 
 ;; 位置百分比变为总行数
 (add-hook
