@@ -4114,7 +4114,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (load "lsp/lsp-snippet")
     (load "lsp/lsp-snippet-tempel")
     
-    ;; 正确显示#ifdef/#endif宏
+    ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
     (use-package clangd-inactive-regions
       :defer t
       :init
