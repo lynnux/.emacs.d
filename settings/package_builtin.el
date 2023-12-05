@@ -301,7 +301,8 @@ Run occur in all buffers whose names match this type for REXP."
 
 (setq dabbrev-abbrev-char-regexp "[A-Za-z-_]") ;; 不补全中文
 
-(global-set-key (kbd "C-'") 'hippie-expand)
+(with-eval-after-load 'bind-key
+  (bind-key* (kbd "C-'") 'hippie-expand))
 (defun try-zwz-expand-dabbrev-visible (old)
   (save-excursion (try-expand-dabbrev-visible old)))
 (setq hippie-expand-try-functions-list
@@ -396,7 +397,4 @@ Run occur in all buffers whose names match this type for REXP."
   (add-to-list 'cc-other-file-alist '("\\.tli\\'" (".tlh")))
   (add-to-list 'cc-other-file-alist '("\\.tlh\\'" (".tli"))))
 
-(with-eval-after-load 'nxml-mode
-  ;; C-c C-f给everything使用
-  (define-key nxml-mode-map (kbd "C-c C-f") nil)
-  (define-key nxml-mode-map (kbd "C-c C-d") nil))
+

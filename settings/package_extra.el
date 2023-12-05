@@ -154,6 +154,7 @@
       (set-file-times check-file (get-file-times expand-zip)) ;; 修改文件时间为zip的时间
       )))
 
+;; use-package含有bind-keys*，优先级最高，参考`override-global-mode'代码
 (unless (symbol-function 'use-package)
   (add-to-list
    'load-path "~/.emacs.d/packages/use-package/use-package-master")
@@ -296,8 +297,7 @@ _q_uit
                          '(dired-recent)
                          t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
-    (global-set-key (kbd "C-c d") 'dired-recent-open)
-    (global-set-key (kbd "C-c C-d") 'dired-recent-open)
+    (bind-key* (kbd "C-c C-d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
@@ -1488,9 +1488,7 @@ _c_: hide comment        _q_uit
         (when (memq (char-after) '(?\C-j nil))
           (call-interactively 'new-line-dwim)))
       (define-key c++-mode-map (kbd ";") 'semicolon-auto-newline)))
-  :config (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace)
-  ;; (define-key c-mode-base-map ";" nil)
-  )
+  :config (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace))
 
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist
@@ -1708,8 +1706,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "M-<wheel-down>") 'mc/mark-next-like-this)
   (global-set-key (kbd "S-<f8>") 'mc/skip-to-next-like-this) ;; 跳过当前选中
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this-dwim) ;; dwim的更智能
-
-  (define-key mc/keymap (kbd "C-v") nil)
+  (define-key mc/keymap (kbd "C-v") nil) ;; 使粘贴可用
   (define-key mc/keymap (kbd "RET") 'multiple-cursors-mode) ;; 退出，C-J输入换行
   ;; 改变指针颜色以示区别 
   (defvar last-cursor-color nil)
@@ -2439,9 +2436,7 @@ symbol under cursor"
       :init
       (setq consult-everything-args "es -p -r") ;; -i是区分大小写
       (global-set-key (kbd "C-c f") 'consult-everything)
-      (global-set-key (kbd "C-c C-f") 'consult-everything)
-      (with-eval-after-load 'elisp-mode
-        (define-key emacs-lisp-mode-map (kbd "C-c C-f") nil))
+      (bind-keys* ("C-c C-f" . consult-everything))
       ;; 它默认用consult--regexp-compiler，跟我们的设置冲突
       (defun consult--with-orderless (&rest args)
         (minibuffer-with-setup-hook
@@ -2713,13 +2708,13 @@ symbol under cursor"
   :defer 0.8
   :config
   (smart-hungry-delete-add-default-hooks)
-  (global-set-key
+  (bind-key*
    [remap delete-forward-char] 'smart-hungry-delete-forward-char)
-  (global-set-key
+  (bind-key*
    [remap delete-char] 'smart-hungry-delete-forward-char)
-  (global-set-key
+  (bind-key*
    [remap delete-backward-char] 'smart-hungry-delete-backward-char)
-  (global-set-key
+  (bind-key*
    [remap backward-delete-char-untabify]
    'smart-hungry-delete-backward-char))
 
@@ -2961,7 +2956,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (remove-hook 'pre-command-hook #'magit-pre-command-hook))
   :config
   (define-key magit-status-mode-map "L" 'magit-section-up) ;; diff差异太多，按L返回所属文件
-  (define-key magit-status-mode-map (kbd "<C-tab>") nil) ;; 使切换buffer
   (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header))
 (defun git-add-file ()
   "Adds (with force) the file from the current buffer to the git repo"
@@ -4265,11 +4259,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     nil)))
 (when c-sharp-server-path
   (with-eval-after-load 'csharp-mode
-    (add-path-to-execute-path (expand-file-name c-sharp-server-path)))
-  (defun my-csharp-hook ()
-    (define-key csharp-mode-map "\C-d" nil) ;; 使用我们自己的hungry delete(cc自带hungry不好用)
-    )
-  (add-hook 'csharp-mode-hook 'my-csharp-hook))
+    (add-path-to-execute-path (expand-file-name c-sharp-server-path))))
 
 ;; xml 这里https://github.com/redhat-developer/vscode-xml的下载https://download.jboss.org/jbosstools/vscode/stable/lemminx-binary/无需要java环境(好像是自动下载java环境)
 ;; 主要是使用xml的格式化功能
@@ -4479,7 +4469,7 @@ _q_uit
                  (1- (length vec_name))
                1)))
       (switch-to-buffer (nth sel myswitch-buffer-list))))
-  (global-set-key (kbd "<C-tab>") 'my-pop-select)
+  (bind-keys* ("<C-tab>" . my-pop-select))
   (global-set-key
    (if (string-equal system-type "windows-nt")
        (kbd "<C-S-tab>")
@@ -4799,10 +4789,7 @@ _q_uit
   ;; org的C-c C-o居然不走find-file
   (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
   (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
-  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default))
-  (define-key org-mode-map (kbd "M-h") nil)
-  (define-key org-mode-map (kbd "C-c C-d") nil)
-  (define-key org-mode-map (kbd "C-'") nil))
+  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default)))
 
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
@@ -4963,8 +4950,6 @@ _q_uit
   (add-hook 'poe-popup-mode-hook (lambda () (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
   (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
   (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
-  (define-key poe-popup-mode-map (kbd "<C-tab>") 'poe-popup-next)
-  (define-key poe-popup-mode-map (kbd "<C-S-tab>") 'poe-popup-prev)
   (global-set-key (kbd "M-1") 'poe-popup-next)
   (global-set-key (kbd "M-`") 'poe-popup-next)
   (defface poe-echo-area-buried '((t :inherit shadow))
@@ -6294,7 +6279,6 @@ _q_uit
      (t
       (comint-simple-send proc command))))
   :config
-  (define-key shell-mode-map (kbd "C-c C-d") nil)
   (define-key shell-mode-map '[up] 'comint-previous-input)
   (define-key shell-mode-map '[down] 'comint-next-input)
 
@@ -6353,10 +6337,6 @@ _q_uit
   (define-advice pcomplete-completions-at-point
       (:around (orig-fn &rest args))
     (esy/file-capf)))
-
-(use-package esh-proc
-  :defer t
-  :config (define-key eshell-proc-mode-map (kbd "C-c C-d") nil))
 
 ;; 处理shell的补全，也改为只枚举当前目录
 (use-package comint
