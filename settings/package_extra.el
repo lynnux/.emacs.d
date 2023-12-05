@@ -4113,6 +4113,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           result)))
     (load "lsp/lsp-snippet")
     (load "lsp/lsp-snippet-tempel")
+    
+    ;; 正确显示#ifdef/#endif宏
+    (use-package clangd-inactive-regions
+      :defer t
+      :init
+      (autoload 'clangd-inactive-regions-mode "lsp/clangd-inactive-regions" "" nil)
+      (add-hook 'eglot-server-initialized-hook #'clangd-inactive-regions-mode)
+      :config
+      ;; (clangd-inactive-regions-set-method "darken-foreground")
+      ;; (clangd-inactive-regions-set-opacity 0.55)
+      )
 
     (add-to-list
      'eglot-server-programs
