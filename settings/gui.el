@@ -18,7 +18,8 @@
    (quote (read-only t cursor-intangible t face minibuffer-prompt)))
  '(auto-compression-mode nil)
  '(auto-encryption-mode nil)
- '(auto-composition-mode nil))
+ '(auto-composition-mode nil)
+ '(file-name-shadow-mode nil))
 
 ;; 位置百分比变为总行数
 (add-hook
