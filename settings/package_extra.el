@@ -4113,13 +4113,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           result)))
     (load "lsp/lsp-snippet")
     (load "lsp/lsp-snippet-tempel")
-    
+
     ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
     (use-package clangd-inactive-regions
       :defer t
       :init
-      (autoload 'clangd-inactive-regions-mode "lsp/clangd-inactive-regions" "" nil)
-      (add-hook 'eglot-server-initialized-hook #'clangd-inactive-regions-mode)
+      (autoload
+        'clangd-inactive-regions-mode "lsp/clangd-inactive-regions"
+        "" nil)
+      (add-hook
+       'eglot-server-initialized-hook #'clangd-inactive-regions-mode)
       :config
       ;; (clangd-inactive-regions-set-method "darken-foreground")
       ;; (clangd-inactive-regions-set-opacity 0.55)
@@ -5412,7 +5415,7 @@ _q_uit
     "实现调试开始无须选择命令，C-u F5才需要选择命令"
     (if (or current-prefix-arg (not dape-history))
         (apply orig-fn args)
-      (cl-letf (((symbol-function #'completing-read)
+      (cl-letf (((symbol-function #'read-from-minibuffer)
                  (lambda (&rest _) (car dape-history))))
         (apply orig-fn args))))
   (define-advice dape--add-eldoc-hook (:after (&rest args) my)
@@ -5421,21 +5424,10 @@ _q_uit
       (eldoc-mode 1)))
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
-  ;; 测试命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
-  (setq
-   lldb-cmd
-   (expand-file-name
-    "~/.emacs.d/.extension/codelldb-x86_64-windows/extension/adapter/codelldb.exe"))
-  
-  ;; 会跑飞
-  (setq lldb-vscode-cmd "c:/LLVM/bin/lldb-vscode.exe")
-  
+  ;; 测试codelldb命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
+  ;; 因为llvm在PATH里，删除lldb-vscode影响主力debugger
+  (assq-delete-all 'lldb-vscode dape-configs)
   ;; cpp, rust https://github.com/microsoft/vscode-cpptools/releases ，解压vsix
-  ;; 测试在启动WindowsDebugLauncher那里卡住了
-  (setq
-   dape-cppdbg-command
-   (expand-file-name
-    "~/.emacs.d/.extension/extension/debugAdapters/bin/OpenDebugAD7.exe"))
   ;; :logging (:engineLogging t) ;; 开启调试消息
 
   (defun decode-hex-string (hex-string)
@@ -5483,10 +5475,13 @@ _q_uit
                       (decode-hex-string (nth 0 s)))
                      nil nil t)))))
   (cl-defmethod dape-handle-request
-      (process (command (eql handshake)) arguments)
-    ;; (message "hand: %S" (plist-get arguments :value))
-      ;; TODO：目前没有方法得到seq，好在handshake目前总是2
-      (dape--response process "handshake" 2 t (list :signature (my-calc (plist-get arguments :value)))))
+      (process (command (eql handshake)) seq arguments)
+    (dape--response
+     process
+     "handshake"
+     seq
+     t
+     (list :signature (my-calc (plist-get arguments :value)))))
   (define-advice dape--handle-object (:after (&rest args))
     "修复乱发序号问题"
     (setq dape--seq-event 0))
@@ -5500,29 +5495,28 @@ _q_uit
               (ad-access-argument args 2) (list :startFrame 0))
              args)))
     (apply orig-fn args))
+
   (setq
    dape-cppvsdbg-command
    (expand-file-name
     "~/.emacs.d/.extension/extension/debugAdapters/vsdbg/bin/vsdbg.exe"))
-  ;; (add-to-list
-  ;;  'dape-configs
-  ;;  `(cppvsdbg
-  ;;    modes
-  ;;    (c-mode c-ts-mode c++-mode c++-ts-mode)
-  ;;    command-cwd
-  ;;    ,(file-name-directory dape-cppvsdbg-command)
-  ;;    command
-  ;;    dape-cppvsdbg-command
-  ;;    command-args
-  ;;    ("--interpreter=vscode")
-  ;;    :type "cppvsdbg"
-  ;;    :request "launch"
-  ;;    :cwd dape-cwd-fn
-  ;;    :program dape-find-file
-  ;;    :stopAtEntry t ;; 支持
-  ;;    ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
-  ;;    ))
-  )
+  (add-to-list
+   'dape-configs
+   `(vsdbg
+     modes
+     (c-mode c-ts-mode c++-mode c++-ts-mode)
+     ensure
+     dape-ensure-command
+     command
+     dape-cppvsdbg-command
+     command-args
+     ["--interpreter=vscode"]
+     :type "cppvsdbg" ;; 必须是这个
+     :cwd dape-cwd-fn
+     :program dape-find-file
+     :stopAtEntry t ;; 支持
+     ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
+     )))
 
 (defvar f5-history '()) ;; session只记录list的值
 (defun my-shell-switch ()
