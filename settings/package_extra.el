@@ -6504,6 +6504,16 @@ _q_uit
            " " (get-chinese-wannianli))))
   (display-time-update))
 
+;; 这个mode各种问题，将就用就行
+(use-package antlr-mode
+  :defer t
+  :config
+  (add-hook 'antlr-delayed-mode-hook
+            (lambda ()
+              (setq-local
+               font-lock-extend-after-change-region-function nil))
+            50 ;; 一定要在自带hook的后面执行
+            ))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
