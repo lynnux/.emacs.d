@@ -6535,20 +6535,12 @@ _q_uit
                     '(foreground-color . "cyan")
                     'display
                     '(raise 0)))
-  (cl-defun
-   my-run-ielm (arg) (interactive "P")
-   (let ((buf (buffer-name (current-buffer))))
-     (ielm)
-     (when arg
-       (insert
-        (prin1-to-string
-         (pcase arg
-           ('(4) `(with-selected-window (get-buffer-window ,buf)))
-           ('(16) `(with-current-buffer ,buf)))))
-       (forward-char -1)
-       ;; (ielm-return)
-       )))
-  ;; (bind-key* (kbd "M-:") 'my-run-ielm)
+  (defun my-eilm ()
+    (interactive)
+    (let ((buf (buffer-name (current-buffer))))
+      (ielm)
+      (ielm-change-working-buffer buf)))
+  (bind-key* (kbd "M-:") 'my-eilm)
   :config)
 
 
