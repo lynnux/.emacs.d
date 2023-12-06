@@ -4961,6 +4961,7 @@ _q_uit
   (poe-popup "*Pp Eval Output*")
   (poe-popup "*Warnings*")
   (poe-popup "*compilation*")
+  (poe-popup "*ielm*")
   (poe-popup "\\`\\*WoMan.*?\\*\\'" :regexp t :size 0.5 :shrink t)
   (poe-popup 'calendar-mode)
   (poe-popup 'comint-mode)
@@ -5979,7 +5980,7 @@ _q_uit
   (add-hook
    'lisp-data-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
   (add-hook
-   'inferior-emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
+   'ielm-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
   (with-eval-after-load 'c-ts-mode
     ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
     (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
@@ -6515,12 +6516,41 @@ _q_uit
 (use-package antlr-mode
   :defer t
   :config
+  ;; 解决编辑报错，导致`delete-selection-mode'出问题
   (add-hook 'antlr-delayed-mode-hook
             (lambda ()
               (setq-local
                font-lock-extend-after-change-region-function nil))
             50 ;; 一定要在自带hook的后面执行
             ))
+
+;; 代替`eval-expression'M-;
+(use-package ielm
+  :defer t
+  :init
+  (setq ielm-header "")
+  (setq ielm-prompt
+        (propertize (char-to-string #x261B)
+                    'face
+                    '(foreground-color . "cyan")
+                    'display
+                    '(raise 0)))
+  (cl-defun
+   my-run-ielm (arg) (interactive "P")
+   (let ((buf (buffer-name (current-buffer))))
+     (ielm)
+     (when arg
+       (insert
+        (prin1-to-string
+         (pcase arg
+           ('(4) `(with-selected-window (get-buffer-window ,buf)))
+           ('(16) `(with-current-buffer ,buf)))))
+       (forward-char -1)
+       ;; (ielm-return)
+       )))
+  ;; (bind-key* (kbd "M-:") 'my-run-ielm)
+  :config)
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
