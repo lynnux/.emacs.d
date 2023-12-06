@@ -5978,6 +5978,8 @@ _q_uit
    'json-mode-hook #'(lambda () (treesit-parser-create 'json)))
   (add-hook
    'lisp-data-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
+  (add-hook
+   'inferior-emacs-lisp-mode-hook #'(lambda () (treesit-parser-create 'elisp)))
   (with-eval-after-load 'c-ts-mode
     ;; 虽然会根据是否包含c++的头文件来判断是否是cpp，这里直接强制就是cpp
     (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-ts-mode))))
