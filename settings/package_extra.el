@@ -3722,12 +3722,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           (list (or cmake-integration-current-target "all"))))
   (define-advice cmake-integration-get-build-folder
       (:around (orig-fn &rest args) my)
-    (or (if (equal (or (car-safe select-compiler-history) "32") "32")
-            (and (bound-and-true-p my-cmake-build-dir)
-                 my-cmake-build-dir) ; 由`.dir-locals.el'设置
-          (and (bound-and-true-p my-cmake-build-dir64)
-               my-cmake-build-dir64))
-        (apply orig-fn args)))
+    (let ((ret
+           (or (if (equal
+                    (or (car-safe select-compiler-history) "32") "32")
+                   (and (bound-and-true-p my-cmake-build-dir)
+                        my-cmake-build-dir) ; 由`.dir-locals.el'设置
+                 (and (bound-and-true-p my-cmake-build-dir64)
+                      my-cmake-build-dir64))
+               (apply orig-fn args))))
+      (setq compilation-search-path
+            (append (list ret) (delete ret compilation-search-path)))
+      ret))
   (define-advice cmake-integration-create-empty-codemodel-file
       (:around (orig-fn &rest args) my)
     "解决windows上调用问题"
