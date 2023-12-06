@@ -247,7 +247,10 @@
   (advice-add 'eldoc-pre-command-refresh-echo-area :override #'ignore) ;; 在pre-command-hook里影响性能
   (with-eval-after-load 'grammatical-edit
     ;; 自作聪明就给加了eldoc
-    (eldoc-remove-command-completions "grammatical-edit-")))
+    (eldoc-remove-command-completions "grammatical-edit-"))
+  (with-eval-after-load 'fingertip
+    ;; 自作聪明就给加了eldoc
+    (eldoc-remove-command-completions "fingertip-")))
 
 (autoload 'defhydra "hydra" nil t)
 
@@ -2688,18 +2691,33 @@ symbol under cursor"
       (let ((maker (apply fn args)))
         (lambda (input)
           (let ((result (funcall maker input)))
-            (when (chinese-word-chinese-string-p input)
-              (let ((cmds (car result)))
-                ;; 经测试不能包含--search-zip参数，不然搜索不到
-                (setq cmds (delete "--search-zip" cmds))
-                (setq result
-                      (append
-                       (list
+            (if (chinese-word-chinese-string-p input)
+                (let ((cmds (car result)))
+                  ;; 经测试不能包含--search-zip参数，不然搜索不到
+                  (setq cmds (delete "--search-zip" cmds))
+                  (setq result
                         (append
-                         (list (car cmds))
-                         (list "--pre" "rgpre")
-                         (cdr cmds)))
-                       (cdr result)))))
+                         (list
+                          (append
+                           (list (car cmds))
+                           (list "--pre" "rgpre")
+                           (cdr cmds)))
+                         (cdr result))))
+              ;; C-u开头加上--search-zip用于搜索el.gz等文件
+              (when current-prefix-arg
+                (let* ((cmds (car result))
+                       (path (car (last cmds))))
+                  (when (string-match
+                         "share/emacs/.*/lisp"
+                         (expand-file-name path))
+                    (setq result
+                          (append
+                           (list
+                            (append
+                             (list (car cmds))
+                             (list "--search-zip")
+                             (cdr cmds)))
+                           (cdr result)))))))
             result))))
     (define-key occur-mode-map (kbd "C-c C-p") 'occur-edit-mode)))
 
@@ -2710,8 +2728,7 @@ symbol under cursor"
   (smart-hungry-delete-add-default-hooks)
   (bind-key*
    [remap delete-forward-char] 'smart-hungry-delete-forward-char)
-  (bind-key*
-   [remap delete-char] 'smart-hungry-delete-forward-char)
+  (bind-key* [remap delete-char] 'smart-hungry-delete-forward-char)
   (bind-key*
    [remap delete-backward-char] 'smart-hungry-delete-backward-char)
   (bind-key*
@@ -4259,7 +4276,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     nil)))
 (when c-sharp-server-path
   (with-eval-after-load 'csharp-mode
-    (add-path-to-execute-path (expand-file-name c-sharp-server-path))))
+    (add-path-to-execute-path
+     (expand-file-name c-sharp-server-path))))
 
 ;; xml 这里https://github.com/redhat-developer/vscode-xml的下载https://download.jboss.org/jbosstools/vscode/stable/lemminx-binary/无需要java环境(好像是自动下载java环境)
 ;; 主要是使用xml的格式化功能
