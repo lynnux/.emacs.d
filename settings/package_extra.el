@@ -300,7 +300,7 @@ _q_uit
                          '(dired-recent)
                          t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
-    (bind-key* (kbd "C-c C-d") 'dired-recent-open)
+    ;; (bind-key* (kbd "C-c C-d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
@@ -2465,6 +2465,7 @@ symbol under cursor"
         (define-key vertico-map "\M-D" 'consult-dir))
       ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
       (setq consult-dir-default-command 'my-find-file)
+      (bind-key* (kbd "C-c C-d") 'consult-dir)
       :config
       (setq
        consult-dir-sources
@@ -2476,7 +2477,9 @@ symbol under cursor"
       (defadvice consult-dir--recentf-dirs
           (around my-consult-dir--recentf-dirs activate)
         (unless (boundp 'dired-recent-directories)
-          (require 'dired-recent)
+          (unless (featurep 'dired-recent)
+            (delay-require-libs
+             "~/.emacs.d/packages/dired" '(dired-recent)))
           (dired-recent-load-list))
         (setq ad-return-value dired-recent-directories)))
     (defun search-in-browser ()
