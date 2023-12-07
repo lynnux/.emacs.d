@@ -2828,7 +2828,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                'invisible
                t))
             (forward-line)))))
-    ;; 测试确实影响性能，
+    ;; 测试确实影响性能，用git config --global core.whitespace cr-at-eol
     ;; (add-to-list 'vc-diff-finish-functions 'hide-trailing-cr-characters)
     ))
 (use-package vc-dir
