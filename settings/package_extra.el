@@ -2810,7 +2810,27 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :init
   (setq vc-log-show-limit 100) ;; 默认2000太多了
-  )
+  :config
+  (when (memq system-type '(ms-dos windows-nt))
+    (defun hide-trailing-cr-characters ()
+      "参考`magit-diff-hide-trailing-cr-characters'的实现"
+      (save-excursion
+        (let ((buffer-read-only nil)
+              (end (point-max)))
+          (goto-char (point-min))
+          (while (< (point) end)
+            (when (and t
+                       (char-equal
+                        ?\r (char-before (line-end-position))))
+              (put-text-property
+               (1- (line-end-position))
+               (line-end-position)
+               'invisible
+               t))
+            (forward-line)))))
+    ;; 测试确实影响性能，
+    ;; (add-to-list 'vc-diff-finish-functions 'hide-trailing-cr-characters)
+    ))
 (use-package vc-dir
   :defer t
   :init
@@ -2949,6 +2969,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq
    magit-version "3.3.0"
    magit-commit-show-diff nil ;; commit时不用显示diff，在stage时一般就检查了
+   magit-diff-hide-trailing-cr-characters nil ;; 会影响性能
    magit-status-sections-hook
    '(
      ;; magit-insert-status-headers
