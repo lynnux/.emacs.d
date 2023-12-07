@@ -2464,7 +2464,15 @@ symbol under cursor"
       (with-eval-after-load 'vertico
         (define-key vertico-map "\M-D" 'consult-dir))
       ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
+      (setq consult-dir-default-command 'my-find-file)
       :config
+      (setq
+       consult-dir-sources
+       '(consult-dir--source-recentf
+         consult-dir--source-bookmark
+         ;; consult-dir--source-default
+         consult-dir--source-project ;projectile if available, project.el otherwise
+         ))
       (defadvice consult-dir--recentf-dirs
           (around my-consult-dir--recentf-dirs activate)
         (unless (boundp 'dired-recent-directories)
