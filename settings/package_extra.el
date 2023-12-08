@@ -6288,7 +6288,7 @@ _q_uit
 (use-package format
   :defer t
   :init
-  ;; (setq format-alist nil) ;; `format-decode'会被c函数`insert-file-contents'调用，而里面都是些用不到的文件头，故而可以屏蔽加快启动。
+  (setq format-alist nil) ;; `format-decode'会被c函数`insert-file-contents'调用，而里面都是些用不到的文件头，故而可以屏蔽加快启动。
   )
 (use-package enriched
   :defer t
