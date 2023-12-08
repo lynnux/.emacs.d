@@ -164,6 +164,9 @@ Otherwise you can set this to a user defined function."
 ;; of having to use a temporary file for the `stderr'.
 (defconst elisp-autofmt--workaround-make-proc (memq system-type (list 'ms-dos 'windows-nt)))
 
+;; Force process IO to use UTF8, see: #15.
+(defconst elisp-autofmt--process-coding-system (cons 'utf-8 'utf-8))
+
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Utilities
@@ -355,38 +358,39 @@ Return a cons cell comprised of the:
       :suffix "-stderr"
 
       (let ((exit-code
-             (cond
-              (stdin-buffer
-               ;; Use the whole `stdin-buffer'
-               (apply #'call-process-region
-                      (append
-                       (list
-                        ;; No min/max (whole buffer).
-                        nil nil
-                        ;; First argument (program).
-                        (car command-with-args)
-                        ;; Don't delete.
-                        nil
-                        ;; Destination.
-                        (list stdout-buffer temp-file-stderr)
-                        ;; No display.
-                        nil)
-                       ;; Remaining arguments.
-                       (cdr command-with-args))))
-              (t
-               (apply #'call-process
-                      (append
-                       (list
-                        ;; First argument (command).
-                        (car command-with-args)
-                        ;; No INFILE.
-                        nil
-                        ;; Destination.
-                        (list stdout-buffer temp-file-stderr)
-                        ;; No display.
-                        nil)
-                       ;; Remaining arguments.
-                       (cdr command-with-args))))))
+             (let ((default-process-coding-system elisp-autofmt--process-coding-system))
+               (cond
+                (stdin-buffer
+                 ;; Use the whole `stdin-buffer'
+                 (apply #'call-process-region
+                        (append
+                         (list
+                          ;; No min/max (whole buffer).
+                          nil nil
+                          ;; First argument (program).
+                          (car command-with-args)
+                          ;; Don't delete.
+                          nil
+                          ;; Destination.
+                          (list stdout-buffer temp-file-stderr)
+                          ;; No display.
+                          nil)
+                         ;; Remaining arguments.
+                         (cdr command-with-args))))
+                (t
+                 (apply #'call-process
+                        (append
+                         (list
+                          ;; First argument (command).
+                          (car command-with-args)
+                          ;; No INFILE.
+                          nil
+                          ;; Destination.
+                          (list stdout-buffer temp-file-stderr)
+                          ;; No display.
+                          nil)
+                         ;; Remaining arguments.
+                         (cdr command-with-args)))))))
             (stderr-as-string
              (progn
                (with-temp-buffer
@@ -409,7 +413,8 @@ Return a cons cell comprised of the:
               ((boundp 'default-buffer-file-coding-system)
                default-buffer-file-coding-system)
               (t
-               'utf-8))))
+               'utf-8)))
+            (default-process-coding-system elisp-autofmt--process-coding-system))
         (with-temp-buffer
           (setq stderr-buffer (current-buffer))
           (with-current-buffer this-buffer

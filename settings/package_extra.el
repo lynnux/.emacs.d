@@ -6299,8 +6299,7 @@ _q_uit
        (interactive)
        (if buffer-read-only
            (signal 'text-read-only nil)
-         (let ((inhibit-message t)
-               (default-process-coding-system '(utf-8 . utf-8)))
+         (let ((inhibit-message t))
            (if (use-region-p)
                (call-interactively 'elisp-autofmt-region)
              (call-interactively 'elisp-autofmt-buffer)))
