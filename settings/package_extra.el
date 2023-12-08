@@ -300,7 +300,7 @@ _q_uit
                          '(dired-recent)
                          t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
-    ;; (bind-key* (kbd "C-c C-d") 'dired-recent-open)
+    (bind-key* (kbd "C-c C-d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
@@ -2464,8 +2464,7 @@ symbol under cursor"
       (with-eval-after-load 'vertico
         (define-key vertico-map "\M-D" 'consult-dir))
       ;; (define-key vertico-map (kbd "C-x C-d") 'consult-dir)
-      (setq consult-dir-default-command 'my-find-file)
-      (bind-key* (kbd "C-c C-d") 'consult-dir)
+      ;; (bind-key* (kbd "C-c C-d") 'consult-dir)
       :config
       (setq
        consult-dir-sources
@@ -2811,6 +2810,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (interactive)
   (setq buffer-display-table (make-display-table))
   (aset buffer-display-table ?\^M []))
+(aset standard-display-table ?\^M []) ;; 直接全局不显示^M
 
 (use-package vc
   :defer t
@@ -2835,7 +2835,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                t))
             (forward-line)))))
     ;; 测试确实影响性能，用git config --global core.whitespace cr-at-eol
-    (add-to-list 'vc-diff-finish-functions 'remove-dos-eol)))
+    ;; (add-to-list 'vc-diff-finish-functions 'remove-dos-eol)
+    ))
 (use-package vc-dir
   :defer t
   :init
@@ -2994,8 +2995,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      ;; magit-insert-unpulled-from-pushremote
      ;; magit-insert-unpulled-from-upstream
      ))
-  (with-eval-after-load 'magit-section
-    (add-hook 'magit-section-mode-hook 'remove-dos-eol))
+  ;; (with-eval-after-load 'magit-section
+  ;;   (add-hook 'magit-section-mode-hook 'remove-dos-eol))
   (with-eval-after-load 'magit-git
     ;; https://github.com/magit/magit/issues/2982#issuecomment-1081204026
     (defun magit-rev-format (format &optional rev args)
