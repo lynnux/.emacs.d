@@ -3,7 +3,7 @@
 (custom-set-variables
  '(blink-cursor-mode nil) ;光标是否闪烁
  '(column-number-mode t) ;状态栏里显示行号和列号
- '(line-number-mode nil)
+ '(line-number-mode t)
  '(mode-line-percent-position nil) ;; 不显示位置百分比
  ;; '(size-indication-mode t) ; 显示文件大小
  '(display-time-mode t) ;显示时间
