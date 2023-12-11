@@ -4168,7 +4168,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      'eglot-server-programs
      '((c-mode c-ts-mode c++-mode c++-ts-mode)
        .
-       ("clangd" "-header-insertion=never")))
+       ("clangd"
+        "-j=8" ;; 线程数量
+        "--background-index"
+        "-header-insertion=never" ;; 不要插入头文件
+        "--clang-tidy" ;; 高级提示
+        "--header-insertion-decorators=0" ;; 不要在前面插入圆点
+        "--completion-style=detailed" "--pch-storage=memory")))
     (eldoc-add-command 'c-electric-paren)
     (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
     (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
