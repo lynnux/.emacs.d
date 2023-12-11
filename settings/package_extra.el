@@ -1493,6 +1493,15 @@ _c_: hide comment        _q_uit
       (define-key c++-mode-map (kbd ";") 'semicolon-auto-newline)))
   :config (define-key c-mode-base-map (kbd "C-h") 'c-electric-backspace))
 
+(use-package c-ts-mode
+  :defer t
+  :config
+  (define-advice c-ts-mode-set-modeline
+      (:around (orig-fn &rest args) my)
+    (let
+        ((comment-start "-ts")) ;; 默认是显示comment style，没什么用来显示是否启动ts
+      (apply orig-fn args))))
+
 (autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
 (setq auto-mode-alist
       (append
