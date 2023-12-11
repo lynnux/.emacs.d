@@ -1920,7 +1920,7 @@ _c_: hide comment        _q_uit
      vertico-sort-function nil ;; 对需要排序的，添加到`vertico-multiform-commands'里
      )
     (run-with-idle-timer
-     0.8 nil
+     0.3 nil
      #'(lambda ()
          (add-to-list
           'load-path "~/.emacs.d/packages/minibuffer/vertico-main")
