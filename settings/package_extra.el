@@ -5763,27 +5763,33 @@ _q_uit
             (open (consult--temporary-files))
             (preview (consult--jump-preview)))
         (lambda (action cand)
-          (when
-              (funcall result action cand) ;; 经测试没有正常preview返回的是marker，正常返回nil
-            (let ((consult--buffer-display (ad-get-argument args 0)))
-              (funcall preview
-                       action
-                       (when-let (loc
-                                  (and cand
-                                       (eq action 'preview)
-                                       (xref-item-location cand)))
-                         (let ((type (type-of loc)))
-                           (pcase type
-                             ('ggtags-xref-location
-                              (consult--marker-from-line-column
-                               (funcall
-                                open
-                                (ggtags-xref-location-file
-                                 loc) ;; 要全路径不然open临时文件会失败
-                                )
-                               (ggtags-xref-location-line loc)
-                               (ggtags-xref-location-column
-                                loc)))))))))))))
+          (if (and cand
+                   (eq action 'preview)
+                   (eq
+                    (type-of (xref-item-location cand))
+                    'ggtags-xref-location))
+              (let ((consult--buffer-display
+                     (ad-get-argument args 0)))
+                (funcall preview
+                         action
+                         (when-let (loc
+                                    (and cand
+                                         (eq action 'preview)
+                                         (xref-item-location cand)))
+                           (let ((type (type-of loc)))
+                             (pcase type
+                               ('ggtags-xref-location
+                                (consult--marker-from-line-column
+                                 (funcall
+                                  open
+                                  (ggtags-xref-location-file
+                                   loc) ;; 要全路径不然open临时文件会失败
+                                  )
+                                 (ggtags-xref-location-line loc)
+                                 (ggtags-xref-location-column
+                                  loc))))))))
+            (funcall result action cand))))))
+
   (defun ggtags-create (root)
     (interactive "DRoot directory: ")
     (let* ((label
