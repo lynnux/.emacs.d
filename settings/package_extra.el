@@ -5729,9 +5729,7 @@ _q_uit
 
 (use-package ggtags
   :if (bound-and-true-p enable-feature-navigation)
-  :commands
-  (ggtags--xref-backend
-   ggtags-create-tags ggtags-update-tags ggtags--xref-find-tags)
+  :commands (ggtags--xref-backend ggtags--xref-find-tags ggtags-check-project)
   :init
   (add-hook 'xref-backend-functions #'ggtags--xref-backend 98)
   (setenv "GTAGSFORCECPP" "1") ;; 默认h不以cpp分析，导致分析不出c++类
@@ -5784,7 +5782,19 @@ _q_uit
                                (ggtags-xref-location-line loc)
                                (ggtags-xref-location-column
                                 loc)))))))))))))
+  (defun ggtags-create (root)
+    (interactive "DRoot directory: ")
+    (let* ((label
+            (consult--read '("default" "native" "ctags" "pygments")))
+           (default-directory root))
+      (async-shell-command (concat "gtags -q --gtagslabel=" label))))
+  (defun ggtags-update ()
+    (interactive)
+    (ggtags-check-project)
+    (async-shell-command "global -u"))
   :config
+  (fmakunbound 'ggtags-create-tags) ;; 去掉避免干扰，用我们的async版本
+  (fmakunbound 'ggtags-update-tags)
   (defadvice ggtags-global-build-command
       (after my-ggtags-global-build-command activate)
     "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
