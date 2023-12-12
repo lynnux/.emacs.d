@@ -4189,7 +4189,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         "--completion-style=detailed" "--pch-storage=memory")))
     (eldoc-add-command 'c-electric-paren)
     (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
-    (eldoc-add-command 'corfu-insert) ;; 补全后提示参数
     (when nil
       ;; 获取不显示signature的方法
       (defadvice eldoc--message-command-p
