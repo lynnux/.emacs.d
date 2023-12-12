@@ -1328,6 +1328,9 @@ _c_: hide comment        _q_uit
         8
         '(#("No match" 0 8 (face italic)))))))
   :config
+  ;; 不知道为什么加这个，加了反而在弹出corfu时eldoc消失了，先试试去掉
+  (advice-remove
+   #'eldoc-display-message-no-interference-p #'corfu--eldoc-advice)
   (add-to-list
    'load-path "~/.emacs.d/packages/corfu/corfu-main/extensions")
   (when nil
