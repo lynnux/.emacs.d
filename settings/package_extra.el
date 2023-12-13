@@ -4448,7 +4448,9 @@ _q_uit
                      (when my-auto-newline
                        (when (eq key ?\{)
                          (call-interactively 'new-line-dwim))))))))
-       (global-set-key key_str key_symbol))))
+       (global-set-key key_str key_symbol)))
+    (with-eval-after-load 'corfu
+      (add-to-list 'corfu-auto-commands "my-elec-pair.*")))
 
   ;; 修复eldoc不显示参数名问题
   (with-eval-after-load 'eldoc
