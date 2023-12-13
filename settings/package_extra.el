@@ -5767,11 +5767,12 @@ _q_uit
     (ggtags-check-project)
     (async-shell-command "global -u"))
   :config
-  ;; 实现xref preview对ggtags的支持
+  ;; 修改type使支持consult-xref preview
   (define-advice ggtags--xref-collect-tags
       (:around (orig-fn &rest args) my)
     (let ((result (apply orig-fn args)))
       (dolist (l result)
+        ;; slot object可以用array操作
         (aset (aref l 2) 0 'xref-file-location))
       result))
   (fmakunbound 'ggtags-create-tags) ;; 去掉避免干扰，用我们的async版本
