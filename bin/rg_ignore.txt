@@ -3,3 +3,6 @@ TAGS
 GTAGS
 GRTAGS
 GPATH
+.cache/*
+.git/*
+compile_commands.json
