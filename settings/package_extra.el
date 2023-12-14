@@ -858,6 +858,7 @@ _c_: hide comment        _q_uit
   :config
   (global-unset-key (kbd "C-z"))
   (global-set-key (kbd "C-z") 'undo-fu-only-undo)
+  (global-set-key [remap undo] 'undo-fu-only-undo)
   (global-set-key (kbd "C-S-z") 'undo-fu-only-redo)
   (global-set-key (kbd "M-/") 'undo-fu-only-redo)
   (global-set-key (kbd "C-x u") (defrepeater #'undo-fu-only-redo)) ;; 这个其实是undo，习惯undo tree这个快捷键了
