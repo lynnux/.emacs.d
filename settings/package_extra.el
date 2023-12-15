@@ -4968,21 +4968,24 @@ _q_uit
     ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
     (call-interactively 'other-window))
   (let ((wcount (length (window-list))))
-    (poe-popup-close)
+    (when (functionp 'poe-popup-close)
+      (poe-popup-close))
     (call-interactively 'keyboard-escape-quit)
-    ;; 如果窗口数没变，就可以弹出pop窗口了
-    (if (eq wcount (length (window-list)))
-        (call-interactively 'poe-popup-toggle))))
+    (when (functionp 'poe-popup-toggle)
+      ;; 如果窗口数没变，就可以弹出pop窗口了
+      (if (eq wcount (length (window-list)))
+          (call-interactively 'poe-popup-toggle)))))
+(global-set-key (kbd "C-1") 'my-C-1)
 
 ;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去(也可以设置:select t切换到)。
 ;; 规则跟shackle是一样的，不过设置:same有bug所以还不能去掉shackle
 (use-package poe
+  :disabled
   :if (bound-and-true-p enable-feature-gui)
   ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
   :defer 1.0
   :commands (poe-popup poe-rule poe-popup-toggle poe-popup-close)
   :init
-  (global-set-key (kbd "C-1") 'my-C-1)
   (setq
    poe-remove-fringes-from-popups nil
    poe-dim-popups nil)
