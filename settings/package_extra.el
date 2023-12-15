@@ -4170,8 +4170,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (autoload
         'clangd-inactive-regions-mode "lsp/clangd-inactive-regions"
         "" nil)
+      (defun ensure-clangd-inactive-regions-mode (&rest _)
+        (clangd-inactive-regions-mode 1))
       (add-hook
-       'eglot-server-initialized-hook #'clangd-inactive-regions-mode)
+       'eglot-server-initialized-hook
+       #'ensure-clangd-inactive-regions-mode)
+      (add-hook
+       'eglot-managed-mode-hook #'ensure-clangd-inactive-regions-mode)
       :config
       ;; (clangd-inactive-regions-set-method "darken-foreground")
       ;; (clangd-inactive-regions-set-opacity 0.55)
@@ -5826,6 +5831,20 @@ _q_uit
             (append
              (list
               '(:data ("EXPECT_FALSE" "EXPECT_TRUE") :case-fold t))
+             (list
+              '(:data ("ASSERT_FALSE" "ASSERT_TRUE") :case-fold t))
+             (list
+              '(:data ("EXPECT_STREQ" "EXPECT_STRNE") :case-fold t))
+             (list
+              '(:data ("ASSERT_STREQ" "ASSERT_STRNE") :case-fold t))
+             (list
+              '(:data
+                ("ASSERT_STRCASEEQ" "ASSERT_STRCASENE")
+                :case-fold t))
+             (list
+              '(:data
+                ("EXPECT_STRCASEEQ" "EXPECT_STRCASENE")
+                :case-fold t))
              (list 'cycle-at-point-find-include) ;; 要排在<>的前面
              result (list 'cycle-at-point-name-convertion)))
       result))
