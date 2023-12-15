@@ -5568,7 +5568,7 @@ _q_uit
      :type "cppvsdbg" ;; 必须是这个
      :cwd dape-cwd-fn
      :program dape-find-file
-     :stopAtEntry t ;; 支持
+     ;; :stopAtEntry t ;; 支持
      ;; :logging (:engineLogging t) ;; 支持，不要随便开，还以为是dape的问题
      )))
 
@@ -5818,15 +5818,17 @@ _q_uit
      cycle-at-point-preset-lang-en
      cycle-at-point-preset-python-mode))
   :config
-  (defadvice cycle-at-point-preset-c-mode
-      (after my-cycle-at-point-preset-c-mode activate)
+  (define-advice cycle-at-point-preset-c-mode
+      (:around (orig-fn &rest args) my)
     "追加自定义的"
-    (setq ad-return-value
-          (append
-           (list
-            (lambda () (cycle-at-point-find-include))) ;; 要排在<>的前面
-           ad-return-value
-           (list (lambda () (cycle-at-point-name-convertion))))))
+    (let ((result (apply orig-fn args)))
+      (setq result
+            (append
+             (list
+              '(:data ("EXPECT_FALSE" "EXPECT_TRUE") :case-fold t))
+             (list 'cycle-at-point-find-include) ;; 要排在<>的前面
+             result (list 'cycle-at-point-name-convertion)))
+      result))
   (define-advice cycle-at-point-preset (:around (orig-fn &rest args))
     "修复ts-mode的规则加载"
     (if (memq
