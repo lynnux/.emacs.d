@@ -5066,9 +5066,7 @@ _q_uit
    shackle-default-rule nil
    shackle-default-alignment 'below
    shackle-rules
-   '( ;; 更多设置参看shackle.el https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
-     ;; (compilation-mode :noselect t :align 'below :size 0.2);; noselect只是cursor不移动过去
-     (" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
+   '((" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
      (magit-status-mode :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
      (magit-log-mode :select t :inhibit-window-quit t :same t)
      (vc-git-log-view-mode :same t)
@@ -5083,7 +5081,13 @@ _q_uit
       :align 'below
       :other t
       :size 0.3)))
-  :config (shackle-mode 1))
+  (unless (functionp 'poe-popup)
+    (add-to-list
+     'shackle-rules
+     '(compilation-mode :noselect t :align 'below :size 0.3)))
+  :config (shackle-mode 1)
+  ;; TODO: 可以参考这里实现C-1 https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
+  )
 
 ;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
 ;; 按两下就会跳到行尾， C-u开头会对齐注释 
