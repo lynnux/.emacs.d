@@ -5523,6 +5523,7 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
+  (plist-put (cdr (assoc 'debugpy dape-configs)) 'command "python")
   (define-advice dape--overlay-icon (:around (orig-fn &rest args) my)
     "修复断点被diff-hl遮挡问题，使用跟terminal一样的样式"
     (cl-letf (((symbol-function #'window-system)
