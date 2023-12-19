@@ -5084,9 +5084,13 @@ _q_uit
   (unless (functionp 'poe-popup)
     (setq shackle-rules
           (append
-           '((compilation-mode :noselect t :align t)
+           '((compilation-mode
+              :noselect t
+              :align t
+              :inhibit-window-quit t)
              ("*Help*" :align t :select t)
-             ("*Backtrace*" :align t))
+             ("*Backtrace*" :align t)
+             ("*Messages*" :align t))
            shackle-rules)))
   :config
   (defun my-shackle-C-1 ()
@@ -5131,8 +5135,11 @@ _q_uit
   (defvar shackle--popup-window-list nil
     "All popup windows.")
 
-  ;; TODO: 可以参考这里实现C-1 https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
-  )
+  ;; https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
+  (define-advice shackle-display-buffer (:after (&rest args) my)
+    "关闭tab-line-mode"
+    (with-current-buffer (ad-get-argument args 0)
+      (tab-line-mode -1))))
 
 ;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
 ;; 按两下就会跳到行尾， C-u开头会对齐注释 
