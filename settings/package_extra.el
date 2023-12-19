@@ -4963,19 +4963,10 @@ _q_uit
 
 (defun my-C-1 ()
   (interactive)
-  (while (or (window-parameter nil 'window-side)
-             (bound-and-true-p poe-popup-mode))
+  (while (window-parameter nil 'window-side)
     ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
-    (call-interactively 'other-window))
-  (let ((wcount (length (window-list))))
-    (when (functionp 'poe-popup-close)
-      (poe-popup-close))
-    (call-interactively 'keyboard-escape-quit)
-    (when (functionp 'poe-popup-toggle)
-      ;; 如果窗口数没变，就可以弹出pop窗口了
-      (if (eq wcount (length (window-list)))
-          (call-interactively 'poe-popup-toggle)))))
-(global-set-key (kbd "C-1") 'my-C-1)
+    (call-interactively 'other-window)))
+(bind-key* (kbd "C-1") 'my-C-1)
 
 ;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去(也可以设置:select t切换到)。
 ;; 规则跟shackle是一样的，不过设置:same有bug所以还不能去掉shackle
@@ -4990,6 +4981,22 @@ _q_uit
    poe-remove-fringes-from-popups nil
    poe-dim-popups nil)
   :config
+  (defun my-poe-C-1 ()
+    (interactive)
+    (while (or (window-parameter nil 'window-side)
+               (bound-and-true-p poe-popup-mode))
+      ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
+      (call-interactively 'other-window))
+    (let ((wcount (length (window-list))))
+      (when (functionp 'poe-popup-close)
+        (poe-popup-close))
+      (call-interactively 'keyboard-escape-quit)
+      (when (functionp 'poe-popup-toggle)
+        ;; 如果窗口数没变，就可以弹出pop窗口了
+        (if (eq wcount (length (window-list)))
+            (call-interactively 'poe-popup-toggle)))))
+  (bind-key* (kbd "C-1") 'my-poe-C-1)
+
   ;; https://github.com/endofunky/emacs.d/blob/master/lisp/core/core-popup.el#L18
   (poe-popup " *Metahelp*") ;; :ephemeral t是临时buffer，toggle后会消失
   (poe-popup "*Apropos*" :size .3 :shrink t)
@@ -5059,33 +5066,71 @@ _q_uit
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
 (use-package shackle
   :if (bound-and-true-p enable-feature-gui)
-  :defer 0.3
+  :hook (after-init . shackle-mode)
   :init
   (setq
-   shackle-default-size 0.4
-   shackle-default-rule nil
+   shackle-default-size 0.3
+   shackle-default-rule nil ;; 最好不设置，只对有限集合设置到`shackle-rules'里
    shackle-default-alignment 'below
    shackle-rules
    '((" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
-     (magit-status-mode :select t :inhibit-window-quit t :same t) ;; magit全屏舒服
-     (magit-log-mode :select t :inhibit-window-quit t :same t)
-     (vc-git-log-view-mode :same t)
+     (magit-status-mode :same t) ;; magit全屏
+     (magit-log-mode :same t) ;; magit log全屏
+     (vc-git-log-view-mode :same t) ;; vc log全屏
      ("\\*SQLite .*"
-      :regexp t
-      :select t
-      :inhibit-window-quit t
+      :regexp t ;; 默认是普通字符串
       :same t) ;; sqlite-mode全屏
-     ("\\*gud-.*"
-      :regexp t
-      :select t
-      :align 'below
-      :other t
-      :size 0.3)))
+     ("\\*gud-.*" :regexp t :other t :size 0.3)))
   (unless (functionp 'poe-popup)
-    (add-to-list
-     'shackle-rules
-     '(compilation-mode :noselect t :align 'below :size 0.3)))
-  :config (shackle-mode 1)
+    (setq shackle-rules
+          (append
+           '((compilation-mode :noselect t :align t)
+             ("*Help*" :align t :select t)
+             ("*Backtrace*" :align t))
+           shackle-rules)))
+  :config
+  (defun my-shackle-C-1 ()
+    (interactive)
+    (while (shackle-match (current-buffer))
+      ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
+      (call-interactively 'other-window))
+    (let ((wcount (length (window-list))))
+      (call-interactively 'keyboard-escape-quit)
+      ;; 如果窗口数没变，就可以弹出pop窗口了
+      (if (eq wcount (length (window-list)))
+          (cl-dolist
+           (b (buffer-list))
+           (when (shackle-match b)
+             (display-buffer b) ;; 这个会确保:noselect等效果
+             (cl-return))))))
+  (bind-key* (kbd "C-1") 'my-shackle-C-1)
+
+  (when (functionp 'pop-select/pop-select)
+    (defun pop-select-shackle-buffer (&optional backward)
+      (interactive)
+      (let* (myswitch-buffer-list
+             (vec_name [])
+             sel)
+        (dolist (b (buffer-list))
+          (when (shackle-match b)
+            (push b myswitch-buffer-list)))
+        (message "%S" myswitch-buffer-list)
+        (cl-dolist
+         (buf myswitch-buffer-list)
+         (setq vec_name (vconcat vec_name (list (buffer-name buf)))))
+        ;; 返回序号
+        (setq sel
+              (pop-select/pop-select
+               vec_name
+               (if backward
+                   (1- (length vec_name))
+                 1)))
+        (call-interactively 'keyboard-escape-quit)
+        (display-buffer (nth sel myswitch-buffer-list))))
+    (bind-key* (kbd "M-`") 'pop-select-shackle-buffer))
+  (defvar shackle--popup-window-list nil
+    "All popup windows.")
+
   ;; TODO: 可以参考这里实现C-1 https://github.com/seagle0128/.emacs.d/blob/47c606e43a207922de6b26f03d15827f685b0b3e/lisp/init-window.el#L145
   )
 
@@ -6582,6 +6627,7 @@ _q_uit
 
 ;; 代替`eval-expression'M-;
 (use-package ielm
+  :disabled
   :defer t
   :init
   (setq ielm-header "")
