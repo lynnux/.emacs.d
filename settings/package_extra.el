@@ -5093,9 +5093,11 @@ _q_uit
              ("*Messages*" :align t))
            shackle-rules)))
   :config
+  (defun is-shacle-popup-buffer (buf)
+    (plist-get (shackle-match buf) :align))
   (defun my-shackle-C-1 ()
     (interactive)
-    (while (shackle-match (current-buffer))
+    (while (is-shacle-popup-buffer (current-buffer))
       ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
       (call-interactively 'other-window))
     (let ((wcount (length (window-list))))
@@ -5104,7 +5106,7 @@ _q_uit
       (if (eq wcount (length (window-list)))
           (cl-dolist
            (b (buffer-list))
-           (when (shackle-match b)
+           (when (is-shacle-popup-buffer b)
              (display-buffer b) ;; 这个会确保:noselect等效果
              (cl-return))))))
   (bind-key* (kbd "C-1") 'my-shackle-C-1)
@@ -5116,7 +5118,7 @@ _q_uit
              (vec_name [])
              sel)
         (dolist (b (buffer-list))
-          (when (shackle-match b)
+          (when (is-shacle-popup-buffer b)
             (push b myswitch-buffer-list)))
         (message "%S" myswitch-buffer-list)
         (cl-dolist
