@@ -5097,18 +5097,27 @@ _q_uit
     (plist-get (shackle-match buf) :align))
   (defun my-shackle-C-1 ()
     (interactive)
-    (while (is-shacle-popup-buffer (current-buffer))
-      ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
-      (call-interactively 'other-window))
-    (let ((wcount (length (window-list))))
-      (call-interactively 'keyboard-escape-quit)
-      ;; 如果窗口数没变，就可以弹出pop窗口了
-      (if (eq wcount (length (window-list)))
-          (cl-dolist
-           (b (buffer-list))
-           (when (is-shacle-popup-buffer b)
-             (display-buffer b) ;; 这个会确保:noselect等效果
-             (cl-return))))))
+    (ignore-errors
+      (let ((max-try-count 10))
+        (while (and (> max-try-count 0)
+                    (is-shacle-popup-buffer (current-buffer)))
+          ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
+          (call-interactively 'other-window)
+          (setq max-try-count (1- max-try-count)))
+        (when (<= max-try-count 0)
+          (call-interactively 'delete-other-windows)
+          (error "return")))
+      (let ((wcount (length (window-list))))
+        (call-interactively 'keyboard-escape-quit)
+        ;; 如果窗口数没变，就可以弹出pop窗口了
+        (if (eq wcount (length (window-list)))
+            (if shackle-last-buffer
+                (display-buffer shackle-last-buffer)
+              (cl-dolist
+               (b (buffer-list))
+               (when (is-shacle-popup-buffer b)
+                 (display-buffer b) ;; 这个会确保:noselect等效果
+                 (cl-return))))))))
   (bind-key* (kbd "C-1") 'my-shackle-C-1)
 
   (when (functionp 'pop-select/pop-select)
