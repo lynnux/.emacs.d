@@ -2573,8 +2573,9 @@ symbol under cursor"
       `(lambda ()
          (interactive)
          (let ((text
-                (substring-no-properties
-                 (or (car-safe vertico--input) "")))
+                (ignore-errors
+                  (buffer-substring-no-properties
+                   (minibuffer-prompt-end) (point-max))))
                (dir
                 (file-name-directory
                  (directory-file-name default-directory))))
@@ -5072,6 +5073,7 @@ _q_uit
    shackle-default-size 0.3
    shackle-default-rule nil ;; 最好不设置，只对有限集合设置到`shackle-rules'里
    shackle-default-alignment 'below
+   shackle-select-reused-windows t
    shackle-rules
    '((" server log\\*\\'" :noselect t :align 'below :size 0.2) ; dap mode的log窗口
      (magit-status-mode :same t) ;; magit全屏
