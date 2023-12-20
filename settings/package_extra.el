@@ -1967,16 +1967,16 @@ _c_: hide comment        _q_uit
     (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
 
     ;; 当前行加下划线
-    (custom-set-faces
-     '(vertico-current
-       ((t
-         (:inherit
-          unspecified
-          :underline t
-          :background nil
-          :distant-foreground nil
-          :foreground nil))))
-     '(consult-preview-line ((t (:underline t :background nil)))))
+    ;; (custom-set-faces
+    ;;  '(vertico-current
+    ;;    ((t
+    ;;      (:inherit
+    ;;       unspecified
+    ;;       :underline t
+    ;;       :background nil
+    ;;       :distant-foreground nil
+    ;;       :foreground nil))))
+    ;;  '(consult-preview-line ((t (:underline t :background nil)))))
 
     ;; 只会恢复关键词
     ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
