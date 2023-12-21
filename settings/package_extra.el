@@ -5175,6 +5175,7 @@ _q_uit
   (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt))
 
 (use-package so-long
+  :disabled
   :if (bound-and-true-p enable-feature-builtin)
   :defer 1.3
   :config (global-so-long-mode))
