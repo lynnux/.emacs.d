@@ -301,6 +301,7 @@ _q_uit
                          t)
     (setq dired-recent-mode-map nil) ;; 禁止它注册C-x C-d
     (bind-key* (kbd "C-c C-d") 'dired-recent-open)
+    (bind-key* (kbd "C-c d") 'dired-recent-open)
     :config
     (with-eval-after-load 'marginalia
       ;; 效果跟consult--read带:category 'file一样，embark也能正常识别了
