@@ -4985,6 +4985,7 @@ _q_uit
      (magit-status-mode :same t) ;; magit全屏
      (magit-log-mode :same t) ;; magit log全屏
      (vc-git-log-view-mode :same t) ;; vc log全屏
+     ("*vc-dir*" :same t) ;; vc-dir-mode不行
      ("\\*SQLite .*"
       :regexp t ;; 默认是普通字符串
       :same t) ;; sqlite-mode全屏
@@ -5020,7 +5021,8 @@ _q_uit
         (call-interactively 'keyboard-escape-quit)
         ;; 如果窗口数没变，就可以弹出pop窗口了
         (if (eq wcount (length (window-list)))
-            (if shackle-last-buffer
+            (if (and shackle-last-buffer
+                     (buffer-live-p shackle-last-buffer))
                 (display-buffer shackle-last-buffer)
               (cl-dolist
                (b (buffer-list))
@@ -5033,9 +5035,14 @@ _q_uit
       (dolist (b (buffer-list))
         (when (is-shacle-popup-buffer b)
           (push b ret)))
-      (setq ret (delete shackle-last-buffer ret))
-      (setq ret (nreverse ret))
-      (push shackle-last-buffer ret)))
+      (if (and shackle-last-buffer
+               (buffer-live-p shackle-last-buffer))
+          (progn
+            (setq ret (delete shackle-last-buffer ret))
+            (setq ret (nreverse ret))
+            (push shackle-last-buffer ret))
+        (setq ret (nreverse ret)))
+      ret))
   (defface popup-echo-area-buried '((t :inherit shadow))
     "Echo area face for buried popups.")
   (defface popup-echo-area '((t :inverse-video t :weight bold))
@@ -5043,7 +5050,7 @@ _q_uit
   (defun echo-popup-buffers (&rest _app)
     "简单实现poe-echo那样的效果"
     ;; 手动执行C-x C-e message居然没有高亮效果
-    (let ((buffers (shackle-popup-buffer-list)))
+    (when-let ((buffers (shackle-popup-buffer-list)))
       (message
        (cl-reduce
         #'concat
