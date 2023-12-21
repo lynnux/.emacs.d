@@ -4969,101 +4969,6 @@ _q_uit
     (call-interactively 'other-window)))
 (bind-key* (kbd "C-1") 'my-C-1)
 
-;; 这个C-tab切换buffer不会切换到side window，而且焦点也不回到pop buffer里去(也可以设置:select t切换到)。
-;; 规则跟shackle是一样的，不过设置:same有bug所以还不能去掉shackle
-(use-package poe
-  :disabled
-  :if (bound-and-true-p enable-feature-gui)
-  ;; from https://github.com/endofunky/emacs.d/blob/master/site-lisp/poe.el
-  :defer 1.0
-  :commands (poe-popup poe-rule poe-popup-toggle poe-popup-close)
-  :init
-  (setq
-   poe-remove-fringes-from-popups nil
-   poe-dim-popups nil)
-  :config
-  (defun my-poe-C-1 ()
-    (interactive)
-    (while (or (window-parameter nil 'window-side)
-               (bound-and-true-p poe-popup-mode))
-      ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
-      (call-interactively 'other-window))
-    (let ((wcount (length (window-list))))
-      (when (functionp 'poe-popup-close)
-        (poe-popup-close))
-      (call-interactively 'keyboard-escape-quit)
-      (when (functionp 'poe-popup-toggle)
-        ;; 如果窗口数没变，就可以弹出pop窗口了
-        (if (eq wcount (length (window-list)))
-            (call-interactively 'poe-popup-toggle)))))
-  (bind-key* (kbd "C-1") 'my-poe-C-1)
-
-  ;; https://github.com/endofunky/emacs.d/blob/master/lisp/core/core-popup.el#L18
-  (poe-popup " *Metahelp*") ;; :ephemeral t是临时buffer，toggle后会消失
-  (poe-popup "*Apropos*" :size .3 :shrink t)
-  (poe-popup "*Backtrace*")
-  (poe-popup "*Checkdoc Status*")
-  (poe-popup "*Compile-Log*")
-  (poe-popup "*Command History*")
-  (poe-popup "*Help*" :size 0.4 :shrink t :select t)
-  (poe-popup "*Messages*")
-  (poe-popup "*Occur*")
-  (poe-popup "*Pp Eval Output*")
-  (poe-popup "*Warnings*")
-  (poe-popup "*compilation*")
-  (poe-popup "*ielm*")
-  (poe-popup "\\`\\*WoMan.*?\\*\\'" :regexp t :size 0.5 :shrink t)
-  (poe-popup 'calendar-mode)
-  (poe-popup 'comint-mode)
-  (poe-popup 'compilation-mode)
-  (poe-popup 'Man-mode :size 0.4 :shrink t)
-  (poe-popup "\\*gud-.*" :regexp t :select t) ;; (poe-popup 'gud-mode) 没效果
-  ;; (poe-popup "*eshell*" :select t)
-  ;; (poe-popup "*shell*" :select t)
-
-  (add-hook 'poe-popup-mode-hook (lambda () (tab-line-mode -1))) ;; 实际上关闭buffer自身的tab-line
-  (remove-hook 'poe-popup-mode-hook #'poe--popup-dim-h) ;; 不需要改变background color
-  (remove-hook 'poe-popup-mode-hook #'poe--popup-remove-fringes-h) ;; 貌似也没什么用
-  (global-set-key (kbd "M-1") 'poe-popup-next)
-  (global-set-key (kbd "M-`") 'poe-popup-next)
-  (defface poe-echo-area-buried '((t :inherit shadow))
-    "Echo area face for buried popups.")
-  (defface poe-echo-area '((t :inverse-video t :weight bold))
-    "Echo area face for opened popup.")
-  (defun echo-poe-buffers (&rest _app)
-    "简单实现poe-echo那样的效果"
-    ;; 手动执行C-x C-e message居然没有高亮效果
-    (message
-     (cl-reduce
-      #'concat
-      (cons
-       (propertize (funcall #'identity
-                            (buffer-name
-                             (car poe--popup-buffer-list)))
-                   'face 'poe-echo-area)
-       (cl-mapcar
-        (lambda (buf)
-          (concat
-           (propertize ", " 'face 'poe-echo-area-buried)
-           (propertize (funcall #'identity (buffer-name buf))
-                       'face 'poe-echo-area-buried)))
-        (cdr poe--popup-buffer-list))))))
-  (advice-add #'poe-popup-toggle :after #'echo-poe-buffers)
-  (advice-add #'poe-popup-next :after #'echo-poe-buffers)
-  (advice-add #'poe-popup-prev :after #'echo-poe-buffers)
-  (defun poe-close-window-hack (&rest _)
-    "Close poe window via `C-g'."
-    ;; `C-g' can deactivate region
-    (when (and (called-interactively-p 'interactive)
-               (not (region-active-p))
-               (poe--popup-windows))
-      (let ((window (car (poe--popup-windows))))
-        (when (window-live-p window)
-          (delete-window window)))))
-  (advice-add #'keyboard-quit :before #'poe-close-window-hack)
-
-  (poe-mode +1))
-
 ;; 这个就是辅助设置`display-buffer-alist'的，设置弹出窗口很方便
 (use-package shackle
   :if (bound-and-true-p enable-feature-gui)
@@ -5097,7 +5002,8 @@ _q_uit
   :config
   (defun is-shacle-popup-buffer (buf)
     (plist-get (shackle-match buf) :align))
-  (defun my-shackle-C-1 ()
+  (defun shackle-toogle-popup ()
+    "toggle功能"
     (interactive)
     (ignore-errors
       (let ((max-try-count 10))
@@ -5120,18 +5026,43 @@ _q_uit
                (when (is-shacle-popup-buffer b)
                  (display-buffer b) ;; 这个会确保:noselect等效果
                  (cl-return))))))))
-  (bind-key* (kbd "C-1") 'my-shackle-C-1)
-
+  (bind-key* (kbd "C-1") 'shackle-toogle-popup)
+  (defun shackle-popup-buffer-list ()
+    (let (ret)
+      (dolist (b (buffer-list))
+        (when (is-shacle-popup-buffer b)
+          (push b ret)))
+      (setq ret (delete shackle-last-buffer ret))
+      (setq ret (nreverse ret))
+      (push shackle-last-buffer ret)))
+  (defface popup-echo-area-buried '((t :inherit shadow))
+    "Echo area face for buried popups.")
+  (defface popup-echo-area '((t :inverse-video t :weight bold))
+    "Echo area face for opened popup.")
+  (defun echo-popup-buffers (&rest _app)
+    "简单实现poe-echo那样的效果"
+    ;; 手动执行C-x C-e message居然没有高亮效果
+    (let ((buffers (shackle-popup-buffer-list)))
+      (message
+       (cl-reduce
+        #'concat
+        (cons
+         (propertize (funcall #'identity (buffer-name (car buffers)))
+                     'face 'popup-echo-area)
+         (cl-mapcar
+          (lambda (buf)
+            (concat
+             (propertize ", " 'face 'popup-echo-area-buried)
+             (propertize (funcall #'identity (buffer-name buf))
+                         'face 'popup-echo-area-buried)))
+          (cdr buffers)))))))
+  (advice-add #'shackle-toogle-popup :after #'echo-popup-buffers)
   (when (functionp 'pop-select/pop-select)
     (defun pop-select-shackle-buffer (&optional backward)
       (interactive)
-      (let* (myswitch-buffer-list
+      (let* ((myswitch-buffer-list (shackle-popup-buffer-list))
              (vec_name [])
              sel)
-        (dolist (b (buffer-list))
-          (when (is-shacle-popup-buffer b)
-            (push b myswitch-buffer-list)))
-        (message "%S" myswitch-buffer-list)
         (cl-dolist
          (buf myswitch-buffer-list)
          (setq vec_name (vconcat vec_name (list (buffer-name buf)))))
@@ -5143,7 +5074,10 @@ _q_uit
                    (1- (length vec_name))
                  1)))
         (call-interactively 'keyboard-escape-quit)
-        (display-buffer (nth sel myswitch-buffer-list))))
+        (display-buffer (nth sel myswitch-buffer-list)))
+      (advice-add
+       #'pop-select-shackle-buffer
+       :after #'echo-popup-buffers))
     (bind-key* (kbd "M-`") 'pop-select-shackle-buffer))
   (defvar shackle--popup-window-list nil
     "All popup windows.")
