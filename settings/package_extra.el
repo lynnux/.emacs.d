@@ -273,23 +273,26 @@
       (when (and p (not (equal text "")))
         (setq y (+ y h))
         ;; (add-face-text-property 0 (length text) 'tooltip t text)
-        (x-show-tip text
-                    (selected-frame)
-                    `((name . "tooltip")
-                      (internal-border-width . 2)
-                      (border-width . 1)
-                      (no-special-glyphs . t)
-                      (left . ,x)
-                      (top . ,y)
-                      (foreground-color
-                       . ,(face-attribute 'default :foreground))
-                      (background-color
-                       . ,(face-attribute 'default :background))
-                      ;; (border-color . "#ffff00")
-                      )
-                    5 0 0))))
+        (x-show-tip
+         text
+         (selected-frame)
+         `((name . "tooltip")
+           (internal-border-width . 2)
+           (border-width . 1)
+           (no-special-glyphs . t)
+           (left . ,x) ;; 设置left后会忽略`x-show-tip'最后的DX参数
+           (top . ,y) ;; 设置top后会忽略`x-show-tip'最后的DY参数
+           (foreground-color . ,(face-attribute 'default :foreground))
+           (background-color . ,(face-attribute 'default :background))
+           ;; (border-color . "#ffff00")
+           )
+         20
+         0
+         0))))
   ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
-  (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10))
+  (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10)
+  (add-hook 'pre-command-hook 'x-hide-tip) ;; 不隐藏的话，就一直显示不太好
+  )
 
 (autoload 'defhydra "hydra" nil t)
 
