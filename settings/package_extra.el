@@ -292,7 +292,7 @@
   ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
   (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10)
   (add-hook 'pre-command-hook 'x-hide-tip) ;; 不隐藏的话，就一直显示不太好
-  )
+  (add-hook 'focus-out-hook 'x-hide-tip))
 
 (autoload 'defhydra "hydra" nil t)
 
