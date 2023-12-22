@@ -5062,15 +5062,16 @@ _q_uit
       (let ((wcount (length (window-list))))
         (call-interactively 'keyboard-escape-quit)
         ;; 如果窗口数没变，就可以弹出pop窗口了
-        (if (eq wcount (length (window-list)))
-            (if (and shackle-last-buffer
-                     (buffer-live-p shackle-last-buffer))
-                (display-buffer shackle-last-buffer)
-              (cl-dolist
-               (b (buffer-list))
-               (when (is-shacle-popup-buffer b)
-                 (display-buffer b) ;; 这个会确保:noselect等效果
-                 (cl-return))))))))
+        (when (eq wcount (length (window-list)))
+          (if (and shackle-last-buffer
+                   (buffer-live-p shackle-last-buffer))
+              (display-buffer shackle-last-buffer)
+            (cl-dolist
+             (b (buffer-list))
+             (when (is-shacle-popup-buffer b)
+               (display-buffer b) ;; 这个会确保:noselect等效果
+               (cl-return))))
+          (echo-popup-buffers)))))
   (bind-key* (kbd "C-1") 'shackle-toogle-popup)
   (defun shackle-popup-buffer-list ()
     (let (ret)
@@ -5106,7 +5107,6 @@ _q_uit
              (propertize (funcall #'identity (buffer-name buf))
                          'face 'popup-echo-area-buried)))
           (cdr buffers)))))))
-  (advice-add #'shackle-toogle-popup :after #'echo-popup-buffers)
   (when (functionp 'pop-select/pop-select)
     (defun pop-select-shackle-buffer (&optional backward)
       (interactive)
