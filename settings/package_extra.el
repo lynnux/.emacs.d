@@ -250,7 +250,46 @@
     (eldoc-remove-command-completions "grammatical-edit-"))
   (with-eval-after-load 'fingertip
     ;; 自作聪明就给加了eldoc
-    (eldoc-remove-command-completions "fingertip-")))
+    (eldoc-remove-command-completions "fingertip-"))
+
+  ;; 使用tooltip显示eldoc，`x-show-tip'是原生c实现的，不卡
+  (defun get-eldoc-msg ()
+    (when eldoc--doc-buffer
+      (with-current-buffer eldoc--doc-buffer
+        (buffer-substring
+         (goto-char (point-min))
+         (progn
+           (end-of-visible-line)
+           (point))))))
+  (defun eldoc-tooltip-display (docs _interactive)
+    (let* ((p (window-absolute-pixel-position))
+           (x (car p))
+           (h (line-pixel-height))
+           (y
+            (if header-line-format
+                (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+              (cdr p)))
+           (text (get-eldoc-msg)))
+      (when (and p (not (equal text "")))
+        (setq y (+ y h))
+        ;; (add-face-text-property 0 (length text) 'tooltip t text)
+        (x-show-tip text
+                    (selected-frame)
+                    `((name . "tooltip")
+                      (internal-border-width . 2)
+                      (border-width . 1)
+                      (no-special-glyphs . t)
+                      (left . ,x)
+                      (top . ,y)
+                      (foreground-color
+                       . ,(face-attribute 'default :foreground))
+                      (background-color
+                       . ,(face-attribute 'default :background))
+                      ;; (border-color . "#ffff00")
+                      )
+                    5 0 0))))
+  ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
+  (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10))
 
 (autoload 'defhydra "hydra" nil t)
 
