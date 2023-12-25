@@ -3349,8 +3349,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    xref--xref-buffer-mode-map "q" 'xref-quit-and-pop-marker-stack)
   (define-key xref--xref-buffer-mode-map "w" 'scroll-down-command)
 
-  (defadvice xref-matches-in-files
-      (around my-xref-matches-in-files activate)
+  (define-advice xref-matches-in-files
+      (:around (orig-fn &rest args) my)
     (let ((cmdproxy-old-encoding
            (cdr
             (assoc
@@ -3368,8 +3368,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                    (concat
                     (cdr (assoc 'ripgrep xref-search-program-alist))
                     " --pre rgpre")))))
-            ad-do-it)
-        ad-do-it)
+            (apply orig-fn args))
+        (apply orig-fn args))
       (modify-coding-system-alist
        'process
        "[cC][mM][dD][pP][rR][oO][xX][yY]"
@@ -3532,9 +3532,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                          '(citre-util)))
   :config
   ;; 强制tag名
-  (defadvice citre--path-to-cache-tags-file-name
-      (around my-citre--path-to-cache-tags-file-name activate)
-    (setq ad-return-value "TAGS"))
+  (define-advice citre--path-to-cache-tags-file-name
+      (:around (orig-fn &rest args) my)
+    "TAGS")
   (define-key
    citre-edit-cmd-buf-map
    (kbd "C-c C-l")
@@ -3580,12 +3580,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (xref--find-definitions identifier nil)))
   :config
   ;; 跟citre生成的TAGS兼容(头两行带有更新TAGS的命令)
-  (defadvice etags-verify-tags-table
-      (around my-etags-verify-tags-table activate)
+  (define-advice etags-verify-tags-table
+      (:around (orig-fn &rest args) my)
     ;; 原来的判断是开头0xC字符
-    (setq ad-return-value t))
-  (defadvice visit-tags-table-buffer
-      (around my-visit-tags-table activate)
+    t)
+  (define-advice visit-tags-table-buffer
+      (:around (orig-fn &rest args) my)
     "屏蔽xref提示选择TAGS"
     (cl-letf
         (((symbol-function #'read-file-name)
@@ -3593,7 +3593,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             ;; (message "dir:%S, default-filename:%S" dir default-filename)
             ;; 直播返回，相当于按RET
             default-filename)))
-      ad-do-it)))
+      (apply orig-fn args))))
 
 (defun my-project-search (&optional dir initial)
   (interactive)
@@ -3666,11 +3666,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         nil)))
   (add-to-list 'project-find-functions 'my-project-find-functions)
   (when (functionp 'which-key--show-keymap)
-    (defadvice project--switch-project-command
-        (around my-project--switch-project-command activate)
+    (define-advice project--switch-project-command
+        (:around (orig-fn &rest args) my)
       (which-key--show-keymap
        "keymap" project-prefix-map nil nil 'no-paging)
-      ad-do-it
+      (apply orig-fn args)
       (which-key--hide-popup)))
 
   ;; 好像自动识别find的输出了(git里的find)
@@ -3843,7 +3843,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :config
     ;; 解决rg输出为utf-8，导致emacs不能正常处理中文路径的问题
     ;; 临时设置cmdproxy编码
-    (defadvice rg-run (around my-run activate)
+    (define-advice rg-run (:around (orig-fn &rest args) my)
       (let ((cmdproxy-old-encoding
              (cdr
               (assoc
@@ -3853,12 +3853,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          'process
          "[cC][mM][dD][pP][rR][oO][xX][yY]"
          '(utf-8 . gbk-dos))
-        ad-do-it
+        (apply orig-fn args)
         (modify-coding-system-alist
          'process
          "[cC][mM][dD][pP][rR][oO][xX][yY]"
          cmdproxy-old-encoding)))
-    (defadvice rg-recompile (around my-rg-recompile activate)
+    (define-advice rg-recompile (:around (orig-fn &rest args) my)
       (let ((cmdproxy-old-encoding
              (cdr
               (assoc
@@ -3868,17 +3868,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          'process
          "[cC][mM][dD][pP][rR][oO][xX][yY]"
          '(utf-8 . gbk-dos))
-        ad-do-it
+        (apply orig-fn args)
         (modify-coding-system-alist
          'process
          "[cC][mM][dD][pP][rR][oO][xX][yY]"
          cmdproxy-old-encoding)))
     ;; 中文
-    (defadvice rg-build-command (around my-rg-build-command activate)
+    (define-advice rg-build-command (:around (orig-fn &rest args) my)
       (if (chinese-word-chinese-string-p (ad-get-arg 0))
           (let ((rg-command-line-flags (list "--pre rgpre")))
-            ad-do-it)
-        ad-do-it))))
+            (apply orig-fn args))
+        (apply orig-fn args)))))
 
 ;; consult-grep -> embark-export to grep-mode
 ;; grep mode里C-c C-p开启编辑，C-c C-c完成，C-c C-k放弃编辑
@@ -4238,9 +4238,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
     (when nil
       ;; 获取不显示signature的方法
-      (defadvice eldoc--message-command-p
-          (before my-eldoc--message-command-p activate)
-        (and (symbolp (ad-get-arg 0)) (message "%S" (ad-get-arg 0)))))
+      (define-advice eldoc--message-command-p
+          (:before (&rest args) my)
+        (and (symbolp (ad-get-argument args 0))
+             (message "%S" (ad-get-argument args 0)))))
     (advice-add
      'jsonrpc--log-event
      :around
@@ -4436,7 +4437,7 @@ _q_uit
 ;; 解决checkout后revert buffer光标位置不对的问题
 (with-eval-after-load 'tfs
   (when (featurep 'saveplace)
-    (defadvice tfs/checkout (before my-tfs/checkout activate)
+    (define-advice tfs/checkout (:before (&rest args) my)
       (save-place-to-alist))))
 
 ;; 自动转换文本中的RGB颜色
@@ -4987,7 +4988,7 @@ _q_uit
          "${title:*} " (propertize "${tags:100}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
   ;; 屏蔽新建node功能，因为不喜欢capture，还是手动按目录结构创建笔记
-  (defadvice org-roam-capture- (around my-org-roam-capture- activate)
+  (define-advice org-roam-capture- (:around (orig-fn &rest args) my)
     (let ((default-directory org-roam-directory))
       (call-interactively 'find-file))))
 
@@ -5362,16 +5363,18 @@ _q_uit
   (defalias 'assoc** 'assoc)
   (defvar cdb-add-g nil)
   :config
-  (defadvice cdb-command-line-list-source
-      (after my-cdb-command-line-list-source activate)
+  (define-advice cdb-command-line-list-source
+      (:around (orig-fn &rest args) my)
     "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
     ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
-    (setq ad-return-value
-          (append
-           ad-return-value
-           (if cdb-add-g
-               '("-2" "-G" "-netsymsno" "-g")
-             '("-2" "-G" "-netsymsno"))))) ;; cdb /?不对啦(跟.netsyms命令对得上)
+    (let ((result (apply orig-fn args)))
+      (setq result
+            (append
+             result
+             (if cdb-add-g
+                 '("-2" "-G" "-netsymsno" "-g")
+               '("-2" "-G" "-netsymsno"))))
+      result)) ;; cdb /?不对啦(跟.netsyms命令对得上)
   )
 
 (use-package gud
@@ -5453,7 +5456,7 @@ _q_uit
      (when (bound-and-true-p gud-cdb-history)
        (setq f5-read-command nil))))
   :config
-  (defadvice gud-sentinel (after my-gud-sentinel activate)
+  (define-advice gud-sentinel (:after (orig-fn &rest args) my)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
     (let ((process (ad-get-arg 0)))
       (unless (process-live-p process)
@@ -5466,8 +5469,7 @@ _q_uit
       (overlay-put ov 'face 'secondary-selection)
       ov)
     "Overlay variable for GUD highlighting.")
-  (defadvice gud-display-line (after my-gud-highlight act)
-    "Highlight current line."
+  (define-advice gud-display-line (:after (orig-fn &rest args) my)
     (let* ((ov gud-overlay)
            (bf (gud-find-file true-file)))
       (if bf
@@ -5840,22 +5842,24 @@ _q_uit
       result))
   (fmakunbound 'ggtags-create-tags) ;; 去掉避免干扰，用我们的async版本
   (fmakunbound 'ggtags-update-tags)
-  (defadvice ggtags-global-build-command
-      (after my-ggtags-global-build-command activate)
+  (define-advice ggtags-global-build-command
+      (:around (orig-fn &rest args) my)
     "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
-    (when force-search-variable
-      (setq ad-return-value (concat ad-return-value " -srax"))))
-  (defadvice ggtags--xref-backend
-      (around my-ggtags--xref-backend activate)
+    (let ((result (apply orig-fn args)))
+      (when force-search-variable
+        (setq result (concat ad-return-value " -srax")))
+      result))
+  (define-advice ggtags--xref-backend
+      (:around (orig-fn &rest args) my)
     "不检查`ggtags-completion-table'，避免多启动一次global进程影响速度"
-    (setq ad-return-value 'ggtags) ;; 原版非函数时返回nil(GTAGS里没有成员变量，而GRTAGS里有，用global -sax可以查到)
+    'ggtags ;; 原版非函数时返回nil(GTAGS里没有成员变量，而GRTAGS里有，用global -sax可以查到)
     )
-  (defadvice ggtags--xref-find-tags
-      (around my-ggtags--xref-find-tags activate)
+  (define-advice ggtags--xref-find-tags
+      (:around (orig-fn &rest args) my)
     "修复xref无效，问题出在调用`call-process'多了双引号，去掉就可以了"
     (cl-letf (((symbol-function #'shell-quote-argument)
                (lambda (argument &optional posix) argument)))
-      ad-do-it)))
+      (apply orig-fn args))))
 
 
 ;; 这个比grugru要更灵活些，缺点是cursor会变，也没有`grugru-highlight-mode'高亮
@@ -6193,8 +6197,7 @@ _q_uit
     (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
     (tree-sitter--do-parse))
   (when use-tree-sitter-hl-mode-hack
-    (defadvice tree-sitter--setup
-        (after my-tree-sitter--setup activate)
+    (define-advice tree-sitter--setup (:after (orig-fn &rest args) my)
       "去掉hook，改为timer模式"
       (remove-hook 'after-change-functions #'tree-sitter--after-change
                    :local)
