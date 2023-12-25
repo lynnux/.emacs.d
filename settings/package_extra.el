@@ -1003,12 +1003,12 @@ _c_: hide comment        _q_uit
      [remap c-indent-line-or-region]
      (tab-try-tempel-first 'c-indent-line-or-region)))
   :config
-  (defadvice tempel--prefix-bounds
-      (around my-tempel--prefix-bounds activate)
+  (define-advice tempel--prefix-bounds
+      (:around (orig-fn &rest args) my)
     "支持lc|aaa得到lc"
     (let ((bounds (cdr-safe (my-get-str-at-point))))
       (when bounds
-        (setq ad-return-value (cons (car bounds) (nth 1 bounds)))))))
+        (cons (car bounds) (nth 1 bounds))))))
 
 ;; 利用tempel实现yas功能
 (use-package yasnippet
@@ -1249,12 +1249,12 @@ _c_: hide comment        _q_uit
        (setq idle-highlight-exclude-point (not buffer-read-only)))))
   (with-eval-after-load 'hi-lock
     ;; 让CTRL+F3立即显示高亮效果
-    (defadvice highlight-symbol-at-point
-        (before my-highlight-symbol-at-point activate)
-      (idle-highlight--unhighlight)))
+    (advice-add
+     #'highlight-symbol-at-point
+     :before #'idle-highlight--unhighlight))
   ;; 输入时高亮效果不是那么好，这里设置鼠标点击时高亮点击处
-  (defadvice idle-highlight--highlight
-      (around my-idle-highlight--highlight activate)
+  (define-advice idle-highlight--highlight
+      (:around (orig-fn &rest args) my)
     (if (memq
          last-command
          '(mouse-set-point embark-next-symbol
@@ -1266,8 +1266,8 @@ _c_: hide comment        _q_uit
                            forward-char
                            backward-char)) ;; this-command是nil
         (let ((idle-highlight-exclude-point nil))
-          ad-do-it)
-      ad-do-it))
+          (apply orig-fn args))
+      (apply orig-fn args)))
   (with-eval-after-load 'multiple-cursors-core
     (add-hook
      'multiple-cursors-mode-enabled-hook 'idle-highlight--unhighlight)
@@ -1403,19 +1403,19 @@ _c_: hide comment        _q_uit
         (corfu--insert 'finished))))
 
   (global-corfu-mode t)
-  (defadvice corfu--update (around my-corfu--update activate)
+  (define-advice corfu--update (:around (orig-fn &rest args) my)
     (let
         ((inhibit-message t)) ;; 我们hack的dabbrev运行时会提示错误，实际功能正常
-      ad-do-it))
-
-  (defadvice corfu--make-frame (after my-corfu--make-frame activate)
-    (let ((frame ad-return-value))
+      (apply orig-fn args)))
+  (define-advice corfu--make-frame (:around (orig-fn &rest args) my)
+    (let ((frame (apply orig-fn args)))
       (when (frame-live-p frame)
         (set-face-background (if (facep 'child-frame-border)
                                  'child-frame-border
                                'internal-border)
                              "#6F6F6F"
-                             frame))))
+                             frame))
+      frame))
 
   ;; 历史输入排前！
   (use-package corfu-history
@@ -1697,7 +1697,7 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-q") 'smart-region)
   :config
   (when (functionp 'which-key--show-keymap)
-    (defadvice smart-region (after my-smart-region activate)
+    (define-advice smart-region (:after (&rest args) my)
       (when rectangle-mark-mode
         (which-key--show-keymap
          "keymap" ctl-x-r-map nil nil 'no-paging)
@@ -1874,8 +1874,7 @@ _c_: hide comment        _q_uit
   :config
   (unless sr-speedbar-auto-refresh
     ;; 重新打开时更新目录
-    (defadvice sr-speedbar-toggle
-        (before my-sr-speedbar-toggle activate)
+    (define-advice sr-speedbar-toggle (:before (&rest args) my)
       (unless (sr-speedbar-exist-p)
         (message default-directory)
         (sr-speedbar-refresh)
@@ -2050,8 +2049,8 @@ _c_: hide comment        _q_uit
       :init
       (when nil
         ;; 调试用
-        (defadvice vertico-multiform--setup
-            (before my-vertico-multiform--setup activate)
+        (define-advice vertico-multiform--setup
+            (:before (&rest args) my)
           (message
            (concat "last command:" (symbol-name this-command)))))
       (setq
@@ -2529,8 +2528,8 @@ symbol under cursor"
          ;; consult-dir--source-default
          consult-dir--source-project ;projectile if available, project.el otherwise
          ))
-      (defadvice consult-dir--recentf-dirs
-          (around my-consult-dir--recentf-dirs activate)
+      (define-advice consult-dir--recentf-dirs
+          (:around (orig-fn &rest args) my)
         (unless (boundp 'dired-recent-directories)
           (unless (featurep 'dired-recent)
             (delay-require-libs
@@ -3154,8 +3153,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (easy-kill-adjust-candidate 'line-with-yank-handler beg end))
     ;; (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
     )
-  (defadvice easy-kill-candidate
-      (after my-easy-kill-candidate activate)
+  (define-advice easy-kill-candidate (:after (&rest args) my)
     "获取所选文字最关键的函数，这里判断是beg end位置方式，再判断是否是自定义thing，就给返回字符追yank-handler"
     (with-current-buffer (easy-kill-get buffer)
       (pcase (easy-kill-get bounds)
@@ -3282,8 +3280,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                               nil
                               'which-key--hide-popup)))
       (progn
-        (defadvice easy-kill-activate-keymap
-            (before my-easy-kill-activate-keymap activate)
+        (define-advice easy-kill-activate-keymap
+            (:before (&rest args) my)
           (unless my-easy-kill-map
             (let ((easy-kill-base-map easy-kill-base-map))
               ;; remove number keys
@@ -3300,12 +3298,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  "keymap" my-easy-kill-map nil nil 'no-paging))
             (which-key--show-keymap
              "keymap" my-easy-kill-map nil nil 'no-paging)))
-        (defadvice set-transient-map
-            (before my-set-transient-map activate)
-          (let ((map (ad-get-arg 0)))
+        (define-advice set-transient-map (:before (&rest args) my)
+          (let ((map (ad-get-argument args 0)))
             ;; 判断是否是easy-kill的keymap
             (when (eq (lookup-key map "?") 'easy-kill-help)
-              (ad-set-arg 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
+              (ad-set-argument args 2 'which-key--hide-popup) ;; easy-kill按n时overlay还是消除不掉，暂时不管了
               )))))))
 
 (use-package whole-line-or-region
