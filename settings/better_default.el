@@ -81,7 +81,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (setq kill-do-not-save-duplicates t)
 ;; 每次拷贝其他程序的文字来替换时常常会删除，这样剪切板里是内容就没有了
 (when (string-equal system-type "windows-nt")
-  (defadvice kill-region (before save-clip activate)
+  (define-advice kill-region (:before (&rest args) my)
     (let* ((clip-str (w32-get-clipboard-data)))
       (and clip-str
            (unless (equal (nth 0 kill-ring) clip-str)
@@ -141,16 +141,16 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   ;;     (indent-region beg end nil))
   (let ((inhibit-message t))
     (indent-region beg end nil)))
-(defadvice yank (after yank-indent activate)
+(define-advice yank (:after (&rest args) my)
   "If current mode is one of 'yank-indent-modes, indent yanked text (with prefix arg don't indent)."
-  (if (and (not (ad-get-arg 0))
+  (if (and (not (ad-get-argument args 0))
            (cl-find-if 'derived-mode-p yank-indent-modes))
       (let ((transient-mark-mode nil))
         (yank-advised-indent-function
          (region-beginning) (region-end)))))
-(defadvice yank-pop (after yank-pop-indent activate)
+(define-advice yank-pop (:after (&rest args) my)
   "If current mode is one of 'yank-indent-modes, indent yanked text (with prefix arg don't indent)."
-  (if (and (not (ad-get-arg 0))
+  (if (and (not (ad-get-argument args 0))
            (cl-find-if 'derived-mode-p yank-indent-modes))
       (let ((transient-mark-mode nil))
         (yank-advised-indent-function

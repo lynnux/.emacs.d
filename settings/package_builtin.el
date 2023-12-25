@@ -49,18 +49,15 @@
 ;; 对org-capture涉及的文件去掉只读
 (with-eval-after-load 'org-capture
   ;; 需要hook三个函数 find-file-noselect get-file-buffer find-buffer-visiting
-  (defadvice org-capture-target-buffer
-      (around my-org-capture-target-buffer activate)
-    (setq tmp-disable-view-mode 2) ;; 2不恢复只读
-    ad-do-it
-    (setq tmp-disable-view-mode nil)))
+  (define-advice org-capture-target-buffer
+      (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
+      (apply orig-fn args))))
 ;; 对C-c C-x C-a归档命令处理
 (with-eval-after-load 'org-archive
-  (defadvice org-archive-subtree
-      (around my-org-archive-subtree activate)
-    (setq tmp-disable-view-mode 2) ;; 2不恢复只读
-    ad-do-it
-    (setq tmp-disable-view-mode nil)))
+  (define-advice org-archive-subtree (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
+      (apply orig-fn args))))
 (with-eval-after-load 'org
   ;; M-RET绑定给tempel了，这个比C-RET更适合
   (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
@@ -237,10 +234,10 @@ Cancels itself, if this buffer was killed."
     fn))
 
 (defvar tmp-disable-view-mode nil) ;; 在需要的函数defadvice里设置，2不恢复只读，3禁用
-(defun check-tmp-disable-view-mode ()
+(defun check-tmp-disable-view-mode (result)
   (unless (eq tmp-disable-view-mode 3)
-    (when (and tmp-disable-view-mode (bufferp ad-return-value))
-      (with-current-buffer ad-return-value
+    (when (and tmp-disable-view-mode (bufferp result))
+      (with-current-buffer result
         (when view-mode
           (view-mode -1) ;; 临时禁用
           (cond
@@ -252,18 +249,20 @@ Cancels itself, if this buffer was killed."
              2 nil
              (lambda () (view-mode 1))))))))))
 
-(defadvice find-file-noselect (around my-find-file-noselect activate)
-  ad-do-it
-  (check-tmp-disable-view-mode))
 ;; 参考org-capture-target-buffer和org-find-base-buffer-visiting，找到下面两个的hook点
-(defadvice get-file-buffer (around my-get-file-buffer activate)
-  ad-do-it
-  ;; ivy会调用这个导致wcy加载，不能用ivy-use-virtual-buffers
-  (check-tmp-disable-view-mode))
-(defadvice find-buffer-visiting
-    (around my-find-buffer-visiting activate)
-  ad-do-it
-  (check-tmp-disable-view-mode))
+(define-advice find-file-noselect (:around (orig-fn &rest args) my)
+  (let ((result (apply orig-fn args)))
+    (check-tmp-disable-view-mode result)
+    result))
+;; ivy会调用这个导致wcy加载，不能用ivy-use-virtual-buffers
+(define-advice get-file-buffer (:around (orig-fn &rest args) my)
+  (let ((result (apply orig-fn args)))
+    (check-tmp-disable-view-mode result)
+    result))
+(define-advice find-buffer-visiting (:around (orig-fn &rest args) my)
+  (let ((result (apply orig-fn args)))
+    (check-tmp-disable-view-mode result)
+    result))
 
 ;;; occur
 (add-hook
@@ -396,5 +395,3 @@ Run occur in all buffers whose names match this type for REXP."
 (with-eval-after-load 'find-file
   (add-to-list 'cc-other-file-alist '("\\.tli\\'" (".tlh")))
   (add-to-list 'cc-other-file-alist '("\\.tlh\\'" (".tli"))))
-
-

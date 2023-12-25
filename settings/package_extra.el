@@ -5456,7 +5456,7 @@ _q_uit
      (when (bound-and-true-p gud-cdb-history)
        (setq f5-read-command nil))))
   :config
-  (define-advice gud-sentinel (:after (orig-fn &rest args) my)
+  (define-advice gud-sentinel (:after (&rest args) my)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
     (let ((process (ad-get-arg 0)))
       (unless (process-live-p process)
@@ -5469,7 +5469,7 @@ _q_uit
       (overlay-put ov 'face 'secondary-selection)
       ov)
     "Overlay variable for GUD highlighting.")
-  (define-advice gud-display-line (:after (orig-fn &rest args) my)
+  (define-advice gud-display-line (:after (&rest args) my)
     (let* ((ov gud-overlay)
            (bf (gud-find-file true-file)))
       (if bf
@@ -6197,7 +6197,7 @@ _q_uit
     (setq tree-sitter-tree nil) ;; 必须设置为nil，否则不刷新
     (tree-sitter--do-parse))
   (when use-tree-sitter-hl-mode-hack
-    (define-advice tree-sitter--setup (:after (orig-fn &rest args) my)
+    (define-advice tree-sitter--setup (:after (&rest args) my)
       "去掉hook，改为timer模式"
       (remove-hook 'after-change-functions #'tree-sitter--after-change
                    :local)
