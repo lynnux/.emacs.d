@@ -2535,7 +2535,7 @@ symbol under cursor"
             (delay-require-libs
              "~/.emacs.d/packages/dired" '(dired-recent)))
           (dired-recent-load-list))
-        (setq ad-return-value dired-recent-directories)))
+        dired-recent-directories))
     (defun search-in-browser ()
       "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
       (interactive)
@@ -3153,29 +3153,30 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (easy-kill-adjust-candidate 'line-with-yank-handler beg end))
     ;; (easy-kill-adjust-candidate 'line-with-yank-handler (line-beginning-position) (line-beginning-position 2))
     )
-  (define-advice easy-kill-candidate (:after (&rest args) my)
+  (define-advice easy-kill-candidate (:around (orig-fn &rest args) my)
     "获取所选文字最关键的函数，这里判断是beg end位置方式，再判断是否是自定义thing，就给返回字符追yank-handler"
-    (with-current-buffer (easy-kill-get buffer)
-      (pcase (easy-kill-get bounds)
-        (`(,_x . ,_x) () ;; 这就是字符串形式
-         )
-        (`(,beg . ,end) ;; begin end位置模式 
-         (let ((string ad-return-value))
-           (if (functionp 'whole-line-or-region-kill-ring-save)
-               (when (eq
-                      (easy-kill-get thing) 'line-with-yank-handler)
-                 (progn
-                   (call-interactively
-                    'whole-line-or-region-kill-ring-save)
-                   (setq ad-return-value (nth 0 kill-ring))))
-             (if (eq (easy-kill-get thing) 'line-with-yank-handler)
-                 (put-text-property
-                  0 (length string) 'yank-handler '(yank-line)
-                  string)
-               ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
-               (remove-text-properties 0 (length string) 'yank-handler
-                                       string))
-             (setq ad-return-value string)))))))
+    (let ((result (apply orig-fn args)))
+      (with-current-buffer (easy-kill-get buffer)
+        (pcase (easy-kill-get bounds)
+          (`(,_x . ,_x) () ;; 这就是字符串形式
+           )
+          (`(,beg . ,end) ;; begin end位置模式 
+           (let ((string result))
+             (if (functionp 'whole-line-or-region-kill-ring-save)
+                 (when (eq
+                        (easy-kill-get thing) 'line-with-yank-handler)
+                   (progn
+                     (call-interactively
+                      'whole-line-or-region-kill-ring-save)
+                     (setq result (nth 0 kill-ring))))
+               (if (eq (easy-kill-get thing) 'line-with-yank-handler)
+                   (put-text-property
+                    0 (length string) 'yank-handler '(yank-line)
+                    string)
+                 ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
+                 (remove-text-properties 0 (length string) 'yank-handler
+                                         string))
+               (setq result string))))))))
 
   (defun easy-kill-on-forward-word (n)
     (let ((beg (easy-kill-get start))
@@ -5847,7 +5848,7 @@ _q_uit
     "加上-srax支持成员变量，参考https://github.com/austin-----/code-gnu-global/issues/29"
     (let ((result (apply orig-fn args)))
       (when force-search-variable
-        (setq result (concat ad-return-value " -srax")))
+        (setq result (concat result " -srax")))
       result))
   (define-advice ggtags--xref-backend
       (:around (orig-fn &rest args) my)
@@ -6764,8 +6765,8 @@ _q_uit
         (eq th 'modus-vivendi-tritanopia)
         (eq th 'dracula))
     (custom-set-faces
-     '(consult-file ((t (:foreground nil))))
-     '(consult-bookmark ((t (:foreground nil))))))
+     '(consult-file ((t (:foreground unspecified))))
+     '(consult-bookmark ((t (:foreground unspecified))))))
    (t))
   (when (string-prefix-p "doom" (symbol-name th))
     ;; doom没有处理hi-lock的颜色
