@@ -3174,8 +3174,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                     0 (length string) 'yank-handler '(yank-line)
                     string)
                  ;; 解决非line-with-yank-handler偶尔带上yank-handler的问题
-                 (remove-text-properties 0 (length string) 'yank-handler
-                                         string))
+                 (remove-text-properties
+                  0 (length string) 'yank-handler
+                  string))
                (setq result string))))))))
 
   (defun easy-kill-on-forward-word (n)
@@ -3669,10 +3670,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (when (functionp 'which-key--show-keymap)
     (define-advice project--switch-project-command
         (:around (orig-fn &rest args) my)
-      (which-key--show-keymap
-       "keymap" project-prefix-map nil nil 'no-paging)
-      (apply orig-fn args)
-      (which-key--hide-popup)))
+      (let (result)
+        (which-key--show-keymap
+         "keymap" project-prefix-map nil nil 'no-paging)
+        (setq result (apply orig-fn args))
+        (which-key--hide-popup)
+        result)))
 
   ;; 好像自动识别find的输出了(git里的find)
   ;; (defadvice project--files-in-directory (around my-project--files-in-directory activate)
