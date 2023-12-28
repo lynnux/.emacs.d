@@ -6025,7 +6025,7 @@ _q_uit
   :init
   ;; M-x -ts-mode提取出来的
   (setq
-   treesit-font-lock-level 4 ;; 最大化高亮
+   treesit-font-lock-level 3 ;; 4最大化高亮
    all-ts-mode
    '((c++-ts-mode . cpp)
      bash-ts-mode
