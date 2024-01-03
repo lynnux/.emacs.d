@@ -84,7 +84,8 @@
    "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip"
    nil
    "emacs-cycle-at-point") ;; codeberg.org上zip里的文件夹名不含-main
-  (ensure-latest "~/.emacs.d/packages/tools/zhengma.zip" t))
+  (ensure-latest "~/.emacs.d/packages/tools/zhengma.zip" t)
+  (ensure-latest "~/.emacs.d/packages/lsp/lspce-master.zip"))
 
 ;; 用于use-package避免自动设置:load-path
 (defun my-eval-string (string)
@@ -1365,7 +1366,7 @@ _c_: hide comment        _q_uit
 
   ;; 偷偷隐藏创建corfu的frame加快首次使用
   (run-with-idle-timer
-   1.5 nil
+   0.5 nil
    (lambda ()
      (let ((inhibit-message t))
        (load "corfu/corfu-main/corfu"))
@@ -3969,10 +3970,24 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
        (pcase-dolist (`(,hook . ,fn) flycheck-hooks-alist)
          (remove-hook hook fn 'local))))))
 
+(defun init-lsp-snippet-tempel ()
+  (use-package lsp-snippet-tempel
+    :defer t
+    :config
+    (lsp-snippet-tempel-eglot-init)
+    (define-advice lsp-snippet-tempel--placeholder-fn
+        (:around (orig-fn &rest args))
+      "去掉placeholder文字提示"
+      (let ((result
+             (apply orig-fn (list (ad-get-argument args 0) ""))))
+        result)))
+  (load "lsp/lsp-snippet")
+  (load "lsp/lsp-snippet-tempel"))
+
 ;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
 ;; lsp-mode缺点：偶尔补全delete-region报错，导致补全失效(进入yas之前就报错)
 ;; eglot缺点。另外flymake不是idle时更新的。
-(defconst lsp-use-which 'eglot)
+(defconst lsp-use-which 'lspce)
 (cond
  ((eq lsp-use-which 'lsp-mode)
   ;; 额外需要ht和spinner
@@ -4205,20 +4220,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      eglot-events-buffer-size 0 ;; 
      )
     :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
-    :config
-    (use-package lsp-snippet-tempel
-      :defer t
-      :config
-      (lsp-snippet-tempel-eglot-init)
-      (define-advice lsp-snippet-tempel--placeholder-fn
-          (:around (orig-fn &rest args))
-        "去掉placeholder文字提示"
-        (let ((result
-               (apply orig-fn (list (ad-get-argument args 0) ""))))
-          result)))
-    (load "lsp/lsp-snippet")
-    (load "lsp/lsp-snippet-tempel")
-
+    :config (init-lsp-snippet-tempel)
     ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
     (use-package clangd-inactive-regions
       :defer t
@@ -4312,7 +4314,58 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           (eql workspace/didChangeWatchedFiles))
          id &key watchers)
       "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
-      (eglot-unregister-capability server method id)))))
+      (eglot-unregister-capability server method id))))
+ ((eq lsp-use-which 'lspce)
+  ;; https://github.com/zbelial/lspce
+  ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
+  (use-package lspce
+    :defer t
+    :init
+    (setq
+     lspce-send-changes-idle-time 0
+     lspce-enable-logging nil)
+    (defun lsp-ensure ()
+      "eglot抄过来改改"
+      (unless (featurep 'lspce-module)
+        (module-load
+         (expand-file-name
+          "H:/prj/rust/lspce/target/release/lspce_module.dll"))
+        (delay-require-libs
+         "~/.emacs.d/packages/lsp/lspce-master" '(lspce)))
+      (let ((buffer (current-buffer)))
+        (cl-labels
+         ((maybe-connect
+           () (remove-hook 'post-command-hook #'maybe-connect nil)
+           (lspce--when-live-buffer
+            buffer
+            (unless lspce-mode
+              (lspce-mode 1)))))
+         (when buffer-file-name
+           (add-hook 'post-command-hook #'maybe-connect
+                     'append
+                     nil)))))
+    :config
+    ;; 不知道为什么lspce屏蔽了flex
+    (with-eval-after-load 'hotfuzz
+      (add-to-list
+       'completion-category-defaults '(lspce-capf (styles hotfuzz))))
+    ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
+    (assoc-delete-all "python" lspce-server-programs
+                      (lambda (a b) (equal a b)))
+    (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
+    ;; 设置clangd参数
+    (assoc-delete-all "C" lspce-server-programs
+                      (lambda (a b) (equal a b)))
+    (add-to-list
+     'lspce-server-programs
+     '("C"
+       "clangd"
+       "-j=8 --background-index -header-insertion=never --clang-tidy --header-insertion-decorators=0 --completion-style=detailed --pch-storage=memory"))
+    (init-lsp-snippet-tempel)
+    ;; lspce使用了较多的yas函数，参考`lsp-snippet-tempel-eglot-init'修正
+    (advice-add
+     'lspce--snippet-expansion-fn
+     :override #'lsp-snippet-tempel--eglot-expand-snippet))))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save ()
