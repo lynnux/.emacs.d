@@ -100,7 +100,7 @@ shuffling is done in place."
               (buf (current-buffer)))
           (describe-variable 'zhengma:current)
           ;; describe-variable会切换到帮助buffer，导致doom-themes-visual-bell-fn失效
-          (switch-to-buffer buf)))
+          (call-interactively 'other-window)))
     (if (string-equal-ignore-case
          input
          (or (cdr
