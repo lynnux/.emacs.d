@@ -4321,6 +4321,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (use-package lspce
     :defer t
     :init
+    ;; 补充format功能
+    (use-package clang-format
+      :defer t
+      :init
+      (autoload 'clang-format-buffer "lsp/clang-format" "" t)
+      (autoload 'clang-format-region "lsp/clang-format" "" t))
     (setq
      lspce-send-changes-idle-time 0
      lspce-enable-logging nil)
@@ -4345,6 +4351,18 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                      'append
                      nil)))))
     :config
+    (define-key
+     lspce-mode-map [(meta f8)]
+     (lambda ()
+       "禁止message提示"
+       (interactive)
+       (if buffer-read-only
+           (signal 'text-read-only nil)
+         (let ((inhibit-message t))
+           (if (use-region-p)
+               (call-interactively 'clang-format-buffer)
+             (call-interactively 'clang-format-region)))
+         (message "clang format done."))))
     ;; 不知道为什么lspce屏蔽了flex
     (with-eval-after-load 'hotfuzz
       (add-to-list
