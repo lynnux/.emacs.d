@@ -16,7 +16,7 @@
 (defun zhengma:shuffle (LIST)
   "Shuffle the elements in LIST.
 shuffling is done in place."
-  (loop
+  (cl-loop
    for i in (reverse (number-sequence 1 (1- (length LIST)))) do
    (let ((j (random (+ i 1))))
      (zhengma:swap LIST i j)))
