@@ -4322,11 +4322,60 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     :defer t
     :init
     ;; 补充format功能
-    (use-package clang-format
-      :defer t
+    (use-package eglot
       :init
-      (autoload 'clang-format-buffer "lsp/clang-format" "" t)
-      (autoload 'clang-format-region "lsp/clang-format" "" t))
+      (let ((eglot-load-path
+             (if (autoloadp (symbol-function 'eglot))
+                 "eglot"
+               "lsp/eglot")))
+        (autoload 'eglot-ensure eglot-load-path "" nil))
+      (setq
+       eglot-confirm-server-initiated-edits
+       nil ; 避免code action的yes/no提示
+       eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
+       eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+       eglot-events-buffer-size 0 ;; 
+       )
+      :defer t
+      :config
+      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+      (add-to-list 'eglot-stay-out-of 'flymake)
+      (add-to-list 'eglot-stay-out-of 'imenu)
+      (add-to-list 'eglot-stay-out-of 'xref)
+      (add-to-list 'eglot-stay-out-of 'eldoc)
+      (setq eglot-ignored-server-capabilities
+            (list
+             :hoverProvider ;; hover没什么用，在sqlite3中还会卡
+             :completionProvider
+             :signatureHelpProvider
+             :definitionProvider
+             :typeDefinitionProvider
+             :implementationProvider
+             :declarationProvider
+             :referencesProvider
+             :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+             :documentSymbolProvider
+             :workspaceSymbolProvider
+             :codeActionProvider
+             :codeLensProvider
+             ;; :documentFormattingProvider
+             ;; :documentRangeFormattingProvider
+             :documentOnTypeFormattingProvider
+             :renameProvider
+             :documentLinkProvider
+             :colorProvider
+             :foldingRangeProvider
+             :executeCommandProvider
+             :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+             ))
+      (add-hook
+       'eglot-managed-mode-hook
+       (lambda ()
+         ;; hook关多了，format功能不正常
+         (remove-hook
+          'completion-at-point-functions #'eglot-completion-at-point
+          t))))
+
     (setq
      lspce-send-changes-idle-time 0
      lspce-enable-logging nil)
@@ -4349,20 +4398,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (when buffer-file-name
            (add-hook 'post-command-hook #'maybe-connect
                      'append
-                     nil)))))
+                     nil))))
+      ;; 开启eglot，需要它的format功能
+      (eglot-ensure))
     :config
-    (define-key
-     lspce-mode-map [(meta f8)]
-     (lambda ()
-       "禁止message提示"
-       (interactive)
-       (if buffer-read-only
-           (signal 'text-read-only nil)
-         (let ((inhibit-message t))
-           (if (use-region-p)
-               (call-interactively 'clang-format-buffer)
-             (call-interactively 'clang-format-region)))
-         (message "clang format done."))))
     ;; 不知道为什么lspce屏蔽了flex
     (with-eval-after-load 'hotfuzz
       (add-to-list
