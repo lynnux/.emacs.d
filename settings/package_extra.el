@@ -78,7 +78,6 @@
   (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/use-package/use-package-master.zip")
-  (ensure-latest "~/.emacs.d/packages/lsp/lsp-mode-master.zip")
   (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/cycle-at-point/emacs-cycle-at-point-main.zip"
@@ -1513,9 +1512,6 @@ _c_: hide comment        _q_uit
   ;; 会影响`cape-wrap-buster'，暂时不用tags补全了
   ;; (with-eval-after-load 'eglot
   ;;   (add-hook 'eglot-managed-mode-hook (enable-lsp-other-backend 'eglot)))
-  (with-eval-after-load 'lsp-mode
-    (add-hook
-     'lsp-managed-mode-hook (enable-lsp-other-backend 'lsp-mode))) ;
   )
 
 (use-package google-c-style
@@ -2229,7 +2225,6 @@ _c_: hide comment        _q_uit
       :init
       (use-package fzf-native
         :init
-        ;; 这个lspmodeel匹配比lsp-mode.el比fussy好，毕竟是fzf算法
         (setq fussy-score-fn 'fussy-fzf-native-score)
         (ignore-errors
           (module-load
@@ -3984,461 +3979,222 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (load "lsp/lsp-snippet")
   (load "lsp/lsp-snippet-tempel"))
 
-;; sqlite3编辑时eglot卡得不行，lsp mode一点事也没有，真是出乎意料！
-;; lsp-mode缺点：偶尔补全delete-region报错，导致补全失效(进入yas之前就报错)
-;; eglot缺点。另外flymake不是idle时更新的。
-(defconst lsp-use-which 'lspce)
-(cond
- ((eq lsp-use-which 'lsp-mode)
-  ;; 额外需要ht和spinner
-  (use-package lsp-mode
-    :if (bound-and-true-p enable-feature-lsp-dap)
-    :init
-    (add-to-list 'load-path "~/.emacs.d/packages/lsp/lsp-mode-master")
+;; https://github.com/zbelial/lspce
+;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
+(use-package lspce
+  :defer t
+  :init
+  (setq
+   lspce-send-changes-idle-time 0
+   lspce-enable-logging nil)
+  (defun lsp-ensure ()
+    "eglot抄过来改改"
+    (unless (featurep 'lspce-module)
+      (module-load
+       (expand-file-name
+        "H:/prj/rust/lspce/target/release/lspce_module.dll"))
+      (delay-require-libs
+       "~/.emacs.d/packages/lsp/lspce-master" '(lspce)))
+    (let ((buffer (current-buffer)))
+      (cl-labels
+       ((maybe-connect
+         () (remove-hook 'post-command-hook #'maybe-connect nil)
+         (lspce--when-live-buffer
+          buffer
+          (unless lspce-mode
+            (lspce-mode 1)))))
+       (when buffer-file-name
+         (add-hook 'post-command-hook #'maybe-connect 'append nil))))
+    ;; 开启eglot，需要它的format功能
+    (eglot-ensure))
+  :config
+  ;; 不知道为什么lspce屏蔽了flex
+  (with-eval-after-load 'hotfuzz
     (add-to-list
-     'load-path "~/.emacs.d/packages/lsp/lsp-mode-master/clients")
+     'completion-category-defaults '(lspce-capf (styles hotfuzz))))
+  ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
+  (assoc-delete-all "python" lspce-server-programs
+                    (lambda (a b) (equal a b)))
+  (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
+  ;; 设置clangd参数
+  (assoc-delete-all "C" lspce-server-programs
+                    (lambda (a b) (equal a b)))
+  (add-to-list
+   'lspce-server-programs
+   '("C"
+     "clangd"
+     "-j=8 --background-index -header-insertion=never --clang-tidy --header-insertion-decorators=0 --completion-style=detailed --pch-storage=memory"))
+  (init-lsp-snippet-tempel)
+  ;; lspce使用了较多的yas函数，参考`lsp-snippet-tempel-eglot-init'修正
+  (advice-add
+   'lspce--snippet-expansion-fn
+   :override #'lsp-snippet-tempel--eglot-expand-snippet))
+
+(use-package eglot
+  :if (bound-and-true-p enable-feature-lsp-dap)
+  :init
+  ;; 最新emacs自带eglot并依赖external-completion
+  (let ((eglot-load-path
+         (if (autoloadp (symbol-function 'eglot))
+             "eglot"
+           "lsp/eglot")))
+    (autoload 'eglot-ensure eglot-load-path "" nil)
+    (autoload 'eglot eglot-load-path "" nil)
+    (autoload 'eglot-rename eglot-load-path "" nil)
+    (autoload 'eglot-completion-at-point eglot-load-path "" nil))
+  (unless (boundp 'lspce-send-changes-idle-time)
     (defun lsp-ensure ()
-      (lsp-deferred))
-    ;; lens和modeline没效果？好像要配合lsp ui用
-    (setq
-     lsp-lens-enable nil
-     lsp-modeline-code-actions-enable nil
-     lsp-modeline-diagnostics-enable nil
-     lsp-modeline-workspace-status-enable nil
-     lsp-headerline-breadcrumb-enable nil ;; 遮挡tabbar了
-     lsp-enable-symbol-highlighting nil ;; 高亮光标下的词，除了能限定作用域没什么大用
-     lsp-enable-folding nil ;; 不需要折叠
-     lsp-semantic-tokens-enable nil
-     lsp-enable-links nil
-     lsp-enable-text-document-color nil
-     lsp-enable-snippet t
-     lsp-completion-provider
-     :none ;; 不用company就要设置这个
-     lsp-enable-on-type-formatting nil ;; 输入后format，完全不需要这个功能，太影响体验了
-     lsp-enable-indentation nil ;; 我设置过粘贴后indent，但lsp mode也advice indent-region-function这个函数了，它format反而不正常
-     lsp-enable-suggest-server-download nil ;;不需要下载server
-     lsp-restart 'ignore ;; 避免project-kill时提示是否重启
-     lsp-enable-imenu nil ;; buffer初次使用时太卡了，用cc mode自带的分析就足够了
-     lsp-display-inline-image nil ;; 好像会开启markdown?
-     )
-
-    (defun my/lsp-mode-setup-completion ()
-      "必须设置这个，不然会让人以为补全有问题"
-      (setf (alist-get
-             'styles
-             (alist-get 'lsp-capf completion-category-defaults))
-            '(orderless)))
-    :hook (lsp-completion-mode . my/lsp-mode-setup-completion)
-    :commands (lsp lsp-deferred lsp-completion-at-point)
-    :config
-    ;; 使重命名可用
-    (define-advice lsp--apply-workspace-edit
-        (:around (orig-fn &rest args) my)
-      (let ((tmp-disable-view-mode t))
-        (apply orig-fn args)))
-    (setq lsp-diagnostics-provider :flycheck) ;; 实测flymake是server返回就马上刷新可能会造成输入卡，而flycheck是idle（查看代码知道)时刷新
-    (require 'lsp-diagnostics) ;; flymake
-    (define-key
-     lsp-mode-map [(meta f8)]
-     (lambda ()
-       (interactive)
-       (if (use-region-p)
-           (call-interactively 'lsp-format-region)
-         (call-interactively 'lsp-format-buffer))))
-    (defun lsp--workspace-print (workspace)
-      "替换成显示root目录名"
-      (let* ((status (lsp--workspace-status workspace))
-             (server-id
-              (->
-               workspace
-               lsp--workspace-client
-               lsp--client-server-id
-               symbol-name))
-             (root (file-name-base (lsp--workspace-root workspace))))
-        (if (eq 'initialized status)
-            (format "%s:%s" server-id root)
-          (format "%s:%s/%s" server-id root status)))))
-
-  ;; dap-mode 依赖treemacs,bui,lsp-treemacs,posframe,lsp-docker,yaml
-  (use-package dap-mode
-    :disabled
-    :load-path "~/.emacs.d/packages/lsp/dap-mode/dap-mode-master"
-    :commands (dap-mode dap-auto-configure-mode)
-    :init
-    (add-to-list 'load-path "~/.emacs.d/packages/lsp/dap-mode")
-    (setq
-     dap-cpptools-debug-program
-     (expand-file-name
-      ".extension/vscode/cpptools/extension/debugAdapters/vsdbg/bin/vsdbg.exe"
-      user-emacs-directory)
-     lsp-enable-dap-auto-configure nil ;; 禁止自动配置dap-mode
-     )
-    (defmacro forward-to-dap (key)
-      "调试键启动dap，并调用原功能"
-      `(lambda ()
-         (interactive)
-         (unless dap-auto-configure-mode
-           (dap-auto-configure-mode +1))
-         (call-interactively (key-binding (kbd ,key)))))
-    (global-set-key (kbd "<f5>") (forward-to-dap "f5"))
-    (global-set-key (kbd "<f9>") (forward-to-dap "f9"))
-    (global-set-key (kbd "<f10>") (forward-to-dap "f10"))
-    (global-set-key (kbd "<f11>") (forward-to-dap "f11"))
-    (global-set-key (kbd "<f12>") (forward-to-dap "f12"))
-    (require 'dap-autoloads)
-    ;; controls目前有bug
-    (setq dap-auto-configure-features
-          '(sessions locals breakpoints expressions tooltip))
-    :config
-    (use-package bui
-      :init
-      ;; 避免多加个load-path
-      (load "lsp/dap-mode/bui.el-master/bui-utils")
-      (load "lsp/dap-mode/bui.el-master/bui-button")
-      (load "lsp/dap-mode/bui.el-master/bui-history")
-      (load "lsp/dap-mode/bui.el-master/bui-core")
-      (load "lsp/dap-mode/bui.el-master/bui-entry")
-      (load "lsp/dap-mode/bui.el-master/bui-info")
-      (load "lsp/dap-mode/bui.el-master/bui-list")
-      (load "lsp/dap-mode/bui.el-master/bui"))
-
-    (use-package treemacs
-      :commands
-      (treemacs
-       treemacs-add-and-display-current-project
-       treemacs-current-visibility)
-      :init
-      (use-package cfrs
-        :init
-        ;; (autoload 'cfrs-read "lsp/dap-mode/treemacs/cfrs")
-        :commands (cfrs-read))
-      ;; (load "lsp/dap-mode/treemacs/pfuture")
-      (add-to-list
-       'load-path "~/.emacs.d/packages/lsp/dap-mode/treemacs")
-      (add-to-list
-       'load-path
-       "~/.emacs.d/packages/lsp/dap-mode/treemacs/treemacs-master/src/elisp")
-      (require 'treemacs-autoloads)
-      ;; (setq treemacs-recenter-after-file-follow t ;好像没效果啊
-      ;;       treemacs-recenter-after-tag-follow t
-      ;;       treemacs-recenter-distance 0.5
-      ;;       ;; treemacs-no-png-images t
-      ;;       )
-      :config (add-to-list 'tab-line-exclude-modes 'treemacs-mode)
-      ;; (with-eval-after-load 'treemacs-mode
-      ;;   (when (display-graphic-p)
-      ;;     ;; 改变高亮行背景色
-      ;;     (add-hook 'treemacs-mode-hook
-      ;;               (lambda ()
-      ;;                 (face-remap-add-relative 'hl-line '(:background "#666")))))
-      ;;   )
-      ;; 避免treemacs persistence文件变成只读
-      ;; (with-eval-after-load 'treemacs-persistence
-      ;;   (define-advice treemacs--persist (:around (orig-fn &rest args) my)
-      ;;     (let ((tmp-disable-view-mode 2));; 2不恢复只读
-      ;;       (apply orig-fn args))))
-      ;; (treemacs-follow-mode t)      ; 切换buffer自动定位，特牛，目录再深都能定位到
-      ;; (treemacs-fringe-indicator-mode -1) ; 有高亮行就不需要fringe了(本身也被disable)
-      ;; (treemacs-filewatch-mode t)          ; 监视系统文件变化
-      )
-    (use-package lsp-treemacs
-      :init
-      (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs-themes")
-      (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs-generic")
-      (load "lsp/dap-mode/lsp-treemacs-master/lsp-treemacs"))
-    ;; f2设置断点跟rg冲突了，所以用vs那套按钮(lsp启动时也会启动dap mode)
-    (define-key
-     dap-mode-map (kbd "<f5>")
-     (lambda ()
-       (interactive)
-       (let ((cs (dap--cur-session)))
-         (if cs
-             (if (dap--session-running cs)
-                 (call-interactively 'dap-continue)
-               (call-interactively 'dap-debug-restart))
-           (call-interactively 'dap-debug)))))
-    (define-key dap-mode-map (kbd "<f12>") 'dap-hydra)
-    (define-key dap-mode-map (kbd "<f9>") 'dap-breakpoint-toggle)
-    (define-key dap-mode-map (kbd "<f11>") 'dap-step-in)
-    (define-key dap-mode-map (kbd "<f10>") 'dap-next)
-
-    ;; 解决hl line不及时更新问题
-    ;; (add-hook 'dap-stack-frame-changed-hook (lambda (debug-session)
-    ;;                                           (when global-hl-line-mode
-    ;;                                             (global-hl-line-highlight))
-    ;;                                           ))
-    (use-package dap-python
-      ;; 需要pip install "ptvsd>=4.2"
-      ;; ptvsd调试bug: https://github.com/emacs-lsp/dap-mode/issues/625
-      :after (dap-mode python)
-      :init
-      ;; (setq dap-python-debugger 'debugpy) ;; 这个好像bug要少些
-      )
-
-    ;; 需要调用dap-debug-edit-template，或者dap-hydra里d e，来编辑运行参数，类似vscode那样设置
-    (use-package dap-cpptools
-      :after (dap-mode cc-mode)
-      :config
-      (dap-register-debug-template
-       "cpptools::Run Configuration"
-       (list
-        :type "cppdbg"
-        :request "launch"
-        :name "cpptools::Run Configuration"
-        :program "${workspaceFolder}/../Autoruns_build/autoruns.exe"
-        :cwd "${workspaceFolder}")))
-
-    (use-package dap-hydra
-      :commands (dap-hydra)
-      :init
-      ;; (add-hook 'dap-stopped-hook
-      ;;           (lambda (arg)
-      ;;             (call-interactively #'dap-hydra)))
-      )
-    ;; TODO: Locals里的icon显示不正常
-    ))
- ((eq lsp-use-which 'eglot)
-  (use-package eglot
-    :if (bound-and-true-p enable-feature-lsp-dap)
-    :init
-    ;; 最新emacs自带eglot并依赖external-completion
-    (let ((eglot-load-path
-           (if (autoloadp (symbol-function 'eglot))
-               "eglot"
-             "lsp/eglot")))
-      (autoload 'eglot-ensure eglot-load-path "" nil)
-      (autoload 'eglot eglot-load-path "" nil)
-      (autoload 'eglot-rename eglot-load-path "" nil)
-      (autoload 'eglot-completion-at-point eglot-load-path "" nil))
-    (defun lsp-ensure ()
-      (eglot-ensure))
-    (setq
-     eglot-confirm-server-initiated-edits
-     nil ; 避免code action的yes/no提示
-     eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
-     eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
-     eglot-events-buffer-size 0 ;; 
-     )
-    :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
-    :config (init-lsp-snippet-tempel)
-    ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
-    (use-package clangd-inactive-regions
-      :defer t
-      :init
-      (autoload
-        'clangd-inactive-regions-mode "lsp/clangd-inactive-regions"
-        "" nil)
-      (defun ensure-clangd-inactive-regions-mode (&rest _)
-        (clangd-inactive-regions-mode 1))
-      (add-hook
-       'eglot-server-initialized-hook
-       #'ensure-clangd-inactive-regions-mode)
-      (add-hook
-       'eglot-managed-mode-hook #'ensure-clangd-inactive-regions-mode)
-      :config
-      ;; (clangd-inactive-regions-set-method "darken-foreground")
-      ;; (clangd-inactive-regions-set-opacity 0.55)
-      )
-
-    (add-to-list
-     'eglot-server-programs
-     '((c-mode c-ts-mode c++-mode c++-ts-mode)
-       .
-       ("clangd"
-        "-j=8" ;; 线程数量
-        "--background-index"
-        "-header-insertion=never" ;; 不要插入头文件
-        "--clang-tidy" ;; 高级提示
-        "--header-insertion-decorators=0" ;; 不要在前面插入圆点
-        "--completion-style=detailed" "--pch-storage=memory")))
-    (eldoc-add-command 'c-electric-paren)
-    (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
-    (when nil
-      ;; 获取不显示signature的方法
-      (define-advice eldoc--message-command-p
-          (:before (&rest args) my)
-        (and (symbolp (ad-get-argument args 0))
-             (message "%S" (ad-get-argument args 0)))))
-    (advice-add
-     'jsonrpc--log-event
-     :around
-     (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
-    ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
-    ;; (add-to-list 'eglot-stay-out-of 'flymake)
-    ;; (add-to-list 'eglot-stay-out-of 'imenu) ;; 用counsel-etags的imenu
-    ;; (setq flymake-no-changes-timeout 1.0) ;; 这个是没有效果的
-    (setq eglot-autoshutdown t) ;; 不关退出emacs会卡死
-    (setq eglot-ignored-server-capabilities
-          (list
-           :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-           :hoverProvider ;; hover没什么用，在sqlite3中还会卡
-           :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
-           :codeActionProvider ;; 当有flymake错误时，code action非常讨厌
-           :documentOnTypeFormattingProvider))
-    ;; 临时禁止view-mode，使重命名可用
-    (define-advice eglot--apply-workspace-edit
-        (:around (orig-fn &rest args) my)
-      (let ((tmp-disable-view-mode t))
-        (apply orig-fn args)))
-    ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
-    (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-
-    ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
-    ;; (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
-    ;; (advice-add
-    ;;  'eglot-completion-at-point
-    ;;  :around #'cape-wrap-noninterruptible)
-
-    (add-hook
-     'eglot-managed-mode-hook
-     (lambda ()
-       ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
-       (setq-local
-        eldoc-documentation-strategy ; eglot has it's own strategy by default
-        'eldoc-documentation-compose-eagerly
-        completion-at-point-functions
-        (cl-nsubst
-         (cape-capf-noninterruptible
-          (cape-capf-buster
-           #'eglot-completion-at-point #'string-prefix-p))
-         'eglot-completion-at-point completion-at-point-functions))
-       ;; cpp用ctags生成的imenu，够用且不卡
-       (when (or (derived-mode-p 'c-mode 'c++-mode)
-                 (derived-mode-p 'c-ts-base-mode))
-         (remove-function
-          (local 'imenu-create-index-function) #'eglot-imenu))))
-    ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
-    (cl-defmethod eglot-register-capability
-        (server
-         (method
-          (eql workspace/didChangeWatchedFiles))
-         id &key watchers)
-      "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
-      (eglot-unregister-capability server method id))))
- ((eq lsp-use-which 'lspce)
-  ;; https://github.com/zbelial/lspce
-  ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
-  (use-package lspce
+      (eglot-ensure)))
+  (setq
+   eglot-confirm-server-initiated-edits
+   nil ; 避免code action的yes/no提示
+   eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
+   eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+   eglot-events-buffer-size 0 ;; 
+   eglot-autoshutdown t ;; 不关退出emacs会卡死
+   )
+  :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
+  :config
+  ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
+  (use-package clangd-inactive-regions
     :defer t
     :init
-    ;; 补充format功能
-    (use-package eglot
-      :init
-      (let ((eglot-load-path
-             (if (autoloadp (symbol-function 'eglot))
-                 "eglot"
-               "lsp/eglot")))
-        (autoload 'eglot-ensure eglot-load-path "" nil))
-      (setq
-       eglot-confirm-server-initiated-edits
-       nil ; 避免code action的yes/no提示
-       eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
-       eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
-       eglot-events-buffer-size 0 ;; 
-       )
-      :defer t
-      :config
-      (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-      (add-to-list 'eglot-stay-out-of 'flymake)
-      (add-to-list 'eglot-stay-out-of 'imenu)
-      (add-to-list 'eglot-stay-out-of 'xref)
-      (add-to-list 'eglot-stay-out-of 'eldoc)
-      (setq eglot-ignored-server-capabilities
-            (list
-             :hoverProvider ;; hover没什么用，在sqlite3中还会卡
-             :completionProvider
-             :signatureHelpProvider
-             :definitionProvider
-             :typeDefinitionProvider
-             :implementationProvider
-             :declarationProvider
-             :referencesProvider
-             :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-             :documentSymbolProvider
-             :workspaceSymbolProvider
-             :codeActionProvider
-             :codeLensProvider
-             ;; :documentFormattingProvider
-             ;; :documentRangeFormattingProvider
-             :documentOnTypeFormattingProvider
-             :renameProvider
-             :documentLinkProvider
-             :colorProvider
-             :foldingRangeProvider
-             :executeCommandProvider
-             :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
-             ))
+    (autoload
+      'clangd-inactive-regions-mode "lsp/clangd-inactive-regions"
+      "" nil)
+    (defun ensure-clangd-inactive-regions-mode (&rest _)
+      (clangd-inactive-regions-mode 1))
+    (add-hook
+     'eglot-server-initialized-hook
+     #'ensure-clangd-inactive-regions-mode)
+    (add-hook
+     'eglot-managed-mode-hook #'ensure-clangd-inactive-regions-mode)
+    :config
+    ;; (clangd-inactive-regions-set-method "darken-foreground")
+    ;; (clangd-inactive-regions-set-opacity 0.55)
+    )
+  (add-to-list
+   'eglot-server-programs
+   '((c-mode c-ts-mode c++-mode c++-ts-mode)
+     .
+     ("clangd"
+      "-j=8" ;; 线程数量
+      "--background-index"
+      "-header-insertion=never" ;; 不要插入头文件
+      "--clang-tidy" ;; 高级提示
+      "--header-insertion-decorators=0" ;; 不要在前面插入圆点
+      "--completion-style=detailed" "--pch-storage=memory")))
+  (advice-add
+   'jsonrpc--log-event
+   :around
+   (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
+  ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
+  (setq eglot-ignored-server-capabilities
+        (list
+         :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+         :hoverProvider ;; hover没什么用，在sqlite3中还会卡
+         :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+         :codeActionProvider ;; 当有flymake错误时，code action非常讨厌
+         :documentOnTypeFormattingProvider))
+  ;; 临时禁止view-mode，使重命名可用
+  (define-advice eglot--apply-workspace-edit
+      (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode t))
+      (apply orig-fn args)))
+  ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
+  (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+
+  (defun remove-cpp-imenu ()
+    ;; cpp用ctags生成的imenu，够用且不卡
+    (when (or (derived-mode-p 'c-mode 'c++-mode)
+              (derived-mode-p 'c-ts-base-mode))
+      (remove-function
+       (local 'imenu-create-index-function) #'eglot-imenu)))
+  (if (boundp 'lspce-send-changes-idle-time)
+      (progn
+        (add-to-list 'eglot-stay-out-of 'flymake)
+        (add-to-list 'eglot-stay-out-of 'xref)
+        (add-to-list 'eglot-stay-out-of 'eldoc)
+        (setq eglot-ignored-server-capabilities
+              (list
+               :hoverProvider ;; hover没什么用，在sqlite3中还会卡
+               :completionProvider
+               :signatureHelpProvider
+               :definitionProvider
+               :typeDefinitionProvider
+               :implementationProvider
+               :declarationProvider
+               :referencesProvider
+               :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+               :documentSymbolProvider
+               :workspaceSymbolProvider
+               :codeActionProvider
+               :codeLensProvider
+               ;; :documentFormattingProvider
+               ;; :documentRangeFormattingProvider
+               :documentOnTypeFormattingProvider
+               :renameProvider
+               :documentLinkProvider
+               :colorProvider
+               :foldingRangeProvider
+               :executeCommandProvider
+               :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+               ))
+        (add-hook
+         'eglot-managed-mode-hook
+         (lambda ()
+           ;; hook关多了，format功能不正常
+           (remove-hook
+            'completion-at-point-functions #'eglot-completion-at-point
+            t)
+           (remove-cpp-imenu))))
+    (progn
+      (eldoc-add-command 'c-electric-paren)
+      (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
+      (when nil
+        ;; 获取不显示signature的方法
+        (define-advice eldoc--message-command-p
+            (:before (&rest args) my)
+          (and (symbolp (ad-get-argument args 0))
+               (message "%S" (ad-get-argument args 0)))))
+      (init-lsp-snippet-tempel)
+      ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
+      ;; (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+      ;; (advice-add
+      ;;  'eglot-completion-at-point
+      ;;  :around #'cape-wrap-noninterruptible)
       (add-hook
        'eglot-managed-mode-hook
        (lambda ()
-         ;; hook关多了，format功能不正常
-         (remove-hook
-          'completion-at-point-functions #'eglot-completion-at-point
-          t))))
+         ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
+         (setq-local
+          eldoc-documentation-strategy ; eglot has it's own strategy by default
+          'eldoc-documentation-compose-eagerly
+          completion-at-point-functions
+          (cl-nsubst
+           (cape-capf-noninterruptible
+            (cape-capf-buster
+             #'eglot-completion-at-point #'string-prefix-p))
+           'eglot-completion-at-point completion-at-point-functions))
+         (remove-cpp-imenu)))))
 
-    (setq
-     lspce-send-changes-idle-time 0
-     lspce-enable-logging nil)
-    (defun lsp-ensure ()
-      "eglot抄过来改改"
-      (unless (featurep 'lspce-module)
-        (module-load
-         (expand-file-name
-          "H:/prj/rust/lspce/target/release/lspce_module.dll"))
-        (delay-require-libs
-         "~/.emacs.d/packages/lsp/lspce-master" '(lspce)))
-      (let ((buffer (current-buffer)))
-        (cl-labels
-         ((maybe-connect
-           () (remove-hook 'post-command-hook #'maybe-connect nil)
-           (lspce--when-live-buffer
-            buffer
-            (unless lspce-mode
-              (lspce-mode 1)))))
-         (when buffer-file-name
-           (add-hook 'post-command-hook #'maybe-connect
-                     'append
-                     nil))))
-      ;; 开启eglot，需要它的format功能
-      (eglot-ensure))
-    :config
-    ;; 不知道为什么lspce屏蔽了flex
-    (with-eval-after-load 'hotfuzz
-      (add-to-list
-       'completion-category-defaults '(lspce-capf (styles hotfuzz))))
-    ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
-    (assoc-delete-all "python" lspce-server-programs
-                      (lambda (a b) (equal a b)))
-    (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
-    ;; 设置clangd参数
-    (assoc-delete-all "C" lspce-server-programs
-                      (lambda (a b) (equal a b)))
-    (add-to-list
-     'lspce-server-programs
-     '("C"
-       "clangd"
-       "-j=8 --background-index -header-insertion=never --clang-tidy --header-insertion-decorators=0 --completion-style=detailed --pch-storage=memory"))
-    (init-lsp-snippet-tempel)
-    ;; lspce使用了较多的yas函数，参考`lsp-snippet-tempel-eglot-init'修正
-    (advice-add
-     'lspce--snippet-expansion-fn
-     :override #'lsp-snippet-tempel--eglot-expand-snippet))))
+  ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
+  (cl-defmethod eglot-register-capability
+      (server
+       (method (eql workspace/didChangeWatchedFiles))
+       id
+       &key
+       watchers)
+    "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
+    (eglot-unregister-capability server method id)))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save ()
   (add-hook 'before-save-hook
             (lambda ()
               (when (featurep 'eglot)
-                (eglot-format))
-              (when (featurep 'lsp-mode)
-                (lsp-format-buffer)))
+                (eglot-format)))
             nil 'local))
-;; pyright好像还需要node，低版本的还报错，装个支持的win7的最后版本就可以了(node-v13.14.0-x64.msi)
-(add-hook
- 'python-mode-hook
- (lambda ()
-   (when (eq lsp-use-which 'lsp-mode)
-     (load "lsp/lsp-pyright"))))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)) ;; h当成c++文件
 
@@ -5323,9 +5079,6 @@ _q_uit
   :if (bound-and-true-p enable-feature-prog)
   :commands (csharp-mode)
   :init (add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-mode)))
-
-(use-package posframe
-  :commands (posframe-hide posframe-show))
 
 (use-package simple
   :defer t
