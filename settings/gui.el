@@ -76,10 +76,10 @@
 ;; 鼠标滚轮，默认的滚动太快，这里改为3行
 (defun up-slightly ()
   (interactive)
-  (scroll-up 3))
+  (scroll-up 4))
 (defun down-slightly ()
   (interactive)
-  (scroll-down 3))
+  (scroll-down 4))
 
 (if (string-equal system-type "windows-nt")
     (progn ;windows，难怪以前设置没效果
