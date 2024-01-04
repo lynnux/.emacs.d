@@ -6529,6 +6529,46 @@ _q_uit
   (bind-key* (kbd "M-:") 'my-eilm)
   :config)
 
+;; 丝滑效果实际就是`while-no-input'循环
+(use-package pixel-scroll
+  :commands
+  (pixel-scroll-precision-interpolate
+   pixel-scroll-interpolate-down pixel-scroll-interpolate-up)
+  :custom
+  (pixel-scroll-precision-interpolate-page
+   t ;; 为了`pixel-scroll-interpolate-down'能调用`pixel-scroll-precision-interpolate'
+   pixel-scroll-precision-interpolation-total-time 0.1)
+  :init
+  ;; 没必要，全靠`pixel-scroll-precision-interpolate'函数
+  ;; (pixel-scroll-precision-mode 1) 
+  (defun my-wheel-up ()
+    (interactive)
+    ;; 鼠标滚动要更快，不然感觉慢
+    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
+      (pixel-scroll-precision-interpolate 100)))
+  (defun my-wheel-down ()
+    (interactive)
+    ;; 鼠标滚动要更快，不然感觉慢
+    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
+      (pixel-scroll-precision-interpolate -100)))
+  (bind-key* [wheel-up] 'my-wheel-up)
+  (bind-key* [wheel-down] 'my-wheel-down)
+  (defun my-scroll-up-command (&optional lines)
+    (interactive)
+    (if lines
+        (pixel-scroll-precision-interpolate
+         (* -1 lines (pixel-line-height)))
+      (pixel-scroll-interpolate-down)))
+  (defun my-scroll-down-command (&optional lines)
+    (interactive)
+    (if lines
+        (pixel-scroll-precision-interpolate
+         (* lines (pixel-line-height))))
+    (pixel-scroll-interpolate-up))
+  (advice-add #'scroll-up-command :override #'my-scroll-up-command)
+  (advice-add
+   #'scroll-down-command
+   :override #'my-scroll-down-command))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
