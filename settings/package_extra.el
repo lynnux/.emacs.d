@@ -4091,6 +4091,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (apply orig-fn args)))
   ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
   (define-key eglot-mode-map [(meta f8)] 'eglot-format)
+  (define-advice eglot-format (:around (orig-fn &rest args) my)
+    (if (memq major-mode '(python-ts-mode python-mode))
+        (progn
+          ;; pylsp没有格式化功能，pip install black
+          (shell-command (concat "python -m black " (buffer-name)))
+          (revert-buffer))
+      (apply orig-fn args)))
 
   (defun remove-cpp-imenu ()
     ;; cpp用ctags生成的imenu，够用且不卡
