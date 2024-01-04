@@ -2869,7 +2869,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :init
   (setq vc-log-show-limit 100) ;; 默认2000太多了
-  :config)
+  :config
+  (define-advice vc-coding-system-for-diff
+      (:around (orig-fn &rest args) my)
+    ;; 解决vc diff乱码, TODO: 写死diff编码了，目前只用git没问题
+    (let ((coding-system-for-read 'utf-8))
+      (apply orig-fn args))))
 (use-package vc-dir
   :defer t
   :init
@@ -3947,24 +3952,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; fixed for eglot with emacs 28.0.50，就kill-buffer时有提示，实际好像没什么问题
   (unless (boundp 'flymake-list-only-diagnostics)
     (defvar flymake-list-only-diagnostics nil)))
-
-(use-package flycheck
-  :if (bound-and-true-p enable-feature-lsp-dap)
-  :commands (flycheck-mode)
-  :init
-  (autoload 'flycheck-mode "lsp/flycheck")
-  (with-eval-after-load 'lsp-diagnostics
-    (load "lsp/flycheck"))
-  :config
-  ;; 当lsp开启时，去掉自己的hook
-  (add-hook
-   'flycheck-mode-hook
-   (lambda ()
-     (when (and flycheck-mode
-                (or (bound-and-true-p eglot--managed-mode)
-                    (bound-and-true-p lsp-managed-mode)))
-       (pcase-dolist (`(,hook . ,fn) flycheck-hooks-alist)
-         (remove-hook hook fn 'local))))))
 
 (defun init-lsp-snippet-tempel ()
   (use-package lsp-snippet-tempel
