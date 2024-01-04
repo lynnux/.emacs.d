@@ -3178,7 +3178,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                  (remove-text-properties
                   0 (length string) 'yank-handler
                   string))
-               (setq result string))))))))
+               (setq result string))))))
+      result))
 
   (defun easy-kill-on-forward-word (n)
     (let ((beg (easy-kill-get start))
@@ -6531,26 +6532,27 @@ _q_uit
 
 ;; 丝滑效果实际就是`while-no-input'循环
 (use-package pixel-scroll
-  :commands
-  (pixel-scroll-precision-interpolate
-   pixel-scroll-interpolate-down pixel-scroll-interpolate-up)
-  :custom
-  (pixel-scroll-precision-interpolate-page
+  ;; :commands
+  ;; (pixel-scroll-precision-interpolate
+  ;;  pixel-scroll-interpolate-down pixel-scroll-interpolate-up)
+  :defer 0.3
+  :config
+  (setq
+   pixel-scroll-precision-interpolate-page
    t ;; 为了`pixel-scroll-interpolate-down'能调用`pixel-scroll-precision-interpolate'
    pixel-scroll-precision-interpolation-total-time 0.1)
-  :init
   ;; 没必要，全靠`pixel-scroll-precision-interpolate'函数
   ;; (pixel-scroll-precision-mode 1) 
   (defun my-wheel-up ()
     (interactive)
     ;; 鼠标滚动要更快，不然感觉慢
     (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      (pixel-scroll-precision-interpolate 100)))
+      (pixel-scroll-precision-interpolate 70)))
   (defun my-wheel-down ()
     (interactive)
     ;; 鼠标滚动要更快，不然感觉慢
     (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      (pixel-scroll-precision-interpolate -100)))
+      (pixel-scroll-precision-interpolate -70)))
   (bind-key* [wheel-up] 'my-wheel-up)
   (bind-key* [wheel-down] 'my-wheel-down)
   (defun my-scroll-up-command (&optional lines)
