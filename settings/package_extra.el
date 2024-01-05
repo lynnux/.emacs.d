@@ -6566,13 +6566,16 @@ _q_uit
         (and (memq major-mode '(nxml-mode)) "XML")
         ;; python格式化工具 pip install black
         (and (memq major-mode '(python-mode python-ts-mode)) "Python")
-        (and (memq major-mode '(rust-mode rust-ts-mode)) "Rust")))
+        (and (memq major-mode '(rust-mode rust-ts-mode)) "Rust")
+        (and (memq major-mode '(mhtml-mode)) "HTML")))
   :config
   ;; 设置喜好的format后端
   (setq-default format-all-formatters
                 '(("Python" black)
-                  ("C++" clang-format)
-                  ("XML" (html-tidy "-q --tidy-mark no -i 4 -xml"))))
+                  ("C++" clang-format) ("HTML" html-tidy)
+                  ;; tidy好像不支持设置indent宽度，将就用吧
+                  ;; ("XML" (html-tidy "-q --tidy-mark no -i 4 -xml"))
+                  ))
   (add-to-list
    'process-coding-system-alist
    '("[tT][iI][dD][yY]" . (utf-8 . utf-8)))
