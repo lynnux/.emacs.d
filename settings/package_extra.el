@@ -3984,7 +3984,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :init
   (setq
    lspce-send-changes-idle-time 0
-   lspce-enable-logging nil)
+   lspce-enable-logging nil
+   lspce-modes-enable-single-file-root '(python-mode python-ts-mode))
   (defun lsp-ensure ()
     "eglot抄过来改改"
     (unless (featurep 'lspce-module)
@@ -4903,8 +4904,7 @@ _q_uit
      ("*Backtrace*" :align t)
      ("*Messages*" :align t)
      ("*Messages*" :align t)
-     ("*format-all-errors*" :align t))
-   )
+     ("*format-all-errors*" :align t)))
   :config
   (defun is-shacle-popup-buffer (buf)
     (plist-get (shackle-match buf) :align))
