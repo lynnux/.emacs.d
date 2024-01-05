@@ -6498,9 +6498,6 @@ _q_uit
 
 ;; 丝滑效果实际就是`while-no-input'循环
 (use-package pixel-scroll
-  ;; :commands
-  ;; (pixel-scroll-precision-interpolate
-  ;;  pixel-scroll-interpolate-down pixel-scroll-interpolate-up)
   :defer 0.3
   :config
   (setq
