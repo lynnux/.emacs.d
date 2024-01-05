@@ -6520,8 +6520,9 @@ _q_uit
     ;; 鼠标滚动要更快，不然感觉慢
     (let ((pixel-scroll-precision-interpolation-total-time 0.05))
       (my-scroll-up-command 3)))
-  (bind-key* [wheel-up] 'my-wheel-up)
-  (bind-key* [wheel-down] 'my-wheel-down)
+  ;; 鼠标滚动感觉有点卡，而且C-n/p有可能造成屏幕移动
+  ;; (bind-key* [wheel-up] 'my-wheel-up)
+  ;; (bind-key* [wheel-down] 'my-wheel-down)
   (defun my-scroll-up-command (&optional lines)
     (interactive)
     (if lines
