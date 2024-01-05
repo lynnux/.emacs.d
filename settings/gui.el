@@ -80,7 +80,7 @@
 (defun down-slightly ()
   (interactive)
   (scroll-down 4))
-
+(setq scroll-error-top-bottom t) ;; 当到达顶或底时自动跳到第一行或最后一行
 (if (string-equal system-type "windows-nt")
     (progn ;windows，难怪以前设置没效果
       (global-set-key [wheel-up] 'down-slightly)
