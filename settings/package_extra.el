@@ -2860,11 +2860,26 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://stackoverflow.com/a/750933
 (aset standard-display-table ?\^M []) ;; 直接全局不显示^M
 
+(use-package text-mode
+  :defer t
+  :config
+  ;; 解决vc commit时corfu报错
+  (add-hook
+   'text-mode-hook
+   (lambda ()
+     (remove-hook
+      'completion-at-point-functions #'ispell-completion-at-point
+      t))))
+
 (use-package vc
   :defer t
   :init
   (setq vc-log-show-limit 100) ;; 默认2000太多了
   :config
+  (define-advice vc-git-command (:around (orig-fn &rest args) my)
+    "解决中文路径add问题，注意测试下commit时中文时是否乱码。TODO: 感觉办法不是太好，将就用"
+    (let ((vc-git-commits-coding-system 'gbk-dos))
+      (apply orig-fn args)))
   (define-advice vc-coding-system-for-diff
       (:around (orig-fn &rest args) my)
     ;; 解决vc diff乱码, TODO: 写死diff编码了，目前只用git没问题
