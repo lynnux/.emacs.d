@@ -4903,7 +4903,8 @@ _q_uit
      ("*Backtrace*" :align t)
      ("*Messages*" :align t)
      ("*Messages*" :align t)
-     ("*format-all-errors*" :align t)))
+     ("*format-all-errors*" :align t))
+   )
   :config
   (defun is-shacle-popup-buffer (buf)
     (plist-get (shackle-match buf) :align))
