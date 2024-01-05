@@ -6227,10 +6227,12 @@ _q_uit
        (interactive)
        (if buffer-read-only
            (signal 'text-read-only nil)
-         (let ((inhibit-message t))
+         (let ((inhibit-message t)
+               (pos (point)))
            (if (use-region-p)
                (call-interactively 'elisp-autofmt-region)
-             (call-interactively 'elisp-autofmt-buffer)))
+             (call-interactively 'elisp-autofmt-buffer))
+           (goto-char pos))
          (message "elisp format done.")))))
   :config
   ;; 使用内置的use-package格式化会有问题，必须加把use-package加入到`load-path'
