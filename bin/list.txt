@@ -1,12 +1,12 @@
  ctags.exe
  emacs-win32-launcher.exe
- es.exe  (EverythingµÄÃüÁî½Ó¿Ú£¬»¹Ö§³ÖÖĞÎÄ!)
+ es.exe  (Everythingçš„å‘½ä»¤æ¥å£ï¼Œè¿˜æ”¯æŒä¸­æ–‡!)
  fd.exe
  pop_select.dll
  readtags.exe (ctags)
  rg.exe
  gtags.exe
  global.exe
-
-ctagsÀ´×ÔĞÂ°æ£¬°üº¬readtags£º
+ tidy.exe (html/xmlç­‰æ ¼å¼åŒ– https://github.com/htacg/tidy-html5)
+ctagsæ¥è‡ªæ–°ç‰ˆï¼ŒåŒ…å«readtagsï¼š
 https://github.com/universal-ctags/ctags-win32/releases

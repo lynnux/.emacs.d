@@ -25,13 +25,6 @@
 ;; (icomplete-mode 1);; 用M-x执行某个命令的时候，在输入的同时给出可选的命令名提示，跟swiper冲突
 
 ;; 不创建~和#文件
-(global-set-key
- [(meta f8)]
- (lambda ()
-   (interactive)
-   (unless (use-region-p)
-     (mark-page))
-   (call-interactively 'indent-region)))
 (setq default-major-mode 'text-mode) ; 默认text模式
 
 (setq gdb-non-stop-setting nil)
@@ -218,7 +211,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;;; m-o切换h/cpp文件
 (global-set-key (kbd "M-o") 'ff-get-other-file)
 (setq
- compilation-auto-jump-to-first-error t ; 自动跳到错误，这个在只有warning时相当烦！
+ compilation-auto-jump-to-first-error
+ t ; 自动跳到错误，这个在只有warning时相当烦！
  compilation-scroll-output t
  compilation-skip-threshold 2 ;; 编译错误默认跳过warning和info
  )
@@ -339,8 +333,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
   (delete-word (- arg)))
 (with-eval-after-load 'bind-key
   (bind-key* [remap kill-word] 'delete-word)
-  (bind-key* [?\M-h] 'delete-word-backward)
-  )
+  (bind-key* [?\M-h] 'delete-word-backward))
 
 (delete ".map" completion-ignored-extensions) ;; vertico补全会过滤一些后辍文件
 

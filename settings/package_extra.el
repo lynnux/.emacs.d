@@ -1614,12 +1614,7 @@ _c_: hide comment        _q_uit
   (cl-dolist
    (jc jump-commands)
    (advice-add jc :before #'backward-forward-push-mark-wrapper))
-  (advice-add 'push-mark :after #'backward-forward-after-push-mark)
-  (define-advice backward-forward-after-push-mark
-      (:around (orig-fn &rest args))
-    "poe管理的buffer不用记录，如果是help-mode，那么M-n/M-p就不正常了"
-    (unless (bound-and-true-p poe-popup-mode)
-      (apply orig-fn args))))
+  (advice-add 'push-mark :after #'backward-forward-after-push-mark))
 ;; 其它jump包
 ;; back-button global跟local是区分开的，这就很麻烦了
 ;; history可能会
@@ -3992,9 +3987,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
           (unless lspce-mode
             (lspce-mode 1)))))
        (when buffer-file-name
-         (add-hook 'post-command-hook #'maybe-connect 'append nil))))
-    ;; 开启eglot，需要它的format功能
-    (eglot-ensure))
+         (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
   :config
   ;; 不知道为什么lspce屏蔽了flex
   (with-eval-after-load 'hotfuzz
@@ -4092,11 +4085,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
   (define-key eglot-mode-map [(meta f8)] 'eglot-format)
   (define-advice eglot-format (:around (orig-fn &rest args) my)
-    (if (memq major-mode '(python-ts-mode python-mode))
-        (progn
-          ;; pylsp没有格式化功能，pip install black
-          (shell-command (concat "python -m black " (buffer-name)))
-          (revert-buffer))
+    (if (memq major-mode '(python-mode python-ts-mode))
+        (my-format-all)
       (apply orig-fn args)))
 
   (defun remove-cpp-imenu ()
@@ -4239,21 +4229,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (add-path-to-execute-path
      (expand-file-name c-sharp-server-path))))
 
-;; xml 这里https://github.com/redhat-developer/vscode-xml的下载https://download.jboss.org/jbosstools/vscode/stable/lemminx-binary/无需要java环境(好像是自动下载java环境)
-;; 主要是使用xml的格式化功能
-(defvar xml-server-path
-  (cond
-   ((file-exists-p "~/lemminx-win32.exe")
-    "~/lemminx-win32.exe")
-   (t
-    nil)))
-(when xml-server-path
-  (with-eval-after-load 'nxml-mode
-    (add-path-to-execute-path (expand-file-name "" "~")))
-  (with-eval-after-load 'eglot
-    (add-to-list
-     'eglot-server-programs '(nxml-mode . ("lemminx-win32")))))
-
 ;; 仅在view mode off时开启lsp，文件本身只读的(如tfs管理的)更不会开启lsp！
 (defvar-local lsp-inited nil)
 (add-hook
@@ -4276,8 +4251,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                     cmake-ts-mode))
                  (and lua-server-path (eq major-mode 'lua-mode))
                  (and c-sharp-server-path
-                      (memq major-mode '(csharp-mode csharp-ts-mode)))
-                 (and xml-server-path (eq major-mode 'nxml-mode)))
+                      (memq
+                       major-mode '(csharp-mode csharp-ts-mode))))
          (lsp-ensure))))))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
@@ -4650,6 +4625,8 @@ _q_uit
   (scroll-on-jump-advice-add embark-previous-symbol)
   (scroll-on-jump-advice-add my/backward-forward-previous-location)
   (scroll-on-jump-advice-add my/backward-forward-next-location)
+  (scroll-on-jump-advice-add diff-hl-next-hunk)
+  (scroll-on-jump-advice-add diff-hl-previous-hunk)
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
 
@@ -4905,18 +4882,13 @@ _q_uit
      ("\\*SQLite .*"
       :regexp t ;; 默认是普通字符串
       :same t) ;; sqlite-mode全屏
-     ("\\*gud-.*" :regexp t :other t :size 0.3)))
-  (unless (functionp 'poe-popup)
-    (setq shackle-rules
-          (append
-           '((compilation-mode
-              :noselect t
-              :align t
-              :inhibit-window-quit t)
-             ("*Help*" :align t :select t)
-             ("*Backtrace*" :align t)
-             ("*Messages*" :align t))
-           shackle-rules)))
+     ("\\*gud-.*" :regexp t :other t :size 0.3)
+     (compilation-mode :noselect t :align t :inhibit-window-quit t)
+     ("*Help*" :align t :select t)
+     ("*Backtrace*" :align t)
+     ("*Messages*" :align t)
+     ("*Messages*" :align t)
+     ("*format-all-errors*" :align t)))
   :config
   (defun is-shacle-popup-buffer (buf)
     (plist-get (shackle-match buf) :align))
@@ -6541,12 +6513,13 @@ _q_uit
     (interactive)
     ;; 鼠标滚动要更快，不然感觉慢
     (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      (pixel-scroll-precision-interpolate 70)))
+      ;; my-scroll-down-command测试好像有问题
+      (my-scroll-up-command -3)))
   (defun my-wheel-down ()
     (interactive)
     ;; 鼠标滚动要更快，不然感觉慢
     (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      (pixel-scroll-precision-interpolate -70)))
+      (my-scroll-up-command 3)))
   (bind-key* [wheel-up] 'my-wheel-up)
   (bind-key* [wheel-down] 'my-wheel-down)
   (defun my-scroll-up-command (&optional lines)
@@ -6565,6 +6538,51 @@ _q_uit
   (advice-add
    #'scroll-down-command
    :override #'my-scroll-down-command))
+
+(use-package format-all
+  :commands (format-all-region-or-buffer)
+  :init
+  (defun my-format-all ()
+    (interactive)
+    (if buffer-read-only
+        (signal 'text-read-only nil)
+      ;; 其它都用`format-all'
+      (call-interactively 'format-all-region-or-buffer)))
+  (global-set-key [(meta f8)] 'my-format-all)
+  ;; from https://github.com/purcell/inheritenv/blob/main/inheritenv.el
+  (defun inheritenv-apply (func &rest args)
+    (cl-letf* (((default-value 'process-environment)
+                process-environment)
+               ((default-value 'exec-path) exec-path))
+      (apply func args)))
+  (defmacro inheritenv (&rest body)
+    `(inheritenv-apply (lambda () ,@body)))
+  (provide 'inheritenv)
+  (provide 'language-id)
+  (defun language-id-buffer ()
+    ;; 在`format-all-default-formatters'找对应的字符串
+    (or (and (memq major-mode '(c++-mode c++-ts-mode)) "C++")
+        ;; xml格式化工具 https://github.com/htacg/tidy-html5
+        (and (memq major-mode '(nxml-mode)) "XML")
+        ;; python格式化工具 pip install black
+        (and (memq major-mode '(python-mode python-ts-mode)) "Python")
+        (and (memq major-mode '(rust-mode rust-ts-mode)) "Rust")))
+  :config
+  ;; 设置喜好的format后端
+  (setq-default format-all-formatters
+                '(("Python" black)
+                  ("C++" clang-format)
+                  ("XML" (html-tidy "-q --tidy-mark no -i 4 -xml"))))
+  (add-to-list
+   'process-coding-system-alist
+   '("[tT][iI][dD][yY]" . (utf-8 . utf-8)))
+  (add-to-list
+   'process-coding-system-alist
+   '("[bB][lL][aA][cC][kK]" . (utf-8 . utf-8)))
+  (add-to-list
+   'process-coding-system-alist
+   '("[rR][uU][sS][tT][fF][mM][tT]" . (utf-8 . utf-8))))
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
