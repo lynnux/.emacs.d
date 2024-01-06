@@ -3989,9 +3989,14 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (defun lsp-ensure ()
     "eglot抄过来改改"
     (unless (featurep 'lspce-module)
-      (module-load
-       (expand-file-name
-        "H:/prj/rust/lspce/target/release/lspce_module.dll"))
+      (ignore-errors
+        (module-load
+         (expand-file-name
+          "H:/prj/rust/lspce/target/release/lspce_module.dll")))
+      (ignore-errors
+        (module-load
+         (expand-file-name
+          "F:/prj/rust/lspce-master/target/release/lspce_module.dll")))
       (delay-require-libs
        "~/.emacs.d/packages/lsp/lspce-master" '(lspce)))
     (let ((buffer (current-buffer)))
