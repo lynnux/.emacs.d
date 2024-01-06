@@ -4017,7 +4017,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
   (assoc-delete-all "python" lspce-server-programs
                     (lambda (a b) (equal a b)))
-  (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
+  (add-to-list 'lspce-server-programs '("python" "pyright-langserver" "--stdio"))
   ;; 设置clangd参数
   (assoc-delete-all "C" lspce-server-programs
                     (lambda (a b) (equal a b)))
