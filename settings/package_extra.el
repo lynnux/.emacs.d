@@ -3985,6 +3985,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq
    lspce-send-changes-idle-time 0
    lspce-enable-logging nil
+   lspce-connect-server-timeout 5 ;; lspce的connect是同步的，server有问题会卡死emacs
    lspce-modes-enable-single-file-root '(python-mode python-ts-mode))
   (defun lsp-ensure ()
     "eglot抄过来改改"
@@ -4017,7 +4018,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
   (assoc-delete-all "python" lspce-server-programs
                     (lambda (a b) (equal a b)))
-  (add-to-list 'lspce-server-programs '("python" "pyright-langserver" "--stdio"))
+  (add-to-list
+   'lspce-server-programs '("python" "pyright-langserver" "--stdio"))
   ;; 设置clangd参数
   (assoc-delete-all "C" lspce-server-programs
                     (lambda (a b) (equal a b)))
