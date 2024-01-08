@@ -330,6 +330,7 @@ _q_uit
    dired-compress-file-default-suffix ".7z" ;; 大写Z对文件默认压缩后辍
    dired-do-revert-buffer t ;; 大写Z选中多个时是分别压缩，这点不如z
    dired-mouse-drag-files t ;; 没有作用
+   dired-clean-confirm-killing-deleted-buffers nil ;; 不访问是否kill已删除掉的文件的buffer
    )
   (put 'dired-find-alternate-file 'disabled nil) ;; 避免使用该函数时提示
   (global-set-key [remap dired] 'dired-jump) ;; 直接打开buffer所在目录，无须确认目录
