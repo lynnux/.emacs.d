@@ -4209,7 +4209,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
   ;; https://github.com/blahgeek/emacs-lsp-booster 
   ;; 这个是作为中间exe wrap lsp进程，加快处理速度，无缝跟eglot/lsp-mode集成！
-  (load "lsp/eglot-booster")
+  (load "lsp/eglot-booster") ;; https://gist.github.com/jdtsmith/d936801a4d7fd981bedf2e59dacd675e 
   (eglot-booster))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
