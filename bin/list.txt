@@ -8,5 +8,6 @@
  gtags.exe
  global.exe
  tidy.exe (html/xml等格式化 https://github.com/htacg/tidy-html5)
+ emacs-lsp-booster.exe (https://github.com/blahgeek/emacs-lsp-booster需要自己编译)
 ctags来自新版，包含readtags：
 https://github.com/universal-ctags/ctags-win32/releases

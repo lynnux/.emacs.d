@@ -3990,6 +3990,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://github.com/zbelial/lspce
 ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
 (use-package lspce
+  :disabled
   :defer t
   :init
   (setq
@@ -4204,7 +4205,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
        &key
        watchers)
     "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
-    (eglot-unregister-capability server method id)))
+    (eglot-unregister-capability server method id))
+
+  ;; https://github.com/blahgeek/emacs-lsp-booster 
+  ;; 这个是作为中间exe wrap lsp进程，加快处理速度，无缝跟eglot/lsp-mode集成！
+  (load "lsp/eglot-booster")
+  (eglot-booster))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save ()
