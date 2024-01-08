@@ -1139,7 +1139,8 @@ _c_: hide comment        _q_uit
         "*org-roam*"
         "*elfeed-entry*"
         "*elfeed-search*"
-        "*dashboard*"))
+        "*dashboard*"
+        "*vc-dir*"))
 (defun ep-tabbar-buffer-list ()
   (delq
    nil
