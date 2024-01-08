@@ -3380,7 +3380,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (modify-coding-system-alist
        'process "[cC][mM][dD][pP][rR][oO][xX][yY]" '(utf-8 . utf-8))
       ;; 检查是否含中文
-      (if (chinese-word-chinese-string-p (ad-get-arg 0))
+      (if (chinese-word-chinese-string-p (ad-get-argument args 0))
           (let ((xref-search-program-alist
                  (list
                   (cons
@@ -3903,7 +3903,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          cmdproxy-old-encoding)))
     ;; 中文
     (define-advice rg-build-command (:around (orig-fn &rest args) my)
-      (if (chinese-word-chinese-string-p (ad-get-arg 0))
+      (if (chinese-word-chinese-string-p (ad-get-argument args 0))
           (let ((rg-command-line-flags (list "--pre rgpre")))
             (apply orig-fn args))
         (apply orig-fn args)))))
@@ -3990,7 +3990,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://github.com/zbelial/lspce
 ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
 (use-package lspce
-  :disabled
   :defer t
   :init
   (setq
@@ -5342,7 +5341,7 @@ _q_uit
   :config
   (define-advice gud-sentinel (:after (&rest args) my)
     "自动关闭Debugger finished的gud buffer，from https://www.reddit.com/r/emacs/comments/ggs0em/autoclose_comint_buffers_on_exit_or_process_end/"
-    (let ((process (ad-get-arg 0)))
+    (let ((process (ad-get-argument args 0)))
       (unless (process-live-p process)
         (kill-buffer (process-buffer process))
         (delete-other-windows)
