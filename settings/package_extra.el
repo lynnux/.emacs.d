@@ -5704,6 +5704,12 @@ _q_uit
     (let ((force-search-variable t))
       (ggtags--xref-find-tags symbol 'definition)))
   (add-hook 'xref-backend-functions #'ggtags-reference-backend 99) ;; 非在原版后面，找不到就按global -srax查找
+  (defun ggtag-find-refercense (identifier)
+    "TODO: 或许可以添加到`xref-find-references'"
+    (interactive (list
+                  (xref--read-identifier "Find references of: ")))
+    (let ((xref-backend-functions '(ggtags-reference-backend)))
+      (xref--find-definitions identifier nil)))
 
   (defun ggtags-create (root)
     (interactive "DRoot directory: ")
@@ -5716,6 +5722,7 @@ _q_uit
     (ggtags-check-project)
     (async-shell-command "global -u"))
   :config
+  (fmakunbound 'ggtags-find-reference) ;; 删除，避免混淆上面的`ggtag-find-refercense'
   ;; 修改type使支持consult-xref preview
   (define-advice ggtags--xref-collect-tags
       (:around (orig-fn &rest args) my)
