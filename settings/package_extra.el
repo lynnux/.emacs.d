@@ -2876,7 +2876,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (use-package vc
   :defer t
   :init
-  (setq vc-log-show-limit 100) ;; 默认2000太多了
+  (setq
+   vc-log-show-limit 100 ;; 默认2000太多了
+   vc-git-diff-switches nil ;; 避免diff时显示为Binary files
+   )
   :config
   (define-advice vc-git-command (:around (orig-fn &rest args) my)
     "解决中文路径add问题，注意测试下commit时中文时是否乱码。TODO: 感觉办法不是太好，将就用"
