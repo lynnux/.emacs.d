@@ -4707,6 +4707,11 @@ _q_uit
     (add-hook 'after-save-hook 'diff-hl-after-save-hook-local nil t))
   (add-hook 'prog-mode-hook 'diff-hl-prog-mode-hook)
   :config
+  (define-advice diff-hl-diff-against-reference
+      (:around (orig-fn &rest args) my)
+    "`vc-git-diff-switches'必须设置为nil，不然diff会显示Binary files"
+    (let ((vc-git-diff-switches nil))
+      (apply orig-fn args)))
   (defhydra
    hydra-diff-hl
    ()
@@ -6549,6 +6554,7 @@ _q_uit
 
 ;; 丝滑效果实际就是`while-no-input'循环
 (use-package pixel-scroll
+  :disabled
   :defer 0.3
   :config
   (setq
