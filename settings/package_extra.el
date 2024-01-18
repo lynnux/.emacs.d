@@ -2288,6 +2288,17 @@ _c_: hide comment        _q_uit
             (apply orig-fun args))))
       (advice-add 'find-file :around 'find-file-auto)
       :config
+      (defun embark-store-select (&rest _)
+        "将F1 v/f选中项加入history 参考https://github.com/oantolin/embark/issues/452"
+        (when-let ((current
+                    (plist-get
+                     (car-safe (embark--targets))
+                     :orig-target)))
+          (when (memq
+                 embark--command
+                 '(describe-variable describe-function))
+            (add-to-history minibuffer-history-variable current))))
+      (advice-add 'embark-act :before #'embark-store-select)
       (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
       (define-key
        embark-file-map (kbd "C-x C-d")
