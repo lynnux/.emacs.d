@@ -3940,7 +3940,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (:around (orig-fn &rest args) my)
       "配合eglot实现idle timer更新"
       (let (timer
-            (flymake-no-changes-timeout 1.0))
+            (flymake-no-changes-timeout 3.0))
         (setq timer (apply orig-fn args))
         (when timer
           ;; timer的callback lambda无法改变`flymake-no-changes-timeout'，所以直接重写timer的callback，照抄就行
@@ -3994,6 +3994,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://github.com/zbelial/lspce
 ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
 (use-package lspce
+  :disabled
   :defer t
   :init
   (setq
@@ -4024,7 +4025,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             (lspce-mode 1)))))
        (when buffer-file-name
          (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
-  :config
+  :config (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster)
   ;; 不知道为什么lspce屏蔽了flex
   (with-eval-after-load 'hotfuzz
     (add-to-list
@@ -4181,23 +4182,24 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                (message "%S" (ad-get-argument args 0)))))
       (init-lsp-snippet-tempel)
       ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
-      ;; (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
-      ;; (advice-add
-      ;;  'eglot-completion-at-point
-      ;;  :around #'cape-wrap-noninterruptible)
+      (advice-add
+       'eglot-completion-at-point
+       :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+      (advice-add
+       'eglot-completion-at-point
+       :around #'cape-wrap-noninterruptible)
       (add-hook
        'eglot-managed-mode-hook
        (lambda ()
          ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
          (setq-local
           eldoc-documentation-strategy ; eglot has it's own strategy by default
-          'eldoc-documentation-compose-eagerly
-          completion-at-point-functions
-          (cl-nsubst
-           (cape-capf-noninterruptible
-            (cape-capf-buster
-             #'eglot-completion-at-point #'string-prefix-p))
-           'eglot-completion-at-point completion-at-point-functions))
+          'eldoc-documentation-compose-eagerly)
+         ;; (setq-local completion-at-point-functions (cl-nsubst
+         ;;                                            (cape-capf-noninterruptible
+         ;;                                             (cape-capf-buster
+         ;;                                              #'eglot-completion-at-point #'string-prefix-p))
+         ;;                                            'eglot-completion-at-point completion-at-point-functions))
          (remove-cpp-imenu)))))
 
   ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
@@ -4213,7 +4215,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; https://github.com/blahgeek/emacs-lsp-booster 
   ;; 这个是作为中间exe wrap lsp进程，加快处理速度，无缝跟eglot/lsp-mode集成！
   (load "lsp/eglot-booster") ;; https://gist.github.com/jdtsmith/d936801a4d7fd981bedf2e59dacd675e 
-  (eglot-booster))
+  (eglot-booster-mode 1))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save ()
@@ -4691,7 +4693,7 @@ _q_uit
       (cancel-timer diff-hl-update-timer))
     (setq diff-hl-update-timer
           (run-with-idle-timer
-           1.0 nil #'diff-hl-update-timer-function)))
+           2.0 nil #'diff-hl-update-timer-function)))
   (defun diff-hl-prog-mode-hook ()
     (unless (featurep 'diff-hl)
       (delay-require-libs
