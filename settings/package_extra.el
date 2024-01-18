@@ -4185,12 +4185,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                (message "%S" (ad-get-argument args 0)))))
       (init-lsp-snippet-tempel)
       ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
-      (advice-add
-       'eglot-completion-at-point
-       :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
-      (advice-add
-       'eglot-completion-at-point
-       :around #'cape-wrap-noninterruptible)
+      ;; (advice-add
+      ;;  'eglot-completion-at-point
+      ;;  :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+      ;; (advice-add
+      ;;  'eglot-completion-at-point
+      ;;  :around #'cape-wrap-noninterruptible)
       (add-hook
        'eglot-managed-mode-hook
        (lambda ()
@@ -4198,11 +4198,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (setq-local
           eldoc-documentation-strategy ; eglot has it's own strategy by default
           'eldoc-documentation-compose-eagerly)
-         ;; (setq-local completion-at-point-functions (cl-nsubst
-         ;;                                            (cape-capf-noninterruptible
-         ;;                                             (cape-capf-buster
-         ;;                                              #'eglot-completion-at-point #'string-prefix-p))
-         ;;                                            'eglot-completion-at-point completion-at-point-functions))
+         (setq-local completion-at-point-functions
+                     (cl-nsubst
+                      (cape-capf-noninterruptible
+                       (cape-capf-buster
+                        #'eglot-completion-at-point
+                        ;; #'string-prefix-p, 默认是equal
+                        (lambda (old new)
+                          ;; 实测old new是一样的，因此我们强制返回nil
+                          nil)))
+                      'eglot-completion-at-point
+                      completion-at-point-functions))
          (remove-cpp-imenu)))))
 
   ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
