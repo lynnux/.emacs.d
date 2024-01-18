@@ -4287,6 +4287,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 (add-hook
  'view-mode-hook
  (lambda ()
+   ;; 编辑`*scratch*'时自动转为`emacs-lisp-mode'
+   (when (and (not view-mode)
+              (equal (buffer-name) "*scratch*")
+              (eq major-mode 'fundamental-mode))
+     (emacs-lisp-mode))
    (unless lsp-inited
      (when (not buffer-read-only)
        (setq-local lsp-inited t)
