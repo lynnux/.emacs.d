@@ -294,10 +294,13 @@
            20
            0
            0)))))
-  ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
-  (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10)
-  (add-hook 'pre-command-hook 'x-hide-tip) ;; 不隐藏的话，就一直显示不太好
-  (add-hook 'focus-out-hook 'x-hide-tip))
+  ;; 目前就仅在dape调试时用吧
+  (with-eval-after-load 'dape
+    (define-advice dape--add-eldoc-hook (:after (&rest args) my2)
+      ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
+      (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10 t)
+      (add-hook 'pre-command-hook 'x-hide-tip nil t) ;; 不隐藏的话，就一直显示不太好
+      (add-hook 'focus-out-hook 'x-hide-tip nil t))))
 
 (autoload 'defhydra "hydra" nil t)
 
@@ -4214,7 +4217,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
   ;; https://github.com/blahgeek/emacs-lsp-booster 
   ;; 这个是作为中间exe wrap lsp进程，加快处理速度，无缝跟eglot/lsp-mode集成！
-  (load "lsp/eglot-booster") ;; https://gist.github.com/jdtsmith/d936801a4d7fd981bedf2e59dacd675e 
+  (load "lsp/eglot-booster")
   (eglot-booster-mode 1))
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
