@@ -6724,7 +6724,8 @@ _q_uit
     ;; 'doom-tomorrow-night
     ;; 'doom-one ;; 有点太浅了
     ;; 'spacemacs-dark
-    'doom-monokai-pro)))
+    'doom-monokai-pro ;; monokai这个系列对比度都还行
+    )))
 
 ;; (load-theme 'modus-vivendi t)
 ;; (load-theme 'dracula t)
@@ -6754,21 +6755,31 @@ _q_uit
    (t))
 
   (when (string-prefix-p "doom" (symbol-name th))
-    ;; doom没有处理hi-lock的颜色
+    ;; doom没有处理hi-lock的颜色，`doom-themes--colors'变量含doom内置color
     (custom-set-faces
-     '(hi-yellow ((t (:foreground "black" :background "yellow"))))
-     '(hi-pink ((t (:foreground "black" :background "HotPink"))))
-     '(hi-green ((t (:foreground "black" :background "green"))))
-     '(hi-blue ((t (:foreground "black" :background "DodgerBlue"))))
-     '(hi-salmon
-       ((t (:foreground "black" :background "light salmon"))))
-     '(hi-aquamarine
-       ((t (:foreground "black" :background "aquamarine"))))
-     '(hi-black-b ((t (:foreground "white" :background "black"))))
-     '(hi-blue-b ((t (:foreground "DodgerBlue" :background "black"))))
-     '(hi-red-b ((t (:foreground "red" :background "black"))))
-     '(hi-green-b ((t (:foreground "green" :background "black"))))
-     '(hi-black-hb ((t (:foreground "orange" :background "black"))))))
+     `(hi-yellow
+       ((t (:foreground "black" :background ,(doom-color 'yellow)))))
+     `(hi-pink
+       ((t (:foreground "black" :background ,(doom-color 'magenta)))))
+     `(hi-green
+       ((t (:foreground "black" :background ,(doom-color 'green)))))
+     `(hi-blue
+       ((t (:foreground "black" :background ,(doom-color 'blue)))))
+     `(hi-salmon
+       ((t (:foreground "black" :background ,(doom-color 'orange)))))
+     `(hi-aquamarine
+       ((t (:foreground "black" :background ,(doom-color 'violet)))))
+     `(hi-black-b
+       ((t (:foreground "white" :background ,(doom-color 'base6)))))
+     `(hi-blue-b
+       ((t (:foreground "white" :background ,(doom-color 'blue)))))
+     `(hi-red-b
+       ((t (:foreground "white" :background ,(doom-color 'red)))))
+     `(hi-green-b
+       ((t (:foreground "white" :background ,(doom-color 'green)))))
+     `(hi-black-hb
+       ((t
+         (:foreground "white" :background ,(doom-color 'orange)))))))
   (when (not (string-prefix-p "doom" (symbol-name th)))
     (set-face-attribute 'doom-themes-visual-bell nil
                         :background "#ff6c6b")))
