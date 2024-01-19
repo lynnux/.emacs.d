@@ -5434,6 +5434,15 @@ _q_uit
     "只能在after开启eldoc-mode"
     (unless (bound-and-true-p eldoc-mode)
       (eldoc-mode 1)))
+  (setq dape-autoport 1890)
+  (define-advice dape-config-autoport
+      (:around (orig-fn &rest args) my)
+    "autoport不知道是emacs还是哪里出问题了，之前都没问题"
+    (cl-letf (((symbol-function #'process-contact)
+               (lambda (&rest _)
+                 (list "localhost" dape-autoport)
+                 (setq dape-autoport (+ 1 dape-autoport)))))
+      (apply orig-fn args)))
 
   ;; 下载https://github.com/vadimcn/codelldb/releases 文档https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
   ;; 测试codelldb命令行程序不能弹窗口，输出也不知道去了哪里。还有就是很慢。
