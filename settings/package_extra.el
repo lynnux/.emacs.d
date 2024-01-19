@@ -190,8 +190,6 @@
         (delete
          "~/.emacs.d/packages/minibuffer/compat-main" load-path)))
 
-(defvar use-my-face nil)
-
 ;; 消除mode line上的minor提示字符
 (use-package diminish
   :commands (diminish))
@@ -1291,8 +1289,6 @@ _c_: hide comment        _q_uit
      'multiple-cursors-mode-disabled-hook
      (lambda () (idle-highlight--time-callback-or-disable))))
   (global-idle-highlight-mode)
-  ;; (set-face-attribute 'idle-highlight nil :inverse-video t) ;; 这个是反色效果，不同的位置颜色可能不同
-  (custom-set-faces '(idle-highlight ((t (:inherit isearch)))))
 
   ;; 让支持region选中高亮
   (defun should-highlight-regin ()
@@ -1335,13 +1331,7 @@ _c_: hide comment        _q_uit
 (use-package hl-line
   :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
   :defer 0.6
-  :config
-  (global-hl-line-mode t)
-  (when use-my-face
-    (if (display-graphic-p)
-        (set-face-attribute 'hl-line nil :background "#2B2B2B") ;; zenburn选中的默认颜色
-      ;; (set-face-attribute 'hl-line nil :background "#E0CF9F" :foreground "Black")
-      )))
+  :config (global-hl-line-mode t))
 
 (defun esy/file-capf ()
   "File completion at point function."
@@ -2016,18 +2006,6 @@ _c_: hide comment        _q_uit
     (define-key vertico-map (kbd "M-o") 'vertico-next-group) ;; 下个组,C-o给avy了
     (define-key vertico-map (kbd "M-O") 'vertico-previous-group) ;; 上个组
 
-    ;; 当前行加下划线
-    ;; (custom-set-faces
-    ;;  '(vertico-current
-    ;;    ((t
-    ;;      (:inherit
-    ;;       unspecified
-    ;;       :underline t
-    ;;       :background nil
-    ;;       :distant-foreground nil
-    ;;       :foreground nil))))
-    ;;  '(consult-preview-line ((t (:underline t :background nil)))))
-
     ;; 只会恢复关键词
     ;; consult-line需要配合(setq consult-line-start-from-top nil)，这样首行就是当前位置
     ;; consult-ripgrep暂时没有好方法
@@ -2685,8 +2663,7 @@ symbol under cursor"
      :keymap my-consult-ripgrep-map)
 
     ;; 想把running改为...貌似不好做到，换个颜色吧
-    (custom-set-faces
-     '(consult-async-running ((t (:inherit mode-line-inactive)))))
+
 
     (defun consult-delete-default-contents ()
       (remove-hook 'pre-command-hook 'consult-delete-default-contents)
@@ -4015,7 +3992,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://github.com/zbelial/lspce
 ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
 (use-package lspce
-  :disabled
   :defer t
   :init
   (setq
@@ -4029,7 +4005,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (ignore-errors
         (module-load
          (expand-file-name
-          "H:/prj/rust/lspce/target/release/lspce_module.dll")))
+          "H:/prj/rust/lspce-master/target/release/lspce_module.dll")))
       (ignore-errors
         (module-load
          (expand-file-name
@@ -5683,8 +5659,6 @@ _q_uit
   (advice-remove 'require 'dashboard-load-bypass-ffap)
   (use-package ffap
     :commands (ffap-guesser))
-  (custom-set-faces
-   '(dashboard-items-face ((t (:weight unspecified)))))
   ;; 用god-mode的快捷键
   (define-key
    dashboard-mode-map (kbd "C-r") 'dashboard-jump-to-recents)
@@ -6696,7 +6670,6 @@ _q_uit
 ;; doom搜集themes系列
 ;; https://github.com/doomemacs/themes
 (use-package doom-themes
-  :disabled
   :if (display-graphic-p)
   :load-path "~/.emacs.d/themes/themes-master"
   :config
@@ -6743,24 +6716,18 @@ _q_uit
   (random-load-doom-theme
    (list
     ;; 'doom-horizon
-    'modus-vivendi
+    ;; 'modus-vivendi
     ;; 'modus-vivendi-tritanopia
     ;; 'doom-snazzy
     ;; 'doom-city-lights
     ;; 'doom-material
     ;; 'doom-tomorrow-night
-    ;; 'doom-one
+    ;; 'doom-one ;; 有点太浅了
     ;; 'spacemacs-dark
-    )))
+    'doom-monokai-pro)))
 
-(when nil
-  (load-file "~/.emacs.d/themes/dracula-theme.el")
-  (setq dracula-height-title-1 1.0)
-  (setq dracula-height-title-2 1.0)
-  (setq dracula-height-title-3 1.0)
-  (setq dracula-height-doc-title 1.0)
-  (load-theme 'dracula t))
-(load-theme 'modus-vivendi t)
+;; (load-theme 'modus-vivendi t)
+;; (load-theme 'dracula t)
 
 ;; 各种theme修补
 (let ((th (car custom-enabled-themes)))
@@ -6784,13 +6751,8 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
-   ((or (eq th 'modus-vivendi)
-        (eq th 'modus-vivendi-tritanopia)
-        (eq th 'dracula))
-    (custom-set-faces
-     '(consult-file ((t (:foreground unspecified))))
-     '(consult-bookmark ((t (:foreground unspecified))))))
    (t))
+
   (when (string-prefix-p "doom" (symbol-name th))
     ;; doom没有处理hi-lock的颜色
     (custom-set-faces
@@ -6812,6 +6774,24 @@ _q_uit
                         :background "#ff6c6b")))
 
 ;; 所有theme共用
-;; paren加下划线，参考的spacemacs
-(set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
-(custom-set-faces '(header-line ((t (:weight bold)))))
+(set-face-attribute 'show-paren-match nil :underline t :weight 'bold) ;; paren加下划线，参考的spacemacs
+(custom-set-faces
+ '(default ((t (:background "#000000")))) ;; 背景色统一用黑色
+ '(header-line ((t (:weight bold))))
+ '(consult-file ((t (:foreground unspecified))))
+ '(consult-bookmark ((t (:foreground unspecified))))
+ '(consult-async-running ((t (:inherit mode-line-inactive))))
+ '(dashboard-items-face ((t (:weight unspecified)))))
+;; (set-face-attribute 'hl-line nil :background "#2B2B2B")
+;; 当前行加下划线
+;; (custom-set-faces
+;;  '(vertico-current
+;;    ((t
+;;      (:inherit
+;;       unspecified
+;;       :underline t
+;;       :background nil
+;;       :distant-foreground nil
+;;       :foreground nil))))
+;;  '(consult-preview-line ((t (:underline t :background nil)))))
+;; (set-face-attribute 'idle-highlight nil :inverse-video t) ;; 这个是反色效果，不同的位置颜色可能不同
