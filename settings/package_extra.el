@@ -252,13 +252,14 @@
 
   ;; 使用tooltip显示eldoc，`x-show-tip'是原生c实现的，不卡
   (defun get-eldoc-msg ()
-    (when eldoc--doc-buffer
-      (with-current-buffer eldoc--doc-buffer
-        (buffer-substring
-         (goto-char (point-min))
-         (progn
-           (end-of-visible-line)
-           (point))))))
+    (or eldoc-last-message
+        (when eldoc--doc-buffer
+          (with-current-buffer eldoc--doc-buffer
+            (buffer-substring
+             (goto-char (point-min))
+             (progn
+               (end-of-visible-line)
+               (point)))))))
   (defun eldoc-tooltip-display (docs _interactive)
     (when (and
            ;; 可能在focus-out后才会调用到，这里检查是否已经focus-out了
@@ -274,7 +275,7 @@
                   (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
                 (cdr p)))
              (text (get-eldoc-msg)))
-        (when (and p (not (equal text "")))
+        (when (and p text (not (equal text "")))
           (setq y (+ y h))
           ;; (add-face-text-property 0 (length text) 'tooltip t text)
           (x-show-tip
@@ -287,9 +288,9 @@
              (left . ,x) ;; 设置left后会忽略`x-show-tip'最后的DX参数
              (top . ,y) ;; 设置top后会忽略`x-show-tip'最后的DY参数
              (foreground-color
-              . ,(face-attribute 'default :foreground))
+              . ,(face-attribute 'tooltip :foreground))
              (background-color
-              . ,(face-attribute 'default :background))
+              . ,(face-attribute 'tooltip :background))
              ;; (border-color . "#ffff00")
              )
            20
