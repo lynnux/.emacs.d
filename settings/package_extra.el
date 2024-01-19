@@ -262,9 +262,12 @@
            (end-of-visible-line)
            (point))))))
   (defun eldoc-tooltip-display (docs _interactive)
-    (when
-        ;; 可能在focus-out后才会调用到，这里检查是否已经focus-out了
-        (frame-parameter nil 'last-focus-update)
+    (when (and
+           ;; 可能在focus-out后才会调用到，这里检查是否已经focus-out了
+           (frame-parameter nil 'last-focus-update)
+           (or eldoc-always-show-tooltip ;; dape里总是启用
+               (not view-mode) ;; 只在编辑时启用
+               ))
       (let* ((p (window-absolute-pixel-position))
              (x (car p))
              (h (line-pixel-height))
@@ -294,13 +297,16 @@
            20
            0
            0)))))
+  (defvar-local eldoc-always-show-tooltip nil
+    "")
+  (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10)
+  (add-hook 'pre-command-hook 'x-hide-tip nil) ;; 不隐藏的话，就一直显示不太好
+  (add-hook 'focus-out-hook 'x-hide-tip nil)
   ;; 目前就仅在dape调试时用吧
   (with-eval-after-load 'dape
     (define-advice dape--add-eldoc-hook (:after (&rest args) my2)
       ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
-      (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10 t)
-      (add-hook 'pre-command-hook 'x-hide-tip nil t) ;; 不隐藏的话，就一直显示不太好
-      (add-hook 'focus-out-hook 'x-hide-tip nil t))))
+      (setq-local eldoc-always-show-tooltip t))))
 
 (autoload 'defhydra "hydra" nil t)
 
