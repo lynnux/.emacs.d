@@ -2296,7 +2296,8 @@ _c_: hide comment        _q_uit
                      :orig-target)))
           (when (memq
                  embark--command
-                 '(describe-variable describe-function))
+                 '(describe-variable
+                   describe-function execute-extended-command))
             (add-to-history minibuffer-history-variable current))))
       (advice-add 'embark-act :before #'embark-store-select)
       (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
