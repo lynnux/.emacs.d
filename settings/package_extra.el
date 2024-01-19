@@ -6665,7 +6665,10 @@ _q_uit
 ;; https://github.com/doomemacs/themes
 (use-package doom-themes
   :if (display-graphic-p)
-  :load-path "~/.emacs.d/themes/themes-master"
+  :defer t
+  :init
+  (delay-require-libs
+   "~/.emacs.d/themes/themes-master" '(doom-themes))
   :config
   (setq
    doom-themes-enable-bold nil
@@ -6704,7 +6707,8 @@ _q_uit
       (load-theme th t)
 
       ;; after load
-      ;; (doom-themes-org-config)
+      ;;   (with-eval-after-load 'org-mode
+      ;;     (doom-themes-org-config))      
       ))
   ;; (random-load-doom-theme (mapcar 'get-theme (directory-files "~/.emacs.d/themes/themes-master/themes" t "^[a-zA-Z0-9].*.el$")))
   (random-load-doom-theme
