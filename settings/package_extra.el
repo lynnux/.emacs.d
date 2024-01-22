@@ -6689,8 +6689,7 @@ _q_uit
              switch-to-buffer
              scroll-on-jump-advice--wrapper
              consult--jump
-             ;; find-file-existing
-             ))
+             recenter))
 
     (advice-add cmd :after #'my-pulse-momentary-line)))
 
