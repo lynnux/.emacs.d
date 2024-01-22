@@ -3312,14 +3312,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                (define-key
                 easy-kill-base-map (number-to-string i) nil))
               (setq my-easy-kill-map (easy-kill-map))))
-          ;; 有poe窗口时不弹出
-          (if (and (functionp 'poe-toggle-latest)
-                   (boundp 'poe-open-popup-alist))
-              (unless poe-open-popup-alist
-                (which-key--show-keymap
-                 "keymap" my-easy-kill-map nil nil 'no-paging))
-            (which-key--show-keymap
-             "keymap" my-easy-kill-map nil nil 'no-paging)))
+          (which-key--show-keymap
+           "keymap" my-easy-kill-map nil nil 'no-paging))
         (define-advice set-transient-map (:before (&rest args) my)
           (let ((map (ad-get-argument args 0)))
             ;; 判断是否是easy-kill的keymap
@@ -4943,6 +4937,7 @@ _q_uit
      ("\\*gud-.*" :regexp t :other t :size 0.3)
      (compilation-mode :noselect t :align t :inhibit-window-quit t)
      ("*Help*" :align t :select t)
+     ("\\*vc-git : .*" :align t :regexp t)
      ("*Backtrace*" :align t)
      ("*Messages*" :align t)
      ("*Messages*" :align t)
