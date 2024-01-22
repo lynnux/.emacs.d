@@ -5103,6 +5103,8 @@ _q_uit
   :init
   (setq blink-matching-paren nil) ;; 不然blink-matching-open不显示
   :config
+  ;; 很多只读buffer都是继承自`special-mode'
+  (define-key special-mode-map (kbd "w") #'scroll-down-command)
   ;; blink-matching-paren为nil的话顺便把这个hook给去掉
   (remove-hook
    'post-self-insert-hook #'blink-paren-post-self-insert-function)
