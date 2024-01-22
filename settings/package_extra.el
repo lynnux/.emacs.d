@@ -632,6 +632,12 @@ _q_uit
   (define-key help-mode-map (kbd "M-n") 'help-go-forward)
   (define-key help-mode-map (kbd "DEL") 'help-go-back))
 
+(use-package minibuffer
+  :defer t
+  :config
+  ;; 屏蔽鼠标点击最下一行显示message buffer
+  (define-key minibuffer-inactive-mode-map (kbd "<mouse-1>") nil))
+
 ;; 保存cursor位置
 (use-package saveplace
   :if (bound-and-true-p enable-feature-builtin)
@@ -6685,7 +6691,7 @@ _q_uit
              consult--jump
              ;; find-file-existing
              ))
-    
+
     (advice-add cmd :after #'my-pulse-momentary-line)))
 
 ;; 好的theme特点:
