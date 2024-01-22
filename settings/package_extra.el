@@ -6692,18 +6692,17 @@ _q_uit
              scroll-on-jump-advice--wrapper
              consult--jump
              recenter))
-    (defvar disable-beacon nil
-      "")
-    (with-eval-after-load 'consult
-      ;; consult preview调用了recenter，这里屏蔽它的beacon效果
-      (define-advice consult--jump-preview
-          (:around (orig-fn &rest args) my)
-        (let ((org-ret (apply orig-fn args)))
-          (lambda (action cand)
-            (let ((disable-beacon t))
-              (funcall org-ret action cand))))))
-
-    (advice-add cmd :after #'my-pulse-momentary-line)))
+    (advice-add cmd :after #'my-pulse-momentary-line))
+  (defvar disable-beacon nil
+    "")
+  (with-eval-after-load 'consult
+    ;; consult preview调用了recenter，这里屏蔽它的beacon效果
+    (define-advice consult--jump-preview
+        (:around (orig-fn &rest args) my)
+      (let ((org-ret (apply orig-fn args)))
+        (lambda (action cand)
+          (let ((disable-beacon t))
+            (funcall org-ret action cand)))))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
