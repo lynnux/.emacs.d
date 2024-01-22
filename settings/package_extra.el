@@ -4378,22 +4378,23 @@ _q_uit
     (cl-dolist
      (key elec-pair-chars)
      (let* ((key_str (char-to-string key))
-            (key_symbol
-             (make-symbol
-              (format "my-elec-pair-%s" (char-to-string key)))))
-       (fset key_symbol
-             (lambda ()
-               (interactive)
-               (let ((this-command 'self-insert-command)
-                     (last-command-event key))
-                 (self-insert-command 1 key)
-                 (unless (minibufferp)
-                   (ignore-errors
-                     (electric-pair-post-self-insert-function)
-                     (when my-auto-newline
-                       (when (eq key ?\{)
-                         (call-interactively 'new-line-dwim))))))))
-       (global-set-key key_str key_symbol)))
+            (key-name
+             (format "my-elec-pair-%s" (char-to-string key))))
+       (eval
+        `(defun ,(intern key-name) ()
+           (interactive)
+           (let ((this-command 'self-insert-command)
+                 (last-command-event ,key))
+             ;; (self-insert-command 1 ,key)
+             (call-interactively 'self-insert-command)
+             (unless (minibufferp)
+               (ignore-errors
+                 (electric-pair-post-self-insert-function)
+                 (when my-auto-newline
+                   (when (eq ,key ?\{)
+                     (call-interactively 'new-line-dwim))))))))
+       (eval `(global-set-key ,key_str ',(intern key-name)))))
+
     (with-eval-after-load 'corfu
       (add-to-list 'corfu-auto-commands "my-elec-pair.*")))
 
