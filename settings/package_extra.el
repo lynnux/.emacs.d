@@ -6832,7 +6832,7 @@ _q_uit
                         :background "#ff6c6b")))
 
 ;; 所有theme共用
-(set-face-attribute 'show-paren-match nil :underline t :weight 'bold) ;; paren加下划线，参考的spacemacs
+(set-face-attribute 'show-paren-match nil :inverse-video t) ;; 反色
 (custom-set-faces
  '(default ((t (:background "#000000")))) ;; 背景色统一用黑色
  '(header-line ((t (:weight bold))))
