@@ -6668,7 +6668,9 @@ _q_uit
   (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
   (defun my-pulse-momentary-line (&rest _)
     (ignore-errors
-      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
+      (when (and (not disable-beacon)
+                 (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
+                 )
         (let*
             ((p (window-absolute-pixel-position))
              (x (car p))
@@ -6690,6 +6692,16 @@ _q_uit
              scroll-on-jump-advice--wrapper
              consult--jump
              recenter))
+    (defvar disable-beacon nil
+      "")
+    (with-eval-after-load 'consult
+      ;; consult preview调用了recenter，这里屏蔽它的beacon效果
+      (define-advice consult--jump-preview
+          (:around (orig-fn &rest args) my)
+        (let ((org-ret (apply orig-fn args)))
+          (lambda (action cand)
+            (let ((disable-beacon t))
+              (funcall org-ret action cand))))))
 
     (advice-add cmd :after #'my-pulse-momentary-line)))
 
