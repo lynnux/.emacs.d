@@ -6655,6 +6655,36 @@ _q_uit
    'process-coding-system-alist
    '("[rR][uU][sS][tT][fF][mM][tT]" . (utf-8 . utf-8))))
 
+;; beacon效果，不过我们只需要某些命令advice就够用了
+(when (fboundp 'pop-select/beacon-set-parameters)
+  (setq beacon-blink-delay 0.01)
+  (setq beacon-blink-duration 0.2)
+  (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
+  (defun my-pulse-momentary-line (&rest _)
+    (ignore-errors
+      (when (frame-visible-p (window-frame)) ;; 可以阻止最小化时弹窗
+        (let*
+            ((p (window-absolute-pixel-position))
+             (x (car p))
+             (h (line-pixel-height))
+             (y
+              (if header-line-format
+                  (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+                (cdr p))))
+          (when p
+            (pop-select/beacon-blink
+             x y
+             (truncate (* beacon-blink-duration 1000)) ; timer
+             (truncate (* beacon-blink-delay 1000)) ; delay
+             ))))))
+  (dolist (cmd
+           '(recenter-top-bottom
+             other-window
+             switch-to-buffer
+             scroll-on-jump-advice--wrapper))
+    (with-eval-after-load 'consult
+      (add-to-list 'consult-after-jump-hook 'my-pulse-momentary-line))
+    (advice-add cmd :after #'my-pulse-momentary-line)))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
