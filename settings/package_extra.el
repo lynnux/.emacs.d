@@ -6681,9 +6681,11 @@ _q_uit
            '(recenter-top-bottom
              other-window
              switch-to-buffer
-             scroll-on-jump-advice--wrapper))
-    (with-eval-after-load 'consult
-      (add-to-list 'consult-after-jump-hook 'my-pulse-momentary-line))
+             scroll-on-jump-advice--wrapper
+             consult--jump
+             ;; find-file-existing
+             ))
+    
     (advice-add cmd :after #'my-pulse-momentary-line)))
 
 ;; 好的theme特点:
