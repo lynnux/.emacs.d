@@ -4799,6 +4799,9 @@ _q_uit
 
 (use-package org
   :defer t
+  :init
+  (setq org-startup-indented t ; 开启`org-indent'
+        )
   :config
   ;; org的C-c C-o居然不走find-file
   (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
@@ -4924,8 +4927,21 @@ _q_uit
    olivetti-body-width 200
    olivetti-lighter nil)
   (autoload 'olivetti-mode "org/olivetti" nil t)
-  :hook (org-mode . olivetti-mode)
-  :config)
+  :hook ((Info-mode org-mode) . olivetti-mode))
+
+;; 再也不用手动输入tab了
+(use-package org-indent
+  :diminish
+  :defer t)
+
+;; 大神维护的bug少，其它美化多少有点问题或者性能问题
+(use-package org-modern
+  :defer t
+  :custom
+  (org-modern-star '("▶" "▼" "●" "○" "✳")) ;; 数量不够时，theme会用不同corlor来区分
+  (org-modern-list '((?- . "▬"))) ;; TODO: +号
+  :init (autoload 'org-modern-mode "org/org-modern" nil t)
+  :hook (org-mode . org-modern-mode))
 
 (use-package eww
   :defer t
