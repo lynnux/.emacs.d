@@ -889,8 +889,13 @@ _c_: hide comment        _q_uit
 (use-package display-line-numbers
   :if (bound-and-true-p enable-feature-builtin)
   :commands (display-line-numbers-mode)
-  :init (setq display-line-numbers-width-start 3)
-  :hook (find-file . display-line-numbers-mode))
+  :init
+  (setq display-line-numbers-width-start 3)
+  (defun enable-display-line-numbers-mode ()
+    ;; org会开启`olivetti'，为了美观不需要显示行号
+    (unless (eq major-mode 'org-mode)
+      (display-line-numbers-mode)))
+  :hook (find-file . enable-display-line-numbers-mode))
 
 ;;; better C-A C-E
 (use-package mwim
@@ -4798,7 +4803,22 @@ _q_uit
   ;; org的C-c C-o居然不走find-file
   (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
   (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
-  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default)))
+  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default))
+
+  ;; 给heaedr line添加click keymap，参考 
+  ;; https://github.com/sabof/org-bullets/blob/master/org-bullets.el
+  ;; https://kitchingroup.cheme.cmu.edu/blog/2017/06/10/Adding-keymaps-to-src-blocks-via-org-font-lock-hook/
+  (defvar org-level-click-map '(keymap (mouse-1 . org-cycle))
+    "")
+  (defun org-add-keymap-to-level (limit)
+    (let ((case-fold-search t))
+      (while (re-search-forward org-heading-regexp limit t)
+        (put-text-property
+         (match-beginning 0)
+         (match-end 0)
+         'keymap
+         org-level-click-map))))
+  (add-hook 'org-font-lock-hook #'org-add-keymap-to-level))
 
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
@@ -4896,6 +4916,16 @@ _q_uit
   (define-advice org-roam-capture- (:around (orig-fn &rest args) my)
     (let ((default-directory org-roam-directory))
       (call-interactively 'find-file))))
+
+(use-package olivetti
+  :defer t
+  :init
+  (setq
+   olivetti-body-width 200
+   olivetti-lighter nil)
+  (autoload 'olivetti-mode "org/olivetti" nil t)
+  :hook (org-mode . olivetti-mode)
+  :config)
 
 (use-package eww
   :defer t
@@ -6838,7 +6868,7 @@ _q_uit
                         :background "#ff6c6b")))
 
 ;; 所有theme共用
-(set-face-attribute 'show-paren-match nil :inverse-video t) ;; 反色
+(set-face-attribute 'show-paren-match nil :underline t :weight 'bold)
 (custom-set-faces
  '(default ((t (:background "#000000")))) ;; 背景色统一用黑色
  '(header-line ((t (:weight bold))))
