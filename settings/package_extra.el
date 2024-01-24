@@ -6852,6 +6852,9 @@ _q_uit
     ;;                     :background "#4C7073"
     ;;                     :foreground "Black"
     )
+   ((eq th 'doom-monokai-pro)
+    (custom-set-faces
+     '(vertico-group-title ((t (:foreground "#939293"))))))
    (t))
 
   (when (string-prefix-p "doom" (symbol-name th))
