@@ -2993,7 +2993,11 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :config
   ;; 在checkin时显示diff
   (load "magit/agitate")
-  (agitate-log-edit-informative-mode))
+  (agitate-log-edit-informative-mode)
+  (define-advice agitate--log-edit-informative-kill-buffer
+      (:after (&rest args) my)
+    (when-let ((buf (get-buffer "*vc-diff*")))
+      (kill-buffer buf))))
 
 ;; 让文件加载过程中vc失效，从而加快文件加载
 (use-package vc-defer
