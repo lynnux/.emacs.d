@@ -6707,7 +6707,7 @@ _q_uit
 (when (fboundp 'pop-select/beacon-set-parameters)
   (setq beacon-blink-delay 0.01)
   (setq beacon-blink-duration 0.1)
-  (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
+  (pop-select/beacon-set-parameters 900 20 #x51 #xaf #xef 50)
   (defun my-pulse-momentary-line (&rest _)
     (ignore-errors
       (when (and (not disable-beacon)
