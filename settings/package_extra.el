@@ -942,7 +942,8 @@ _c_: hide comment        _q_uit
       project-compile
       quickrun
       save-buffers-kill-terminal
-      volatile-kill-buffer))
+      volatile-kill-buffer
+      vc-diff))
   ;; 调用后立即执行的。eglot只有保存后才会更新code actions
   (defvar super-save-triggers-after '(eglot-code-actions))
   (defun super-save-command-advice (&rest _args)
@@ -2883,6 +2884,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq
    vc-log-show-limit 100 ;; 默认2000太多了
    vc-git-diff-switches nil ;; 避免diff时显示为Binary files
+   vc-find-revision-no-save t ;; 查看revision时不保存临时文件
    )
   :config
   (define-advice vc-git-command (:around (orig-fn &rest args) my)
@@ -2956,6 +2958,28 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      (lambda ()
        (setq-local log-view-expanded-log-entry-function
                    'log-view-show-diff)))))
+(use-package diff-mode
+  :defer t
+  :config
+  (define-advice diff-goto-source (:around (orig-fn &rest args) my)
+    "实现打开对应的revision文件"
+    (let ((rev1 (car-safe diff-vc-revisions))
+          (rev2 (cdr-safe diff-vc-revisions))
+          rev-at-point)
+      (if (and diff-vc-backend rev1 rev2)
+          (progn
+            (when (memq
+                   'diff-added
+                   (idle-highlight--faces-at-point (point)))
+              (setq rev-at-point rev1))
+            (when (memq
+                   'diff-removed
+                   (idle-highlight--faces-at-point (point)))
+              (setq rev-at-point rev2))
+            (message "rev:%S" rev-at-point))
+        ;; revision为nil调用原函数
+        (apply orig-fn args)))))
+
 
 ;; 给commit添加conventionalcommits关键字 https://www.conventionalcommits.org/
 (defun git-conventionalcommits-capf (&optional interactive)
@@ -6860,6 +6884,14 @@ _q_uit
     (custom-set-faces
      '(vertico-group-title ((t (:foreground "#939293"))))))
    (t))
+
+  ;; fix doom的bug，`(require 'cus-edit)'触发
+  (custom-push-theme 'theme-face 'custom-button th 'reset)
+  (custom-push-theme 'theme-face 'custom-button-unraised th 'reset)
+  (custom-push-theme
+   'theme-face 'custom-button-pressed-unraised th 'reset)
+  (custom-push-theme 'theme-face 'custom-button-pressed th 'reset)
+  (custom-push-theme 'theme-face 'custom-button-mouse th 'reset)
 
   (when (string-prefix-p "doom" (symbol-name th))
     ;; doom没有处理hi-lock的颜色，`doom-themes--colors'变量含doom内置color
