@@ -1361,9 +1361,9 @@ _c_: hide comment        _q_uit
   (setq
    corfu-cycle t
    corfu-auto t
-   corfu-auto-prefix 1
+   corfu-auto-prefix 2
    corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
-   ;; corfu-auto-delay 0.2      ;; 避免输完后马上C-n/C-p也补全
+   corfu-auto-delay 0.01 ;; 这个很影响体验的！
    ;; corfu-quit-at-boundary nil ;; 可以用M-空格来分词
    corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
    corfu-min-width 30 ;; 不知道怎么回事，有时候显示不全但补全功能正常
@@ -2178,7 +2178,8 @@ _c_: hide comment        _q_uit
              (when (string-prefix-p "eglot" (symbol-name (car l)))
                (add-to-list
                 'completion-category-overrides
-                (list (car l) '(styles ,backend))))))
+                ;; flex仅补充位，不然可能会导致C-g按很多次
+                (list (car l) '(styles orderless basic ,backend))))))
          (when (featurep 'orderless)
            ;; +orderless-flex其实也是可以用，但是它没有打分机制。应该优先部分匹配，再是flex
            ;; 另外这个好像也是支持分词反序匹配，如ext pac匹配package_extra（不加空格的extpac都不支持)
@@ -6705,7 +6706,7 @@ _q_uit
 ;; beacon效果，不过我们只需要某些命令advice就够用了
 (when (fboundp 'pop-select/beacon-set-parameters)
   (setq beacon-blink-delay 0.01)
-  (setq beacon-blink-duration 0.2)
+  (setq beacon-blink-duration 0.1)
   (pop-select/beacon-set-parameters 300 20 #x51 #xaf #xef 50)
   (defun my-pulse-momentary-line (&rest _)
     (ignore-errors
