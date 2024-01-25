@@ -10,8 +10,8 @@
  '(inhibit-startup-screen t) ;禁止显示启动画面
  '(show-paren-mode t) ;()匹配提示
  '(tooltip-mode nil) ;windows会卡，不用
- '(tool-bar-mode nil)          		;不显示toolbar
- '(menu-bar-mode nil)          ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
+ '(tool-bar-mode nil) ;不显示toolbar
+ '(menu-bar-mode nil) ; win10黑色模块就这个是白的，所幸去掉算了，命令tmm-menubar能在minibuffer里显示
  '(warning-suppress-log-types '((comp) (comp)))
  '(warning-suppress-types '((comp)))
  '(minibuffer-prompt-properties ;; 禁止光标移动到在minibuffer的prompt里去，不然输入会提示Text readonly
@@ -98,35 +98,25 @@
 (global-set-key (kbd "C-2") 'volatile-kill-buffer)
 (global-set-key "\M-r" 'replace-string)
 
+;; 使用`cnfonts-edit-profile'确定字号
 (when (display-graphic-p)
-  ;; 字体设置，下载Consolas字体，很好看，据说是ms专门给vs studio用的
+  (require 'cl) ;; find-if
   (defun qiang-font-existsp (font)
     (find-font (font-spec :name font)))
-  (defun qiang-make-font-string (font-name font-size)
-    (if (and (stringp font-size)
-             (equal ":" (string (elt font-size 0))))
-        (format "%s%s" font-name font-size)
-      (format "%s %s" font-name font-size)))
   (defun qiang-set-font
       (english-fonts
        english-font-size chinese-fonts &optional chinese-font-size)
-    "english-font-size could be set to \":pixelsize=18\" or a integer.
-If set/leave chinese-font-size to nil, it will follow english-font-size"
-    (require 'cl) ; for find if
     (let ((en-font
-           (qiang-make-font-string
-            (find-if
-             #'qiang-font-existsp english-fonts)
-            english-font-size))
+           (font-spec
+            :name
+            (find-if #'qiang-font-existsp english-fonts)
+            :size english-font-size))
           (zh-font
            (font-spec
             :family
             (find-if #'qiang-font-existsp chinese-fonts)
             :size chinese-font-size)))
-      (message "Set English Font to %s" en-font)
       (set-face-attribute 'default nil :font en-font)
-
-      (message "Set Chinese Font to %s" zh-font)
       (dolist (charset '(kana han symbol cjk-misc bopomofo))
         (set-fontset-font
          (frame-parameter nil 'font) charset zh-font))))
@@ -146,7 +136,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
      "Fira Code"
      "Hack Regular"
      "Fixedsys")
-   ":pixelsize=15"
+   11.5
    '("宋体"
      "微软雅黑"
      "宋体"
@@ -155,7 +145,7 @@ If set/leave chinese-font-size to nil, it will follow english-font-size"
      "黑体"
      "WenQuanYi Bitmap Song"
      "文泉驿等宽微米黑")
-   14))
+   12.0))
 ;; 要能区分0O和1lI(光l1就能排除很多了)，单看单词时要好看，--__能区分出来，粗体要好看，()要好看(感觉小点好看)
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S")

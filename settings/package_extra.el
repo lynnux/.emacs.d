@@ -4972,10 +4972,25 @@ _q_uit
   :defer t
   :init
   (setq
-   org-modern-star '("◌") ;; '("●" "○" "▶") 突出标题让人更安心写内容
-   org-modern-list '((?* . "●") (?+ . "▶") (?- . "▬")))
+   org-modern-star
+   '("◌") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
+   org-modern-list '((?+ . "●") (?- . "▬"))) ;; ▶ ▬ ，*不好输出就算了
   :init (autoload 'org-modern-mode "org/org-modern" nil t)
   :hook (org-mode . org-modern-mode))
+
+;; 中英文对齐的工具
+(use-package cnfonts
+  :defer t
+  :init (autoload 'cnfonts-edit-profile "tools/cnfonts" nil t)
+  :init (autoload 'cnfonts--set-font-1 "tools/cnfonts" nil t)
+  :config
+  (load "tools/cnfonts-ui")
+  (define-advice cnfonts-edit-profile
+      (:around (orig-fn &rest args) my)
+    (cl-letf (((symbol-function #'locate-library)
+               (lambda (&rest _)
+                 "~/.emacs.d/packages/tools/cnfonts.el")))
+      (apply orig-fn args))))
 
 (use-package eww
   :defer t
