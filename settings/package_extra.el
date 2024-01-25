@@ -4833,7 +4833,7 @@ _q_uit
    org-startup-indented t ; 开启`org-indent'
    org-modules '() ;; 造成org文件打开慢的真凶！
    org-hide-emphasis-markers t ;; 不显示`org-emphasis-alist'
-   org-ellipsis " ▽" ;; ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
+   org-ellipsis "⤵" ;; ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
    )
   :config
   ;; org的C-c C-o居然不走find-file
