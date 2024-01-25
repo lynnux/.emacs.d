@@ -4829,8 +4829,12 @@ _q_uit
 (use-package org
   :defer t
   :init
-  (setq org-startup-indented t ; 开启`org-indent'
-        )
+  (setq
+   org-startup-indented t ; 开启`org-indent'
+   org-modules '() ;; 造成org文件打开慢的真凶！
+   org-hide-emphasis-markers t ;; 不显示`org-emphasis-alist'
+   org-ellipsis " ▽" ;; ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
+   )
   :config
   ;; org的C-c C-o居然不走find-file
   (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
@@ -4966,9 +4970,10 @@ _q_uit
 ;; 大神维护的bug少，其它美化多少有点问题或者性能问题
 (use-package org-modern
   :defer t
-  :custom
-  (org-modern-star '("▶" "▼" "●" "○" "✳")) ;; 数量不够时，theme会用不同corlor来区分
-  (org-modern-list '((?- . "▬"))) ;; TODO: +号
+  :init
+  (setq
+   org-modern-star '("◌") ;; '("●" "○" "▶") 突出标题让人更安心写内容
+   org-modern-list '((?* . "●") (?+ . "▶") (?- . "▬")))
   :init (autoload 'org-modern-mode "org/org-modern" nil t)
   :hook (org-mode . org-modern-mode))
 
