@@ -1259,6 +1259,7 @@ _c_: hide comment        _q_uit
      hi-black-b hi-blue-b hi-red-b hi-green-b hi-black-hb) ;; 排除CTRL+F3高亮的
    )
   :config
+  (add-hook 'before-revert-hook #'idle-highlight--unhighlight) ;; 修复revert之前高亮不消除问题
   ;; 仅在编辑时才不高亮光标下的
   (with-eval-after-load 'view
     (add-hook
