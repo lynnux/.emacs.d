@@ -1336,6 +1336,7 @@ _c_: hide comment        _q_uit
 (global-set-key [(control ?|)] 'vline-mode)
 
 (use-package hl-line
+  :disabled
   :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
   :defer 0.6
   :config (global-hl-line-mode t))
