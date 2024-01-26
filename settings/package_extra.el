@@ -1300,9 +1300,12 @@ _c_: hide comment        _q_uit
   ;; 让支持region选中高亮
   (defun should-highlight-regin ()
     (and (use-region-p)
+         ;; 仅支持单行内的选中高亮，可以避免选中多行时显示的小问题
          (eq
           (line-number-at-pos (region-beginning))
-          (line-number-at-pos (region-end)))))
+          (line-number-at-pos (region-end)))
+         ;; 排除选中一个字符，经常鼠标点击会选中一个字符
+         (not (eq 1 (- (region-end) (region-beginning))))))
   (define-advice idle-highlight--word-at-point-args
       (:around (orig-fn &rest args))
     (if (should-highlight-regin)
