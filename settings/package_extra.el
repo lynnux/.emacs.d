@@ -5109,6 +5109,9 @@ _q_uit
   (when (functionp 'pop-select/pop-select)
     (defun pop-select-shackle-buffer (&optional backward)
       (interactive)
+      ;; 检测是否在pop buffer，是的话就切换到其它buffer
+      (when (is-shacle-popup-buffer (current-buffer))
+        (call-interactively 'other-window))
       (let* ((myswitch-buffer-list (shackle-popup-buffer-list))
              (vec_name [])
              sel)
