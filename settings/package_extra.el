@@ -4978,8 +4978,9 @@ _q_uit
   :init
   (setq
    org-modern-star
-   '("◌") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
-   org-modern-list '((?+ . "●") (?- . "▬"))) ;; ▶ ▬ ，*不好输出就算了
+   '("●" "●" "▶") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
+   ;; https://www.fuhaoku.net/block/Dingbats
+   org-modern-list '((?+ . "✚") (?- . "▬"))) ;; ▶ ▬ ，*不好输出就算了
   :init (autoload 'org-modern-mode "org/org-modern" nil t)
   :hook (org-mode . org-modern-mode))
 
