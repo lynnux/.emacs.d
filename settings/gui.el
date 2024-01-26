@@ -164,6 +164,8 @@
 (global-set-key (kbd "C-S-<right>") 'enlarge-window-horizontally)
 
 ;; 高亮TODO等
+(defface my-todo-face '((t :foreground "#cc6666" :inverse-video t))
+  "")
 (add-hook
  'prog-mode-hook
  (lambda ()
@@ -171,5 +173,5 @@
     nil
     '(("\\<\\(FIXME\\|BUG\\|XXX\\|TODO\\|NOCOMMIT\\)\\>"
        1
-       '((:foreground "#cc6666"))
+       'my-todo-face
        t)))))
