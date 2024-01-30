@@ -1,4 +1,5 @@
 ;; 不够可以来这里找：https://github.com/Crandel/tempel-collection/tree/main/templates
+;; 官方帮助 https://github.com/minad/tempel
 
 fundamental-mode ;; Available everywhere
 
@@ -223,7 +224,7 @@ import sys
 
 def main():
     "q"
-    pass
+    input(\"over!\")
 
 if __name__ == \"__main__\":
     try:
@@ -234,6 +235,7 @@ if __name__ == \"__main__\":
         input()
 ")
 (pathset "os.environ['PATH'] += os.pathsep + r'"q"'")
+(oswalk "for root, dirs, files in os.walk(\".\"):" n> "for fname in files:" n> "fpath = os.path.join(root, fname)" q)
 
 rust-mode rust-ts-mode
 
