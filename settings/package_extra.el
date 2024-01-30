@@ -4977,10 +4977,11 @@ _q_uit
   :defer t
   :init
   (setq
-   org-modern-star
-   '("●" "●" "▶") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
+   org-modern-star '("")
+   ;; '("●" "●" "▶") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
    ;; https://www.fuhaoku.net/block/Dingbats
-   org-modern-list '((?+ . "✚") (?- . "▬"))) ;; ▶ ▬ ，*不好输出就算了
+   org-modern-list '((?+ . "●") (?- . "●")) ;;'((?+ . "✚") (?- . "▬"))
+   ) ;; ▶ ▬ ，*不好输出就算了
   :init (autoload 'org-modern-mode "org/org-modern" nil t)
   :hook (org-mode . org-modern-mode))
 
@@ -6960,7 +6961,15 @@ _q_uit
  '(consult-file ((t (:foreground unspecified))))
  '(consult-bookmark ((t (:foreground unspecified))))
  '(consult-async-running ((t (:inherit mode-line-inactive))))
- '(dashboard-items-face ((t (:weight unspecified)))))
+ '(dashboard-items-face ((t (:weight unspecified))))
+ `(org-level-1
+   ((t (:weight bold :foreground ,(doom-color 'blue) :height 1.2)))) ;; 参考`outline-1'
+ `(org-level-2
+   ((t
+     (:weight bold :foreground ,(doom-color 'magenta) :height 1.15))))
+ `(org-level-3
+   ((t
+     (:weight bold :foreground ,(doom-color 'violet) :height 1.1)))))
 ;; (set-face-attribute 'hl-line nil :background "#2B2B2B")
 ;; 当前行加下划线
 ;; (custom-set-faces
