@@ -6063,7 +6063,8 @@ _q_uit
      toml-ts-mode
      tsx-ts-mode
      typescript-ts-mode
-     yaml-ts-mode))
+     yaml-ts-mode
+     lua-ts-mode))
   (cl-dolist
    (ts1 all-ts-mode)
    (let (ts
