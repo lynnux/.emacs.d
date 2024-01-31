@@ -2069,7 +2069,7 @@ _c_: hide comment        _q_uit
           (vertico-sort-function . vertico-sort-history-alpha))
          (describe-variable
           (vertico-sort-function . vertico-sort-history-alpha))
-         (my-project-find-file
+         (project-find-file
           (vertico-sort-function . vertico-sort-history-length-alpha)) ;; 按file-name-history排序
          (search-in-browser
           (vertico-sort-function . vertico-sort-history-alpha))
@@ -2585,7 +2585,7 @@ symbol under cursor"
                ((equal backend "project search")
                 (my-project-search nil myword))
                ((equal backend "project file")
-                (call-interactively 'my-project-find-file))
+                (call-interactively 'project-find-file))
                (t
                 (progn
                   (setq myword
@@ -3655,9 +3655,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq this-command 'my-project-search) ;; 使C-; s的preview生效
   (consult-ripgrep dir initial))
 
-(defun my-project-find-file ()
-  (interactive)
-  (call-interactively 'project-find-file))
 (defun my-project-buffer ()
   (interactive)
   (if (functionp 'consult-project-buffer)
@@ -3690,7 +3687,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; p切换project时显示的命令
   (setq
    project-switch-commands
-   `((?f "File" my-project-find-file)
+   `((?f "File" project-find-file)
      (?s "Search" my-project-search)
      (?d "Dired" project-dired)
      (?m "Magit" my-project-magit)
@@ -3700,11 +3697,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    project-switch-use-entire-map t ; switch prj时也可以按其它键
    )
   ;; 这个还可以避免projectile search的bug(比如搜索 projectile-indexing-method，projectile.el就被忽略了)
-  (define-key project-prefix-map "f" 'my-project-find-file)
+  (define-key project-prefix-map "f" 'project-find-file)
   (define-key project-prefix-map "s" 'my-project-search)
   (define-key project-prefix-map "S" 'project-shell)
   (define-key project-prefix-map "m" 'my-project-magit) ; v保留，那个更快更精简
-  (define-key project-prefix-map "t" 'my/generate-tags)
+  (define-key project-prefix-map "t" 'ggtags-create)
+  (define-key project-prefix-map "u" 'ggtags-update)
   (define-key project-prefix-map "b" 'my-project-buffer)
 
   :config
@@ -4902,7 +4900,7 @@ _q_uit
   (defun call-project-find ()
     (interactive)
     (let ((default-directory org-roam-directory))
-      (call-interactively 'my-project-find-file)))
+      (call-interactively 'project-find-file)))
   (defun call-project-search ()
     (interactive)
     (let ((default-directory org-roam-directory))
