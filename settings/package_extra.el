@@ -6963,26 +6963,13 @@ _q_uit
  '(consult-async-running ((t (:inherit mode-line-inactive))))
  '(dashboard-items-face ((t (:weight unspecified))))
  `(org-level-1
-   ((t
-     (:weight
-      bold
-      :foreground ,(doom-color 'blue)
-      :height 1.2
-      :family "微软雅黑")))) ;; 标题用微软雅黑好看一点，gui.el里不要设置中文，win10默认就是点阵字体
+   ((t (:weight bold :foreground ,(doom-color 'blue) :height 1.2))))
  `(org-level-2
    ((t
-     (:weight
-      bold
-      :foreground ,(doom-color 'magenta)
-      :height 1.15
-      :family "微软雅黑"))))
+     (:weight bold :foreground ,(doom-color 'magenta) :height 1.15))))
  `(org-level-3
    ((t
-     (:weight
-      bold
-      :foreground ,(doom-color 'violet)
-      :height 1.1
-      :family "微软雅黑")))))
+     (:weight bold :foreground ,(doom-color 'violet) :height 1.1)))))
 ;; (set-face-attribute 'hl-line nil :background "#2B2B2B")
 ;; 当前行加下划线
 ;; (custom-set-faces
