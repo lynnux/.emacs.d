@@ -4104,6 +4104,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    '("C"
      "clangd"
      "-j=8 --background-index -header-insertion=never --clang-tidy --header-insertion-decorators=0 --completion-style=detailed --pch-storage=memory"))
+  (add-to-list
+   'lspce-server-programs '("cmake" "cmake-language-server"))
   (init-lsp-snippet-tempel)
   ;; lspce使用了较多的yas函数，参考`lsp-snippet-tempel-eglot-init'修正
   (advice-add
