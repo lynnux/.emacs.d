@@ -1154,40 +1154,36 @@ _c_: hide comment        _q_uit
         "*elfeed-search*"
         "*dashboard*"
         "*vc-dir*"))
+(defun tab-show-buffer-p (b)
+  (cond
+   ;; Always include the current buffer.
+   ((eq (current-buffer) b)
+    b)
+   ((string-match "^TAGS\\(<.*>\\)?$" (format "%s" (buffer-name b)))
+    nil)
+   ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
+   ((string-match "^magit-.*:.*" (format "%s" (buffer-name b)))
+    nil) ;; 排除magit-process
+   ((buffer-file-name b)
+    b)
+   ((string-match "^\*gud-.*" (format "%s" (buffer-name b)))
+    b) ;; gud buffer
+   ((string-match "^\*Embark .*" (format "%s" (buffer-name b)))
+    b)
+   ((string-match "^\*SQLite .*" (format "%s" (buffer-name b)))
+    b) ;; *SQLite test.db*
+   ((member (buffer-name b) EmacsPortable-included-buffers)
+    b)
+   ((char-equal ?\  (aref (buffer-name b) 0))
+    nil)
+   ((char-equal ?* (aref (buffer-name b) 0))
+    nil)
+   ((char-equal ?: (aref (buffer-name b) 0))
+    nil) ;; 排除dired-sidebar buffer
+   ((buffer-live-p b)
+    b)))
 (defun ep-tabbar-buffer-list ()
-  (delq
-   nil
-   (mapcar
-    #'(lambda (b)
-        (cond
-         ;; Always include the current buffer.
-         ((eq (current-buffer) b)
-          b)
-         ((string-match
-           "^TAGS\\(<.*>\\)?$" (format "%s" (buffer-name b)))
-          nil)
-         ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
-         ((string-match "^magit-.*:.*" (format "%s" (buffer-name b)))
-          nil) ;; 排除magit-process
-         ((buffer-file-name b)
-          b)
-         ((string-match "^\*gud-.*" (format "%s" (buffer-name b)))
-          b) ;; gud buffer
-         ((string-match "^\*Embark .*" (format "%s" (buffer-name b)))
-          b)
-         ((string-match "^\*SQLite .*" (format "%s" (buffer-name b)))
-          b) ;; *SQLite test.db*
-         ((member (buffer-name b) EmacsPortable-included-buffers)
-          b)
-         ((char-equal ?\  (aref (buffer-name b) 0))
-          nil)
-         ((char-equal ?* (aref (buffer-name b) 0))
-          nil)
-         ((char-equal ?: (aref (buffer-name b) 0))
-          nil) ;; 排除dired-sidebar buffer
-         ((buffer-live-p b)
-          b)))
-    (buffer-list))))
+  (delq nil (mapcar #'tab-show-buffer-p (buffer-list))))
 
 ;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
 (use-package tab-line
@@ -1232,6 +1228,14 @@ _c_: hide comment        _q_uit
        " | ") ;; 这个比close button好看 
      ))
   :config
+  (define-advice volatile-kill-buffer (:before (&rest args) my)
+    "让C-2跳过那些tab不可见的buffer"
+    (cl-dolist
+     (buf (buffer-list))
+     (when (not (tab-show-buffer-p buf))
+       ;; (message "bury-buffer:%S" buf)
+       (bury-buffer buf) ;; 将buffer放到最后去
+       (cl-return))))
   (global-tab-line-mode 1)
   (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
   (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
