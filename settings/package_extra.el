@@ -2963,6 +2963,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      (lambda ()
        (setq-local log-view-expanded-log-entry-function
                    'log-view-show-diff)))))
+
+(use-package diff
+  :defer t
+  :config
+  ;; 现在不加git PATH了(跟vc环境冲突)，所以需要单独设置
+  (setq diff-command
+        (concat
+         (file-name-parent-directory
+          (file-name-directory (executable-find "git")))
+         "usr/bin/diff.exe")))
+
 (use-package diff-mode
   :defer t
   :config
