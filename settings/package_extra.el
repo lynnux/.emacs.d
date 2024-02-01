@@ -2966,6 +2966,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
 (use-package diff
   :defer t
+  :init
+  ;; 设置了`diff-command'后diff refine就正常了，让它仅diff buffer里p/n才显示
+  (setq diff-refine 'navigation)
   :config
   ;; 现在不加git PATH了(跟vc环境冲突)，所以需要单独设置
   (setq diff-command
@@ -3032,10 +3035,25 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :config
   ;; 在checkin时显示diff
-  (load "magit/agitate")
-  (agitate-log-edit-informative-mode)
+  (agitate-log-edit-informative-mode))
+
+;; 对vc很好的补充
+(use-package agitate
+  :defer t
+  :init
+  (dec-placeholder-fun agitate-log-edit-informative-mode
+                       agitate
+                       "~/.emacs.d/packages/magit"
+                       '(agitate))
+  ;; 查看buffer对应文件的历史修改记录
+  (dec-placeholder-fun agitate-vc-git-find-revision
+                       agitate
+                       "~/.emacs.d/packages/magit"
+                       '(agitate))
+  :config
   (define-advice agitate--log-edit-informative-kill-buffer
       (:after (&rest args) my)
+    "提交的同时也删除`vc-diff' buffer"
     (when-let ((buf (get-buffer "*vc-diff*")))
       (kill-buffer buf))))
 
