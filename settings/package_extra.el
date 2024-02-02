@@ -2254,7 +2254,8 @@ _c_: hide comment        _q_uit
        embark-next-symbol
        embark-previous-symbol
        embark-toggle-highlight
-       embark-open-externally)
+       embark-open-externally
+       embark-prefix-help-command)
       :bind
       (("M-." . embark-act) ;; 按这个后，还可以按其它prefix key如C-x调用C-x开头的键，起了which-key的作用！
        ;; ("M-." . embark-dwim) ;; 除非你知道每个object默认的操作，否则还是embark-act吧
@@ -2266,6 +2267,7 @@ _c_: hide comment        _q_uit
        1.0 ;; 按钮提示菜单延迟，熟练后可以设置长点
        ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
        )
+      (setq prefix-help-command #'embark-prefix-help-command) ;; 按prefix键后再按F1 k
       (global-set-key [f3] 'embark-next-symbol)
       (global-set-key [(shift f3)] 'embark-previous-symbol)
       (global-set-key [(control f3)] 'embark-toggle-highlight)
@@ -2300,7 +2302,6 @@ _c_: hide comment        _q_uit
                    describe-function execute-extended-command))
             (add-to-history minibuffer-history-variable current))))
       (advice-add 'embark-act :before #'embark-store-select)
-      (setq prefix-help-command #'embark-prefix-help-command) ;; C-h可以输入命令，有时候显示不全或许记不住命令行
       (define-key
        embark-file-map (kbd "C-x C-d")
        (lambda (file)
@@ -3046,11 +3047,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :defer t
   :init
   (dec-placeholder-fun agitate-log-edit-informative-mode
-                       agitate
-                       "~/.emacs.d/packages/magit"
-                       '(agitate))
-  ;; 查看buffer对应文件的历史修改记录
-  (dec-placeholder-fun agitate-vc-git-find-revision
                        agitate
                        "~/.emacs.d/packages/magit"
                        '(agitate))
