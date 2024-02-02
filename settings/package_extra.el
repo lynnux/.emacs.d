@@ -2984,9 +2984,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    'side-window ;；用minibuffer当easy-mark时会移动屏幕，需要easy-kill-init-candidate里屏蔽narrow-to-region，并且非set-transient-map一闪而过
    which-key-use-C-h-commands nil ;; 避免C-h时调用成which-key的
    which-key-max-display-columns 4 ;; 限制列更好看点
+   which-key-side-window-max-height 1.0 ;; 设置更高点，不然会显示不完全
    )
   :commands (which-key--show-keymap which-key--hide-popup)
-  :config)
+  :config
+  ;; 不显示`digit-argument'命令
+  (add-to-list
+   'which-key-replacement-alist '((nil . "digit-argument") . t)))
 
 ;; easy-kill，添加类似vim里yi/a的东西！
 (use-package easy-kill
@@ -3498,7 +3502,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         (progn
           (which-key--show-keymap
            "keymap" project-prefix-map nil nil 'no-paging)
-          (set-transient-map project-prefix-map nil 'which-key--hide-popup))
+          (set-transient-map project-prefix-map
+                             nil
+                             'which-key--hide-popup))
       (set-transient-map project-prefix-map nil 'ignore)))
   (global-set-key (kbd "C-;") 'invoke_project)
 
