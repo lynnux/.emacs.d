@@ -21,7 +21,7 @@ prog-mode
 (bug (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "BUG ")
 (hack (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "HACK ")
 (timestamp (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "Time-stamp: <>")
-(coding (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "-*- coding: " (p "utf-8") " -*-")
+(coding (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "-*- coding: " (p "utf-8") (if (derived-mode-p 'emacs-lisp-mode) "; lexical-binding: t;" "") " -*-")
 
 latex-mode
 

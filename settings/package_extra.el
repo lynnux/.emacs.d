@@ -1,4 +1,5 @@
-﻿;; 非官方自带packages的设置 -*- lexical-binding: t -*-
+;; -*- coding: utf-8; lexical-binding: t; -*-
+;; 非官方自带packages的设置
 ;; benchmark: 使用profiler-start和profiler-report来查看会影响emacs性能，如造成卡顿的命令等
 ;; 拖慢gui测试：C-x 3开两个窗口，打开不同的buffer，C-s搜索可能出现比较多的词，测试出doom modeline和tabbar ruler比较慢
 ;; 参考https://gitee.com/advanceflow/elisp/blob/main/%E9%99%84%E5%BD%95H-%E6%A0%87%E5%87%86%E9%92%A9%E5%AD%90.org 查看各种hook，能去掉就去掉
@@ -153,15 +154,6 @@
       (f-touch check-file)
       (set-file-times check-file (get-file-times expand-zip)) ;; 修改文件时间为zip的时间
       )))
-
-;; use-package含有bind-keys*，优先级最高，参考`override-global-mode'代码
-(unless (symbol-function 'use-package)
-  (add-to-list
-   'load-path "~/.emacs.d/packages/use-package/use-package-master")
-  (condition-case nil
-      (require 'use-package)
-    (error (update-all-packages))) ;; 首次检查是否解压，之后还是手动更新包吧
-  )
 
 (add-to-list 'load-path "~/.emacs.d/packages")
 
@@ -2550,78 +2542,6 @@ symbol under cursor"
              "~/.emacs.d/packages/dired" '(dired-recent)))
           (dired-recent-load-list))
         dired-recent-directories))
-    (defun search-in-browser ()
-      "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
-      (interactive)
-      (let (myword
-            myurl
-            backend)
-        (setq myword
-              (if (region-active-p)
-                  (buffer-substring-no-properties
-                   (region-beginning) (region-end))
-                (thing-at-point 'symbol)))
-        (unless myword
-          (setq myword (read-string "请输入要搜索的内容：")))
-        (if myword
-            (progn
-              (setq
-               backend
-               (consult--read
-                '("baidu"
-                  "google"
-                  "rust winapi"
-                  "msdn"
-                  "emacs china"
-                  "everything"
-                  "project search"
-                  "cppreference"
-                  ;; "project file"
-                  )
-                :prompt (format "Search %s on: " myword)
-                ;; :history t ;; 不需要这个，选择会记录在minibuffer-history里
-                :require-match t
-                :sort t ; 这个会方住上次的选择
-                :category 'file ;; 按前面的设置这个是flex匹配
-                ))
-              (cond
-               ((equal backend "everything")
-                (consult-everything myword))
-               ((equal backend "project search")
-                (my-project-search nil myword))
-               ((equal backend "project file")
-                (call-interactively 'project-find-file))
-               (t
-                (progn
-                  (setq myword
-                        (replace-regexp-in-string " " "%20" myword))
-                  (setq
-                   myurl
-                   (cond
-                    ((equal backend "google")
-                     (concat
-                      "https://www.google.com/search?q=" myword))
-                    ((equal backend "msdn")
-                     (concat
-                      "https://www.baidu.com/s?wd="
-                      myword
-                      "%20site%3Amsdn.microsoft.com"))
-                    ((equal backend "rust winapi")
-                     (concat
-                      "https://docs.rs/winapi/latest/winapi/index.html?search="
-                      myword))
-                    ((equal backend "emacs china")
-                     (concat
-                      "https://emacs-china.org/search?q=" myword))
-                    ((equal backend "cppreference")
-                     (concat
-                      "https://duckduckgo.com/?sites=cppreference.com&q="
-                      myword))
-                    (t
-                     (concat "https://www.baidu.com/s?wd=" myword))))
-                  (message "%S" myurl)
-                  (browse-url myurl))))))))
-    (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
     :config
     ;; C-l命令
     (defvar C-L-string nil)
@@ -6833,6 +6753,7 @@ _q_uit
         (lambda (action cand)
           (let ((disable-beacon t))
             (funcall org-ret action cand)))))))
+
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
