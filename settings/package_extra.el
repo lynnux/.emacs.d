@@ -2983,6 +2983,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    which-key-popup-type
    'side-window ;；用minibuffer当easy-mark时会移动屏幕，需要easy-kill-init-candidate里屏蔽narrow-to-region，并且非set-transient-map一闪而过
    which-key-use-C-h-commands nil ;; 避免C-h时调用成which-key的
+   which-key-max-display-columns 4 ;; 限制列更好看点
    )
   :commands (which-key--show-keymap which-key--hide-popup)
   :config)
@@ -3493,10 +3494,12 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :init
   (defun invoke_project ()
     (interactive)
-    (when (functionp' which-key--show-keymap)
-      (which-key--show-keymap
-       "keymap" project-prefix-map nil nil 'no-paging))
-    (set-transient-map project-prefix-map nil 'which-key--hide-popup))
+    (if (functionp' which-key--show-keymap)
+        (progn
+          (which-key--show-keymap
+           "keymap" project-prefix-map nil nil 'no-paging)
+          (set-transient-map project-prefix-map nil 'which-key--hide-popup))
+      (set-transient-map project-prefix-map nil 'ignore)))
   (global-set-key (kbd "C-;") 'invoke_project)
 
   ;; eglot+ctags补全是不错的方案(clangd flymake很多错误时补全失灵)

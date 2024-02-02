@@ -508,7 +508,22 @@ Run occur in all buffers whose names match this type for REXP."
   (define-key vc-dir-mode-map (kbd "i") 'vc-dir-ignore)
   (define-advice vc-dir-ignore (:around (orig-fn &rest args) my)
     (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
-      (apply orig-fn args))))
+      (apply orig-fn args)))
+  (defun invoke-vc-dir ()
+    (interactive)
+    (if (functionp' which-key--show-keymap)
+        (progn
+          (which-key--show-keymap
+           "keymap" vc-dir-mode-map nil nil 'no-paging)
+          (set-transient-map vc-dir-mode-map
+                             nil
+                             'which-key--hide-popup))
+      (set-transient-map vc-dir-mode-map nil 'ignore)))
+  (define-key vc-dir-mode-map (kbd "?") 'invoke-vc-dir)
+  ;; 自动弹出菜单，不能做到transient那样，总比没有要好点
+  (add-hook
+   'vc-dir-mode-hook
+   (lambda () (run-with-local-idle-timer 0.1 nil 'invoke-vc-dir))))
 
 (use-package vc-hooks
   :defer t
@@ -529,7 +544,21 @@ Run occur in all buffers whose names match this type for REXP."
               (when pn
                 (setq result (string-replace "Git" pn result))))
             (propertize result 'face 'vc-mode-face))
-        result))))
+        result)))
+  ;; https://emacs.stackexchange.com/questions/14755/how-to-remove-bindings-to-the-esc-prefix-key
+  ;; 无法取消或者覆盖"C-x v"，只能这样替换成另外的
+  (define-key key-translation-map (kbd "C-x v") (kbd "C-c v"))
+  (bind-key* (kbd "C-c v") 'invoke-vc)
+  (defun invoke-vc ()
+    (interactive)
+    (if (functionp' which-key--show-keymap)
+        (progn
+          (which-key--show-keymap
+           "keymap" vc-prefix-map nil nil 'no-paging)
+          (set-transient-map vc-prefix-map
+                             nil
+                             'which-key--hide-popup))
+      (set-transient-map vc-prefix-map nil 'ignore))))
 
 (use-package log-view
   :defer t
