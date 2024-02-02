@@ -2072,6 +2072,8 @@ _c_: hide comment        _q_uit
          (consult-bookmark
           (vertico-sort-function . vertico-sort-history-alpha))
          (tempel-insert
+          (vertico-sort-function . vertico-sort-history-alpha))
+         (search-in-browser
           (vertico-sort-function . vertico-sort-history-alpha))))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)

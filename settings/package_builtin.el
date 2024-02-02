@@ -408,60 +408,66 @@ Run occur in all buffers whose names match this type for REXP."
   (add-to-list 'cc-other-file-alist '("\\.tli\\'" (".tlh")))
   (add-to-list 'cc-other-file-alist '("\\.tlh\\'" (".tli"))))
 
-(defun webjump-auto-query (expr name)
-  (let (query)
-    (setq query
-          (if (region-active-p)
-              (buffer-substring-no-properties
-               (region-beginning) (region-end))
-            (thing-at-point 'symbol)))
-    (unless query
-      (setq query (read-string "请输入要搜索的内容：")))
-    (when (equal query "")
-      (setq query nil)) ;; 空白搜索直接跳首页
-    (if query
-        (concat
-         (aref expr 2) (webjump-url-encode query) (aref expr 3))
-      (aref expr 1))))
-(defun search-in-browser ()
-  "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
-  (interactive)
-  (let ((webjump-sites
-         '(("baidu" .
-            [webjump-auto-query
-             "https://www.baidu.com"
-             "https://www.baidu.com/s?wd="
-             ""])
-           ("msdn" .
-            [webjump-auto-query
-             "https://www.baidu.com"
-             "https://www.baidu.com/s?wd="
-             "%20site%3Amsdn.microsoft.com"])
-           ("google" .
-            [webjump-auto-query
-             "https://www.google.com"
-             "https://www.google.com/search?q="
-             ""])
-           ("rust winapi" .
-            [webjump-auto-query
-             "https://docs.rs/winapi/latest/winapi/index.html"
-             "https://docs.rs/winapi/latest/winapi/index.html?search="
-             ""])
-           ("emacs china" .
-            [webjump-auto-query
-             "https://emacs-china.org"
-             "https://emacs-china.org/search?q="
-             ""])
-           ("cppreference" .
-            [webjump-auto-query
-             "https://cppreference.com"
-             "https://duckduckgo.com/?sites=cppreference.com&q="
-             ""])
-           ;; ("everything" . #'consult-everything)
-           ;; ("project search" . #'my-project-search)
-           ))
-        (webjump-builtin 'webjump-auto-query))
-    (cl-letf (((symbol-function #'webjump-builtin)
-               (lambda (expr name) (webjump-auto-query expr name))))
-      (webjump))))
-(global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
+(use-package webjump
+  :defer t
+  :init
+  (defun webjump-auto-query (expr name)
+    (let (query)
+      (setq query
+            (if (region-active-p)
+                (buffer-substring-no-properties
+                 (region-beginning) (region-end))
+              (thing-at-point 'symbol)))
+      (unless query
+        (setq query (read-string "请输入要搜索的内容：")))
+      (when (equal query "")
+        (setq query nil)) ;; 空白搜索直接跳首页
+      (if query
+          (concat
+           (aref expr 2) (webjump-url-encode query) (aref expr 3))
+        (aref expr 1))))
+  (defun search-in-browser ()
+    "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
+    (interactive)
+    (when (autoloadp (symbol-function 'webjump))
+      (require 'webjump))
+    (let
+        ((webjump-sites
+          '(("baidu" .
+             [webjump-auto-query
+              "https://www.baidu.com"
+              "https://www.baidu.com/s?wd="
+              ""])
+            ("msdn" .
+             [webjump-auto-query
+              "https://www.baidu.com"
+              "https://www.baidu.com/s?wd="
+              "%20site%3Amsdn.microsoft.com"])
+            ("google" .
+             [webjump-auto-query
+              "https://www.google.com"
+              "https://www.google.com/search?q="
+              ""])
+            ("rust winapi" .
+             [webjump-auto-query
+              "https://docs.rs/winapi/latest/winapi/index.html"
+              "https://docs.rs/winapi/latest/winapi/index.html?search="
+              ""])
+            ("emacs china" .
+             [webjump-auto-query
+              "https://emacs-china.org"
+              "https://emacs-china.org/search?q="
+              ""])
+            ("cppreference" .
+             [webjump-auto-query
+              "https://cppreference.com"
+              "https://duckduckgo.com/?sites=cppreference.com&q="
+              ""])
+            ;; ("everything" . #'consult-everything)
+            ;; ("project search" . #'my-project-search)
+            )))
+      (cl-letf (((symbol-function #'webjump-builtin)
+                 (lambda (expr name) (webjump-auto-query expr name))))
+        (webjump))))
+  (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
+  )
