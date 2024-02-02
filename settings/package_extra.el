@@ -2267,7 +2267,7 @@ _c_: hide comment        _q_uit
        1.0 ;; 按钮提示菜单延迟，熟练后可以设置长点
        ;; embark-quit-after-action nil     ;; 默认就退出minibuffer了
        )
-      (setq prefix-help-command #'embark-prefix-help-command) ;; 按prefix键后再按F1 k
+      ;; (setq prefix-help-command #'embark-prefix-help-command) ;; 按prefix键后再按F1
       (global-set-key [f3] 'embark-next-symbol)
       (global-set-key [(shift f3)] 'embark-previous-symbol)
       (global-set-key [(control f3)] 'embark-toggle-highlight)
