@@ -4664,59 +4664,6 @@ _q_uit
   (define-key winner-mode-map (kbd "<C-left>") #'winner-undo)
   (define-key winner-mode-map (kbd "<C-right>") #'winner-redo))
 
-(use-package org
-  :defer t
-  :init
-  (setq
-   org-startup-indented t ; 开启`org-indent'
-   org-modules '() ;; 造成org文件打开慢的真凶！
-   org-hide-emphasis-markers t ;; 不显示`org-emphasis-alist'
-   org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
-   )
-  :config
-  ;; org的C-c C-o居然不走find-file
-  (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
-  (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
-  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default))
-
-  ;; 给heaedr line添加click keymap，参考 
-  ;; https://github.com/sabof/org-bullets/blob/master/org-bullets.el
-  ;; https://kitchingroup.cheme.cmu.edu/blog/2017/06/10/Adding-keymaps-to-src-blocks-via-org-font-lock-hook/
-  (defvar org-level-click-map '(keymap (mouse-1 . org-cycle))
-    "")
-  (defun org-add-keymap-to-level (limit)
-    (let ((case-fold-search t))
-      (while (re-search-forward org-heading-regexp limit t)
-        (put-text-property
-         (match-beginning 0)
-         (match-end 0)
-         'keymap
-         org-level-click-map))))
-  (add-hook 'org-font-lock-hook #'org-add-keymap-to-level)
-
-  ;; 添加markdown的代码标记
-  (add-to-list 'org-emphasis-alist '("`" org-code verbatim))
-  (setq org-verbatim-re
-        (string-replace "[=~]" "[=~`]" org-verbatim-re))
-  (define-advice org-do-emphasis-faces
-      (:around (orig-fn &rest args) my)
-    (cl-letf* ((org-member (symbol-function #'member))
-               (org-format (symbol-function #'format))
-               ((symbol-function #'format)
-                (lambda (&rest args)
-                  (if (equal
-                       (car args) "\\([%s]\\|^\\)\\([~=*/_+]\\)")
-                      (progn
-                        (setcar args "\\([%s]\\|^\\)\\([~=*/_+`]\\)")
-                        (apply org-format args))
-                    (apply org-format args))))
-               ((symbol-function #'member)
-                (lambda (elt list)
-                  (if (equal list '("~" "="))
-                      (funcall org-member elt '("~" "=" "`"))
-                    (funcall org-member elt list)))))
-      (apply orig-fn args))))
-
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
 (use-package org-roam
@@ -4822,11 +4769,6 @@ _q_uit
    olivetti-lighter nil)
   (autoload 'olivetti-mode "org/olivetti" nil t)
   :hook ((Info-mode org-mode) . olivetti-mode))
-
-;; 再也不用手动输入tab了
-(use-package org-indent
-  :diminish
-  :defer t)
 
 ;; 大神维护的bug少，其它美化多少有点问题或者性能问题
 (use-package org-modern

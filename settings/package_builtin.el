@@ -28,111 +28,171 @@
   (define-key bs-mode-map ">" 'end-of-buffer))
 
 ;; org mode
-;; (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
-(define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表
-(setq org-log-done 'time) ;给已完成事项打上时间戳。可选 note，附加注释
-(setq org-startup-folded 'show4levels) ; 打开时折叠
-(add-hook
- 'org-agenda-mode-hook (lambda () (setq org-agenda-follow-mode t)))
-;; (setq org-capture-bookmark nil) ;; 不需要添加到
-(setq org-bookmark-names-plist
-      '(:last-capture
-        "org-capture-last-stored"
-        ;;:last-refile "org-refile-last-stored"
-        ;;:last-capture-marker "org-capture-last-stored-marker"
-        ))
-(setq org-capture-templates
-      `(("i"
-         "Idea"
-         entry
-         (file+headline , "idea.org" "Index")
-         "* IDEA %?\n %i\n %a")
-        ("t"
-         "Task"
-         entry
-         (file+headline , "todo.org" "Task")
-         "* TODO %i%?\n\n于: %U %a")))
-;; (setq org-remember-templates
-;;       '(("Todo" ?t "* TODO %i%?\n\n于: %U %a" "F:/kp/org/remember/TODO.org" "Tasks")
-;;   	("IDEA" ?i "* IDEA %?\n %i\n %a" "F:/kp/org/remember/Idea.org" "Idea")
-;;   	))
-(define-key global-map "\C-cr" 'org-capture)
-(define-key global-map "\C-cc" 'org-capture)
-;; 对org-capture涉及的文件去掉只读
-(with-eval-after-load 'org-capture
-  ;; 需要hook三个函数 find-file-noselect get-file-buffer find-buffer-visiting
+(use-package org
+  :defer t
+  :init
+  (setq
+   org-startup-indented t ; 开启`org-indent'
+   org-modules '() ;; 造成org文件打开慢的真凶！
+   org-hide-emphasis-markers t ;; 不显示`org-emphasis-alist'
+   org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
+   org-log-done 'time ; 给已完成事项打上时间戳。可选 note，附加注释
+   org-startup-folded 'show4levels ; 打开时折叠
+   )
+
+  :config
+  ;; M-RET绑定给tempel了，这个比C-RET更适合
+  (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
+  (define-key org-mode-map (kbd "C-<kp-enter>") #'org-meta-return)
+
+  ;; org的C-c C-o居然不走find-file
+  (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
+  (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
+  (add-to-list 'org-file-apps '("\\.xlsx?\\'" . default))
+
+  ;; 给heaedr line添加click keymap，参考 
+  ;; https://github.com/sabof/org-bullets/blob/master/org-bullets.el
+  ;; https://kitchingroup.cheme.cmu.edu/blog/2017/06/10/Adding-keymaps-to-src-blocks-via-org-font-lock-hook/
+  (defvar org-level-click-map '(keymap (mouse-1 . org-cycle))
+    "")
+  (defun org-add-keymap-to-level (limit)
+    (let ((case-fold-search t))
+      (while (re-search-forward org-heading-regexp limit t)
+        (put-text-property
+         (match-beginning 0)
+         (match-end 0)
+         'keymap
+         org-level-click-map))))
+  (add-hook 'org-font-lock-hook #'org-add-keymap-to-level)
+
+  ;; 添加markdown的代码标记
+  (add-to-list 'org-emphasis-alist '("`" org-code verbatim))
+  (setq org-verbatim-re
+        (string-replace "[=~]" "[=~`]" org-verbatim-re))
+  (define-advice org-do-emphasis-faces
+      (:around (orig-fn &rest args) my)
+    (cl-letf* ((org-member (symbol-function #'member))
+               (org-format (symbol-function #'format))
+               ((symbol-function #'format)
+                (lambda (&rest args)
+                  (if (equal
+                       (car args) "\\([%s]\\|^\\)\\([~=*/_+]\\)")
+                      (progn
+                        (setcar args "\\([%s]\\|^\\)\\([~=*/_+`]\\)")
+                        (apply org-format args))
+                    (apply org-format args))))
+               ((symbol-function #'member)
+                (lambda (elt list)
+                  (if (equal list '("~" "="))
+                      (funcall org-member elt '("~" "=" "`"))
+                    (funcall org-member elt list)))))
+      (apply orig-fn args)))
+
+  (add-hook
+   'org-mode-hook
+   (lambda ()
+     ;; 禁止<>自动，因为<src什么的还是很常用的
+     (setq-local electric-pair-inhibit-predicate
+                 `(lambda (c)
+                    (if (char-equal c ?<)
+                        t
+                      (,electric-pair-inhibit-predicate c)))))))
+
+(use-package org-publish
+  :defer t
+  :init
+  (defvar website-org-path nil)
+  (defvar website-org-publish-path nil)
+  :config
+  (when (and website-org-path website-org-publish-path)
+    (setq
+     org-publish-project-alist
+     `(( ;; note ` instead of '
+        "org-notes"
+        :base-directory ,(format "%s" website-org-path) ;设置存放.org文件位置 
+        :base-extension "org" ;仅处理 .org 格式文件
+        :publishing-directory ,(format "%s" website-org-publish-path) ;导出html文件位置
+        :recursive t
+        :publishing-function org-publish-org-to-html
+        :headline-levels 4 ;Just the default for this project.
+        :auto-preamble t
+        :auto-sitemap t ;自动生成 sitemap.org
+        :sitemap-filename "sitemap.org" ;默认名称
+        :sitemap-title "SiteMap"
+        :export-creator-info nil ;禁止在 postamble 显示"Created by Org"
+        :export-author-info nil ;禁止在 postamble 显示 "Author: Your Name"
+        :auto-postamble nil
+        :table-of-contents nil ;禁止生成文章目录，如果要生成，将 nil 改为 t
+        :section-numbers nil ;禁止在段落标题前使用数字，如果使用，将 nil 改为 t
+        :html-postamble html-last-updated ;自定义 postamble 显示字样
+        :style-include-default nil ;禁用默认 css 样式,使用自定义css
+        )
+       ;;static 组件
+       ("org-static"
+        :base-directory ,(format "%s" website-org-path)
+        :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
+        :publishing-directory ,(format "%s" website-org-publish-path)
+        :recursive t
+        :publishing-function org-publish-attachment)
+       ;;publish 组件
+       ("org" :components ("org-notes" "org-static"))))
+    (defun html-last-updated ()
+      (concat
+       "<div id=\"footer\">Last Updated: "
+       (format-time-string "%Y-%m-%d %H:%M")
+       ". contact: lynnux@qq.com</a></div> "))))
+
+;; 再也不用手动输入tab了
+(use-package org-indent
+  :diminish
+  :defer t)
+
+(use-package org-agenda
+  :init
+  ;; (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
+  (define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表
+  ;; (setq org-capture-bookmark nil) ;; 不需要添加到
+  (setq org-bookmark-names-plist
+        '(:last-capture
+          "org-capture-last-stored"
+          ;;:last-refile "org-refile-last-stored"
+          ;;:last-capture-marker "org-capture-last-stored-marker"
+          ))
+  (setq org-capture-templates
+        `(("i"
+           "Idea"
+           entry
+           (file+headline , "idea.org" "Index")
+           "* IDEA %?\n %i\n %a")
+          ("t"
+           "Task"
+           entry
+           (file+headline , "todo.org" "Task")
+           "* TODO %i%?\n\n于: %U %a")))
+  ;; (setq org-remember-templates
+  ;;       '(("Todo" ?t "* TODO %i%?\n\n于: %U %a" "F:/kp/org/remember/TODO.org" "Tasks")
+  ;;   	("IDEA" ?i "* IDEA %?\n %i\n %a" "F:/kp/org/remember/Idea.org" "Idea")
+  ;;   	))
+  (define-key global-map "\C-cr" 'org-capture)
+  (define-key global-map "\C-cc" 'org-capture)
+
+  :config
+  (add-hook
+   'org-agenda-mode-hook (lambda () (setq org-agenda-follow-mode t)))
+
+  ;; 对org-capture涉及的文件去掉只读
   (define-advice org-capture-target-buffer
       (:around (orig-fn &rest args) my)
     (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
-      (apply orig-fn args))))
-;; 对C-c C-x C-a归档命令处理
-(with-eval-after-load 'org-archive
+      (apply orig-fn args)))
+
   (define-advice org-archive-subtree (:around (orig-fn &rest args) my)
     (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
       (apply orig-fn args))))
-(with-eval-after-load 'org
-  ;; M-RET绑定给tempel了，这个比C-RET更适合
-  (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
-  (define-key org-mode-map (kbd "C-<kp-enter>") #'org-meta-return))
 
-;; tabbar配置那里有对org的C-TAB的设置
-(defvar website-org-path nil)
-(defvar website-org-publish-path nil)
-(add-hook
- 'org-mode-hook
- (lambda ()
-   ;; 禁止<>自动，因为<src什么的还是很常用的
-   (setq-local electric-pair-inhibit-predicate
-               `(lambda (c)
-                  (if (char-equal c ?<)
-                      t
-                    (,electric-pair-inhibit-predicate c))))
-   (setq truncate-lines nil)
-   ;(define-key org-mode-map  [(control ?\,)] 'ska-point-to-register)
-   ;; 建站专用
-   ;; (require 'org-publish)
-   (when (and website-org-path website-org-publish-path)
-     (setq
-      org-publish-project-alist
-      ;notes组件
-      `(( ;; note ` instead of '
-         "org-notes"
-         :base-directory ,(format "%s" website-org-path) ;设置存放.org文件位置 
-         :base-extension "org" ;仅处理 .org 格式文件
-         :publishing-directory ,(format "%s" website-org-publish-path) ;导出html文件位置
-         :recursive t
-         :publishing-function org-publish-org-to-html
-         :headline-levels 4 ;Just the default for this project.
-         :auto-preamble t
-         :auto-sitemap t ;自动生成 sitemap.org
-         :sitemap-filename "sitemap.org" ;默认名称
-         :sitemap-title "SiteMap"
-         :export-creator-info nil ;禁止在 postamble 显示"Created by Org"
-         :export-author-info nil ;禁止在 postamble 显示 "Author: Your Name"
-         :auto-postamble nil
-         :table-of-contents nil ;禁止生成文章目录，如果要生成，将 nil 改为 t
-         :section-numbers nil ;禁止在段落标题前使用数字，如果使用，将 nil 改为 t
-         :html-postamble html-last-updated ;自定义 postamble 显示字样
-         :style-include-default nil ;禁用默认 css 样式,使用自定义css
-         )
-        ;;static 组件
-        ("org-static"
-         :base-directory ,(format "%s" website-org-path)
-         :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
-         :publishing-directory ,(format "%s" website-org-publish-path)
-         :recursive t
-         :publishing-function org-publish-attachment)
-        ;;publish 组件
-        ("org" :components ("org-notes" "org-static"))))
-     (defun html-last-updated ()
-       (concat
-        "<div id=\"footer\">Last Updated: "
-        (format-time-string "%Y-%m-%d %H:%M")
-        ". contact: lynnux@qq.com</a></div> ")))))
-
-
-;; cua mode line
-(defun my-cua-mode-setting ()
+(use-package cua-base
+  :defer t
+  :config
   (setq cua-remap-control-z nil) ;原来是add-hook，所以设置不成功，eval-after-load会在加载cua文件后立即执行。elisp要加强啊！
   (defface cua-mode-mode-line-face
     '((((type tty pc)) :bold t :foreground "blue" :background "white")
@@ -156,11 +216,8 @@
   (define-key global-map (kbd "<S-mouse-1>") 'mouse-set-point)
   (put 'mouse-set-point 'CUA 'move)
   (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
-  ;; (setq cua-keep-region-after-copy t) ;选中复制后保持选中状态
+  ;; (setq cua-keep-region-after-copy t) ;选中复制后保持选中状态  
   )
-;; )
-(with-eval-after-load 'cua-base
-  (my-cua-mode-setting))
 
 ;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
 (defun run-with-local-idle-timer (secs repeat function &rest args)
