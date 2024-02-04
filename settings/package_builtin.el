@@ -65,6 +65,16 @@
          org-level-click-map))))
   (add-hook 'org-font-lock-hook #'org-add-keymap-to-level)
 
+  ;; 使汉字的emphasis不需要输入额外的空格，参考https://www.cnblogs.com/apirobot/p/15366984.html
+  (dolist (index '(0 1))
+    (setcar
+     (nthcdr index org-emphasis-regexp-components)
+     (string-replace
+      "[:space:]" "[:multibyte:][:space:]"
+      (nth index org-emphasis-regexp-components))))
+  (org-set-emph-re
+   'org-emphasis-regexp-components org-emphasis-regexp-components)
+
   ;; 添加markdown的代码标记
   (add-to-list 'org-emphasis-alist '("`" org-code verbatim))
   (setq org-verbatim-re
@@ -148,6 +158,7 @@
   :defer t)
 
 (use-package org-agenda
+  :defer t
   :init
   ;; (setq org-hide-leading-stars t); 只高亮显示最后一个代表层级的 *
   (define-key global-map "\C-ca" 'org-agenda) ;C-c a 进入日程表

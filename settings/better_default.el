@@ -338,3 +338,13 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (delete ".map" completion-ignored-extensions) ;; vertico补全会过滤一些后辍文件
 
 (global-set-key (kbd "C-x C-p") 'mark-whole-buffer) ;; 即C-x h功能，原mark-page会被分隔
+
+(defun qiang-comment-dwim-line (&optional arg)
+  "片行尾和选中时跟`comment-dwim'一致"
+  (interactive "*P")
+  (comment-normalize-vars)
+  (if (and (not (region-active-p)) (not (looking-at "[ \t]*$")))
+      (comment-or-uncomment-region
+       (line-beginning-position) (line-end-position))
+    (comment-dwim arg)))
+(global-set-key [remap comment-dwim] 'qiang-comment-dwim-line)

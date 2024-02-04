@@ -4940,26 +4940,6 @@ _q_uit
     (with-current-buffer (ad-get-argument args 0)
       (tab-line-mode -1))))
 
-(defun qiang-comment-dwim-line (&optional arg)
-  "片行尾和选中时跟`comment-dwim'一致"
-  (interactive "*P")
-  (comment-normalize-vars)
-  (if (and (not (region-active-p)) (not (looking-at "[ \t]*$")))
-      (comment-or-uncomment-region
-       (line-beginning-position) (line-end-position))
-    (comment-dwim arg)))
-(global-set-key [remap comment-dwim] 'qiang-comment-dwim-line)
-;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
-;; 按两下就会跳到行尾， C-u开头会对齐注释 
-(use-package comment-dwim-2
-  :disabled
-  :if (bound-and-true-p enable-feature-edit) ;
-  :defer 1.1 ;; 经常首次使用时卡住，故而不要用延迟加载了
-  :bind ([remap comment-dwim] . comment-dwim-2)
-  :init
-  ;; (setq cd2/region-command 'cd2/comment-or-uncomment-region) ;; comment-dwim那种模式，多行需要全部选中
-  (global-set-key "\M-;" 'comment-dwim-2))
-
 ;; 修改光标下的数字，这个支持十六进制(shift-number不支持)
 (use-package evil-numbers
   :if (bound-and-true-p enable-feature-edit)
