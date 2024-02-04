@@ -162,77 +162,9 @@
 (with-eval-after-load 'cua-base
   (my-cua-mode-setting))
 
-(with-eval-after-load 'view
-  ;; 跟god-mode集成了，原来view单字符的功能全部加上C-，
-  (define-key
-   view-mode-map (kbd "C-w")
-   'View-scroll-page-backward-set-page-size) ;; view-mode显然不能编辑
-  (define-key
-   view-mode-map (kbd "C-SPC")
-   'View-scroll-page-forward-set-page-size) ;; 原C-spc是set-mark
-  (define-key
-   view-mode-map (kbd "C-v")
-   'View-scroll-page-forward-set-page-size) ;; view-mode显然不能编辑
-  ;; (define-key view-mode-map "a" 'move-beginning-of-line)
-  ;; (define-key view-mode-map "e" 'move-end-of-line)
-  ;; (define-key view-mode-map "m" 'back-to-indentation)
-  ;; (define-key view-mode-map "n" 'next-line)
-  ;; (define-key view-mode-map "p" 'previous-line)
-  ;; (define-key view-mode-map "g" 'lgrep)
-  ;; (define-key view-mode-map "1" 'delete-other-windows)
-  ;; (define-key view-mode-map "2" 'split-window-vertically)
-  ;; (define-key view-mode-map "3" 'split-window-horizontally)
-  ;; (define-key view-mode-map "f" 'forward-word)
-  ;; (define-key view-mode-map "b" 'backward-word)
-  ;; (define-key view-mode-map "v" 'set-mark-command)
-  ;; (define-key view-mode-map "t" 'set-mark-command)
-  ;; (define-key view-mode-map "o" 'other-window)
-  ;; (define-key view-mode-map "G" 'end-of-buffer)
-  ;; (define-key view-mode-map "i" 'view-mode)
-  ;; (define-key view-mode-map "r" 'move-to-window-line-top-bottom)
-  ;; (define-key view-mode-map "c" 'kill-ring-save)
-  ;; (define-key view-mode-map "l" 'View-scroll-line-forward)
-  ;; (define-key view-mode-map "q" 'quit-window)
-  (defface view-mode-mode-line-face
-    '((((type tty pc)) :bold t :background "red" :foreground "white")
-      (t (:background "red" :foreground "white")))
-    "Face used highlight `view-mode-line-format'.")
-
-  (defvar view-mode-line-format
-    (propertize "View"
-                ;; 'local-map mode-line-minor-mode-keymap
-                ;; 'help-echo "mouse-3: minor mode menu"
-                'face 'view-mode-mode-line-face)
-    "*Mode line format of `view-mode'.")
-
-  (put 'view-mode-line-format 'risky-local-variable t)
-
-  (setq minor-mode-alist
-        (append
-         `((view-mode " ") (view-mode ,view-mode-line-format))
-         (delq (assq 'view-mode minor-mode-alist) minor-mode-alist))))
-(global-unset-key (kbd "C-x C-q")) ;; 偶尔遇到C-i也不能修改就是这个导致的
-
-;; 避免wcy提示失败
-(add-hook
- 'after-init-hook
- (lambda ()
-   (add-hook
-    'find-file-hook
-    (lambda ()
-      ;; 排除git commit的buffer
-      (unless (or (string-match
-                   "\\(?:COMMIT_EDITMSG\\)$" buffer-file-name)
-                  (string-match
-                   "\\(?:.dir-locals.el\\)$" buffer-file-name))
-        (view-mode 1))))))
-(keyboard-translate ?\C-i ?\H-i) ;把C-I绑定为开关，terminal貌似不起作用
-(global-set-key [?\H-i] 'view-mode)
 ;; 有些插件如eglot-rename需要临时禁用view-mode，一般用find-file-noselect(fin-file-hook那里做对已经打开的文件无效)，以下是trick
 (defun run-with-local-idle-timer (secs repeat function &rest args)
-  "Like `run-with-idle-timer', but always runs in the `current-buffer'.
-
-Cancels itself, if this buffer was killed."
+  ""
   (let* ( ;; Chicken and egg problem.
          (fns (make-symbol "local-idle-timer"))
          (timer (apply 'run-with-idle-timer secs repeat fns args))
@@ -245,99 +177,153 @@ Cancels itself, if this buffer was killed."
     (fset fns fn)
     fn))
 
-(defvar tmp-disable-view-mode nil) ;; 在需要的函数defadvice里设置，2不恢复只读，3禁用
-(defun check-tmp-disable-view-mode (result)
-  (unless (eq tmp-disable-view-mode 3)
-    (when (and tmp-disable-view-mode (bufferp result))
-      (with-current-buffer result
-        (when view-mode
-          (view-mode -1) ;; 临时禁用
-          (cond
-           ((eq tmp-disable-view-mode 2)
-            ())
-           (t
-            ;; 2秒后恢复只读，实际上idle可能超过2秒
-            (run-with-local-idle-timer
-             2 nil
-             (lambda () (view-mode 1))))))))))
+(use-package view
+  :defer t
+  :init
+  (add-hook
+   'after-init-hook
+   (lambda ()
+     (add-hook
+      'find-file-hook
+      (lambda ()
+        ;; 排除git commit的buffer
+        (unless (or (string-match
+                     "\\(?:COMMIT_EDITMSG\\)$" buffer-file-name)
+                    (string-match
+                     "\\(?:.dir-locals.el\\)$" buffer-file-name))
+          (view-mode 1))))))
+  (keyboard-translate ?\C-i ?\H-i) ;把C-I绑定为开关，terminal貌似不起作用
+  (global-set-key [?\H-i] 'view-mode)
+  (global-unset-key (kbd "C-x C-q")) ;; 偶尔遇到C-i也不能修改就是这个导致的
+  (defvar tmp-disable-view-mode nil) ;; 在需要的函数defadvice里设置，2不恢复只读，3禁用
+  (defun check-tmp-disable-view-mode (result)
+    (unless (eq tmp-disable-view-mode 3)
+      (when (and tmp-disable-view-mode (bufferp result))
+        (with-current-buffer result
+          (when view-mode
+            (view-mode -1) ;; 临时禁用
+            (cond
+             ((eq tmp-disable-view-mode 2)
+              ())
+             (t
+              ;; 2秒后恢复只读，实际上idle可能超过2秒
+              (run-with-local-idle-timer
+               2 nil
+               (lambda () (view-mode 1))))))))))
 
-;; 参考org-capture-target-buffer和org-find-base-buffer-visiting，找到下面两个的hook点
-(define-advice find-file-noselect (:around (orig-fn &rest args) my)
-  (let ((result (apply orig-fn args)))
-    (check-tmp-disable-view-mode result)
-    result))
-;; ivy会调用这个导致wcy加载，不能用ivy-use-virtual-buffers
-(define-advice get-file-buffer (:around (orig-fn &rest args) my)
-  (let ((result (apply orig-fn args)))
-    (check-tmp-disable-view-mode result)
-    result))
-(define-advice find-buffer-visiting (:around (orig-fn &rest args) my)
-  (let ((result (apply orig-fn args)))
-    (check-tmp-disable-view-mode result)
-    result))
+  ;; 参考org-capture-target-buffer和org-find-base-buffer-visiting，找到下面两个的hook点
+  (define-advice find-file-noselect (:around (orig-fn &rest args) my)
+    (let ((result (apply orig-fn args)))
+      (check-tmp-disable-view-mode result)
+      result))
+  ;; ivy会调用这个导致wcy加载，不能用ivy-use-virtual-buffers
+  (define-advice get-file-buffer (:around (orig-fn &rest args) my)
+    (let ((result (apply orig-fn args)))
+      (check-tmp-disable-view-mode result)
+      result))
+  (define-advice find-buffer-visiting
+      (:around (orig-fn &rest args) my)
+    (let ((result (apply orig-fn args)))
+      (check-tmp-disable-view-mode result)
+      result))
 
-;;; occur
-(add-hook
- 'occur-mode-hook
- (lambda ()
-   (define-key occur-mode-map (kbd "p") 'occur-prev)
-   (define-key occur-mode-map (kbd "n") 'occur-next)))
-;;; from http://www.emacswiki.org/emacs/aok.el
-(defun all-occur (rexp)
-  "Search all buffers for REXP."
-  (interactive "MRegexp: ")
-  (multi-occur (buffer-list) rexp))
+  :config
+  ;; 跟god-mode集成了，原来view单字符的功能全部加上C-，
+  (define-key
+   view-mode-map (kbd "C-w")
+   'View-scroll-page-backward-set-page-size) ;; view-mode显然不能编辑
+  (define-key
+   view-mode-map (kbd "C-SPC")
+   'View-scroll-page-forward-set-page-size) ;; 原C-spc是set-mark
+  (define-key
+   view-mode-map (kbd "C-v")
+   'View-scroll-page-forward-set-page-size) ;; view-mode显然不能编辑
+  (define-key view-mode-map (kbd "C-j") nil)
+  (define-key
+   view-mode-map (kbd "RET")
+   (lambda ()
+     (interactive)
+     (when (eq major-mode 'org-mode)
+       (call-interactively 'org-cycle))))
+  (defface view-mode-mode-line-face
+    '((((type tty pc)) :bold t :background "red" :foreground "white")
+      (t (:background "red" :foreground "white")))
+    "")
+  (defvar view-mode-line-format
+    (propertize "View" 'face 'view-mode-mode-line-face)
+    "")
+  (put 'view-mode-line-format 'risky-local-variable t)
+  (setq minor-mode-alist
+        (append
+         `((view-mode " ") (view-mode ,view-mode-line-format))
+         (delq (assq 'view-mode minor-mode-alist) minor-mode-alist))))
 
-;; this one {c}/{sh}ould be a completing read that would read from a
-;; predefined list of filetype extensions (without requiring a match).
-(defun type-occur (extension rexp)
-  "EXTENSION denotes a filetype extension to search.
+(use-package occur
+  :defer t
+  :init
+  ;;; from http://www.emacswiki.org/emacs/aok.el
+  (defun all-occur (rexp)
+    "Search all buffers for REXP."
+    (interactive "MRegexp: ")
+    (multi-occur (buffer-list) rexp))
+
+  ;; this one {c}/{sh}ould be a completing read that would read from a
+  ;; predefined list of filetype extensions (without requiring a match).
+  (defun type-occur (extension rexp)
+    "EXTENSION denotes a filetype extension to search.
 Run occur in all buffers whose names match this type for REXP."
-  (interactive "MExtension: \nMRegexp: ")
-  (multi-occur-in-matching-buffers (concat ".*\." extension) rexp))
+    (interactive "MExtension: \nMRegexp: ")
+    (multi-occur-in-matching-buffers (concat ".*\." extension) rexp))
 
-(defun mode-occur (mode rexp)
-  "Search all buffers with major mode MODE for REXP."
-  (interactive (list
-                (read-command "Mode: ") (read-string "Regexp: ")))
-  (multi-occur
-   (remove-if
-    (lambda (buf)
-      (set-buffer buf)
-      (not (eq major-mode mode)))
-    (buffer-list))
-   rexp))
+  (defun mode-occur (mode rexp)
+    "Search all buffers with major mode MODE for REXP."
+    (interactive (list
+                  (read-command "Mode: ") (read-string "Regexp: ")))
+    (multi-occur
+     (remove-if
+      (lambda (buf)
+        (set-buffer buf)
+        (not (eq major-mode mode)))
+      (buffer-list))
+     rexp))
+  :config
+  (define-key occur-mode-map (kbd "p") 'occur-prev)
+  (define-key occur-mode-map (kbd "n") 'occur-next))
 
 (setq completion-ignore-case t)
 
 (setq dabbrev-abbrev-char-regexp "[A-Za-z-_]") ;; 不补全中文
 
-(with-eval-after-load 'bind-key
-  (bind-key* (kbd "C-'") 'hippie-expand))
-(defun try-zwz-expand-dabbrev-visible (old)
-  (save-excursion (try-expand-dabbrev-visible old)))
-(setq hippie-expand-try-functions-list
-      '(try-expand-dabbrev
-        try-zwz-expand-dabbrev-visible
-        try-expand-dabbrev-all-buffers
-        try-expand-dabbrev-from-kill
-        try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-all-abbrevs
-        try-expand-list
-        try-expand-line
-        try-complete-lisp-symbol-partially
-        try-complete-lisp-symbol))
+(use-package hippie-exp
+  :defer t
+  :init (bind-key* (kbd "C-'") 'hippie-expand)
+  :config
+  (defun try-zwz-expand-dabbrev-visible (old)
+    (save-excursion (try-expand-dabbrev-visible old)))
+  (setq hippie-expand-try-functions-list
+        '(try-expand-dabbrev
+          try-zwz-expand-dabbrev-visible
+          try-expand-dabbrev-all-buffers
+          try-expand-dabbrev-from-kill
+          try-complete-file-name-partially
+          try-complete-file-name
+          try-expand-all-abbrevs
+          try-expand-list
+          try-expand-line
+          try-complete-lisp-symbol-partially
+          try-complete-lisp-symbol)))
 
-;; 老实说gdb一点都不好用，尽量用打印输出来调试
-(add-hook
- 'gdb-mode-hook
- #'(lambda ()
-     (gdb-many-windows)
-     (define-key c-mode-base-map [(f5)] 'gud-go)
-     (define-key c-mode-base-map [(f10)] 'gud-step)
-     (define-key c-mode-base-map [(f11)] 'gud-next)
-     (define-key c-mode-base-map [(f9)] 'gud-break)))
+(use-package gdb
+  :defer t
+  :config
+  (add-hook
+   'gdb-mode-hook
+   #'(lambda ()
+       (gdb-many-windows)
+       (define-key c-mode-base-map [(f5)] 'gud-go)
+       (define-key c-mode-base-map [(f10)] 'gud-step)
+       (define-key c-mode-base-map [(f11)] 'gud-next)
+       (define-key c-mode-base-map [(f9)] 'gud-break))))
 
 ;; autosave 这个会卡
 (setq

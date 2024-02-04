@@ -5568,8 +5568,8 @@ _q_uit
 
   ;; ESC代替C-g
   (define-key key-translation-map (kbd "ESC") (kbd "C-g")) ;; 普通方法还不行
-  (with-eval-after-load 'view
-    (setq view-mode-map (make-sparse-keymap)))
+  ;; (with-eval-after-load 'view
+  ;;   (setq view-mode-map (make-sparse-keymap)))
   (add-hook
    'view-mode-hook
    (lambda ()
@@ -6265,7 +6265,11 @@ _q_uit
   ;; see https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/4
   (add-to-list
    'load-path "~/.emacs.d/packages/use-package/use-package-master")
-  (setq-default elisp-autofmt-load-packages-local '("use-package")))
+  (setq-default elisp-autofmt-load-packages-local '("use-package"))
+  (with-eval-after-load 'diff-hl
+    ;; 修复格式化后diff-hl消失问题
+    (define-advice elisp-autofmt--region (:after (&rest args) my)
+      (diff-hl-update))))
 
 (use-package format
   :defer t
