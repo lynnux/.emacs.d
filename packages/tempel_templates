@@ -68,7 +68,11 @@ emacs-lisp-mode
          ";;; " (file-name-nondirectory (or (buffer-file-name) (buffer-name))) " ends here" n)
 (log "(message \"LOG %s " (s sexp) ": %S"
      "\" (format-time-string \"%X\") " sexp ")")
-(define-advice "(define-advice " (p "target") " (" (p ":around") " (orig-fn &rest args) my)"  n> "(let ((result (apply orig-fn args)))" n> q n>"result))")
+(define-advice "(define-advice " q " (:around (orig-fn &rest args) my)"  n> "(let ((result (apply orig-fn args)))" n>  n>"result))")
+(cl-letf "(cl-letf (((symbol-function #'" q ")
+             (lambda (&rest _)
+               (ignore))))
+    (ignore))")
 
 eshell-mode
 
