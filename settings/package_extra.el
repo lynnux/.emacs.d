@@ -3869,7 +3869,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (ignore-errors
         (module-load
          (expand-file-name
-          "H:/prj/rust/lspce-master/target/release/lspce_module.dll")))
+          "H:/prj/rust/lspce/target/release/lspce_module.dll")))
       (ignore-errors
         (module-load
          (expand-file-name
