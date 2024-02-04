@@ -4692,7 +4692,30 @@ _q_uit
          (match-end 0)
          'keymap
          org-level-click-map))))
-  (add-hook 'org-font-lock-hook #'org-add-keymap-to-level))
+  (add-hook 'org-font-lock-hook #'org-add-keymap-to-level)
+
+  ;; 添加markdown的代码标记
+  (add-to-list 'org-emphasis-alist '("`" org-code verbatim))
+  (setq org-verbatim-re
+        (string-replace "[=~]" "[=~`]" org-verbatim-re))
+  (define-advice org-do-emphasis-faces
+      (:around (orig-fn &rest args) my)
+    (cl-letf* ((org-member (symbol-function #'member))
+               (org-format (symbol-function #'format))
+               ((symbol-function #'format)
+                (lambda (&rest args)
+                  (if (equal
+                       (car args) "\\([%s]\\|^\\)\\([~=*/_+]\\)")
+                      (progn
+                        (setcar args "\\([%s]\\|^\\)\\([~=*/_+`]\\)")
+                        (apply org-format args))
+                    (apply org-format args))))
+               ((symbol-function #'member)
+                (lambda (elt list)
+                  (if (equal list '("~" "="))
+                      (funcall org-member elt '("~" "=" "`"))
+                    (funcall org-member elt list)))))
+      (apply orig-fn args))))
 
 ;; 优点: 可以以文件名,tag和子标题(需要org-id-get-create创建id)来搜索。
 ;; roam buffer: 可以显示backlink，同时会根据鼠标位置动态更新内容
@@ -4975,10 +4998,20 @@ _q_uit
     (with-current-buffer (ad-get-argument args 0)
       (tab-line-mode -1))))
 
+(defun qiang-comment-dwim-line (&optional arg)
+  "片行尾和选中时跟`comment-dwim'一致"
+  (interactive "*P")
+  (comment-normalize-vars)
+  (if (and (not (region-active-p)) (not (looking-at "[ \t]*$")))
+      (comment-or-uncomment-region
+       (line-beginning-position) (line-end-position))
+    (comment-dwim arg)))
+(global-set-key [remap comment-dwim] 'qiang-comment-dwim-line)
 ;; 这个comment行只要有mark即可，不需要全部选中(对于lisp相关mode它还是会优先region)
 ;; 按两下就会跳到行尾， C-u开头会对齐注释 
 (use-package comment-dwim-2
-  :if (bound-and-true-p enable-feature-edit)
+  :disabled
+  :if (bound-and-true-p enable-feature-edit) ;
   :defer 1.1 ;; 经常首次使用时卡住，故而不要用延迟加载了
   :bind ([remap comment-dwim] . comment-dwim-2)
   :init
