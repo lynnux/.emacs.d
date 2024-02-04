@@ -683,3 +683,9 @@ Run occur in all buffers whose names match this type for REXP."
      (remove-hook
       'completion-at-point-functions #'ispell-completion-at-point
       t))))
+
+(use-package help-fns
+  :defer t
+  :init
+  ;; 加快F1 f/v，禁止根据输入加载内置包
+  (setq help-enable-completion-autoload nil))
