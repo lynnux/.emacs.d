@@ -5642,11 +5642,20 @@ _q_uit
   ;; 修改type使支持consult-xref preview
   (define-advice ggtags--xref-collect-tags
       (:around (orig-fn &rest args) my)
-    (let ((result (apply orig-fn args)))
-      (dolist (l result)
-        ;; slot object可以用array操作
-        (aset (aref l 2) 0 'xref-file-location))
-      result))
+    (cl-letf*
+        ((org-expand-file-name (symbol-function #'expand-file-name))
+         (root (nth 1 args))
+         ((symbol-function #'expand-file-name)
+          (lambda (&rest args)
+            ;; 解决偶尔打开不存在路径的问题，是因为default-directory为空，expand-file-name参数加上root就可以了
+            (if (not default-directory)
+                (apply org-expand-file-name (list (car args) root))
+              (apply org-expand-file-name args)))))
+      (let ((result (apply orig-fn args)))
+        (dolist (l result)
+          ;; slot object可以用array操作
+          (aset (aref l 2) 0 'xref-file-location))
+        result)))
   (fmakunbound 'ggtags-create-tags) ;; 去掉避免干扰，用我们的async版本
   (fmakunbound 'ggtags-update-tags)
   (define-advice ggtags-global-build-command
