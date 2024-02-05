@@ -158,16 +158,15 @@
 (add-to-list 'load-path "~/.emacs.d/packages")
 
 ;; (ensure-latest "~/.emacs.d/settings/test.zip")
-;; F1 v查看变量 sanityinc/require-times，正常一页就显示完了，目前11个包
+;; F1 v查看变量 sanityinc/require-times，或者M-x `sanityinc/require-times' 正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
-  :disabled
   :config
   (add-hook
    'after-init-hook
    (lambda ()
-     ;; 启动后就不再需要了，会把helm等算进去
-     (advice-remove 'require 'sanityinc/require-times-wrapper))))
+     ;; (advice-remove 'require 'sanityinc/require-times-wrapper)
+     )))
 
 ;; !themes要放到最后，内置theme查看 M-x customize-themes
 ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
@@ -3086,8 +3085,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 
   ;; 当光标在屏幕下一半，minibuffer显示有换行的拷贝内容，会导致C-l效果，需要去掉换行
   ;; 测试带汉字也会。。所以屏蔽echo
-  (defun easy-kill-echo-around (orig-fun format-string &rest args))
-  (advice-add 'easy-kill-echo :around #'easy-kill-echo-around)
+  (advice-add 'easy-kill-echo :override #'ignore)
   (add-to-list 'easy-kill-alist '(?= line-with-yank-handler ""))
 
   (setq easy-mark-try-things '(symbol sexp)) ; 要加sexp，不然在)处expand会有bug
@@ -6305,6 +6303,7 @@ _q_uit
       (apply orig-fn args))))
 
 (use-package cal-china
+  :disabled
   :defer 0.5 ;; 不知为何，直接加载会报错
   :init
   (use-package calendar
