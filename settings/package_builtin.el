@@ -34,7 +34,7 @@
   (setq
    org-startup-indented t ; 开启`org-indent'
    org-modules '() ;; 造成org文件打开慢的真凶！
-   org-hide-emphasis-markers t ;; 不显示`org-emphasis-alist'
+   org-hide-emphasis-markers nil ;; 不显示`org-emphasis-alist'
    org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀
    org-log-done 'time ; 给已完成事项打上时间戳。可选 note，附加注释
    org-startup-folded 'show4levels ; 打开时折叠
@@ -65,15 +65,18 @@
          org-level-click-map))))
   (add-hook 'org-font-lock-hook #'org-add-keymap-to-level)
 
+  ;; 测试英文也是需要空格，所以干脆把emphasis加上零宽空格
   ;; 使汉字的emphasis不需要输入额外的空格，参考https://www.cnblogs.com/apirobot/p/15366984.html
-  (dolist (index '(0 1))
-    (setcar
-     (nthcdr index org-emphasis-regexp-components)
-     (string-replace
-      "[:space:]" "[:multibyte:][:space:]"
-      (nth index org-emphasis-regexp-components))))
-  (org-set-emph-re
-   'org-emphasis-regexp-components org-emphasis-regexp-components)
+  ;; (dolist (index '(0 1))
+  ;;   (setcar
+  ;;    (nthcdr index org-emphasis-regexp-components)
+  ;;    (string-replace
+  ;;     "[:space:]" "[:multibyte:][:space:]"
+  ;;     (nth index org-emphasis-regexp-components))))
+  ;; (setcar (nthcdr 0 org-emphasis-regexp-components) " \t('\"{[:nonascii:]")
+  ;; (setcar (nthcdr 1 org-emphasis-regexp-components) "- \t.,:!?;'\")}\\[[:nonascii:]")
+  ;; (org-set-emph-re
+  ;;  'org-emphasis-regexp-components org-emphasis-regexp-components)
 
   ;; 添加markdown的代码标记
   (add-to-list 'org-emphasis-alist '("`" org-code verbatim))
@@ -106,7 +109,22 @@
                  `(lambda (c)
                     (if (char-equal c ?<)
                         t
-                      (,electric-pair-inhibit-predicate c)))))))
+                      (,electric-pair-inhibit-predicate c))))
+
+     (when (functionp 'tempel-insert)
+       ;; emphasis字符加上零宽空格
+       (defmacro add_zero_space_char (ch)
+         `(lambda ()
+            (interactive)
+            ;; r支持region！但注意有些键`easy-mark'会影响到，如=
+            (tempel-insert (list "" "\x200B" ,ch 'r ,ch "\x200B"))))
+       (local-set-key "*" (add_zero_space_char "*"))
+       (local-set-key "/" (add_zero_space_char "/"))
+       (local-set-key "_" (add_zero_space_char "_"))
+       (local-set-key "=" (add_zero_space_char "="))
+       (local-set-key "~" (add_zero_space_char "~"))
+       (local-set-key "+" (add_zero_space_char "+"))
+       (local-set-key "`" (add_zero_space_char "`"))))))
 
 (use-package org-publish
   :defer t
