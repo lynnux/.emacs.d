@@ -6303,8 +6303,7 @@ _q_uit
       (apply orig-fn args))))
 
 (use-package cal-china
-  :disabled
-  :defer 0.5 ;; 不知为何，直接加载会报错
+  :defer 5.5 ;; 不知为何，直接加载会报错
   :init
   (use-package calendar
     :commands (calendar-absolute-from-gregorian calendar-current-date))
