@@ -4773,7 +4773,7 @@ _q_uit
   :defer t
   :init
   (setq
-   org-modern-star '("")
+   org-modern-star '("●" "●" "▶")
    ;; '("●" "●" "▶") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
    ;; https://www.fuhaoku.net/block/Dingbats
    org-modern-list '((?+ . "●") (?- . "●")) ;;'((?+ . "✚") (?- . "▬"))
