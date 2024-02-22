@@ -37,9 +37,6 @@ def main():
                 continue
             if "lhttp.qtfm.cn/live" in url:
                 continue
-            # 去重复
-            if url in all_url:
-                continue
             # 去掉一些处理有问题的
             title = title.replace("'", '"')
             if title.count('"') != 2:
@@ -48,6 +45,9 @@ def main():
             url = url.replace("'", '"')
             if url.count('"') != 2:
                 continue
+            # 去重复
+            if url in all_url:
+                continue            
             all_url.add(url)
             out += "(" + title + " " + url + ")" + "\n"
     with open("radio_urls.el", "w", encoding="utf-8") as f:

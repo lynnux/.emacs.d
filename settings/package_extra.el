@@ -4819,6 +4819,7 @@ _q_uit
             (radio-urls-read
              (expand-file-name "packages/tools/radio_urls.el"
                                user-emacs-directory)))
+      ;; 蜻蜓的音质基本都很差，仅下面这个可以
       (setq radio-urls
             (append
              '(("华语金曲500首"
@@ -4832,7 +4833,7 @@ _q_uit
                           t)))
       (empv-play (nth 1 item))))
   (defalias 'radio-stop 'empv-exit)
-  :config
+  :config (add-to-list 'empv-mpv-args "--volume=70") ;; 默认声音太大
   ;; 目前仅支持播放/关闭功能，其它功能都有问题，有个参数socket-file在windows上是不支持的
   ;; 播放之前必须关闭之前的进程
   (advice-add #'empv-play :before (lambda (&rest _) (empv-exit))))
