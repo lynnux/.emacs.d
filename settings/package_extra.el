@@ -2073,6 +2073,8 @@ _c_: hide comment        _q_uit
          (tempel-insert
           (vertico-sort-function . vertico-sort-history-alpha))
          (search-in-browser
+          (vertico-sort-function . vertico-sort-history-alpha))
+         (radio-select
           (vertico-sort-function . vertico-sort-history-alpha))))
       ;; (setq vertico-multiform-categories
       ;;       '((file buffer grid)
@@ -4794,6 +4796,46 @@ _q_uit
                (lambda (&rest _)
                  "~/.emacs.d/packages/tools/cnfonts.el")))
       (apply orig-fn args))))
+
+(use-package empv
+  :defer t
+  :init (autoload 'empv-play "tools/empv" nil t)
+  ;; https://www.radio-browser.info/
+  (defvar radio-urls nil)
+  (defun radio-urls-read (file)
+    "radio_urls.el由radio_urls_get.py生成"
+    (with-temp-buffer
+      (insert "(\n")
+      (insert-file-contents file)
+      (goto-char (point-max))
+      (insert "\n)")
+      (goto-char (point-min))
+      (let ((data (read (current-buffer))))
+        data)))
+  (defun radio-select ()
+    (interactive)
+    (unless radio-urls
+      (setq radio-urls
+            (radio-urls-read
+             (expand-file-name "packages/tools/radio_urls.el"
+                               user-emacs-directory)))
+      (setq radio-urls
+            (append
+             '(("华语金曲500首"
+                "http://ls.qingting.fm/live/3412131.m3u8?bitrate=64"))
+             radio-urls)))
+    (let* ((completion-ignore-case t)
+           (item
+            (assoc-string (completing-read "Radio select: " radio-urls
+                                           nil t)
+                          radio-urls
+                          t)))
+      (empv-play (nth 1 item))))
+  (defalias 'radio-stop 'empv-exit)
+  :config
+  ;; 目前仅支持播放/关闭功能，其它功能都有问题，有个参数socket-file在windows上是不支持的
+  ;; 播放之前必须关闭之前的进程
+  (advice-add #'empv-play :before (lambda (&rest _) (empv-exit))))
 
 (use-package eww
   :defer t
