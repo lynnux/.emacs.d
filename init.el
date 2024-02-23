@@ -48,7 +48,7 @@
    )
   (setq tfs/tf-exe "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\IDE\\TF.exe")
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
-  (setq empv-mpv-binary "H:/green/mpv/mpv.exe")
+  (setq foobar-binary "H:/green/foobar2000/foobar2000.exe") ;; 用/会有问题
   )
 
  ;; 

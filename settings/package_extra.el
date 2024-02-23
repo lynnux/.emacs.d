@@ -4797,9 +4797,23 @@ _q_uit
                  "~/.emacs.d/packages/tools/cnfonts.el")))
       (apply orig-fn args))))
 
-(use-package empv
-  :defer t
-  :init (autoload 'empv-play "tools/empv" nil t)
+;; foobar音质最好！网速好像比mpv稍微慢点，特别网络卡时容错也没mpv好
+(when t
+  ;; foobar里需要设置
+  ;; 1.添加歌曲不显示gui，Preference>Shell Integretion，Bring to front.. 去掉勾选
+  ;; 2.缩小到托盘图标，【File】->【Preferences】->【Advanced】->【Display】->【Default User Interface】->【Windows minimize and close】勾选Minize hide，close exits
+  (defvar foobar-binary nil)
+  (defvar foobar-running nil)
+  (defun foobar-play (uri)
+    (w32-shell-execute nil foobar-binary "/hide")
+    (w32-shell-execute nil foobar-binary (format "/play %s" uri))
+    (setq foobar-running t))
+  (defun foobar-exit ()
+    (interactive)
+    (w32-shell-execute nil foobar-binary "/hide")
+    (w32-shell-execute nil foobar-binary "/stop") ;; 没必要/exit，不然后面再播放可能会显示Proccesing files对话框
+    (setq foobar-running nil))
+
   ;; https://www.radio-browser.info/
   (defvar radio-urls nil)
   (defvar radio-url-current nil)
@@ -4834,13 +4848,8 @@ _q_uit
                           t)))
       (setq radio-url-current item)
       (ignore-errors
-        (empv-play (nth 1 item)))))
-  (defalias 'radio-stop 'empv-exit)
-  :config (add-to-list 'empv-mpv-args "--volume=70") ;; 默认声音太大
-  ;; 目前仅支持播放/关闭功能，其它功能都有问题，有个参数socket-file在windows上是不支持的
-  ;; 播放之前必须关闭之前的进程
-  (advice-add #'empv-play :before (lambda (&rest _) (empv-exit)))
-
+        (foobar-play (nth 1 item)))))
+  (defalias 'radio-stop 'foobar-exit)
   ;; 添加mode-line指示，参考`display-time-string'
   (defvar radio-mode-string nil)
   (put 'radio-mode-string 'risky-local-variable t) ;; 必须不然face等没效果
@@ -4852,15 +4861,15 @@ _q_uit
     (interactive "e")
     (when radio-url-current
       (ignore-errors
-        (if (empv--running?)
-            (empv-exit)
-          (empv-play (nth 1 radio-url-current))))))
+        (if foobar-running
+            (foobar-exit)
+          (foobar-play (nth 1 radio-url-current))))))
   (defun radio-mode-string-update (&optional _)
     (setq radio-mode-string
           (if radio-url-current
               (propertize (concat " ⏯️️" (car radio-url-current))
                           'face
-                          (if (empv--running?)
+                          (if foobar-running
                               'radio-mode-line-face-playing
                             'radio-mode-line-face-stopped)
                           'mouse-face
@@ -4873,8 +4882,8 @@ _q_uit
       (define-key
        map [mode-line mouse-1] 'radio-mode-string-keymap-click)
       map))
-  (advice-add #'empv--make-process :after #'radio-mode-string-update)
-  (advice-add #'empv-exit :after #'radio-mode-string-update)
+  (advice-add #'foobar-play :after #'radio-mode-string-update)
+  (advice-add #'foobar-exit :after #'radio-mode-string-update)
   (setq global-mode-string
         (append global-mode-string '(radio-mode-string))))
 
