@@ -660,7 +660,7 @@ Run occur in all buffers whose names match this type for REXP."
   :defer t
   :init
   ;; 设置了`diff-command'后diff refine就正常了，让它仅diff buffer里p/n才显示
-  (setq diff-refine 'navigation)
+  (setq diff-refine 'nil)
   :config
   ;; 现在不加git PATH了(跟vc环境冲突)，所以需要单独设置
   (setq diff-command
