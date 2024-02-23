@@ -4802,6 +4802,7 @@ _q_uit
   :init (autoload 'empv-play "tools/empv" nil t)
   ;; https://www.radio-browser.info/
   (defvar radio-urls nil)
+  (defvar radio-url-current nil)
   (defun radio-urls-read (file)
     "radio_urls.el由radio_urls_get.py生成"
     (with-temp-buffer
@@ -4831,12 +4832,51 @@ _q_uit
                                            nil t)
                           radio-urls
                           t)))
-      (empv-play (nth 1 item))))
+      (setq radio-url-current item)
+      (ignore-errors
+        (empv-play (nth 1 item)))))
   (defalias 'radio-stop 'empv-exit)
   :config (add-to-list 'empv-mpv-args "--volume=70") ;; 默认声音太大
   ;; 目前仅支持播放/关闭功能，其它功能都有问题，有个参数socket-file在windows上是不支持的
   ;; 播放之前必须关闭之前的进程
-  (advice-add #'empv-play :before (lambda (&rest _) (empv-exit))))
+  (advice-add #'empv-play :before (lambda (&rest _) (empv-exit)))
+
+  ;; 添加mode-line指示，参考`display-time-string'
+  (defvar radio-mode-string nil)
+  (put 'radio-mode-string 'risky-local-variable t) ;; 必须不然face等没效果
+  (defface radio-mode-line-face-playing '((t :foreground "#6ae4b9"))
+    "")
+  (defface radio-mode-line-face-stopped '((t :foreground "#CC6666"))
+    "")
+  (defun radio-mode-string-keymap-click (event)
+    (interactive "e")
+    (when radio-url-current
+      (ignore-errors
+        (if (empv--running?)
+            (empv-exit)
+          (empv-play (nth 1 radio-url-current))))))
+  (defun radio-mode-string-update (&optional _)
+    (setq radio-mode-string
+          (if radio-url-current
+              (propertize (concat " ⏯️️" (car radio-url-current))
+                          'face
+                          (if (empv--running?)
+                              'radio-mode-line-face-playing
+                            'radio-mode-line-face-stopped)
+                          'mouse-face
+                          'mode-line-highlight
+                          'local-map
+                          radio-mode-string-keymap)
+            "")))
+  (defvar radio-mode-string-keymap
+    (let ((map (make-sparse-keymap)))
+      (define-key
+       map [mode-line mouse-1] 'radio-mode-string-keymap-click)
+      map))
+  (advice-add #'empv--make-process :after #'radio-mode-string-update)
+  (advice-add #'empv-exit :after #'radio-mode-string-update)
+  (setq global-mode-string
+        (append global-mode-string '(radio-mode-string))))
 
 (use-package eww
   :defer t
