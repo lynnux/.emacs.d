@@ -32,6 +32,7 @@
    org-roam-directory (file-truename "F:/doc/mynote")
    )
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
+  (setq foobar-binary "c:/green/foobar2000/foobar2000.exe")
   )
  
  ;; work
