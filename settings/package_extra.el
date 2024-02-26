@@ -4802,6 +4802,9 @@ _q_uit
   ;; foobar里需要设置
   ;; 1.添加歌曲不显示gui，Preference>Shell Integretion，Bring to front.. 去掉勾选
   ;; 2.缩小到托盘图标，【File】->【Preferences】->【Advanced】->【Display】->【Default User Interface】->【Windows minimize and close】勾选Minize hide，close exits
+  ;; 3.提升音质WASAPI篇，官网 https://www.foobar2000.org/components 下载插件WASAPI shared output 0.6.21(这个支持64位) 7z解压放到components目录，重启。 Preferences>Playback>Output>Device选择WASAPI设备
+  ;; 也可以ASIO好像更好！官网下载asio插件，我装了水果自带asio驱动，Device选择FL Studio ASIO(选择ASIO4ALL V2没有声音不知道怎么回事)。
+  ;; 最后发现好像都差不多，甚至打开mpv听效果一样！mpv默认就是wasapi输出，不过不支持win7懒得折腾了。
   (defvar foobar-binary nil)
   (defvar foobar-running nil)
   (defun foobar-play (uri)
