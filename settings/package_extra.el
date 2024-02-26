@@ -4808,6 +4808,7 @@ _q_uit
   (defvar foobar-binary nil)
   (defvar foobar-running nil)
   (defun foobar-play (uri)
+    (foobar-exit) ;; 当切换下一个比较耗时电台时开头仍然会串音
     ;; win7 foobar不能播放重定向的url，需要自己获取重定向后的URL
     (when (equal (list 6 1 7601) (w32-version))
       (setq uri
@@ -4825,6 +4826,21 @@ _q_uit
     (w32-shell-execute nil foobar-binary "/hide")
     (w32-shell-execute nil foobar-binary "/stop") ;; 没必要/exit，不然后面再播放可能会显示Proccesing files对话框
     (setq foobar-running nil))
+  (when nil
+    ;; mpv适配
+    (defvar empv-mpv-args `("--no-video" "--no-terminal" "--idle"))
+    (setq foobar-binary "H:/green/mpv/mpv.exe")
+    (defun foobar-exit ()
+      (interactive)
+      (when foobar-running
+        (setq foobar-running (delete-process foobar-running))))
+    (defun foobar-play (uri)
+      (foobar-exit)
+      (setq foobar-running
+            (make-process
+             :name "empv-process"
+             :buffer nil
+             :command `(,foobar-binary ,@empv-mpv-args ,uri)))))
 
   ;; https://www.radio-browser.info/
   (defvar radio-urls nil)
