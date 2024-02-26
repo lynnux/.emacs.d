@@ -4805,6 +4805,15 @@ _q_uit
   (defvar foobar-binary nil)
   (defvar foobar-running nil)
   (defun foobar-play (uri)
+    ;; win7 foobar不能播放重定向的url，需要自己获取重定向后的URL
+    (when (equal (list 6 1 7601) (w32-version))
+      (setq uri
+            (string-trim
+             (shell-command-to-string
+              (concat
+               (expand-file-name "packages/tools/url_get_redirect.py"
+                                 user-emacs-directory)
+               " " uri)))))
     (w32-shell-execute nil foobar-binary "/hide")
     (w32-shell-execute nil foobar-binary (format "/play %s" uri))
     (setq foobar-running t))
