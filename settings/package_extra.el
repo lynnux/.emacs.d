@@ -3888,9 +3888,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
   :config (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster)
   ;; 不知道为什么lspce屏蔽了flex
-  (with-eval-after-load 'hotfuzz
-    (add-to-list
-     'completion-category-defaults '(lspce-capf (styles hotfuzz))))
+  ;; (with-eval-after-load 'hotfuzz
+  ;;   (add-to-list
+  ;;    'completion-category-defaults '(lspce-capf (styles hotfuzz))))
   ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
   (assoc-delete-all "python" lspce-server-programs
                     (lambda (a b) (equal a b)))
@@ -4826,21 +4826,52 @@ _q_uit
     (w32-shell-execute nil foobar-binary "/hide")
     (w32-shell-execute nil foobar-binary "/stop") ;; 没必要/exit，不然后面再播放可能会显示Proccesing files对话框
     (setq foobar-running nil))
-  (when nil
-    ;; mpv适配
-    (defvar empv-mpv-args `("--no-video" "--no-terminal" "--idle"))
-    (setq foobar-binary "H:/green/mpv/mpv.exe")
-    (defun foobar-exit ()
-      (interactive)
-      (when foobar-running
-        (setq foobar-running (delete-process foobar-running))))
-    (defun foobar-play (uri)
-      (foobar-exit)
-      (setq foobar-running
-            (make-process
-             :name "empv-process"
-             :buffer nil
-             :command `(,foobar-binary ,@empv-mpv-args ,uri)))))
+  (defun foobar-is-running ()
+    foobar-running)
+
+  ;; mpv
+  (defvar mpv-binary nil)
+  (defvar mpv-process nil)
+  (defvar empv-mpv-args
+    `("--no-video" "--no-terminal" "--idle" "--volume=70"))
+  (defun mpv-exit ()
+    (interactive)
+    (ignore-errors
+      (when mpv-process
+        (setq mpv-process (delete-process mpv-process)))))
+  (defun mpv-play (uri)
+    (mpv-exit)
+    (setq mpv-process
+          (make-process
+           :name "empv-process"
+           :buffer nil
+           :command `(,mpv-binary ,@empv-mpv-args ,uri))))
+  (defun mpv-is-running ()
+    mpv-process)
+
+  ;; radio
+  (defun radio-switch-backend (&optional backend)
+    (interactive)
+    (unless backend
+      (setq backend
+            (completing-read
+             "Radio backend select: " '("foobar" "mpv")
+             nil t)))
+    (when (and (fboundp 'radio-is-running) (radio-is-running))
+      (radio-exit))
+    (if (equal backend "foobar")
+        (progn
+          (defalias 'radio-play 'foobar-play)
+          (defalias 'radio-exit 'foobar-exit)
+          (defalias 'radio-is-running 'foobar-is-running))
+      (defalias 'radio-play 'mpv-play)
+      (defalias 'radio-exit 'mpv-exit)
+      (defalias 'radio-is-running 'mpv-is-running)))
+
+  ;; 音质其实都差不多，win7只能foobar，win10以上mpv，mpv下载要快点不卡
+  (if (> (car (w32-version)) 7)
+      (radio-switch-backend "mpv")
+    (radio-switch-backend "foobar"))
 
   ;; https://www.radio-browser.info/
   (defvar radio-urls nil)
@@ -4876,8 +4907,8 @@ _q_uit
                           t)))
       (setq radio-url-current item)
       (ignore-errors
-        (foobar-play (nth 1 item)))))
-  (defalias 'radio-stop 'foobar-exit)
+        (radio-play (nth 1 item)))))
+  (defalias 'radio-stop 'radio-exit)
   ;; 添加mode-line指示，参考`display-time-string'
   (defvar radio-mode-string nil)
   (put 'radio-mode-string 'risky-local-variable t) ;; 必须不然face等没效果
@@ -4889,15 +4920,15 @@ _q_uit
     (interactive "e")
     (when radio-url-current
       (ignore-errors
-        (if foobar-running
-            (foobar-exit)
-          (foobar-play (nth 1 radio-url-current))))))
+        (if (radio-is-running)
+            (radio-exit)
+          (radio-play (nth 1 radio-url-current))))))
   (defun radio-mode-string-update (&optional _)
     (setq radio-mode-string
           (if radio-url-current
               (propertize (concat " ⏯️️" (car radio-url-current))
                           'face
-                          (if foobar-running
+                          (if (radio-is-running)
                               'radio-mode-line-face-playing
                             'radio-mode-line-face-stopped)
                           'mouse-face
@@ -4912,6 +4943,8 @@ _q_uit
       map))
   (advice-add #'foobar-play :after #'radio-mode-string-update)
   (advice-add #'foobar-exit :after #'radio-mode-string-update)
+  (advice-add #'mpv-play :after #'radio-mode-string-update)
+  (advice-add #'mpv-exit :after #'radio-mode-string-update)
   (setq global-mode-string
         (append global-mode-string '(radio-mode-string))))
 
