@@ -5457,11 +5457,10 @@ _q_uit
     (interactive)
     (when (autoloadp (symbol-function 'dape))
       (load "lsp/dape"))
-    (if (dape--live-process t)
+    (if (dape--live-connection 'stopped t)
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
-  (plist-put (cdr (assoc 'debugpy dape-configs)) 'command "python")
   (define-advice dape--overlay-icon (:around (orig-fn &rest args) my)
     "修复断点被diff-hl遮挡问题，使用跟terminal一样的样式"
     (cl-letf (((symbol-function #'window-system)
@@ -5543,16 +5542,8 @@ _q_uit
                       (decode-hex-string (nth 0 s)))
                      nil nil t)))))
   (cl-defmethod dape-handle-request
-      (process (command (eql handshake)) seq arguments)
-    (dape--response
-     process
-     "handshake"
-     seq
-     t
-     (list :signature (my-calc (plist-get arguments :value)))))
-  (define-advice dape--handle-object (:after (&rest args))
-    "修复乱发序号问题"
-    (setq dape--seq-event 0))
+      (_conn (_command (eql handshake)) arguments)
+    (list :signature (my-calc (plist-get arguments :value))))
   (define-advice dape-request (:around (orig-fn &rest args) my)
     "stackTrace要求参数startFrame，这是符合标准的 https://microsoft.github.io/debug-adapter-protocol/specification "
     (when (equal (ad-get-argument args 1) "stackTrace")
@@ -5564,6 +5555,22 @@ _q_uit
              args)))
     (apply orig-fn args))
 
+  ;; (setq dape-debug t)
+  (defun dape-find-file (&optional default)
+    "Read filename without any ignored extensions at project root.
+DEFAULT specifies which file to return on empty input."
+    (let* ((completion-ignored-extensions nil)
+           (default-directory (funcall dape-cwd-fn t))
+           (file
+            (expand-file-name
+             (read-file-name (if default
+                                 (format "Program (default %s): "
+                                         default)
+                               "Program: ")
+                             default-directory default t))))
+      (if (tramp-tramp-file-p file)
+          (tramp-file-name-localname (tramp-dissect-file-name file))
+        file)))
   (setq
    dape-cppvsdbg-command
    (expand-file-name
@@ -5575,6 +5582,8 @@ _q_uit
      (c-mode c-ts-mode c++-mode c++-ts-mode)
      ensure
      dape-ensure-command
+     command-cwd
+     dape-command-cwd
      command
      dape-cppvsdbg-command
      command-args
