@@ -3190,6 +3190,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               )))))))
 
 (use-package whole-line-or-region
+  :disabled
   :if (bound-and-true-p enable-feature-edit)
   :config
   (define-key
