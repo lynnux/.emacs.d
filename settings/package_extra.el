@@ -4832,7 +4832,7 @@ _q_uit
   (defvar mpv-binary nil)
   (defvar mpv-process nil)
   (defvar empv-mpv-args
-    `("--no-video" "--no-terminal" "--idle" "--volume=50"))
+    `("--no-video" "--no-terminal" "--idle" "--volume=65"))
   (defun mpv-exit ()
     (interactive)
     (ignore-errors

@@ -104,7 +104,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
     (unless (= (elt string (1- (length string))) ?\n)
       (save-excursion (insert "\n")))
     (let ((beg (point-marker)))
-      (insert string)
+      (insert (substring-no-properties string))
       ;; 必须要删除yank-handler，不然还会遗留在string里 
       (remove-yank-excluded-properties beg (point))
       (yank-advised-indent-function beg (point)) ; 顺便indent一下
