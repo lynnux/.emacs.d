@@ -3889,9 +3889,9 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
          (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
   :config (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster)
   ;; 不知道为什么lspce屏蔽了flex
-  ;; (with-eval-after-load 'hotfuzz
-  ;;   (add-to-list
-  ;;    'completion-category-defaults '(lspce-capf (styles hotfuzz))))
+  (with-eval-after-load 'hotfuzz
+    (add-to-list
+     'completion-category-defaults '(lspce-capf (styles hotfuzz))))
   ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
   (assoc-delete-all "python" lspce-server-programs
                     (lambda (a b) (equal a b)))
