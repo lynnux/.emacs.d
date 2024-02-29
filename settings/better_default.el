@@ -84,18 +84,23 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
     ;; (message "Copied line")
     ))
 
-(define-advice kill-region (:around (orig-fn &rest args) my)
-  (if (or (use-region-p) (not (called-interactively-p 'any)))
-      (apply orig-fn args)
-    (let ((string
-           (filter-buffer-substring
-            (line-beginning-position) (line-beginning-position 2)
-            t)))
-      (when (> (length string) 0)
-        (put-text-property
-         0 (length string) 'yank-handler '(yank-line)
-         string))
-      (kill-new string nil))))
+;; emacs高版本的bug，会提示`The mark is not set now, so there is no region'，
+;; 解决办法是参考`whole-line-or-region.el'自己定义一个函数，然后remap kill-region
+;; (define-advice kill-region (:around (orig-fn &rest args) my)
+;;   (apply orig-fn args)
+;;   (if (or (use-region-p) (not (called-interactively-p 'any)))
+;;       (apply orig-fn args)
+;;     (let ((string
+;;            (filter-buffer-substring
+;;             (line-beginning-position) (line-beginning-position 2)
+;;             t)))
+;;       (when (> (length string) 0)
+;;         (put-text-property
+;;          0 (length string) 'yank-handler '(yank-line)
+;;          string))
+;;       (kill-new string nil))
+;;     )
+;;   )
 
 (defun yank-line (string)
   "Insert STRING above the current line."

@@ -18,6 +18,22 @@
 
 (setq history-length 200)
 
+(defun my-kill-region (prefix)
+  "解决`The mark is not set now, so there is no region'，自己定义一个`kill-region'就可以了"
+  (interactive "p")
+  (if (or (use-region-p) (not (called-interactively-p 'any)))
+      (funcall 'kill-region (region-beginning) (region-end) 'region)
+    (let ((string
+           (filter-buffer-substring
+            (line-beginning-position) (line-beginning-position 2)
+            t)))
+      (when (> (length string) 0)
+        (put-text-property
+         0 (length string) 'yank-handler '(yank-line)
+         string))
+      (kill-new string nil))))
+(bind-key* [remap kill-region] 'my-kill-region)
+
 ;;buffer管理，真的太好用了！
 (global-set-key (kbd "C-x b") 'bs-show) ;这个更好
 (with-eval-after-load 'bs
