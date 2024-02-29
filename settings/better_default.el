@@ -1,17 +1,6 @@
 ;; gui相关设置在set_gui.el中 -*- lexical-binding: t -*-
 ;; 内置plugin设置在plugin_basic.el中,非官方的在plugin_extra.el中
 
-(require 'server)
-;; 解决win7上的不安全提示信息
-(and (>= emacs-major-version 23)
-     (defun server-ensure-safe-dir (dir)
-       "Noop"
-       t))
-(when (string-equal system-type "windows-nt")
-  (server-start))
-(with-eval-after-load 'server
-  (remove-hook
-   'kill-buffer-query-functions 'server-kill-buffer-query-function)) ; 去掉关闭emacsclientw打开的文件的提示
 (define-key global-map "\C-r" 'kill-ring-save) ; M-w经常不起作用
 (define-key
  global-map (kbd "C-x SPC")

@@ -27,6 +27,18 @@
   (define-key bs-mode-map "<" 'beginning-of-buffer)
   (define-key bs-mode-map ">" 'end-of-buffer))
 
+(use-package server
+  :defer 0.5
+  :config
+  ;; 解决win7上的不安全提示信息
+  (and (>= emacs-major-version 23)
+       (fset #'server-ensure-safe-dir #'ignore))
+  (when (string-equal system-type "windows-nt")
+    (server-start))
+  ;; 去掉关闭emacsclientw打开的文件的提示
+  (remove-hook
+   'kill-buffer-query-functions 'server-kill-buffer-query-function))
+
 ;; org mode
 (use-package org
   :defer t
