@@ -3937,6 +3937,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    )
   :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
   :config
+  (setf (plist-get eglot-events-buffer-config :size) 0) ;; eglot-events-buffer-size 自1.16废弃了
   ;; 正确显示#ifdef/#endif宏，需要clangd 17版本以上
   (use-package clangd-inactive-regions
     :defer t
@@ -3966,10 +3967,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       "--clang-tidy" ;; 高级提示
       "--header-insertion-decorators=0" ;; 不要在前面插入圆点
       "--completion-style=detailed" "--pch-storage=memory")))
-  (advice-add
-   'jsonrpc--log-event
-   :around
-   (lambda (_orig-func &rest _))) ;; 禁止log buffer据说可以加快速度
+  (fset #'jsonrpc--log-event #'ignore) ;; 禁止log buffer据说可以加快速度
   ;; flymake还是要开的，错误不处理的话，补全就不能用了。用跟cmake一样的vs版本可以解决很多错误
   (setq eglot-ignored-server-capabilities
         (list
@@ -4833,7 +4831,7 @@ _q_uit
   (defvar mpv-binary nil)
   (defvar mpv-process nil)
   (defvar empv-mpv-args
-    `("--no-video" "--no-terminal" "--idle" "--volume=70"))
+    `("--no-video" "--no-terminal" "--idle" "--volume=50"))
   (defun mpv-exit ()
     (interactive)
     (ignore-errors
