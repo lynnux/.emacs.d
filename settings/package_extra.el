@@ -4867,10 +4867,8 @@ _q_uit
       (defalias 'radio-exit 'mpv-exit)
       (defalias 'radio-is-running 'mpv-is-running)))
 
-  ;; 音质其实都差不多，win7只能foobar，win10以上mpv，mpv下载要快点不卡
-  (if (> (car (w32-version)) 7)
-      (radio-switch-backend "mpv")
-    (radio-switch-backend "foobar"))
+  ;; 音质其实都差不多，mpv下载要快点不卡。mpv支持win7最后版本20230917
+  (radio-switch-backend "mpv")
 
   ;; https://www.radio-browser.info/
   (defvar radio-urls nil)

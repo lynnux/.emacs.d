@@ -33,7 +33,8 @@
    org-default-notes-file "D:/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "F:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
-  (setq foobar-binary "c:/green/foobar2000/foobar2000.exe"))
+  (setq foobar-binary "c:/green/foobar2000/foobar2000.exe")
+  (setq mpv-binary "C:/green/mpv/mpv.exe"))
 
  ;; work
  ((and (string-equal system-type "windows-nt")
