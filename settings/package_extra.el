@@ -6763,6 +6763,9 @@ DEFAULT specifies which file to return on empty input."
           (let ((disable-beacon t))
             (funcall org-ret action cand)))))))
 
+(use-package gn-mode
+  :commands (gn-mode)
+  :init (add-to-list 'auto-mode-alist '("\\.gni?\\'" . gn-mode)))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
