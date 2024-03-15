@@ -14,13 +14,13 @@ then
 end
 
 -- work pc
-if "DESKTOP-9JD2LQI" == utils.system_name()
+if "SNQU" == utils.system_name()
    and MajorVersion == 6
    and MinorVersion == 2
    and BuildNumber == 9200
 then
-   emacsclientw = "c:\\green\\Emacs\\gccemacs_240118\\bin\\emacsclientw.exe"
-   runemacs = "c:\\green\\Emacs\\gccemacs_240118\\bin\\runemacs.exe"
+   emacsclientw = "D:\\green\\Emacs\\gccemacs_240314\\bin\\emacsclientw.exe"
+   runemacs = "D:\\green\\Emacs\\gccemacs_240314\\bin\\runemacs.exe"
 end
 
 -- get commandline

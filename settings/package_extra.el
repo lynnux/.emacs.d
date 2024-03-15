@@ -2203,7 +2203,7 @@ _c_: hide comment        _q_uit
       (ignore-errors
         (module-load
          (expand-file-name
-          "f:/prj/test/hotfuzz-for-windows/hotfuzz-module.dll")))
+          "D:/prj/rust/hotfuzz-for-windows/hotfuzz-module.dll")))
       (ignore-errors
         (module-load
          (expand-file-name
@@ -3870,7 +3870,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (ignore-errors
         (module-load
          (expand-file-name
-          "H:/prj/rust/lspce/target/release/lspce_module.dll")))
+          "D:/prj/rust/lspce/target/release/lspce_module.dll")))
       (ignore-errors
         (module-load
          (expand-file-name
@@ -4292,7 +4292,7 @@ _q_uit
    "F:/prj/rust/pop-select/target/release/pop_select.dll"))
 (ignore-errors
   (module-load
-   "H:/prj/rust/pop-select/target/release/pop_select.dll"))
+   "D:/prj/rust/pop-select/target/release/pop_select.dll"))
 
 (when (functionp 'pop-select/transparent-set-background)
   (when (version< emacs-version "29")
@@ -4622,7 +4622,7 @@ _q_uit
 
 (ignore-errors
   (module-load
-   "H:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
+   "D:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))
 (ignore-errors
   (module-load
    "f:/prj/rust/emacs-preview-rs/target/release/emacs_preview_rs.dll"))

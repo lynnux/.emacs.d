@@ -38,22 +38,22 @@
 
  ;; work
  ((and (string-equal system-type "windows-nt")
-       (string-equal "DESKTOP-9JD2LQI" (system-name))
-       (equal (list 10 0 19044) (w32-version)))
+       (string-equal "SNQU" (system-name))
+       (equal (list 10 0 19045) (w32-version)))
   (setq
-   org-directory "H:/doc/autosync/autosync/org"
+   org-directory "D:/doc/autosync/autosync/org"
    org-agenda-files
    (list
-    "H:/doc/autosync/autosync/org/idea.org"
-    "H:/doc/autosync/autosync/org/todo.org")
-   org-default-notes-file "H:/doc/autosync/autosync/org/default.org"
+    "D:/doc/autosync/autosync/org/idea.org"
+    "D:/doc/autosync/autosync/org/todo.org")
+   org-default-notes-file "D:/doc/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "G:/doc/mynote"))
   (setq
    tfs/tf-exe
    "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\IDE\\TF.exe")
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
-  (setq foobar-binary "H:/green/foobar2000/foobar2000.exe")
-  (setq mpv-binary "H:/green/mpv/mpv.exe"))
+  (setq foobar-binary "D:/green/foobar2000/foobar2000.exe")
+  (setq mpv-binary "D:/green/mpv/mpv.exe"))
 
  ;; 
  (t
