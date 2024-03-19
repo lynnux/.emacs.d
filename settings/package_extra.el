@@ -3213,6 +3213,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; project内置查找会用到，支持ripgrep了！
 (use-package xref
   :if (bound-and-true-p enable-feature-navigation)
+  :commands(xref--read-identifier)
   :defer t
   :init
   (setq
