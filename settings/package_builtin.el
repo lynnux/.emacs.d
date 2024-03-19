@@ -4,6 +4,21 @@
 ;; 自带的不用加require，因为xxx-mode基本上都是autoload！
 ;; C-x f filecache everything recent-visit/changed find-file-at-point
 
+;; 在这里开启/关闭feature，用于调试问题
+(dolist (f
+         '(enable-feature-builtin
+           enable-feature-minibuffer
+           enable-feature-win32-only
+           enable-feature-edit
+           enable-feature-lsp-dap
+           enable-feature-dired
+           enable-feature-gui
+           enable-feature-navigation
+           enable-feature-tools
+           enable-feature-prog
+           enable-feature-mode-line))
+  (eval `(defvar ,f t)))
+
 ;; use-package含有bind-keys*，优先级最高，参考`override-global-mode'代码
 (unless (symbol-function 'use-package)
   (add-to-list
@@ -735,3 +750,12 @@ Run occur in all buffers whose names match this type for REXP."
   :init
   ;; 加快F1 f/v，禁止根据输入加载内置包
   (setq help-enable-completion-autoload nil))
+
+(use-package goto-addr
+  :if (bound-and-true-p enable-feature-gui)
+  :defer 0.8
+  :init
+  (global-set-key (kbd "C-c C-o") 'goto-address-at-point) ;; 跟org快捷键一致
+  (setq goto-address-uri-schemes-ignored '("info:" "mailto:" "data:")) ;; 去掉info:
+  :config
+  (global-goto-address-mode 1))

@@ -11,21 +11,6 @@
 ;; 在使用了org-roam的功能后退出emacs会崩溃，最后发现应该是native-comp的问题，有个gnus-art的文件比较大，但是跟上面一样只有tmp生成，找到删除gnus-art.elc就可以了
 ;; 以后的崩溃问题都可以参考这个处理，一般是eln-cache里有tmp没编译好造成emacs退出时崩溃
 
-;; 在这里开启/关闭feature，用于调试问题
-(dolist (f
-         '(enable-feature-builtin
-           enable-feature-minibuffer
-           enable-feature-win32-only
-           enable-feature-edit
-           enable-feature-lsp-dap
-           enable-feature-dired
-           enable-feature-gui
-           enable-feature-navigation
-           enable-feature-tools
-           enable-feature-prog
-           enable-feature-mode-line))
-  (eval `(defvar ,f t)))
-
 (when (bound-and-true-p enable-feature-win32-only)
   (setq enable-feature-win32-only
         (string-equal system-type "windows-nt")))
@@ -5978,12 +5963,6 @@ DEFAULT specifies which file to return on empty input."
               word))))))
       (list :data result))))
 
-(use-package goto-addr
-  :if (bound-and-true-p enable-feature-gui)
-  :defer 0.8
-  :init
-  (global-set-key (kbd "C-c C-o") 'goto-address-at-point) ;; 跟org快捷键一致
-  :config (global-goto-address-mode 1))
 
 ;; bin下载 https://github.com/lynnux/tree-sitter-module/releases
 (use-package treesit
