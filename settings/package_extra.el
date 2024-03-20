@@ -348,7 +348,7 @@ _q_uit
        (call-interactively 'dired-sidebar-toggle-sidebar)))
     (setq
      dired-sidebar-theme 'ascii
-     dired-sidebar-width 32
+     dired-sidebar-width 50
      ;; dired-sidebar-use-custom-font t 不好看，字变小了
      dired-sidebar-should-follow-file nil ; 太卡了！主要它的timer是repeat的，而且当emacs缩小窗口后会莫名弹出来？
      dired-sidebar-follow-file-idle-delay 0.5
@@ -4603,6 +4603,7 @@ _q_uit
     (diff-hl-update))
 
   (use-package diff-hl-dired
+    :disabled                           ; chrome的out目录进入失败
     :commands (diff-hl-dired-mode)
     :init (add-hook 'dired-mode-hook 'diff-hl-dired-mode)))
 
