@@ -5718,12 +5718,12 @@ DEFAULT specifies which file to return on empty input."
           +1
         -1))))
   ;; 方便god mode的键绑定
-  (global-set-key (kbd "C-<") 'beginning-of-buffer)
-  (global-set-key (kbd "C->") 'end-of-buffer)
   (global-set-key (kbd "C-x C-2") 'split-window-below)
   (global-set-key (kbd "C-x C-3") 'split-window-right)
   :config
   (define-key god-local-mode-map (kbd "i") 'view-mode)
+  (define-key god-local-mode-map (kbd "<") 'beginning-of-buffer)
+  (define-key god-local-mode-map (kbd ">") 'end-of-buffer)
   (define-key
    god-local-mode-map (kbd "SPC")
    (lambda ()

@@ -254,6 +254,8 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; C-m-f C-m-b不好按，用下面代替
 (global-set-key (kbd "M-e") 'forward-sexp)
 (global-set-key (kbd "M-a") 'backward-sexp)
+(global-set-key (kbd "C-<") 'beginning-of-defun)
+(global-set-key (kbd "C->") 'end-of-defun)
 
 ;; 各种尝试优化emacs速度，好像有点效果^_^
 ;; https://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
