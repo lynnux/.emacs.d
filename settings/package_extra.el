@@ -337,16 +337,11 @@ _q_uit
              neotree-follow-file-idle-delay
              nil
              #'neotree-follow-to-file))))
-  (defvar neotree-follow-file-commands
-    '(my-pop-select
-      my-project-search
-      tab-line-select-tab
-      volatile-kill-buffer
-      consult-buffer
-      ff-get-other-file
-      files-recent-visited
-      xref-pop-to-location ;; for all xref
-      ))
+ (defvar neotree-follow-file-commands
+   '(volatile-kill-buffer
+     switch-to-buffer
+     xref-pop-to-location ;; for all xref
+     ))
   (cl-dolist
       (jc neotree-follow-file-commands)
     (advice-add jc :after #'neotree-follow-file-advice))
@@ -444,13 +439,11 @@ _q_uit
                dired-sidebar-follow-file-idle-delay
                nil
                #'dired-sidebar-follow-to-file))))
-    (defvar dired-sibar-follow-file-commands
-      '(my-pop-select
-        my-project-search
-        tab-line-select-tab
-        volatile-kill-buffer
-        consult-buffer
-        ff-get-other-file)) ;; 随时加
+  (defvar dired-sibar-follow-file-commands
+    '(volatile-kill-buffer
+      switch-to-buffer
+      xref-pop-to-location ;; for all xref
+      ))
     (cl-dolist
      (jc dired-sibar-follow-file-commands)
      (advice-add jc :after #'dired-sidbar-follow-file-advice))
