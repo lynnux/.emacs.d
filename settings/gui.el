@@ -122,7 +122,7 @@
           (set-fontset-font
            (frame-parameter nil 'font) charset zh-font)))))
 
-  ;; https://www.programmingfonts.org在线看字体效果
+  ;; https://www.programmingfonts.org 在线看字体效果
   ;; https://www.codingfont.com/ 正是它发现Roboto Mono的
   ;; 很多字体要实际安装在emacs看才真正知道效果，网页只能看个大概
   (qiang-set-font

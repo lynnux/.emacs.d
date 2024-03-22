@@ -307,11 +307,18 @@ _q_uit
    neo-vc-integration nil)
   (global-set-key (kbd "<C-f1>") 'neotree-toggle)
   :config
-  (add-hook 'neotree-mode-hook 
-            (lambda() 
-              (hl-line-mode 1) ;; 指明当前行
-              (face-remap-add-relative 'hl-line '(:background "#666")) ;; 使更清楚
-              ))
+ (add-hook
+  'neotree-mode-hook
+  (lambda ()
+    (hl-line-mode 1) ;; 指明当前行
+    (face-remap-add-relative 'hl-line '(:background "#666")) ;; 使更清楚
+    ;; (face-remap-add-relative 'default :height 105) ;; 仅大小
+    (defface neotree-face
+      '((t :family "BlinkMacSystemFont" :height 110)) ;; 参考的github字体
+      "")
+    (buffer-face-set 'neotree-face)
+    (setq line-spacing 0.1) ;; 行高
+    ))
   (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node)
   (defun projectile-project-root ()
     (project-root (project-current t)))
