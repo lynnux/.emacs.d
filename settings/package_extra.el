@@ -292,6 +292,71 @@ _q_uit
  ("q" nil "nil" :color blue))
 (global-set-key (kbd "C-c b") 'hydra-bookmark/body)
 
+(use-package neotree
+  :commands (neotree-toggle)
+  :init
+  (setq
+   neo-theme 'nerd
+   neo-window-width 50
+   neo-create-file-auto-open t
+   neo-show-updir-line t
+   neo-mode-line-type 'neotree
+   neo-smart-open t
+   neo-show-hidden-files t
+   neo-auto-indent-point t
+   neo-vc-integration nil)
+  (global-set-key (kbd "<C-f1>") 'neotree-toggle)
+  :config
+  (add-hook 'neotree-mode-hook 
+            (lambda() 
+              (hl-line-mode 1) ;; 指明当前行
+              (face-remap-add-relative 'hl-line '(:background "#666")) ;; 使更清楚
+              ))
+  (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node)
+  (defun projectile-project-root ()
+    (project-root (project-current t)))
+  (defun projectile-project-p ()
+    (project-current nil))
+  
+  ;; 实现自动follow
+  (defvar neotree-follow-to-file-timer nil)
+  (defvar neotree-follow-file-idle-delay 0.5)
+  (defun neotree-follow-file-advice (&rest args)
+    (when (neo-global--window-exists-p)
+      (when neotree-follow-to-file-timer
+        (cancel-timer neotree-follow-to-file-timer))
+      (setq neotree-follow-to-file-timer
+            (run-with-idle-timer
+             neotree-follow-file-idle-delay
+             nil
+             #'neotree-follow-to-file))))
+  (defvar neotree-follow-file-commands
+    '(my-pop-select
+      my-project-search
+      tab-line-select-tab
+      volatile-kill-buffer
+      consult-buffer
+      ff-get-other-file
+      files-recent-visited
+      xref-find-definitions
+      ))
+  (cl-dolist
+      (jc neotree-follow-file-commands)
+    (advice-add jc :after #'neotree-follow-file-advice))
+  (defun neotree-follow-to-file ()
+    "直接用neotree-follow-file，hl-line的行有问题，这里修复下"
+    (interactive)
+    (ignore-errors
+      (let ((neo-toggle-window-keep-p t)) ;; 不选中neotree窗口
+        (neotree-show))
+      ;; 修复高亮
+      (when (neo-global--window-exists-p)
+        (with-current-buffer (neo-global--get-buffer nil)
+          (hl-line-highlight)
+          ))
+      ))
+  )
+
 ;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
   :if (bound-and-true-p enable-feature-dired)
@@ -335,6 +400,7 @@ _q_uit
 
   ;; bug较多能用，好处是支持diredful、diff-hl显示
   (use-package dired-sidebar
+    :disabled
     :commands (dired-sidebar-toggle-sidebar)
     :init
     (global-set-key
@@ -2448,7 +2514,6 @@ symbol under cursor"
         (call-interactively 'consult-lsp-symbols)) ;; 支持narrow字符！
        (t
         (call-interactively 'consult-imenu-multi))))
-    (global-set-key [(control ?\,)] 'my-project-imenu)
 
     (use-package consult-imenu
       :commands (consult-imenu consult-imenu-multi consult-imenu--items)
@@ -3207,6 +3272,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    xref-auto-jump-to-first-xref 'show)
   (global-set-key (kbd "C-.") 'xref-find-definitions)
   (global-set-key (kbd "<C-down-mouse-1>") 'xref-find-definitions)
+ (defun my-xref-find-apropos ()
+   (interactive)
+   "自动搜索光标下，如果没有才提示输入"
+   (let ((pattern
+          (xref-backend-identifier-at-point (xref-find-backend))))
+     (if pattern
+         (xref-find-apropos pattern)
+       (call-interactively 'xref-find-apropos))))
+  (global-set-key [(control ?\,)] 'my-xref-find-apropos)
   :config
   (define-key xref--xref-buffer-mode-map (kbd "C-n") 'xref-next-line)
   (define-key xref--xref-buffer-mode-map (kbd "C-p") 'xref-prev-line)

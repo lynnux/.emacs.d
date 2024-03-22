@@ -154,20 +154,21 @@
                         t
                       (,electric-pair-inhibit-predicate c))))
 
-     (when (functionp 'tempel-insert)
-       ;; emphasis字符加上零宽空格
-       (defmacro add_zero_space_char (ch)
-         `(lambda ()
-            (interactive)
-            ;; r支持region！但注意有些键`easy-mark'会影响到，如=
-            (tempel-insert (list "" "\x200B" ,ch 'r ,ch "\x200B"))))
-       (local-set-key "*" (add_zero_space_char "*"))
-       (local-set-key "/" (add_zero_space_char "/"))
-       (local-set-key "_" (add_zero_space_char "_"))
-       (local-set-key "=" (add_zero_space_char "="))
-       (local-set-key "~" (add_zero_space_char "~"))
-       (local-set-key "+" (add_zero_space_char "+"))
-       (local-set-key "`" (add_zero_space_char "`"))))))
+     ;; (when (functionp 'tempel-insert)
+     ;;   ;; emphasis字符加上零宽空格
+     ;;   (defmacro add_zero_space_char (ch)
+     ;;     `(lambda ()
+     ;;        (interactive)
+     ;;        ;; r支持region！但注意有些键`easy-mark'会影响到，如=
+     ;;        (tempel-insert (list "" "\x200B" ,ch 'r ,ch "\x200B"))))
+     ;;   (local-set-key "*" (add_zero_space_char "*"))
+     ;;   (local-set-key "/" (add_zero_space_char "/"))
+     ;;   (local-set-key "_" (add_zero_space_char "_"))
+     ;;   (local-set-key "=" (add_zero_space_char "="))
+     ;;   (local-set-key "~" (add_zero_space_char "~"))
+     ;;   (local-set-key "+" (add_zero_space_char "+"))
+     ;;   (local-set-key "`" (add_zero_space_char "`")))
+     )))
 
 (use-package org-publish
   :defer t
