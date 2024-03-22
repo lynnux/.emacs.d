@@ -338,7 +338,7 @@ _q_uit
       consult-buffer
       ff-get-other-file
       files-recent-visited
-      xref-find-definitions
+      xref-pop-to-location ;; for all xref
       ))
   (cl-dolist
       (jc neotree-follow-file-commands)
