@@ -149,6 +149,7 @@
    ;; 11.5 ;; 不能指定中文大小，不然org face的height有问题 其它方法见https://emacs-china.org/t/face-charset-size/16916
    ))
 ;; 要能区分0O和1lI(光l1就能排除很多了)，单看单词时要好看，--__能区分出来，粗体要好看，()要好看(感觉小点好看)
+(set-fontset-font t 'unicode "Segoe UI Emoji" nil 'prepend) ;; 修复部分字符显示问题 https://emacs-china.org/t/emacs/15676/10
 
 (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S")
 
