@@ -112,3 +112,6 @@ packages/minibuffer/compat.el-master/*
 /packages/tools/zhengma/
 packages/lsp/lspce-master/
 /cnfonts/
+bin/gtags.conf
+/share/*
+

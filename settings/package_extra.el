@@ -1182,111 +1182,6 @@ _c_: hide comment        _q_uit
   (global-set-key (kbd "C-c y") #'aya-create)
   (global-set-key (kbd "C-c e") #'aya-expand))
 
-;; from tabbar-ruler
-(setq EmacsPortable-included-buffers
-      '("*scratch*"
-        "*rg*"
-        "*eww*"
-        "*xref*"
-        "*shell*"
-        "*eshell*"
-        "*PowerShell*"
-        "*org-roam*"
-        "*elfeed-entry*"
-        "*elfeed-search*"
-        "*dashboard*"
-        "*vc-dir*"))
-(defun tab-show-buffer-p (b)
-  (cond
-   ;; Always include the current buffer.
-   ((eq (current-buffer) b)
-    b)
-   ((string-match "^TAGS\\(<.*>\\)?$" (format "%s" (buffer-name b)))
-    nil)
-   ;;((string-match "^magit.*:.*" (format "%s" (buffer-name b))) nil)
-   ((string-match "^magit-.*:.*" (format "%s" (buffer-name b)))
-    nil) ;; 排除magit-process
-   ((buffer-file-name b)
-    b)
-   ((string-match "^\*gud-.*" (format "%s" (buffer-name b)))
-    b) ;; gud buffer
-   ((string-match "^\*Embark .*" (format "%s" (buffer-name b)))
-    b)
-   ((string-match "^\*SQLite .*" (format "%s" (buffer-name b)))
-    b) ;; *SQLite test.db*
-   ((member (buffer-name b) EmacsPortable-included-buffers)
-    b)
-   ((char-equal ?\  (aref (buffer-name b) 0))
-    nil)
-   ((char-equal ?* (aref (buffer-name b) 0))
-    nil)
-   ((char-equal ?: (aref (buffer-name b) 0))
-    nil) ;; 排除dired-sidebar buffer
-   ((buffer-live-p b)
-    b)))
-(defun ep-tabbar-buffer-list ()
-  (delq nil (mapcar #'tab-show-buffer-p (buffer-list))))
-
-;; 27.1自带tab-bar-mode和tab-line-mode，试了下tab-line跟tabbar-ruler是一样的效果
-(use-package tab-line
-  :if
-  (and (functionp 'global-tab-line-mode)
-       (bound-and-true-p enable-feature-gui))
-  :defer 0.5
-  :init
-  (setq
-   tab-line-tabs-function 'ep-tabbar-buffer-list
-   tab-line-new-button-show nil)
-  (unless (version< emacs-version "29")
-    ;; 28.0.50 设置后鼠标不能选择buffer了
-    (setq
-     tab-line-close-button-show nil
-     tab-line-separator
-     (if (display-graphic-p)
-         ;; unicode符号展示网站 https://www.fuhaoku.net/block/Misc_Symbols
-         ;; (propertize 
-         ;;             'face '(foreground-color . "cyan"))
-         (format " %s "
-                 (char-to-string
-                  (let ((tl
-                         (list
-                          #x2618
-                          #x266B
-                          #x266E
-                          #x266F
-                          #x2665
-                          #x2666
-                          #x26DF
-                          #o22666 ;; old
-                          #x26FA
-                          #x2691
-                          #x267B
-                          #x2615
-                          #x2622
-                          #x262F
-                          #x26F4
-                          #x26AB)))
-                    (nth (mod (random t) (length tl)) tl))))
-       " | ") ;; 这个比close button好看 
-     ))
-  :config
-  (define-advice volatile-kill-buffer (:before (&rest args) my)
-    "让C-2跳过那些tab不可见的buffer"
-    (cl-dolist
-     (buf (buffer-list))
-     (when (not (tab-show-buffer-p buf))
-       ;; (message "bury-buffer:%S" buf)
-       (bury-buffer buf) ;; 将buffer放到最后去
-       (cl-return))))
-  (global-tab-line-mode 1)
-  (add-to-list 'tab-line-exclude-modes 'speedbar-mode)
-  (add-to-list 'tab-line-exclude-modes 'dired-sidebar-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-info-breakpoints-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-info-stack-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-info-scope-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-repl-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-info-threads-mode)
-  (add-to-list 'tab-line-exclude-modes 'dape-info-watch-mode))
 
 ;; undo-fu作者写的有保障，不添加post-command-hook，高亮只是屏幕可见区域
 (use-package idle-highlight-mode
@@ -5845,12 +5740,20 @@ DEFAULT specifies which file to return on empty input."
     (let ((xref-backend-functions '(ggtags-reference-backend)))
       (xref--find-definitions identifier nil)))
 
-  (defun ggtags-create (root)
-    (interactive "DRoot directory: ")
-    (let* ((label
-            (consult--read '("default" "native" "ctags" "pygments")))
-           (default-directory root))
-      (async-shell-command (concat "gtags -q --gtagslabel=" label))))
+ (defun ggtags-create (root)
+   (interactive "DRoot directory: ")
+   (let* ((label
+           (consult--read '("default" "native" "ctags" "pygments")))
+          (default-directory root))
+     (async-shell-command
+      (concat
+       "gtags -q --gtagslabel="
+       (if (equal "pygments" label)
+           (concat
+            label
+            " --gtagsconf="
+            (expand-file-name "bin/gtags.conf" user-emacs-directory))
+         label)))))
   (defun ggtags-update ()
     (interactive)
     (ggtags-check-project)

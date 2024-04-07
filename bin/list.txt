@@ -11,3 +11,9 @@
  emacs-lsp-booster.exe (https://github.com/blahgeek/emacs-lsp-booster需要自己编译)
 ctags来自新版，包含readtags：
 https://github.com/universal-ctags/ctags-win32/releases
+
+ gtags要支持其它语言的话，需要ctags，还需要
+share\gtags\gtags.conf拷贝到gtags.exe同目录
+lib\gtags\pygments-parser.dll拷贝到gtags.exe同目录
+share\gtags\script\pygments_parser.py拷贝到~\share...目录
+创建tags时选择pygments
