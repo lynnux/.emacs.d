@@ -6653,7 +6653,7 @@ DEFAULT specifies which file to return on empty input."
   (provide 'language-id)
   (defun language-id-buffer ()
     ;; 在`format-all-default-formatters'找对应的字符串
-    (or (and (memq major-mode '(c++-mode c++-ts-mode)) "C++")
+    (or (and (memq major-mode '(c++-mode c++-ts-mode c-mode c-ts-mode)) "C++")
         ;; xml格式化工具 https://github.com/htacg/tidy-html5
         (and (memq major-mode '(nxml-mode)) "XML")
         ;; python格式化工具 pip install black
