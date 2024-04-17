@@ -559,6 +559,11 @@ Run occur in all buffers whose names match this type for REXP."
               "https://www.baidu.com"
               "https://www.baidu.com/s?wd="
               "%20site%3Amsdn.microsoft.com"])
+            ("glib" .
+             [webjump-auto-query
+              "https://www.google.com"
+              "https://www.google.com/search?q="
+              "+site%3Adocs.gtk.org"])
             ("google" .
              [webjump-auto-query
               "https://www.google.com"
