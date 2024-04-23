@@ -3851,7 +3851,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (assoc-delete-all "python" lspce-server-programs
                     (lambda (a b) (equal a b)))
   (add-to-list
-   'lspce-server-programs '("python" "pyright-langserver" "--stdio"))
+   'lspce-server-programs '("python" "pylsp" ""))
   ;; 设置clangd参数
   (assoc-delete-all "C" lspce-server-programs
                     (lambda (a b) (equal a b)))
