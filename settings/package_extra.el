@@ -297,7 +297,7 @@ _q_uit
   :init
   (setq
    neo-theme 'nerd
-   neo-window-width 50
+   neo-window-width 32
    neo-create-file-auto-open t
    neo-show-updir-line t
    neo-mode-line-type 'neotree
