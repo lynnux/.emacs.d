@@ -1305,6 +1305,8 @@ _c_: hide comment        _q_uit
   (autoload 'cape-wrap-noninterruptible "corfu/cape" "" nil)
   (autoload 'cape-capf-buster "corfu/cape" "" nil)
   (autoload 'cape-capf-noninterruptible "corfu/cape" "" nil)
+  (autoload 'cape-capf-super "corfu/cape" "" nil)
+  (autoload 'cape-keyword "corfu/cape-keyword" "" nil)
   (setq
    corfu-cycle t
    corfu-auto t
@@ -1330,6 +1332,41 @@ _c_: hide comment        _q_uit
         8
         '(#("No match" 0 8 (face italic)))))))
   :config
+  (add-to-list 'completion-at-point-functions 'cape-keyword)
+  ;; 所有capf一起出结果！
+  (defmacro my-capf-super (orig-fn args1)
+    `(cl-letf* ((org-run-hook-wrapped
+                 (symbol-function #'run-hook-wrapped))
+                ((symbol-function #'run-hook-wrapped)
+                 (lambda (&rest args)
+                   ;; 其它功能也会调用run-hook-wrapped，这里只处理capf补全
+                   (if (eq (car args) 'completion-at-point-functions)
+                       (let (backends)
+                         (dolist (f
+                                  (append
+                                   completion-at-point-functions
+                                   (default-value
+                                    'completion-at-point-functions)))
+                           (when (functionp f)
+                             (cl-pushnew f backends)))
+                         (setq backends
+                               (reverse (delete-dups backends)))
+                         (let ((completion-at-point-functions
+                                (list
+                                 (apply 'cape-capf-super backends))))
+                           (apply org-run-hook-wrapped args)))
+                     (apply org-run-hook-wrapped args)))))
+       (apply ,orig-fn ,args1)))
+  (define-advice corfu--auto-complete-deferred
+      (:around (orig-fn &rest args1) my)
+    (my-capf-super orig-fn args1))
+  (define-advice completion-at-point
+      (:around (orig-fn &rest args1) my)
+    (my-capf-super orig-fn args1))
+  
+  ;; (define-advice completion-at-point (:around (orig-fn &rest args) my)
+  ;;   (my-capf-super orig-fn args))
+  
   ;; 不知道为什么加这个，加了反而在弹出corfu时eldoc消失了，先试试去掉
   (advice-remove
    #'eldoc-display-message-no-interference-p #'corfu--eldoc-advice)
