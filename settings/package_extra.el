@@ -1305,8 +1305,14 @@ _c_: hide comment        _q_uit
   (autoload 'cape-wrap-noninterruptible "corfu/cape" "" nil)
   (autoload 'cape-capf-buster "corfu/cape" "" nil)
   (autoload 'cape-capf-noninterruptible "corfu/cape" "" nil)
-  (autoload 'cape-capf-super "corfu/cape" "" nil)
-  (autoload 'cape-keyword "corfu/cape-keyword" "" nil)
+  (autoload 'cape-capf-super "corfu/cape" "" nil) ;; 只对静态有效
+  (autoload 'cape-wrap-silent "corfu/cape" "" nil)
+  (use-package cape-keyword
+    :defer t
+    :init
+    (dec-placeholder-fun cape-keyword cape-keyword "~/.emacs.d/packages/corfu" '(cape cape-keyword))
+    :config
+    (add-to-list 'cape-keyword-list '(conf-toml-mode "features" "default-features")))
   (setq
    corfu-cycle t
    corfu-auto t
@@ -1332,8 +1338,8 @@ _c_: hide comment        _q_uit
         8
         '(#("No match" 0 8 (face italic)))))))
   :config
-  (add-to-list 'completion-at-point-functions 'cape-keyword)
-  ;; 所有capf一起出结果！
+  ;; (add-to-list 'completion-at-point-functions 'cape-keyword)
+  ;; 所有capf一起出结果！测试有问题`cape-capf-super'只能处理简单的
   (defmacro my-capf-super (orig-fn args1)
     `(cl-letf* ((org-run-hook-wrapped
                  (symbol-function #'run-hook-wrapped))
@@ -1357,15 +1363,12 @@ _c_: hide comment        _q_uit
                            (apply org-run-hook-wrapped args)))
                      (apply org-run-hook-wrapped args)))))
        (apply ,orig-fn ,args1)))
-  (define-advice corfu--auto-complete-deferred
-      (:around (orig-fn &rest args1) my)
-    (my-capf-super orig-fn args1))
-  (define-advice completion-at-point
-      (:around (orig-fn &rest args1) my)
-    (my-capf-super orig-fn args1))
-  
-  ;; (define-advice completion-at-point (:around (orig-fn &rest args) my)
-  ;;   (my-capf-super orig-fn args))
+  ;; (define-advice corfu--auto-complete-deferred
+  ;;     (:around (orig-fn &rest args1) my)
+  ;;   (my-capf-super orig-fn args1))
+  ;; (define-advice completion-at-point
+  ;;     (:around (orig-fn &rest args1) my)
+  ;;   (my-capf-super orig-fn args1))
   
   ;; 不知道为什么加这个，加了反而在弹出corfu时eldoc消失了，先试试去掉
   (advice-remove
@@ -1456,19 +1459,20 @@ _c_: hide comment        _q_uit
     (defvar has-dabbrev-capf nil)
     (defun my-dabbrev-capf ()
       "Workaround for issue with `dabbrev-capf'."
-      (let ((inhibit-message t)
-            (disable-cursor-chg t)) ;; 屏蔽dabbrev和corfu的消息
-        (dabbrev--reset-global-variables)
-        (setq dabbrev-case-fold-search nil)
-        (if has-dabbrev-capf
-            (ignore-errors
-              (dabbrev-capf))
-          (cl-letf (((symbol-function #'completion-in-region)
-                     (lambda (beg end table &rest args)
-                       (list beg end table))))
-            (dabbrev-completion)) ;; hack dabbrev-completion to return list
-          )))
-    (add-to-list 'completion-at-point-functions 'my-dabbrev-capf)
+      (dabbrev--reset-global-variables)
+      (setq dabbrev-case-fold-search nil)
+      (if has-dabbrev-capf
+          (dabbrev-capf)
+        (cl-letf (((symbol-function #'completion-in-region)
+                   (lambda (beg end table &rest args)
+                     (list beg end table))))
+          (dabbrev-completion)) ;; hack dabbrev-completion to return list
+        ))
+    (defun dabbrev-capf-silent()
+      (cape-wrap-silent #'my-dabbrev-capf))
+    (if (functionp 'cape-keyword)
+        (add-to-list 'completion-at-point-functions (cape-capf-super #'dabbrev-capf-silent #'cape-keyword))
+      (add-to-list 'completion-at-point-functions #'dabbrev-capf-silent))
     :config (setq has-dabbrev-capf (functionp 'dabbrev-capf)))
 
   (add-to-list 'completion-at-point-functions 'esy/file-capf t)

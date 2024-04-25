@@ -255,7 +255,7 @@ rust-mode rust-ts-mode
 
 conf-toml-mode
 
-(add_depend p " = {version = \"" p "\", features=[\"" p "\"], default-features = false}")
+(add_depend p " = {version = \"" p "\", features = [\"" p "\"], default-features = false}")
 
 ;; Local Variables:
 ;; mode: lisp-data
