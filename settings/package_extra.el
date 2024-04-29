@@ -1844,6 +1844,11 @@ _c_: hide comment        _q_uit
 (autoload 'rust-mode "rust-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 (modify-coding-system-alist 'file "\\.rs\\'" 'utf-8-with-signature) ; 带中文必须这个编码，干脆就默认
+(use-package rust-ts-mode
+  :defer t
+  :config
+  ;; `rust-ts-mode'没有compile error的正则
+  (require 'rust-mode))
 
 (use-package sr-speedbar
   :if (bound-and-true-p enable-feature-navigation)
