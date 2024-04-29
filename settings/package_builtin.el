@@ -542,54 +542,64 @@ Run occur in all buffers whose names match this type for REXP."
           (concat
            (aref expr 2) (webjump-url-encode query) (aref expr 3))
         (aref expr 1))))
-  (defun search-in-browser ()
-    "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
-    (interactive)
-    (when (autoloadp (symbol-function 'webjump))
-      (require 'webjump))
-    (let
-        ((webjump-sites
-          '(("baidu" .
-             [webjump-auto-query
-              "https://www.baidu.com"
-              "https://www.baidu.com/s?wd="
-              ""])
-            ("msdn" .
-             [webjump-auto-query
-              "https://www.baidu.com"
-              "https://www.baidu.com/s?wd="
-              "%20site%3Amsdn.microsoft.com"])
-            ("glib" .
-             [webjump-auto-query
-              "https://www.google.com"
-              "https://www.google.com/search?q="
-              "+site%3Adocs.gtk.org"])
-            ("google" .
-             [webjump-auto-query
-              "https://www.google.com"
-              "https://www.google.com/search?q="
-              ""])
-            ("rust winapi" .
-             [webjump-auto-query
-              "https://docs.rs/winapi/latest/winapi/index.html"
-              "https://docs.rs/winapi/latest/winapi/index.html?search="
-              ""])
-            ("emacs china" .
-             [webjump-auto-query
-              "https://emacs-china.org"
-              "https://emacs-china.org/search?q="
-              ""])
-            ("cppreference" .
-             [webjump-auto-query
-              "https://cppreference.com"
-              "https://duckduckgo.com/?sites=cppreference.com&q="
-              ""])
-            ;; ("everything" . #'consult-everything)
-            ;; ("project search" . #'my-project-search)
-            )))
-      (cl-letf (((symbol-function #'webjump-builtin)
-                 (lambda (expr name) (webjump-auto-query expr name))))
-        (webjump))))
+ (defun search-in-browser ()
+   "在浏览器里打开搜索当前symbol(region)，主要参考`xahk-lookup-ahk-ref'"
+   (interactive)
+   (when (autoloadp (symbol-function 'webjump))
+     (require 'webjump))
+   (let
+       ((webjump-sites
+         '(("baidu" .
+            [webjump-auto-query
+             "https://www.baidu.com"
+             "https://www.baidu.com/s?wd="
+             ""])
+           ("msdn" .
+            [webjump-auto-query
+             "https://www.baidu.com"
+             "https://www.baidu.com/s?wd="
+             "%20site%3Amsdn.microsoft.com"])
+           ("glib" .
+            [webjump-auto-query
+             "https://www.google.com"
+             "https://www.google.com/search?q="
+             "+site%3Adocs.gtk.org"])
+           ("google" .
+            [webjump-auto-query
+             "https://www.google.com"
+             "https://www.google.com/search?q="
+             ""])
+           ("rust winapi" .
+            [webjump-auto-query
+             "https://docs.rs/winapi/latest/winapi/index.html"
+             "https://docs.rs/winapi/latest/winapi/index.html?search="
+             ""])
+           ("rust windows-sys" .
+            [webjump-auto-query
+             "https://docs.rs/windows-sys"
+             "https://docs.rs/windows-sys/latest/windows_sys/?search="
+             ""])
+           ("rust windows(COM/WinRT)" .
+            [webjump-auto-query
+             "https://microsoft.github.io/windows-docs-rs/"
+             "https://microsoft.github.io/windows-docs-rs/doc/windows/?search="
+             ""])
+           ("emacs china" .
+            [webjump-auto-query
+             "https://emacs-china.org"
+             "https://emacs-china.org/search?q="
+             ""])
+           ("cppreference" .
+            [webjump-auto-query
+             "https://cppreference.com"
+             "https://duckduckgo.com/?sites=cppreference.com&q="
+             ""])
+           ;; ("everything" . #'consult-everything)
+           ;; ("project search" . #'my-project-search)
+           )))
+     (cl-letf (((symbol-function #'webjump-builtin)
+                (lambda (expr name) (webjump-auto-query expr name))))
+       (webjump))))
   (global-set-key (kbd "<f1> <f1>") 'search-in-browser) ;; 原命令 `help-for-help'可以按f1 ?
   )
 
