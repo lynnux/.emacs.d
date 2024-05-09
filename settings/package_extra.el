@@ -3894,13 +3894,17 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (add-to-list
      'completion-category-defaults '(lspce-capf (styles hotfuzz))))
   ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
-  (assoc-delete-all "python" lspce-server-programs
-                    (lambda (a b) (equal a b)))
-  (add-to-list
-   'lspce-server-programs '("python" "pylsp" ""))
+  (setq lspce-server-programs (assoc-delete-all "python" lspce-server-programs))
+  (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
+  (setq lspce-server-programs (assoc-delete-all "rust" lspce-server-programs))
+  (defun my-lspce-ra-initializationOptions ()
+    "cargo启动太多了，只有禁用checkOnSave了，没有错误检查了。参考`lspce-ra-initializationOptions', https://hw0lff.github.io/rust-analyzer-docs/2023-06-05/index.html"
+    (let ((options (make-hash-table :test #'equal)))
+      (setq options (lspce--add-option "checkOnSave" :json-false options))
+      options))
+  (add-to-list 'lspce-server-programs '("rust" "rust-analyzer" "" my-lspce-ra-initializationOptions))
   ;; 设置clangd参数
-  (assoc-delete-all "C" lspce-server-programs
-                    (lambda (a b) (equal a b)))
+  (setq lspce-server-programs (assoc-delete-all "C" lspce-server-programs))
   (add-to-list
    'lspce-server-programs
    '("C"
