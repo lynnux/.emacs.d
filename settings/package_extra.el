@@ -2768,7 +2768,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ("q" nil "" :color blue))))
 (global-set-key (kbd "C-4") 'hydra-copybf4/body)
 (defun hydra-copybf3/body ()
-  ()
   (interactive)
   (require 'hydra)
   (funcall
