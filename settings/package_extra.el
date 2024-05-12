@@ -1912,37 +1912,61 @@ _c_: hide comment        _q_uit
   (defun ivy-set-occur (a b))
   (defun ivy-configure (a b c))
   :config
-  (defun my-counsel-etags-imenu-default-create-index-function ()
-    "修改原版不用临时文件"
-    (let* ((ctags-program "ctags")
-           (code-file buffer-file-name)
-           cmd
-           imenu-items
-           cands)
-      (when (and code-file (file-exists-p code-file))
-        (setq cmd
-              (cond
-               (counsel-etags-command-to-scan-single-code-file
-                (concat
-                 counsel-etags-command-to-scan-single-code-file
-                 "\""
-                 code-file
-                 "\""))
-               (t
-                (counsel-etags-get-scan-command
-                 ctags-program code-file))))
-        (setq cands
-              (counsel-etags-imenu-scan-string
-               (shell-command-to-string cmd)))
-        (save-excursion
-          (dolist (c cands)
-            (let* ((name (car c)))
-              (goto-char (point-min))
-              (counsel-etags-forward-line (cdr c))
-              (when (search-forward name (point-at-eol) t)
-                (forward-char (- (length name))))
-              (push (cons name (point-marker)) imenu-items)))))
-      imenu-items))
+ (defun my-counsel-etags-imenu-default-create-index-function ()
+   "修改原版不用临时文件"
+   (let* ((ctags-program "ctags")
+          (code-file buffer-file-name)
+          cmd
+          imenu-items
+          cands)
+     (when (and code-file (file-exists-p code-file))
+       (setq cmd
+             (cond
+              (counsel-etags-command-to-scan-single-code-file
+               (concat
+                counsel-etags-command-to-scan-single-code-file
+                "\""
+                code-file
+                "\""))
+              (t
+               (counsel-etags-get-scan-command
+                ctags-program code-file))))
+       (setq cands
+             (counsel-etags-imenu-scan-string
+              (shell-command-to-string cmd)))
+       (save-excursion
+         (dolist (c cands)
+           (let* ((name (car c))
+                  pos
+                  more_begin
+                  more_end)
+             (goto-char (point-min))
+             (counsel-etags-forward-line (cdr c))
+             (when (search-forward name (point-at-eol) t)
+               (forward-char (- (length name))))
+             (setq pos (point-marker))
+             ;; 获取类名等更多信息
+             (skip-syntax-forward "^\s(")
+             (setq more_end (point))
+             (goto-char pos)
+             (skip-syntax-backward "^\s(")
+             (setq more_begin (point))
+             (put-text-property
+              0 1 'read-only (buffer-substring more_begin more_end)
+              name)
+             (push (cons name pos) imenu-items)))))
+     imenu-items))
+  (with-eval-after-load 'marginalia
+   (define-advice marginalia-annotate-imenu
+       (:around (orig-fn &rest args) my)
+     "marginalia中添加"
+     (if (eq imenu-create-index-function
+          'my-counsel-etags-imenu-default-create-index-function)
+         (if-let ((prop-text (get-text-property 0 'read-only (ad-get-argument args 0))))
+             (marginalia--fields
+              (prop-text :truncate 1.0 :face 'marginalia-function))
+             nil)
+       (apply orig-fn args))))
   (defun imenu-setup-for-cpp ()
     (setq-local
      imenu-create-index-function
@@ -5002,17 +5026,12 @@ _q_uit
     "toggle功能"
     (interactive)
     (ignore-errors
-      (let ((max-try-count 10))
-        (while (and (> max-try-count 0)
-                    (is-shacle-popup-buffer (current-buffer)))
-          ;; 在side window里，切换到其它窗口。other有可能还是side bar所以用了while
-          (call-interactively 'other-window)
-          (setq max-try-count (1- max-try-count)))
-        (when (<= max-try-count 0)
-          (call-interactively 'delete-other-windows)
-          (error "return")))
       (let ((wcount (length (window-list))))
-        (call-interactively 'keyboard-escape-quit)
+        ;; 遍历删除shacle buffer的window
+        (cl-dolist (w (window-list))
+          (when (is-shacle-popup-buffer (window-buffer w))
+            (delete-window w)))
+        (call-interactively 'keyboard-escape-quit)
         ;; 如果窗口数没变，就可以弹出pop窗口了
         (when (eq wcount (length (window-list)))
           (if (and shackle-last-buffer
