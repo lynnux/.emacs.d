@@ -2484,8 +2484,7 @@ symbol under cursor"
       :commands (consult-imenu consult-imenu-multi consult-imenu--items)
       :init
       ;; 所有project打开的buffer中查找，太爽了！因为函数名/变量等没有多少，所以没有效率问题
-      ;; (global-set-key [(control ?\,)] 'consult-imenu-multi)
-      (global-set-key (kbd "M-m") 'consult-imenu)
+      (global-set-key (kbd "M-m") 'my-project-imenu)
       (keyboard-translate ?\C-m ?\H-m)
       (global-set-key (kbd "C-x H-m") mule-keymap)
       (global-set-key [?\H-m] 'consult-imenu))
