@@ -1610,10 +1610,13 @@ _c_: hide comment        _q_uit
    (advice-add jc :before #'backward-forward-push-mark-wrapper))
  (define-advice backward-forward-after-push-mark
      (:around (orig-fn &rest args) my)
+   "排除一些mark"
    ;; (backtrace)
    (unless (or (memq this-command '(mouse-drag-region ;; 排除鼠标点击
                        ))
-               (memq major-mode '(help-mode minibuffer-mode)))
+               (memq major-mode '(help-mode minibuffer-mode))
+               (string-match-p "^ " (buffer-name)) ;; 排除隐藏buffer
+               )
      (apply orig-fn args)))
   (advice-add 'push-mark :after #'backward-forward-after-push-mark))
 ;; 其它jump包
@@ -2334,22 +2337,22 @@ _c_: hide comment        _q_uit
               (call-interactively 'my-consult-ripgrep))
           (message "not exist! %S" target)) ; TODO: 支持buffer bookmark等
         )
-      ;; from https://github.com/glen-dai/highlight-global 
-      (defun get-thing-to-highlight ()
-        "Get thing to highlight. If active region, get reigon, else get
-symbol under cursor"
-        (if (use-region-p)
-            (buffer-substring-no-properties
-             (region-beginning) (region-end))
-          (if (thing-at-point 'symbol)
-              (buffer-substring-no-properties
-               (car (bounds-of-thing-at-point 'symbol))
-               (cdr (bounds-of-thing-at-point 'symbol))))))
       ;; 使CTRL+F3支持region高亮
-      (define-advice embark-toggle-highlight
-          (:around (orig-fn &rest args))
-        (let ((find-tag-default-function 'get-thing-to-highlight))
-          (apply orig-fn args)))
+     (define-advice embark-toggle-highlight
+         (:around (orig-fn &rest args))
+       "使CTRL+F3支持region高亮"
+       (cl-letf* ((org-find-tag-default-as-symbol-regexp
+                   (symbol-function
+                    #'find-tag-default-as-symbol-regexp))
+                  ((symbol-function
+                    #'find-tag-default-as-symbol-regexp)
+                   (lambda (&rest args)
+                     (if (use-region-p)
+                         (buffer-substring-no-properties
+                          (region-beginning) (region-end))
+                       (apply org-find-tag-default-as-symbol-regexp
+                              args)))))
+         (apply orig-fn args)))
       (define-key embark-general-map [f2] 'embark-consult-rg)))
   ;; 预览功能很快！好像不是真的加载
   (use-package consult
