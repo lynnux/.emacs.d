@@ -1608,6 +1608,13 @@ _c_: hide comment        _q_uit
   (cl-dolist
    (jc jump-commands)
    (advice-add jc :before #'backward-forward-push-mark-wrapper))
+ (define-advice backward-forward-after-push-mark
+     (:around (orig-fn &rest args) my)
+   ;; (backtrace)
+   (unless (or (memq this-command '(mouse-drag-region ;; 排除鼠标点击
+                       ))
+               (memq major-mode '(help-mode minibuffer-mode)))
+     (apply orig-fn args)))
   (advice-add 'push-mark :after #'backward-forward-after-push-mark))
 ;; 其它jump包
 ;; back-button global跟local是区分开的，这就很麻烦了
@@ -3910,7 +3917,10 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
             (lspce-mode 1)))))
        (when buffer-file-name
          (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
-  :config (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster)
+  :config
+  (when (functionp 'cape-wrap-buster)
+    (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster))
+  ;; 
   ;; 不知道为什么lspce屏蔽了flex
   (with-eval-after-load 'hotfuzz
     (add-to-list

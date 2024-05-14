@@ -115,3 +115,4 @@ packages/lsp/lspce-master/
 bin/gtags.conf
 /share/*
 
+packages/company/company-mode-master/
