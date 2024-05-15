@@ -1316,12 +1316,13 @@ _c_: hide comment        _q_uit
   (setq
    corfu-cycle t
    corfu-auto t
-   corfu-auto-prefix 2
+   corfu-auto-prefix 1
    corfu-preview-current nil ; 避免直接上屏，有时候输入完了要马上C-n/C-p，这时只需要按个C-g就可以了，而不需要再删除上屏的
    corfu-auto-delay 0.01 ;; 这个很影响体验的！
-   ;; corfu-quit-at-boundary nil ;; 可以用M-空格来分词
+   corfu-quit-at-boundary t
+   corfu-on-exact-match nil
    corfu-quit-no-match t ;; 没有match时退出，不然有个No match影响操作
-   corfu-min-width 30 ;; 不知道怎么回事，有时候显示不全但补全功能正常
+   corfu-min-width 80 ;; 不知道怎么回事，有时候显示不全但补全功能正常
    )
 
   ;; 偷偷隐藏创建corfu的frame加快首次使用
@@ -2337,7 +2338,6 @@ _c_: hide comment        _q_uit
               (call-interactively 'my-consult-ripgrep))
           (message "not exist! %S" target)) ; TODO: 支持buffer bookmark等
         )
-      ;; 使CTRL+F3支持region高亮
      (define-advice embark-toggle-highlight
          (:around (orig-fn &rest args))
        "使CTRL+F3支持region高亮"
@@ -6804,6 +6804,21 @@ DEFAULT specifies which file to return on empty input."
 (use-package gn-mode
   :commands (gn-mode)
   :init (add-to-list 'auto-mode-alist '("\\.gni?\\'" . gn-mode)))
+
+(use-package devdocs
+ :if (bound-and-true-p enable-feature-tools)
+ :defer t
+ :init
+ (setq devdocs-window-select t)
+ (dec-placeholder-fun
+  devdocs-lookup devdocs "~/.emacs.d/packages/tools" '(devdocs))
+ (dec-placeholder-fun
+  devdocs-install devdocs "~/.emacs.d/packages/tools" '(devdocs))
+ :config
+ (define-advice devdocs-install (:around (orig-fn &rest args) my)
+   "修复windows平台默认gbk编码问题"
+   (let ((coding-system-for-write 'utf-8))
+     (apply orig-fn args))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
