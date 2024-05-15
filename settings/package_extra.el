@@ -146,6 +146,7 @@
 ;; F1 v查看变量 sanityinc/require-times，或者M-x `sanityinc/require-times' 正常一页就显示完了，目前11个包
 ;; 有个几年前的封装没有用，直接用的原版的 https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 (use-package init-benchmarking
+  :disabled
   :config
   (add-hook
    'after-init-hook
@@ -5019,6 +5020,7 @@ _q_uit
      (magit-status-mode :same t) ;; magit全屏
      (magit-log-mode :same t) ;; magit log全屏
      (vc-git-log-view-mode :same t) ;; vc log全屏
+     (devdocs-mode :same t)
      ("*vc-dir*" :same t) ;; vc-dir-mode不行
      ("\\*SQLite .*"
       :regexp t ;; 默认是普通字符串
@@ -6806,19 +6808,25 @@ DEFAULT specifies which file to return on empty input."
   :init (add-to-list 'auto-mode-alist '("\\.gni?\\'" . gn-mode)))
 
 (use-package devdocs
- :if (bound-and-true-p enable-feature-tools)
- :defer t
- :init
- (setq devdocs-window-select t)
- (dec-placeholder-fun
-  devdocs-lookup devdocs "~/.emacs.d/packages/tools" '(devdocs))
- (dec-placeholder-fun
-  devdocs-install devdocs "~/.emacs.d/packages/tools" '(devdocs))
- :config
- (define-advice devdocs-install (:around (orig-fn &rest args) my)
-   "修复windows平台默认gbk编码问题"
-   (let ((coding-system-for-write 'utf-8))
-     (apply orig-fn args))))
+  :if (bound-and-true-p enable-feature-tools)
+  :defer t
+  :init
+  (setq devdocs-window-select t)
+  (dec-placeholder-fun
+   devdocs-lookup devdocs "~/.emacs.d/packages/tools" '(devdocs))
+  (dec-placeholder-fun
+   devdocs-install devdocs "~/.emacs.d/packages/tools" '(devdocs))
+  (bind-key* (kbd "<f1> h") 'devdocs-lookup)
+  :config
+  (define-key devdocs-mode-map "w" #'scroll-down-command)
+  (define-advice devdocs-install (:around (orig-fn &rest args) my)
+    "修复windows平台默认gbk编码问题"
+    (let ((coding-system-for-write 'utf-8))
+      (apply orig-fn args)))
+  (define-advice devdocs--render (:around (orig-fn &rest args) my)
+    "修复windows平台读取乱码"
+    (let ((coding-system-for-read 'utf-8))
+      (apply orig-fn args))))
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，

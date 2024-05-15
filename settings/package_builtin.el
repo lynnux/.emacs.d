@@ -789,7 +789,8 @@ Run occur in all buffers whose names match this type for REXP."
         "*elfeed-entry*"
         "*elfeed-search*"
         "*dashboard*"
-        "*vc-dir*"))
+        "*vc-dir*"
+        "*devdocs*"))
 (defun tab-show-buffer-p (b)
   (cond
    ;; Always include the current buffer.
