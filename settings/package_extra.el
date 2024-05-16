@@ -5020,7 +5020,7 @@ _q_uit
      (magit-status-mode :same t) ;; magit全屏
      (magit-log-mode :same t) ;; magit log全屏
      (vc-git-log-view-mode :same t) ;; vc log全屏
-     (devdocs-mode :same t)
+     ;; (devdocs-mode :same t)
      ("*vc-dir*" :same t) ;; vc-dir-mode不行
      ("\\*SQLite .*"
       :regexp t ;; 默认是普通字符串
@@ -6811,7 +6811,7 @@ DEFAULT specifies which file to return on empty input."
   :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
-  (setq devdocs-window-select t)
+  ;; (setq devdocs-window-select t)
   (dec-placeholder-fun
    devdocs-lookup devdocs "~/.emacs.d/packages/tools" '(devdocs))
   (dec-placeholder-fun
