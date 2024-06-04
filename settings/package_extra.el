@@ -317,8 +317,8 @@ _q_uit
     (defface neotree-face
       '((t :family "BlinkMacSystemFont" :height 110)) ;; 参考的github字体
       "")
-    (buffer-face-set 'neotree-face)
-    (setq line-spacing 0.1) ;; 行高
+    ;; (buffer-face-set 'neotree-face)
+    ;; (setq line-spacing 0.1) ;; 行高
     ))
   (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node)
   (defun projectile-project-root ()
