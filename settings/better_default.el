@@ -214,7 +214,7 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 (global-set-key (kbd "S-<f4>") 'previous-error)
 
 ;; 禁止narrow功能
-(global-set-key (kbd "C-x n-") nil)
+(define-key ctl-x-map "\C-n" nil)
 (global-set-key (kbd "C-x n") 'next-line)
 
 (global-set-key (kbd "C-x C-o") 'other-window)

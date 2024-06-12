@@ -36,9 +36,9 @@
   (setq foobar-binary "c:/green/foobar2000/foobar2000.exe")
   (setq mpv-binary "C:/green/mpv/mpv.exe"))
 
- ;; work
+ ;; home2
  ((and (string-equal system-type "windows-nt")
-       (string-equal "SNQU" (system-name))
+       (string-equal "DESKTOP-N5D640Q" (system-name))
        (equal (list 10 0 19045) (w32-version)))
   (setq
    org-directory "D:/doc/autosync/autosync/org"
@@ -47,13 +47,9 @@
     "D:/doc/autosync/autosync/org/idea.org"
     "D:/doc/autosync/autosync/org/todo.org")
    org-default-notes-file "D:/doc/autosync/autosync/org/default.org"
-   org-roam-directory (file-truename "G:/doc/mynote"))
-  (setq
-   tfs/tf-exe
-   "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\IDE\\TF.exe")
+   org-roam-directory (file-truename "d:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
-  (setq foobar-binary "D:/green/foobar2000/foobar2000.exe")
-  (setq mpv-binary "D:/green/mpv/mpv.exe"))
+  (setq mpv-binary "D:/green/mpv-x86_64-v3-20240609/mpv.exe"))
 
  ;; 
  (t
