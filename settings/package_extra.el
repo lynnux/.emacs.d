@@ -6816,6 +6816,8 @@ DEFAULT specifies which file to return on empty input."
    devdocs-lookup devdocs "~/.emacs.d/packages/tools" '(devdocs))
   (dec-placeholder-fun
    devdocs-install devdocs "~/.emacs.d/packages/tools" '(devdocs))
+  (defalias 'doc-search 'devdocs-lookup)
+  (defalias 'doc-install 'devdocs-install)
   (bind-key* (kbd "<f1> h") 'devdocs-lookup)
   :config
   (define-key devdocs-mode-map "w" #'scroll-down-command)
