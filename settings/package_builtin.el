@@ -259,14 +259,21 @@
   :config
   (add-hook
    'org-agenda-mode-hook (lambda () (setq org-agenda-follow-mode t)))
-
-  ;; 对org-capture涉及的文件去掉只读
   (define-advice org-capture-target-buffer
       (:around (orig-fn &rest args) my)
     (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
       (apply orig-fn args)))
-
   (define-advice org-archive-subtree (:around (orig-fn &rest args) my)
+    (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
+      (apply orig-fn args))))
+
+;; 低版本的`org-capture-target-buffer'在`org-agenda'里？
+(use-package org-capture
+  :defer t
+  :config
+  ;; 对org-capture涉及的文件去掉只读
+  (define-advice org-capture-target-buffer
+      (:around (orig-fn &rest args) my)
     (let ((tmp-disable-view-mode 2)) ;; 2不恢复只读
       (apply orig-fn args))))
 

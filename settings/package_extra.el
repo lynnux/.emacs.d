@@ -4762,7 +4762,6 @@ _f_: find        _t_: add tag
 _i_: add id      _n_: add node
 _g_: get link    _l_: add link
 _s_: rg search   _p_: find file
-_c_: capture
 _G_: graph       _L_: buffer toggle
 _q_uit
 "
