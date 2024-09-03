@@ -6832,8 +6832,9 @@ DEFAULT specifies which file to return on empty input."
 
 (use-package pyvenv
   :commands (pyvenv-mode)
-  :after (python)
-  :init (add-to-list 'python-mode-hook 'pyvenv-mode)
+  :init
+  (add-to-list 'python-ts-mode-hook 'pyvenv-mode)
+  (add-to-list 'python-mode-hook 'pyvenv-mode)
   ;; 自动开启venv的方法是在project目录M-x `add-dir-local-variable' > python-mode > pyvenv-workon设置为$WORKON_HOME目录的name。
   )
 
