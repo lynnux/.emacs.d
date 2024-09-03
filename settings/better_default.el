@@ -261,9 +261,12 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
 ;; https://emacs.stackexchange.com/questions/598/how-do-i-prevent-extremely-long-lines-making-emacs-slow
 ;; 下面抄自doom，略有修改(spacemacs和purcell都没有)
 (setq auto-mode-case-fold nil)
-(setq-default bidi-display-reordering 'left-to-right)
+(setq-default bidi-display-reordering nil) ;; 非大文件nil就行，'left-to-right
 (setq-default bidi-paragraph-direction 'left-to-right)
-(setq-default bidi-inhibit-bpa t)
+(setq-default bidi-inhibit-bpa t
+              long-line-threshold 1000
+              large-hscroll-threshold 1000
+              syntax-wholeline-max 1000) ; 默认10000， https://emacs-china.org/t/topic/25811/9
 (setq-default cursor-in-non-selected-windows nil)
 ;; (setq highlight-nonselected-windows nil) 有些不自然，比如diff的时候
 (setq fast-but-imprecise-scrolling t)
