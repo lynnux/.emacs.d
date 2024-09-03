@@ -81,9 +81,16 @@
    org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀。显示不出来可以装个unifont
    org-log-done 'time ; 给已完成事项打上时间戳。可选 note，附加注释
    org-startup-folded 'show4levels ; 打开时折叠
+   org-confirm-babel-evaluate nil ;; org babel执行不需要warning提示
    )
 
   :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     (shell . t)
+     (emacs-lisp . t)))
+  
   ;; M-RET绑定给tempel了，这个比C-RET更适合
   (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
   (define-key org-mode-map (kbd "C-<kp-enter>") #'org-meta-return)

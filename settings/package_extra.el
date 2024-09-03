@@ -294,6 +294,7 @@ _q_uit
 (global-set-key (kbd "C-c b") 'hydra-bookmark/body)
 
 (use-package neotree
+  :disabled
   :commands (neotree-toggle)
   :init
   (setq
@@ -403,7 +404,7 @@ _q_uit
 
   ;; bug较多能用，好处是支持diredful、diff-hl显示
   (use-package dired-sidebar
-    :disabled
+    ;; :disabled
     :commands (dired-sidebar-toggle-sidebar)
     :init
     (global-set-key
