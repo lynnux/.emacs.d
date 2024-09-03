@@ -897,3 +897,10 @@ Run occur in all buffers whose names match this type for REXP."
   (add-to-list 'tab-line-exclude-modes 'dape-repl-mode)
   (add-to-list 'tab-line-exclude-modes 'dape-info-threads-mode)
   (add-to-list 'tab-line-exclude-modes 'dape-info-watch-mode))
+
+
+(use-package python
+  :defer t
+  :config
+  ;; python -m venv创建的居然没有python3.exe！
+  (setq python-shell-interpreter "python"))

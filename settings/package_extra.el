@@ -6830,6 +6830,13 @@ DEFAULT specifies which file to return on empty input."
     (let ((coding-system-for-read 'utf-8))
       (apply orig-fn args))))
 
+(use-package pyvenv
+  :commands (pyvenv-mode)
+  :after (python)
+  :init (add-to-list 'python-mode-hook 'pyvenv-mode)
+  ;; 自动开启venv的方法是在project目录M-x `add-dir-local-variable' > python-mode > pyvenv-workon设置为$WORKON_HOME目录的name。
+  )
+
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，
 ;; eldoc参数当前哪个参数很明显

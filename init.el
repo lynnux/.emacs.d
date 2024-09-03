@@ -49,7 +49,9 @@
    org-default-notes-file "D:/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "d:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
-  (setq mpv-binary "D:/green/mpv-x86_64-v3-20240609/mpv.exe"))
+  (setq mpv-binary "D:/green/mpv-x86_64-v3-20240609/mpv.exe")
+  (setenv "WORKON_HOME" "D:/prj/venv") ;; for pyvenv，要把所有venv都创建在同一个目录里
+  )
 
  ;; 
  (t
