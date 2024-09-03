@@ -4678,8 +4678,8 @@ _q_uit
     (unless (featurep 'emacs-preview)
       (dec-placeholder-fun emacs-preview-mode emacs-preview
                            (if (file-exists-p
-                                "h:/prj/rust/emacs-preview-rs/src")
-                               "h:/prj/rust/emacs-preview-rs/src"
+                                "d:/prj/rust/emacs-preview-rs/src")
+                               "d:/prj/rust/emacs-preview-rs/src"
                              "f:/prj/rust/emacs-preview-rs/src")
                            '(emacs-preview)))
     (call-interactively 'emacs-preview-mode))
@@ -4770,11 +4770,11 @@ _q_uit
    ("t" org-roam-tag-add nil :color blue)
    ("i" org-id-get-create nil :color blue)
    ("n" org-roam-node-insert nil :color blue)
-   ("g" org-store-link nil :color blue)
+   ("s" org-store-link nil :color blue)
    ("l" org-insert-link nil :color blue)
    ("p" call-project-find nil :color blue)
-   ("s" call-project-search nil :color blue)
-   ("c" org-roam-capture nil :color blue)
+   ("g" call-project-search nil :color blue)
+   ;; ("c" org-roam-capture nil :color blue) ;; 手动创建org
    ("G" org-roam-graph nil :color blue)
    ("L" org-roam-buffer-toggle nil :color blue)
    ("q" nil "nil" :color blue))

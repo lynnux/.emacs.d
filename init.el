@@ -41,12 +41,12 @@
        (string-equal "DESKTOP-N5D640Q" (system-name))
        (equal (list 10 0 19045) (w32-version)))
   (setq
-   org-directory "D:/doc/autosync/autosync/org"
+   org-directory "D:/autosync/autosync/org"
    org-agenda-files
    (list
-    "D:/doc/autosync/autosync/org/idea.org"
-    "D:/doc/autosync/autosync/org/todo.org")
-   org-default-notes-file "D:/doc/autosync/autosync/org/default.org"
+    "D:/autosync/autosync/org/idea.org"
+    "D:/autosync/autosync/org/todo.org")
+   org-default-notes-file "D:/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "d:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
   (setq mpv-binary "D:/green/mpv-x86_64-v3-20240609/mpv.exe"))
