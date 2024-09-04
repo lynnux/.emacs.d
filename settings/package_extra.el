@@ -4038,43 +4038,44 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (remove-function
        (local 'imenu-create-index-function) #'eglot-imenu)))
   (if (boundp 'lspce-send-changes-idle-time)
-      (progn
-        (add-to-list 'eglot-stay-out-of 'flymake)
-        (add-to-list 'eglot-stay-out-of 'xref)
-        (add-to-list 'eglot-stay-out-of 'eldoc)
-        (setq eglot-ignored-server-capabilities
-              (list
-               :hoverProvider ;; hover没什么用，在sqlite3中还会卡
-               :completionProvider
-               :signatureHelpProvider
-               :definitionProvider
-               :typeDefinitionProvider
-               :implementationProvider
-               :declarationProvider
-               :referencesProvider
-               :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-               :documentSymbolProvider
-               :workspaceSymbolProvider
-               :codeActionProvider
-               :codeLensProvider
-               ;; :documentFormattingProvider
-               ;; :documentRangeFormattingProvider
-               :documentOnTypeFormattingProvider
-               :renameProvider
-               :documentLinkProvider
-               :colorProvider
-               :foldingRangeProvider
-               :executeCommandProvider
-               :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
-               ))
-        (add-hook
-         'eglot-managed-mode-hook
-         (lambda ()
-           ;; hook关多了，format功能不正常
-           (remove-hook
-            'completion-at-point-functions #'eglot-completion-at-point
-            t)
-           (remove-cpp-imenu))))
+      ;; (progn
+      ;;   (add-to-list 'eglot-stay-out-of 'flymake)
+      ;;   (add-to-list 'eglot-stay-out-of 'xref)
+      ;;   (add-to-list 'eglot-stay-out-of 'eldoc)
+      ;;   (setq eglot-ignored-server-capabilities
+      ;;         (list
+      ;;          :hoverProvider ;; hover没什么用，在sqlite3中还会卡
+      ;;          :completionProvider
+      ;;          :signatureHelpProvider
+      ;;          :definitionProvider
+      ;;          :typeDefinitionProvider
+      ;;          :implementationProvider
+      ;;          :declarationProvider
+      ;;          :referencesProvider
+      ;;          :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
+      ;;          :documentSymbolProvider
+      ;;          :workspaceSymbolProvider
+      ;;          :codeActionProvider
+      ;;          :codeLensProvider
+      ;;          ;; :documentFormattingProvider
+      ;;          ;; :documentRangeFormattingProvider
+      ;;          :documentOnTypeFormattingProvider
+      ;;          :renameProvider
+      ;;          :documentLinkProvider
+      ;;          :colorProvider
+      ;;          :foldingRangeProvider
+      ;;          :executeCommandProvider
+      ;;          :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+      ;;          ))
+      ;;   (add-hook
+      ;;    'eglot-managed-mode-hook
+      ;;    (lambda ()
+      ;;      ;; hook关多了，format功能不正常
+      ;;      (remove-hook
+      ;;       'completion-at-point-functions #'eglot-completion-at-point
+      ;;       t)
+      ;;      (remove-cpp-imenu))))
+      (ignore)
     (progn
       (eldoc-add-command 'c-electric-paren)
       (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
@@ -4196,23 +4197,24 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
    (unless lsp-inited
      (when (not buffer-read-only)
        (setq-local lsp-inited t)
-       (when (or (memq
-                  major-mode
-                  '(c-mode
-                    c++-mode
-                    python-mode
-                    rust-mode
-                    cmake-mode
-                    c-ts-mode
-                    c++-ts-mode
-                    python-ts-mode
-                    rust-ts-mode
-                    cmake-ts-mode))
-                 (and lua-server-path (eq major-mode 'lua-mode))
-                 (and c-sharp-server-path
-                      (memq
-                       major-mode '(csharp-mode csharp-ts-mode))))
-         (lsp-ensure))))))
+       (cond
+        ((or (memq
+              major-mode
+              '(c-mode
+                c++-mode
+                rust-mode
+                cmake-mode
+                c-ts-mode
+                c++-ts-mode
+                rust-ts-mode
+                cmake-ts-mode))
+             (and lua-server-path (eq major-mode 'lua-mode))
+             (and c-sharp-server-path
+                  (memq major-mode '(csharp-mode csharp-ts-mode))))
+         (lsp-ensure))
+        ;; lspce对python venv支持不好，而eglot无须配置就可以
+        ((memq major-mode '(python-mode python-ts-mode))
+         (eglot-ensure)))))))
 
 ;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
 ;; 请在init里设置tfs/tf-exe
