@@ -50,7 +50,10 @@
    org-roam-directory (file-truename "d:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'
   (setq mpv-binary "D:/green/mpv-x86_64-v3-20240609/mpv.exe")
+  ;; pyenv问题好多！
+  (setq black-binary "D:/green/.pyenv/pyenv-win/versions/3.10.5/Scripts/black.exe") ;; 解决pyenv环境py format问题
   (setenv "WORKON_HOME" "D:/prj/venv") ;; for pyvenv，要把所有venv都创建在同一个目录里
+  (setq elisp-autofmt-python-bin "D:/green/.pyenv/pyenv-win/versions/3.10.5/python.exe") ;; pyenv的python.bat对参数解析有bug
   )
 
  ;; 

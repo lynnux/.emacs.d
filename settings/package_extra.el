@@ -4026,10 +4026,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
       (apply orig-fn args)))
   ;; clang-format不需要了，默认情况下会sort includes line，导致编译不过，但clangd的却不会，但是要自定义格式需要创建.clang-format文件
   (define-key eglot-mode-map [(meta f8)] 'eglot-format)
-  (define-advice eglot-format (:around (orig-fn &rest args) my)
-    (if (memq major-mode '(python-mode python-ts-mode))
-        (my-format-all)
-      (apply orig-fn args)))
 
   (defun remove-cpp-imenu ()
     ;; cpp用ctags生成的imenu，够用且不卡
@@ -6725,6 +6721,18 @@ DEFAULT specifies which file to return on empty input."
       ;; 其它都用`format-all'
       (call-interactively 'format-all-region-or-buffer)))
   (global-set-key [(meta f8)] 'my-format-all)
+ (with-eval-after-load 'eglot
+   (define-advice eglot-format (:around (orig-fn &rest args) my)
+     (if (memq major-mode '(python-mode python-ts-mode))
+         (my-format-all)
+       (apply orig-fn args)))
+   (when (executable-find "pyenv")
+     ;; `pyenv'环境需要指定`black-binary'为`black.exe'的全路径
+     (define-advice format-all--buffer-hard
+         (:around (orig-fn &rest args) my)
+       (when (memq major-mode '(python-mode python-ts-mode))
+         (setq args (-replace-at 3 `,black-binary args)))
+       (apply orig-fn args))))
   ;; from https://github.com/purcell/inheritenv/blob/main/inheritenv.el
   (defun inheritenv-apply (func &rest args)
     (cl-letf* (((default-value 'process-environment)
