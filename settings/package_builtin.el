@@ -900,7 +900,14 @@ Run occur in all buffers whose names match this type for REXP."
 
 
 (use-package python
-  :defer t
-  :config
-  ;; python -m venv创建的居然没有python3.exe！
-  (setq python-shell-interpreter "python"))
+ :defer t
+ :config
+ ;; python -m venv创建的居然没有python3.exe！
+ (setq python-shell-interpreter "python")
+ (define-advice python-shell-send-region (:before (&rest args) my)
+   "自动滚动到最低(仅当光标在最后面时) https://github.com/jorgenschaefer/elpy/issues/1641"
+   (let ((curbuf (current-buffer)))
+     (python-shell-switch-to-shell)
+     (goto-char (point-max))
+     (recenter -10)
+     (pop-to-buffer curbuf))))
