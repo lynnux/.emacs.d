@@ -91,10 +91,6 @@
      (shell . t)
      (emacs-lisp . t)))
   
-  ;; M-RET绑定给tempel了，这个比C-RET更适合
-  (define-key org-mode-map (kbd "C-<return>") #'org-meta-return)
-  (define-key org-mode-map (kbd "C-<kp-enter>") #'org-meta-return)
-
   ;; org的C-c C-o居然不走find-file
   (add-to-list 'org-file-apps '("\\.docx?\\'" . default))
   (add-to-list 'org-file-apps '("\\.pcapn?g?\\'" . default))
