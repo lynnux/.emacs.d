@@ -6841,11 +6841,13 @@ DEFAULT specifies which file to return on empty input."
       (apply orig-fn args))))
 
 (use-package pyvenv
+  :defer 0.5
   :commands (pyvenv-mode)
   :init
-  (add-to-list 'python-ts-mode-hook 'pyvenv-mode)
-  (add-to-list 'python-mode-hook 'pyvenv-mode)
+  :config
+  (pyvenv-mode) ;; 全局开启方便org也能使用
   ;; 自动开启venv的方法是在project目录M-x `add-dir-local-variable' > python-mode > pyvenv-workon设置为$WORKON_HOME目录的name。
+  ;; 或者`add-file-local-variable'
   )
 
 ;; 好的theme特点:

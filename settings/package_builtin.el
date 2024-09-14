@@ -74,15 +74,16 @@
 (use-package org
   :defer t
   :init
-  (setq
-   org-startup-indented t ; 开启`org-indent'
-   org-modules '() ;; 造成org文件打开慢的真凶！
-   org-hide-emphasis-markers nil ;; 不显示`org-emphasis-alist'
-   org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀。显示不出来可以装个unifont
-   org-log-done 'time ; 给已完成事项打上时间戳。可选 note，附加注释
-   org-startup-folded 'show4levels ; 打开时折叠
-   org-confirm-babel-evaluate nil ;; org babel执行不需要warning提示
-   )
+ (setq
+  org-startup-indented t ; 开启`org-indent'
+  org-modules '() ;; 造成org文件打开慢的真凶！
+  org-hide-emphasis-markers nil ;; 不显示`org-emphasis-alist'
+  org-ellipsis "⤸" ;; ⤵ ▼ ▽ ⌄ ⌵ ⏑ 尽量不用实心的，不然太突兀。显示不出来可以装个unifont
+  org-log-done 'time ; 给已完成事项打上时间戳。可选 note，附加注释
+  org-startup-folded 'show4levels ; 打开时折叠
+  org-confirm-babel-evaluate nil ;; org babel执行不需要warning提示
+  org-src-preserve-indentation t ;; for src indent
+  )
 
   :config
   (org-babel-do-load-languages
