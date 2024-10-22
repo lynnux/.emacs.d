@@ -6830,6 +6830,10 @@ DEFAULT specifies which file to return on empty input."
   (defalias 'doc-install 'devdocs-install)
   (bind-key* (kbd "<f1> h") 'devdocs-lookup)
   :config
+ (define-advice devdocs-goto-target (:after (&rest args) my)
+   (if (bound-and-true-p hl-line-mode)
+       (hl-line-highlight)
+     (hl-line-mode 1)))
   (define-key devdocs-mode-map "w" #'scroll-down-command)
   (define-advice devdocs-install (:around (orig-fn &rest args) my)
     "修复windows平台默认gbk编码问题"
