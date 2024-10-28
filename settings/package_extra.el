@@ -6829,6 +6829,15 @@ DEFAULT specifies which file to return on empty input."
   (defalias 'doc-search 'devdocs-lookup)
   (defalias 'doc-install 'devdocs-install)
   (bind-key* (kbd "<f1> h") 'devdocs-lookup)
+ (add-hook
+  'rust-ts-mode-hook
+  #'(lambda () (setq-local devdocs-current-docs '("rust"))))
+ (add-hook
+  'python-mode-hook
+  #'(lambda () (setq-local devdocs-current-docs '("python~3.10"))))
+ (add-hook
+  'python-ts-mode-hook
+  #'(lambda () (setq-local devdocs-current-docs '("python~3.10"))))
   :config
  (define-advice devdocs-goto-target (:after (&rest args) my)
    (if (bound-and-true-p hl-line-mode)

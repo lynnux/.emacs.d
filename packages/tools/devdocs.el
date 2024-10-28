@@ -5,7 +5,7 @@
 ;; Author: Augusto Stoffel <arstoffel@gmail.com>
 ;; Keywords: help
 ;; URL: https://github.com/astoff/devdocs.el
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1"))
 ;; Version: 0.6.1
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -94,9 +94,6 @@ Fontification is done using the `org-src' library, which see."
   "Whether to select the DevDocs window for viewing."
   :type 'boolean)
 
-(defvar devdocs-extra-rendering-functions '()
-  "Extra functions for `shr-external-rendering-functions'.")
-
 (defface devdocs-code-block '((t nil))
   "Additional face to apply to code blocks in DevDocs buffers.")
 
@@ -105,6 +102,37 @@ Fontification is done using the `org-src' library, which see."
 
 (defconst devdocs--data-format-version 1
   "Version number of the saved documentation data format.")
+
+(defvar devdocs--rendering-functions '((t (math . devdocs--tag-math)
+                                          (pre . devdocs--tag-pre)))
+  "Extra functions for `shr-external-rendering-functions'.
+This is an alist whose keys are a document slug, a document type, or the
+wildcard t.  When a document is rendered, all matching entries are
+collected and appended to `shr-external-rendering-functions'.
+
+For example, to modify how hyperlinks are rendered in the elisp
+document, you can use:
+
+  (push \\='(a . my-custom-renderer)
+        (alist-get \\='elisp devdocs--rendering-functions))
+
+Feel free to experiment with this feature, but note that the API is
+experimental and may change in the future.")
+
+(make-obsolete-variable 'devdocs-extra-rendering-functions
+                        'devdocs--rendering-functions
+                        "0.7")
+
+(defcustom devdocs-use-mathjax nil
+  "Whether to render mathematical formulas using MathJax.
+Set this to `block' to render only displayed formulas.  Any other
+non-nil value means to render displayed as well as inline formulas.
+
+This feature requires the Node program.  Make sure to run the command
+`devdocs-setup-mathjax' to install the necessary libraries."
+  :type '(choice (const :tag "Show math as plain text" nil)
+                 (const :tag "Render only displayed formulas" block)
+                 (const :tag "Render all formulas" t)))
 
 ;;; Memoization
 
@@ -315,6 +343,10 @@ already installed, reinstall it."
    revert-buffer-function #'devdocs--revert-buffer
    truncate-lines t))
 
+(defun devdocs--revert-buffer (&rest _args)
+  "Refresh DevDocs buffer."
+  (devdocs--render (pop devdocs--stack)))
+
 (defun devdocs-goto-target ()
   "Go to the original position in a DevDocs buffer."
   (interactive)
@@ -432,7 +464,35 @@ Interactively, read a page name with completion."
   (define-key map "w" #'devdocs-copy-url)
   (define-key map "." #'devdocs-goto-target))
 
-;;; Rendering
+(easy-menu-define devdocs-mode-menu devdocs-mode-map
+  "Menu for `devdocs-mode'."
+  '("DevDocs"
+    ["Go to Entry" devdocs-lookup
+     :help "Select and jump to an index entry"]
+    ["Previous Entry" devdocs-previous-entry
+     :help "Go to the previous documentation entry according to index order"]
+    ["Next Entry" devdocs-next-entry
+     :help "Go to the next documentation entry according to index order"]
+    "---"
+    ["Go to Page" devdocs-goto-page
+     :help "Select and jump to a page"]
+    ["First Page" devdocs-first-page
+     :help "Go to the first document page"]
+    ["Previous Page" devdocs-previous-page
+     :help "Go to the previous document page"]
+    ["Next Page" devdocs-next-page
+     :help "Go to the next document page"]
+    ["Last Page" devdocs-last-page
+     :help "Go to the last document page"]
+    "---"
+    ["Back in History" devdocs-go-back
+     :active (cadr devdocs--stack)
+     :help "Go to a previously displayed documentation entry"]
+    ["Forward in History" devdocs-go-forward
+     :active (car devdocs--forward-stack)
+     :help "Return from a previously displayed documentation entry"]))
+
+;;; HTML rendering
 
 (defun devdocs--path-file (path)
   "Return the non-fragment part of PATH."
@@ -453,26 +513,6 @@ Interactively, read a page name with completion."
         (url-expander-remove-relative-links ;; undocumented function!
          (concat (file-name-directory base) path))))))
 
-(defun devdocs--shr-tag-pre (dom)
-  "Insert and fontify pre-tag represented by DOM."
-  (let ((start (point)))
-    (if-let ((lang (and devdocs-fontify-code-blocks
-                        (dom-attr dom 'data-language)))
-             (mode (or (cdr (assoc lang '(("cpp" . c++-mode)
-                                          ("shell" . sh-mode))))
-                       (intern (concat lang "-mode"))))
-             (buffer (and (fboundp mode) (current-buffer))))
-        (insert
-         (with-temp-buffer
-           (shr-tag-pre dom)
-           (let ((inhibit-message t)
-	         (message-log-max nil))
-             (ignore-errors (delay-mode-hooks (funcall mode)))
-             (font-lock-ensure))
-           (buffer-string)))
-      (shr-tag-pre dom))
-    (add-face-text-property start (point) 'devdocs-code-block t)))
-
 (defun devdocs--render (entry)
   "Render a DevDocs documentation entry, returning a buffer.
 
@@ -484,12 +524,16 @@ fragment part of ENTRY.path."
       (devdocs-mode))
     (let-alist entry
       (let* ((inhibit-read-only t)
-             (extra-rendering-functions (cdr (assoc
-                                              (intern .doc.type)
-                                              devdocs-extra-rendering-functions)))
-             (shr-external-rendering-functions `((pre . devdocs--shr-tag-pre)
-                                                 ,@extra-rendering-functions
-                                                 ,@shr-external-rendering-functions))
+             (shr-external-rendering-functions
+              (append
+               (alist-get .doc.slug
+                          devdocs--rendering-functions
+                          nil nil #'string=)
+               (alist-get .doc.type
+                          devdocs--rendering-functions
+                          nil nil #'string=)
+               (alist-get t devdocs--rendering-functions)
+               shr-external-rendering-functions))
              (file (expand-file-name (format "%s/%s.html"
                                              .doc.slug
                                              (url-hexify-string (devdocs--path-file .path)))
@@ -509,10 +553,6 @@ fragment part of ENTRY.path."
       (devdocs-goto-target)
       (current-buffer))))
 
-(defun devdocs--revert-buffer (&rest _args)
-  "Refresh DevDocs buffer."
-  (devdocs--render (pop devdocs--stack)))
-
 (defun devdocs--internal-url-p (url)
   "Return t if URL seems to be an internal DevDocs link."
   (not (string-match-p "\\`[a-z]+:" url)))
@@ -531,6 +571,151 @@ fragment part of ENTRY.path."
       (unless entry (error "Can't find `%s'" dest))
       (when frag (push `(fragment . ,frag) entry))
       (devdocs--render entry))))
+
+(defun devdocs--tag-pre (dom)
+  "Insert and fontify pre tag represented by DOM."
+  (let ((start (point)))
+    (if-let ((lang (and devdocs-fontify-code-blocks
+                        (dom-attr dom 'data-language)))
+             (mode (or (cdr (assoc lang '(("cpp" . c++-mode)
+                                          ("shell" . sh-mode))))
+                       (intern (concat lang "-mode"))))
+             (buffer (and (fboundp mode) (current-buffer))))
+        (insert
+         (with-temp-buffer
+           (shr-tag-pre dom)
+           (let ((inhibit-message t)
+	         (message-log-max nil))
+             (ignore-errors (delay-mode-hooks (funcall mode)))
+             (font-lock-ensure))
+           (buffer-string)))
+      (shr-tag-pre dom))
+    (add-face-text-property start (point) 'devdocs-code-block t)))
+
+(defun devdocs--tag-math (dom)
+  (let ((start (point)))
+    (shr-generic (thread-first
+                   dom
+                   (dom-child-by-tag 'semantics)
+                   (dom-child-by-tag 'annotation)
+                   (or dom)))
+    (when (pcase devdocs-use-mathjax
+            ('block (string= (dom-attr dom 'display) 'block))
+            (_ devdocs-use-mathjax))
+      (devdocs--render-math start (point) dom))))
+
+;;; Math rendering
+;; TODO: Split off as a separate package?
+
+(defvar devdocs--mathjax nil
+  "Place to store the MathJax process state.")
+
+(defvar devdocs--mathjax-ttl 60
+  "Time to let the MathJax process live without producing output.")
+
+(defvar devdocs--math-image-props '(:ascent 75)
+  "Image properties of rendered math formulas, as accepted by `create-image'.")
+
+(defvar devdocs--mathjax-directory (expand-file-name ".mathjax" devdocs-data-dir)
+  "Directory where MathJax should be installed.
+This is used by `devdocs-setup-mathjax'.  You may also chose to not run
+that command and set this variable to any directory in which Node is
+able to import the `mathjax-node' library.")
+
+(defun devdocs-setup-mathjax ()
+  "Install dependencies of the `devdocs-use-mathjax' feature."
+  (interactive)
+  (mkdir devdocs--mathjax-directory t)
+  (let ((default-directory devdocs--mathjax-directory)
+        (inhibit-read-only t))
+    (if (not (executable-find "node"))
+        (lwarn 'devdocs :error
+               "Math rendering in DevDocs requires the Node program.")
+      (with-current-buffer
+          (compile "npm install --prefix . mathjax-node")
+        (goto-char (pos-bol 0))
+        (insert "⚠️ After installation finishes, customize "
+                (buttonize "devdocs-use-mathjax"
+                           #'customize-variable
+                           'devdocs-use-mathjax)
+                " to enable math rendering in DevDocs.")
+        (fill-paragraph)
+        (insert ?\n ?\n)))))
+
+(defun devdocs--get-mathjax ()
+  "Return a cons cell consisting of a MathJax process and a list of callbacks."
+  (unless (process-live-p (car devdocs--mathjax))
+    (setq devdocs--mathjax nil))
+  (with-memoization devdocs--mathjax
+    (let* ((default-directory devdocs--mathjax-directory)
+           (buffer (generate-new-buffer " *devdocs-mathjax*"))
+           (proc
+            (make-process
+             :name "mathjax"
+             :buffer buffer
+             :connection-type 'pipe
+             :noquery t
+             :command
+             `("node" "-e" "\
+const mathjax = require('mathjax-node')
+require('readline').createInterface(process.stdin).on('line', line => {
+  mathjax.typeset(JSON.parse(line), data => {
+    process.stdout.write(JSON.stringify(data))})})")
+             :sentinel
+             (lambda (proc _)
+               (cond
+                ((process-live-p proc))
+                ((zerop (process-exit-status proc)) (kill-buffer buffer))
+                (t (lwarn 'devdocs :error
+                          (format "\
+MathJax process exited with status %s.  See buffer %s for more information."
+                                  (process-exit-status proc)
+                                  (buttonize (buffer-name buffer)
+                                             #'pop-to-buffer
+                                             buffer))))))))
+           (timer (run-at-time devdocs--mathjax-ttl nil
+                               (lambda ()
+                                 (setq devdocs--mathjax nil)
+                                 (process-send-eof proc)))))
+      (add-function
+       :after (process-filter proc)
+       (lambda (&rest _)
+         (goto-char (point-min))
+         (while-let ((data (ignore-errors
+                             (json-parse-buffer :object-type 'alist)))
+                     (callback (pop (cdr devdocs--mathjax))))
+           (funcall callback data))
+         (delete-region (point-min) (point))
+         (timer-set-time timer (time-add nil devdocs--mathjax-ttl))))
+      (list proc))))
+
+(defun devdocs--render-math (start end dom)
+  (let* ((start (copy-marker start))
+         (end (copy-marker end))
+         (mathjax (devdocs--get-mathjax))
+         (proc (car mathjax))
+         (arg `(:math
+                ,(with-temp-buffer (dom-print dom nil t)
+                                   (buffer-string))
+                :format "MathML"
+                :svg t))
+         (buffer (current-buffer)))
+    (set-marker-insertion-type start t)
+    (process-send-string proc (json-serialize arg))
+    (process-send-string proc "\n")
+    (nconc mathjax
+           (list
+            (lambda (data)
+              (let-alist data
+                (when (and .svg
+                           (buffer-live-p buffer)
+                           (< start end)) ;funky erase-buffer detection
+                  (with-current-buffer buffer
+                    (let ((inhibit-read-only t)
+                          (image (apply #'svg-image .svg
+                                        devdocs--math-image-props)))
+                      (add-text-properties start end
+                                           `(display ,image)))))))))))
 
 ;;; Lookup commands
 
