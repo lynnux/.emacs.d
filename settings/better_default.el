@@ -347,3 +347,6 @@ Replaces default behaviour of comment-dwim, when it inserts comment at the end o
        (line-beginning-position) (line-end-position))
     (comment-dwim arg)))
 (global-set-key [remap comment-dwim] 'qiang-comment-dwim-line)
+
+(define-key global-map (kbd "<f1> n") nil); 避免跟f1 f1误触
+(define-key global-map (kbd "<f1> C-n") nil); 避免跟f1 f1误触

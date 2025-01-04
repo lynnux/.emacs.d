@@ -404,7 +404,6 @@ _q_uit
 
   ;; bug较多能用，好处是支持diredful、diff-hl显示
   (use-package dired-sidebar
-    ;; :disabled
     :commands (dired-sidebar-toggle-sidebar)
     :init
     (global-set-key
@@ -1861,7 +1860,8 @@ _c_: hide comment        _q_uit
   :defer t
   :config
   ;; `rust-ts-mode'没有compile error的正则
-  (require 'rust-mode))
+  (require 'rust-mode)
+  )
 
 (use-package sr-speedbar
   :if (bound-and-true-p enable-feature-navigation)
@@ -3892,6 +3892,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
 ;; https://github.com/zbelial/lspce
 ;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
 (use-package lspce
+  :disabled
   :defer t
   :init
   (setq
@@ -4122,7 +4123,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   ;; https://github.com/blahgeek/emacs-lsp-booster 
   ;; 这个是作为中间exe wrap lsp进程，加快处理速度，无缝跟eglot/lsp-mode集成！
   (load "lsp/eglot-booster")
-  (eglot-booster-mode 1))
+  (eglot-booster-mode 1)
+  )
 
 ;; 不能任意hook，不然右键无法打开文件，因为eglot找不到对应的server会报错
 (defun enable-format-on-save ()

@@ -19,8 +19,8 @@ if "DESKTOP-N5D640Q" == utils.system_name()
    and MinorVersion == 2
    and BuildNumber == 9200
 then
-   emacsclientw = "D:\\green\\Emacs\\gccemacs_240611\\bin\\emacsclientw.exe"
-   runemacs = "D:\\green\\Emacs\\gccemacs_240611\\bin\\runemacs.exe"
+    emacsclientw = "D:\\green\\Emacs\\gccemacs_241128\\bin\\emacsclientw.exe"
+    runemacs = "D:\\green\\Emacs\\gccemacs_241128\\bin\\runemacs.exe"
 end
 
 -- get commandline
