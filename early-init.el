@@ -1,4 +1,5 @@
 ﻿;; -*- lexical-binding: t; -*-
+;; !!! early-init.elc是过期的会造成emacs启动慢1秒！删除就好了
 
 ;; 解决恶心的 https://github.com/emacs-mirror/emacs/commit/9f25d46568bf0a4d617145537db4c8aaf5e0219b
 ;; 不过还需要手动修改share\emacs\site-lisp\site-start.el源码，执行m-x `elisp-enable-lexical-binding`
@@ -8,7 +9,7 @@
   (cl-letf (((symbol-function #'display-warning)
              (lambda (&rest _)
                )))))
-
+;; (setq internal--get-default-lexical-binding-function nil)
 (setq byte-compile-warnings '(cl-functions)) ; disable "Package cl is deprecated"
 (setq load-prefer-newer t) ; since 24.4 不加载过期elc文件，但IO会检查文件时间，如果长期不更新可以用(setq load-prefer-newer noninteractive)
 (setq native-comp-async-report-warnings-errors 'silent)

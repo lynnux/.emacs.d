@@ -138,10 +138,11 @@
      "Hack Regular"
      "Fixedsys")
    11.5
-   '("新宋体" ;; org跟Iosevka table自动对齐
+   '(
+     "等线" ;; 新版本新宋体不好看了
      "微软雅黑"
      "宋体"
-     "新宋体"
+     "新宋体";; org跟Iosevka table自动对齐
      "Microsoft Yahei"
      "黑体"
      "WenQuanYi Bitmap Song"
