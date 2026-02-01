@@ -61,7 +61,6 @@
   (ensure-latest "~/.emacs.d/packages/org/org-roam-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/rg.el-master.zip")
-  (ensure-latest "~/.emacs.d/packages/tools/elfeed-master.zip")
   (ensure-latest
    "~/.emacs.d/packages/use-package/use-package-master.zip")
   (ensure-latest "~/.emacs.d/themes/emacs-dashboard-master.zip")
@@ -3525,16 +3524,13 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     (autoload 'eglot eglot-load-path "" nil)
     (autoload 'eglot-rename eglot-load-path "" nil)
     (autoload 'eglot-completion-at-point eglot-load-path "" nil))
-  (unless (boundp 'lspce-send-changes-idle-time)
-    (defun lsp-ensure ()
-      (eglot-ensure)))
   (setq
    eglot-confirm-server-initiated-edits
-   nil ; 避免code action的yes/no提示
+   nil                            ; 避免code action的yes/no提示
    eglot-send-changes-idle-time 0 ; 加快补全，实际上corfu-auto-delay的关系更大
-   eglot-sync-connect nil ;; 打开新文件就不卡了，貌似没有副作用？
+   eglot-sync-connect nil     ;; 打开新文件就不卡了，貌似没有副作用？
    eglot-events-buffer-size 0 ;; 
-   eglot-autoshutdown t ;; 不关退出emacs会卡死
+   eglot-autoshutdown t       ;; 不关退出emacs会卡死
    )
   :commands (eglot eglot-ensure eglot-rename eglot-completion-at-point)
   :config
@@ -3564,8 +3560,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
      ("clangd"
       "-j=8" ;; 线程数量
       "--background-index"
-      "-header-insertion=never" ;; 不要插入头文件
-      "--clang-tidy" ;; 高级提示
+      "-header-insertion=never"         ;; 不要插入头文件
+      "--clang-tidy"                    ;; 高级提示
       "--header-insertion-decorators=0" ;; 不要在前面插入圆点
       "--completion-style=detailed" "--pch-storage=memory")))
   (fset #'jsonrpc--log-event #'ignore) ;; 禁止log buffer据说可以加快速度
@@ -3573,8 +3569,8 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq eglot-ignored-server-capabilities
         (list
          :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-         :hoverProvider ;; hover没什么用，在sqlite3中还会卡
-         :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
+         :hoverProvider      ;; hover没什么用，在sqlite3中还会卡
+         :inlayHintProvider  ;; 参数提示，但编辑时会错位，不太需要
          :codeActionProvider ;; 当有flymake错误时，code action非常讨厌
          :documentOnTypeFormattingProvider))
   ;; 临时禁止view-mode，使重命名可用
@@ -3591,89 +3587,50 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
               (derived-mode-p 'c-ts-base-mode))
       (remove-function
        (local 'imenu-create-index-function) #'eglot-imenu)))
-  (if (boundp 'lspce-send-changes-idle-time)
-      ;; (progn
-      ;;   (add-to-list 'eglot-stay-out-of 'flymake)
-      ;;   (add-to-list 'eglot-stay-out-of 'xref)
-      ;;   (add-to-list 'eglot-stay-out-of 'eldoc)
-      ;;   (setq eglot-ignored-server-capabilities
-      ;;         (list
-      ;;          :hoverProvider ;; hover没什么用，在sqlite3中还会卡
-      ;;          :completionProvider
-      ;;          :signatureHelpProvider
-      ;;          :definitionProvider
-      ;;          :typeDefinitionProvider
-      ;;          :implementationProvider
-      ;;          :declarationProvider
-      ;;          :referencesProvider
-      ;;          :documentHighlightProvider ;; 关闭光标下sybmol加粗高亮
-      ;;          :documentSymbolProvider
-      ;;          :workspaceSymbolProvider
-      ;;          :codeActionProvider
-      ;;          :codeLensProvider
-      ;;          ;; :documentFormattingProvider
-      ;;          ;; :documentRangeFormattingProvider
-      ;;          :documentOnTypeFormattingProvider
-      ;;          :renameProvider
-      ;;          :documentLinkProvider
-      ;;          :colorProvider
-      ;;          :foldingRangeProvider
-      ;;          :executeCommandProvider
-      ;;          :inlayHintProvider ;; 参数提示，但编辑时会错位，不太需要
-      ;;          ))
-      ;;   (add-hook
-      ;;    'eglot-managed-mode-hook
-      ;;    (lambda ()
-      ;;      ;; hook关多了，format功能不正常
-      ;;      (remove-hook
-      ;;       'completion-at-point-functions #'eglot-completion-at-point
-      ;;       t)
-      ;;      (remove-cpp-imenu))))
-      (ignore)
-    (progn
-      (eldoc-add-command 'c-electric-paren)
-      (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
-      (when nil
-        ;; 获取不显示signature的方法
-        (define-advice eldoc--message-command-p
-            (:before (&rest args) my)
-          (and (symbolp (ad-get-argument args 0))
-               (message "%S" (ad-get-argument args 0)))))
-      (init-lsp-snippet-tempel)
-      ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
-      ;; (advice-add
-      ;;  'eglot-completion-at-point
-      ;;  :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
-      ;; (advice-add
-      ;;  'eglot-completion-at-point
-      ;;  :around #'cape-wrap-noninterruptible)
-      (add-hook
-       'eglot-managed-mode-hook
-       (lambda ()
-         ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
-         (setq-local
-          eldoc-documentation-strategy ; eglot has it's own strategy by default
-          'eldoc-documentation-compose-eagerly)
-         (setq-local completion-at-point-functions
-                     (cl-nsubst
-                      (cape-capf-noninterruptible
-                       (cape-capf-buster
-                        #'eglot-completion-at-point
-                        ;; #'string-prefix-p, 默认是equal
-                        (lambda (old new)
-                          ;; 实测old new是一样的，因此我们强制返回nil
-                          nil)))
-                      'eglot-completion-at-point
-                      completion-at-point-functions))
-         (remove-cpp-imenu)))))
+  (progn
+    (eldoc-add-command 'c-electric-paren)
+    (eldoc-add-command 'c-electric-semi&comma) ;; 输入,后提示参数
+    (when nil
+      ;; 获取不显示signature的方法
+      (define-advice eldoc--message-command-p
+          (:before (&rest args) my)
+        (and (symbolp (ad-get-argument args 0))
+             (message "%S" (ad-get-argument args 0)))))
+    (init-lsp-snippet-tempel)
+    ;; 似乎下面的`cape-capf-noninterruptible'的配置更好点？
+    ;; (advice-add
+    ;;  'eglot-completion-at-point
+    ;;  :around #'cape-wrap-buster) ;; corfu wiki新增的方法，让输入时强制更新capf
+    ;; (advice-add
+    ;;  'eglot-completion-at-point
+    ;;  :around #'cape-wrap-noninterruptible)
+    (add-hook
+     'eglot-managed-mode-hook
+     (lambda ()
+       ;; 抄自https://www.reddit.com/r/emacs/comments/17uyy08/frustrating_python_lsp_experience/ 效果似乎更好点
+       (setq-local
+        eldoc-documentation-strategy ; eglot has it's own strategy by default
+        'eldoc-documentation-compose-eagerly)
+       (setq-local completion-at-point-functions
+                   (cl-nsubst
+                    (cape-capf-noninterruptible
+                     (cape-capf-buster
+                      #'eglot-completion-at-point
+                      ;; #'string-prefix-p, 默认是equal
+                      (lambda (old new)
+                        ;; 实测old new是一样的，因此我们强制返回nil
+                        nil)))
+                    'eglot-completion-at-point
+                    completion-at-point-functions))
+       (remove-cpp-imenu))))
 
   ;; 禁止didChangeWatchedFiles，一些lsp server会调用它，导致调用project-files，大型项目会卡住(如kill-buffer时)。 等同于lsp-enable-file-watchers
   (cl-defmethod eglot-register-capability
-      (server
-       (method (eql workspace/didChangeWatchedFiles))
-       id
-       &key
-       watchers)
+    (server
+     (method (eql workspace/didChangeWatchedFiles))
+     id
+     &key
+     watchers)
     "不要didChangeWatchedFiles这个功能，试了修改eglot--trampish-p不行，只有这样"
     (eglot-unregister-capability server method id))
 
@@ -3780,72 +3737,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq rainbow-ansi-colors nil)
   (setq rainbow-x-colors nil))
 
-
-(use-package elec-pair
-  :if (bound-and-true-p enable-feature-edit)
-  :init
-  (defvar my-auto-newline nil
-    "自己实现auto newline")
-  :config
-  ;; 去掉elec-pair的post-self-insert-hook，改为直接对char绑定并调用elec-pair的函数
-  (when t
-    ;; 把所有会成对的char都放这里 (elec-pair是从`syntax-table'找到成对的)
-    (defvar elec-pair-chars
-      '(?\'
-        ?\" ?\` ?\( ?\{ ?\[ ?\<
-        ?\) ?\} ?\] ?\>)) ;; 右边也加上，有时候人工会输入
-    (add-hook
-     'electric-pair-mode-hook
-     (lambda ()
-       (when electric-pair-mode
-         ;; 删除无用的hook
-         (remove-hook
-          'post-self-insert-hook
-          #'electric-pair-post-self-insert-function)
-         (remove-hook
-          'post-self-insert-hook
-          #'electric-pair-open-newline-between-pairs-psif)
-         (remove-hook
-          'self-insert-uses-region-functions
-          #'electric-pair-will-use-region))))
-    (cl-dolist
-     (key elec-pair-chars)
-     (let* ((key_str (char-to-string key))
-            (key-name
-             (format "my-elec-pair-%s" (char-to-string key))))
-       (eval
-        `(defun ,(intern key-name) ()
-           (interactive)
-           (let ((this-command 'self-insert-command)
-                 (last-command-event ,key))
-             ;; (self-insert-command 1 ,key)
-             (call-interactively 'self-insert-command)
-             (unless (minibufferp)
-               (ignore-errors
-                 (electric-pair-post-self-insert-function)
-                 (when my-auto-newline
-                   (when (eq ,key ?\{)
-                     (call-interactively 'new-line-dwim))))))))
-       (eval `(global-set-key ,key_str ',(intern key-name)))))
-
-    (with-eval-after-load 'corfu-auto
-      (add-to-list 'corfu-auto-commands "my-elec-pair.*")))
-
-  ;; 修复eldoc不显示参数名问题
-  (with-eval-after-load 'eldoc
-    (eldoc-add-command "my-elec-pair-\("))
-
-  (electric-pair-mode 1) ;; 这个是必须开的，有些mode会添加自己的chars
-  ;; c++换行时输入{}自动indent
-  ;; (defadvice electric-pair--insert (after my-electric-pair--insert activate)
-  ;;   (indent-according-to-mode)
-  ;;   )
-  )
-
-
-(with-eval-after-load 'python
-  (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
-  )
 
 ;; 由emacs module实现ctrl tab切换窗口
 ;; (ignore-errors (module-load (expand-file-name "~/.emacs.d/bin/pop_select.dll"))) ; 需要全路径加载(如果没把~/.emacs.d/bin加入环境变量的话)
@@ -4502,17 +4393,6 @@ _q_uit
   (setq global-mode-string
         (append global-mode-string '(radio-mode-string))))
 
-(use-package eww
-  :defer t
-  :config
-  (define-key eww-mode-map "w" 'scroll-down-command)
-  (use-package shr
-    :defer t
-    :config
-    ;; 修复选中图片时按w不生效问题
-    (define-key shr-image-map "w" nil)
-    (define-key eww-link-keymap "w" nil)))
-
 (defun my-C-1 ()
   (interactive)
   (while (window-parameter nil 'window-side)
@@ -4662,26 +4542,6 @@ _q_uit
   ;; (global-set-key (kbd "C-<right>") 'drag-stuff-right)
   )
 
-(use-package elfeed
-  :if (bound-and-true-p enable-feature-tools)
-  :defer t
-  :init
-  (dec-placeholder-fun
-   elfeed elfeed "~/.emacs.d/packages/tools/elfeed-master" '(elfeed))
-  (setq
-   elfeed-use-curl t ;; win10好像自带curl
-   ;; elfeed-curl-program-name "curl"
-   elfeed-feeds
-   '("http://tttang.com/rss.xml"
-     "https://xz.aliyun.com/feed"
-     "https://paper.seebug.org/rss")
-   elfeed-search-filter "@6-months-ago" ;; 默认不显示已经read了的，设置为都显示
-   )
-  :config
-  (define-key
-   elfeed-search-mode-map (kbd "RET")
-   'elfeed-search-browse-url) ; 不需要查看简介什么的，直接打开浏览器就行了
-  )
 
 ;; 删除了csharp-compilation的引用，tree-sister好像没起作用，将就用了
 (use-package csharp-mode
@@ -5691,77 +5551,6 @@ DEFAULT specifies which file to return on empty input."
     (define-advice elisp-autofmt--region (:after (&rest args) my)
       (diff-hl-update))))
 
-(use-package format
-  :defer t
-  :init
-  (setq format-alist nil) ;; `format-decode'会被c函数`insert-file-contents'调用，而里面都是些用不到的文件头，故而可以屏蔽加快启动。
-  )
-(use-package enriched
-  :defer t
-  :init
-  (with-eval-after-load 'font-lock
-    (define-advice turn-on-font-lock (:around (orig-fn &rest args))
-      "对`enriched-mode'禁用font-lock-mode"
-      (when (not (and (boundp 'enriched-mode) enriched-mode))
-        (apply orig-fn args))))
-  :config
-  ;; TODO：`enriched-toggle-markup'切换后字符的属性并没有去掉
-  )
-
-(use-package shell
-  :if (bound-and-true-p enable-feature-tools)
-  :defer t
-  :init
-  (setq confirm-kill-processes nil)
-  (setq comint-input-sender 'my-shell-simple-send)
-  (defun my-shell-simple-send (proc command)
-    "添加额外命令cls清屏"
-    (cond
-     ((string-match "^[ \t]*cls[ \t]*$" command)
-      (comint-send-string proc "\n")
-      (erase-buffer))
-     ;; Send other commands to the default handler.
-     (t
-      (comint-simple-send proc command))))
-  :config
-  (define-key shell-mode-map '[up] 'comint-previous-input)
-  (define-key shell-mode-map '[down] 'comint-next-input)
-
-  ;; 在任何位置按M-p/n都可以自动跳到命令输入位置
-  (define-advice comint-previous-input (:before (&rest args) my)
-    (comint-goto-process-mark))
-  (define-advice comint-next-input (:before (&rest args) my)
-    (comint-goto-process-mark))
-
-  ;; No confirm kill process: for *shell* and *compilation*
-  ;; https://emacs.stackexchange.com/q/24330
-  (defun set-no-process-query-on-exit ()
-    (let ((proc (get-buffer-process (current-buffer))))
-      (when (processp proc)
-        (set-process-query-on-exit-flag proc nil))))
-  ;; Kill the buffer when the shell process exits
-  ;; https://emacs.stackexchange.com/a/48307
-  (defun kill-buffer-on-shell-logout ()
-    (let* ((proc (get-buffer-process (current-buffer)))
-           (sentinel (process-sentinel proc)))
-      (set-process-sentinel
-       proc
-       `(lambda (process signal)
-          ;; Call the original process sentinel first.
-          (funcall #',sentinel process signal)
-          ;; Kill the buffer on an exit signal.
-          (and (memq (process-status process) '(exit signal))
-               (buffer-live-p (process-buffer process))
-               (kill-buffer (process-buffer process)))))))
-  (add-hook
-   'shell-mode-hook
-   (lambda ()
-     (make-local-variable 'comint-prompt-read-only)
-     (setq comint-prompt-read-only t) ;; 让不删除prompt
-     (kill-buffer-on-shell-logout)
-     (set-no-process-query-on-exit))))
-
-
 (use-package eshell
   :defer t
   :config
@@ -5919,68 +5708,6 @@ DEFAULT specifies which file to return on empty input."
   (display-time-update))
 
 
-;; 代替`eval-expression'M-;
-(use-package ielm
-  :disabled
-  :defer t
-  :init
-  (setq ielm-header "")
-  (setq ielm-prompt
-        (propertize (char-to-string #x261B)
-                    'face
-                    '(foreground-color . "cyan")
-                    'display
-                    '(raise 0)))
-  (defun my-eilm ()
-    (interactive)
-    (let ((buf (buffer-name (current-buffer))))
-      (ielm)
-      (ielm-change-working-buffer buf)))
-  (bind-key* (kbd "M-:") 'my-eilm)
-  :config)
-
-;; 丝滑效果实际就是`while-no-input'循环
-(use-package pixel-scroll
-  :disabled
-  :defer 0.3
-  :config
-  (setq
-   pixel-scroll-precision-interpolate-page
-   t ;; 为了`pixel-scroll-interpolate-down'能调用`pixel-scroll-precision-interpolate'
-   pixel-scroll-precision-interpolation-total-time 0.1)
-  ;; 没必要，全靠`pixel-scroll-precision-interpolate'函数
-  ;; (pixel-scroll-precision-mode 1) 
-  (defun my-wheel-up ()
-    (interactive)
-    ;; 鼠标滚动要更快，不然感觉慢
-    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      ;; my-scroll-down-command测试好像有问题
-      (my-scroll-up-command -3)))
-  (defun my-wheel-down ()
-    (interactive)
-    ;; 鼠标滚动要更快，不然感觉慢
-    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
-      (my-scroll-up-command 3)))
-  ;; 鼠标滚动感觉有点卡，而且C-n/p有可能造成屏幕移动
-  (bind-key* [wheel-up] 'my-wheel-up)
-  (bind-key* [wheel-down] 'my-wheel-down)
-  (defun my-scroll-up-command (&optional lines)
-    (interactive)
-    (if lines
-        (pixel-scroll-precision-interpolate
-         (* -1 lines (pixel-line-height)))
-      (pixel-scroll-interpolate-down)))
-  (defun my-scroll-down-command (&optional lines)
-    (interactive)
-    (if lines
-        (pixel-scroll-precision-interpolate
-         (* lines (pixel-line-height))))
-    (pixel-scroll-interpolate-up))
-  (advice-add #'scroll-up-command :override #'my-scroll-up-command)
-  (advice-add
-   #'scroll-down-command
-   :override #'my-scroll-down-command))
-
 (use-package format-all
   :commands (format-all-region-or-buffer)
   :init
@@ -6118,16 +5845,6 @@ DEFAULT specifies which file to return on empty input."
     "修复windows平台读取乱码"
     (let ((coding-system-for-read 'utf-8))
       (apply orig-fn args))))
-
-(use-package pyvenv
-  :defer 0.5
-  :commands (pyvenv-mode)
-  :init
-  :config
-  (pyvenv-mode) ;; 全局开启方便org也能使用
-  ;; 自动开启venv的方法是在project目录M-x `add-dir-local-variable' > python-mode > pyvenv-workon设置为$WORKON_HOME目录的name。
-  ;; 或者`add-file-local-variable'
-  )
 
 ;; 好的theme特点:
 ;; treemacs里git非源码里区别明显(doom-one)，

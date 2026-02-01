@@ -1074,3 +1074,215 @@ Run occur in all buffers whose names match this type for REXP."
   :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
   :defer 0.6
   :config (global-hl-line-mode t))
+
+
+(use-package elec-pair
+  :if (bound-and-true-p enable-feature-edit)
+  :init
+  (defvar my-auto-newline nil
+    "自己实现auto newline")
+  :config
+  ;; 去掉elec-pair的post-self-insert-hook，改为直接对char绑定并调用elec-pair的函数
+  (when t
+    ;; 把所有会成对的char都放这里 (elec-pair是从`syntax-table'找到成对的)
+    (defvar elec-pair-chars
+      '(?\'
+        ?\" ?\` ?\( ?\{ ?\[ ?\<
+        ?\) ?\} ?\] ?\>)) ;; 右边也加上，有时候人工会输入
+    (add-hook
+     'electric-pair-mode-hook
+     (lambda ()
+       (when electric-pair-mode
+         ;; 删除无用的hook
+         (remove-hook
+          'post-self-insert-hook
+          #'electric-pair-post-self-insert-function)
+         (remove-hook
+          'post-self-insert-hook
+          #'electric-pair-open-newline-between-pairs-psif)
+         (remove-hook
+          'self-insert-uses-region-functions
+          #'electric-pair-will-use-region))))
+    (cl-dolist
+        (key elec-pair-chars)
+      (let* ((key_str (char-to-string key))
+             (key-name
+              (format "my-elec-pair-%s" (char-to-string key))))
+        (eval
+         `(defun ,(intern key-name) ()
+            (interactive)
+            (let ((this-command 'self-insert-command)
+                  (last-command-event ,key))
+              ;; (self-insert-command 1 ,key)
+              (call-interactively 'self-insert-command)
+              (unless (minibufferp)
+                (ignore-errors
+                  (electric-pair-post-self-insert-function)
+                  (when my-auto-newline
+                    (when (eq ,key ?\{)
+                      (call-interactively 'new-line-dwim))))))))
+        (eval `(global-set-key ,key_str ',(intern key-name)))))
+
+    (with-eval-after-load 'corfu-auto
+      (add-to-list 'corfu-auto-commands "my-elec-pair.*")))
+
+  ;; 修复eldoc不显示参数名问题
+  (with-eval-after-load 'eldoc
+    (eldoc-add-command "my-elec-pair-\("))
+
+  (electric-pair-mode 1) ;; 这个是必须开的，有些mode会添加自己的chars
+  ;; c++换行时输入{}自动indent
+  ;; (defadvice electric-pair--insert (after my-electric-pair--insert activate)
+  ;;   (indent-according-to-mode)
+  ;;   )
+  )
+
+(with-eval-after-load 'python
+  (define-key python-mode-map "\177" nil) ;; 不需要python自带的DEL键处理
+  )
+
+
+(use-package eww
+  :defer t
+  :config
+  (define-key eww-mode-map "w" 'scroll-down-command)
+  (use-package shr
+    :defer t
+    :config
+    ;; 修复选中图片时按w不生效问题
+    (define-key shr-image-map "w" nil)
+    (define-key eww-link-keymap "w" nil)))
+
+
+(use-package format
+  :defer t
+  :init
+  (setq format-alist nil) ;; `format-decode'会被c函数`insert-file-contents'调用，而里面都是些用不到的文件头，故而可以屏蔽加快启动。
+  )
+
+(use-package enriched
+  :defer t
+  :init
+  (with-eval-after-load 'font-lock
+    (define-advice turn-on-font-lock (:around (orig-fn &rest args))
+      "对`enriched-mode'禁用font-lock-mode"
+      (when (not (and (boundp 'enriched-mode) enriched-mode))
+        (apply orig-fn args))))
+  :config
+  ;; TODO：`enriched-toggle-markup'切换后字符的属性并没有去掉
+  )
+
+(use-package shell
+  :if (bound-and-true-p enable-feature-tools)
+  :defer t
+  :init
+  (setq confirm-kill-processes nil)
+  (setq comint-input-sender 'my-shell-simple-send)
+  (defun my-shell-simple-send (proc command)
+    "添加额外命令cls清屏"
+    (cond
+     ((string-match "^[ \t]*cls[ \t]*$" command)
+      (comint-send-string proc "\n")
+      (erase-buffer))
+     ;; Send other commands to the default handler.
+     (t
+      (comint-simple-send proc command))))
+  :config
+  (define-key shell-mode-map '[up] 'comint-previous-input)
+  (define-key shell-mode-map '[down] 'comint-next-input)
+
+  ;; 在任何位置按M-p/n都可以自动跳到命令输入位置
+  (define-advice comint-previous-input (:before (&rest args) my)
+    (comint-goto-process-mark))
+  (define-advice comint-next-input (:before (&rest args) my)
+    (comint-goto-process-mark))
+
+  ;; No confirm kill process: for *shell* and *compilation*
+  ;; https://emacs.stackexchange.com/q/24330
+  (defun set-no-process-query-on-exit ()
+    (let ((proc (get-buffer-process (current-buffer))))
+      (when (processp proc)
+        (set-process-query-on-exit-flag proc nil))))
+  ;; Kill the buffer when the shell process exits
+  ;; https://emacs.stackexchange.com/a/48307
+  (defun kill-buffer-on-shell-logout ()
+    (let* ((proc (get-buffer-process (current-buffer)))
+           (sentinel (process-sentinel proc)))
+      (set-process-sentinel
+       proc
+       `(lambda (process signal)
+          ;; Call the original process sentinel first.
+          (funcall #',sentinel process signal)
+          ;; Kill the buffer on an exit signal.
+          (and (memq (process-status process) '(exit signal))
+               (buffer-live-p (process-buffer process))
+               (kill-buffer (process-buffer process)))))))
+  (add-hook
+   'shell-mode-hook
+   (lambda ()
+     (make-local-variable 'comint-prompt-read-only)
+     (setq comint-prompt-read-only t) ;; 让不删除prompt
+     (kill-buffer-on-shell-logout)
+     (set-no-process-query-on-exit))))
+
+;; 代替`eval-expression'M-;
+(use-package ielm
+  :disabled
+  :defer t
+  :init
+  (setq ielm-header "")
+  (setq ielm-prompt
+        (propertize (char-to-string #x261B)
+                    'face
+                    '(foreground-color . "cyan")
+                    'display
+                    '(raise 0)))
+  (defun my-eilm ()
+    (interactive)
+    (let ((buf (buffer-name (current-buffer))))
+      (ielm)
+      (ielm-change-working-buffer buf)))
+  (bind-key* (kbd "M-:") 'my-eilm)
+  :config)
+
+;; 丝滑效果实际就是`while-no-input'循环
+(use-package pixel-scroll
+  :disabled
+  :defer 0.3
+  :config
+  (setq
+   pixel-scroll-precision-interpolate-page
+   t ;; 为了`pixel-scroll-interpolate-down'能调用`pixel-scroll-precision-interpolate'
+   pixel-scroll-precision-interpolation-total-time 0.1)
+  ;; 没必要，全靠`pixel-scroll-precision-interpolate'函数
+  ;; (pixel-scroll-precision-mode 1) 
+  (defun my-wheel-up ()
+    (interactive)
+    ;; 鼠标滚动要更快，不然感觉慢
+    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
+      ;; my-scroll-down-command测试好像有问题
+      (my-scroll-up-command -3)))
+  (defun my-wheel-down ()
+    (interactive)
+    ;; 鼠标滚动要更快，不然感觉慢
+    (let ((pixel-scroll-precision-interpolation-total-time 0.05))
+      (my-scroll-up-command 3)))
+  ;; 鼠标滚动感觉有点卡，而且C-n/p有可能造成屏幕移动
+  (bind-key* [wheel-up] 'my-wheel-up)
+  (bind-key* [wheel-down] 'my-wheel-down)
+  (defun my-scroll-up-command (&optional lines)
+    (interactive)
+    (if lines
+        (pixel-scroll-precision-interpolate
+         (* -1 lines (pixel-line-height)))
+      (pixel-scroll-interpolate-down)))
+  (defun my-scroll-down-command (&optional lines)
+    (interactive)
+    (if lines
+        (pixel-scroll-precision-interpolate
+         (* lines (pixel-line-height))))
+    (pixel-scroll-interpolate-up))
+  (advice-add #'scroll-up-command :override #'my-scroll-up-command)
+  (advice-add
+   #'scroll-down-command
+   :override #'my-scroll-down-command))
