@@ -514,78 +514,6 @@ _q_uit
       :config (diredful-mode 1)))
   (add-hook 'dired-mode-hook 'delay-dired-relate-init))
 
-(use-package help-mode
-  :defer t
-  :config
-  (define-key help-mode-map "w" 'scroll-down-command)
-  (define-key help-mode-map [backspace] 'help-go-back)
-  (define-key help-mode-map (kbd "M-p") 'help-go-back)
-  (define-key help-mode-map (kbd "M-n") 'help-go-forward)
-  (define-key help-mode-map (kbd "DEL") 'help-go-back))
-
-(use-package minibuffer
-  :defer t
-  :config
-  ;; 屏蔽鼠标点击最下一行显示message buffer
-  (define-key minibuffer-inactive-mode-map (kbd "<mouse-1>") nil))
-
-;; 保存cursor位置
-(use-package saveplace
-  :if (bound-and-true-p enable-feature-builtin)
-  :init
-  (setq
-   save-place-file
-   (expand-file-name ".saveplace" user-emacs-directory)
-   save-place-forget-unreadable-files t)
-  :hook (after-init . save-place-mode)
-  :config
-  (add-hook
-   'save-place-after-find-file-hook
-   (lambda ()
-     (if buffer-file-name
-         ;; find-file-hook执行时，window-buffer还没有变成新buffer，这时recenter会出错，
-         ;; 所以这里用timer来执行recenter
-         (with-current-buffer (get-file-buffer buffer-file-name)
-           (run-with-local-idle-timer
-            0.1 nil
-            (lambda ()
-              (ignore-errors
-                (recenter))))))))
-  (define-advice save-place-to-alist (:around (orig-fn &rest args))
-    "不记录so-long-mode打开的文件，不然下次打开可能会很卡"
-    (unless (eq major-mode 'so-long-mode)
-      (apply orig-fn args))))
-
-;; 还是放弃session的那个file-name-history吧，现在都用这个了
-(use-package recentf
-  :if (bound-and-true-p enable-feature-builtin)
-  :init
-  (setq recentf-save-file
-        (expand-file-name ".recentf" user-emacs-directory))
-  (setq
-   recentf-max-saved-items 500
-   recentf-auto-cleanup 'never ; 默认造成开机启动卡10秒！
-   )
-  (setq
-   recentf-exclude
-   '(".cache"
-     ".cask"
-     "bookmarks$"
-     "/G?TAGS$"
-     "COMMIT_EDITMSG\\'"
-     "/ssh:"
-     "/sudo:"
-     "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
-     "^/tmp/"
-     (lambda (file) (file-in-directory-p file package-user-dir))))
-  :hook (after-init . recentf-mode)
-  :config
-  ;; 去掉不必要的hook
-  (defconst recentf-used-hooks
-    '((find-file-hook recentf-track-opened-file)
-      (kill-emacs-hook recentf-save-list))
-    "Hooks used by recentf."))
-
 ;; session的C-x C-/貌似好用一点？
 (use-package session
   ;; session只保存了修改文件的point
@@ -654,21 +582,6 @@ _q_uit
            6
            (assoc (session-buffer-file-name) session-file-alist)))))))
   (global-set-key (kbd "C-x C-/") 'goto-last-change-check-in-session))
-
-;; 用session就够了
-(use-package savehist
-  :disabled
-  :if (bound-and-true-p enable-feature-builtin)
-  :init
-  (setq savehist-file
-        (expand-file-name ".savehist" user-emacs-directory))
-  ;;(setq history-delete-duplicates nil)
-  (setq savehist-autosave-interval nil) ; 只emacs退出时保存，不要timer
-  (setq savehist-save-minibuffer-history nil) ;; 我们只给dired的sort用
-  :config
-  (defun my-init-savehist ()
-    (savehist-mode +1)
-    (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)))
 
 
 (global-set-key (kbd "C-x f") 'hydra-find-file-select)
@@ -775,18 +688,6 @@ _c_: hide comment        _q_uit
   (if my-hs-hide
       (hs-hide-all)
     (hs-show-all)))
-
-;; display-line-numbers是C实现的，最快！
-(use-package display-line-numbers
-  :if (bound-and-true-p enable-feature-builtin)
-  :commands (display-line-numbers-mode)
-  :init
-  (setq display-line-numbers-width-start 3)
-  (defun enable-display-line-numbers-mode ()
-    ;; org会开启`olivetti'，为了美观不需要显示行号
-    (unless (eq major-mode 'org-mode)
-      (display-line-numbers-mode)))
-  :hook (find-file . enable-display-line-numbers-mode))
 
 ;;; better C-A C-E
 (use-package mwim
@@ -1123,12 +1024,6 @@ _c_: hide comment        _q_uit
   :config
   ;; (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
   (change-cursor-mode 1))
-
-(use-package hl-line
-  :disabled
-  :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
-  :defer 0.6
-  :config (global-hl-line-mode t))
 
 (defun esy/file-capf ()
   "File completion at point function."
@@ -2587,16 +2482,15 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (add-hook
    'vc-git-log-edit-mode-hook 'git-conventionalcommits-capf-setup))
 
-(use-package log-edit
-  :defer t
-  :config
-  ;; 在checkin时显示diff
-  (agitate-log-edit-informative-mode))
-
 ;; 对vc很好的补充
 (use-package agitate
   :defer t
   :init
+  (use-package log-edit
+    :defer t
+    :config
+    ;; 在checkin时显示diff
+    (agitate-log-edit-informative-mode))
   (dec-placeholder-fun agitate-log-edit-informative-mode
                        agitate
                        "~/.emacs.d/packages/magit"
@@ -3618,73 +3512,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         result)))
   (load "lsp/lsp-snippet")
   (load "lsp/lsp-snippet-tempel"))
-
-;; https://github.com/zbelial/lspce
-;; 这个很多都是参考eglot实现，比如`after-change-functions'，这样可以避免windows上的一些问题
-(use-package lspce
-  :disabled
-  :defer t
-  :init
-  (setq
-   lspce-send-changes-idle-time 0
-   lspce-enable-logging nil
-   lspce-connect-server-timeout 5 ;; lspce的connect是同步的，server有问题会卡死emacs
-   lspce-modes-enable-single-file-root '(python-mode python-ts-mode))
-  (defun lsp-ensure ()
-    "eglot抄过来改改"
-    (unless (featurep 'lspce-module)
-      (ignore-errors
-        (module-load
-         (expand-file-name
-          "D:/prj/rust/lspce/target/release/lspce_module.dll")))
-      (ignore-errors
-        (module-load
-         (expand-file-name
-          "F:/prj/rust/lspce-master/target/release/lspce_module.dll")))
-      (delay-require-libs
-       "~/.emacs.d/packages/lsp/lspce-master" '(lspce)))
-    (let ((buffer (current-buffer)))
-      (cl-labels
-       ((maybe-connect
-         () (remove-hook 'post-command-hook #'maybe-connect nil)
-         (lspce--when-live-buffer
-          buffer
-          (unless lspce-mode
-            (lspce-mode 1)))))
-       (when buffer-file-name
-         (add-hook 'post-command-hook #'maybe-connect 'append nil)))))
-  :config
-  (when (functionp 'cape-wrap-buster)
-    (advice-add 'lspce-completion-at-point :around #'cape-wrap-buster))
-  ;; 
-  ;; 不知道为什么lspce屏蔽了flex
-  (with-eval-after-load 'hotfuzz
-    (add-to-list
-     'completion-category-defaults '(lspce-capf (styles hotfuzz))))
-  ;; `lspce--choose-server'有bug，多个选择反而有问题，所以这里去掉多余的选择
-  (setq lspce-server-programs (assoc-delete-all "python" lspce-server-programs))
-  (add-to-list 'lspce-server-programs '("python" "pylsp" ""))
-  (setq lspce-server-programs (assoc-delete-all "rust" lspce-server-programs))
-  (defun my-lspce-ra-initializationOptions ()
-    "cargo启动太多了，只有禁用checkOnSave了，没有错误检查了。参考`lspce-ra-initializationOptions', https://hw0lff.github.io/rust-analyzer-docs/2023-06-05/index.html"
-    (let ((options (make-hash-table :test #'equal)))
-      (setq options (lspce--add-option "checkOnSave" :json-false options))
-      options))
-  (add-to-list 'lspce-server-programs '("rust" "rust-analyzer" "" my-lspce-ra-initializationOptions))
-  ;; 设置clangd参数
-  (setq lspce-server-programs (assoc-delete-all "C" lspce-server-programs))
-  (add-to-list
-   'lspce-server-programs
-   '("C"
-     "clangd"
-     "-j=8 --background-index -header-insertion=never --clang-tidy --header-insertion-decorators=0 --completion-style=detailed --pch-storage=memory"))
-  (add-to-list
-   'lspce-server-programs '("cmake" "cmake-language-server"))
-  (init-lsp-snippet-tempel)
-  ;; lspce使用了较多的yas函数，参考`lsp-snippet-tempel-eglot-init'修正
-  (advice-add
-   'lspce--snippet-expansion-fn
-   :override #'lsp-snippet-tempel--eglot-expand-snippet))
 
 (use-package eglot
   :if (bound-and-true-p enable-feature-lsp-dap)
@@ -4824,11 +4651,6 @@ _q_uit
   (global-set-key (kbd "<C-wheel-up>") 'evil-numbers/dec-at-pt) ;; CTRL+鼠标滚动
   (global-set-key (kbd "<C-wheel-down>") 'evil-numbers/inc-at-pt))
 
-(use-package so-long
-  :disabled
-  :if (bound-and-true-p enable-feature-builtin)
-  :defer 1.3
-  :config (global-so-long-mode))
 
 (use-package drag-stuff
   :if (bound-and-true-p enable-feature-edit)

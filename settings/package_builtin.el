@@ -961,3 +961,116 @@ Run occur in all buffers whose names match this type for REXP."
            20
            0
            0))))))
+
+(use-package help-mode
+  :defer t
+  :config
+  (define-key help-mode-map "w" 'scroll-down-command)
+  (define-key help-mode-map [backspace] 'help-go-back)
+  (define-key help-mode-map (kbd "M-p") 'help-go-back)
+  (define-key help-mode-map (kbd "M-n") 'help-go-forward)
+  (define-key help-mode-map (kbd "DEL") 'help-go-back))
+
+(use-package minibuffer
+  :defer t
+  :config
+  ;; 屏蔽鼠标点击最下一行显示message buffer
+  (define-key minibuffer-inactive-mode-map (kbd "<mouse-1>") nil))
+
+;; 保存cursor位置
+(use-package saveplace
+  :if (bound-and-true-p enable-feature-builtin)
+  :init
+  (setq
+   save-place-file
+   (expand-file-name ".saveplace" user-emacs-directory)
+   save-place-forget-unreadable-files t)
+  :hook (after-init . save-place-mode)
+  :config
+  (add-hook
+   'save-place-after-find-file-hook
+   (lambda ()
+     (if buffer-file-name
+         ;; find-file-hook执行时，window-buffer还没有变成新buffer，这时recenter会出错，
+         ;; 所以这里用timer来执行recenter
+         (with-current-buffer (get-file-buffer buffer-file-name)
+           (run-with-local-idle-timer
+            0.1 nil
+            (lambda ()
+              (ignore-errors
+                (recenter))))))))
+  (define-advice save-place-to-alist (:around (orig-fn &rest args))
+    "不记录so-long-mode打开的文件，不然下次打开可能会很卡"
+    (unless (eq major-mode 'so-long-mode)
+      (apply orig-fn args))))
+
+;; 还是放弃session的那个file-name-history吧，现在都用这个了
+(use-package recentf
+  :if (bound-and-true-p enable-feature-builtin)
+  :init
+  (setq recentf-save-file
+        (expand-file-name ".recentf" user-emacs-directory))
+  (setq
+   recentf-max-saved-items 500
+   recentf-auto-cleanup 'never ; 默认造成开机启动卡10秒！
+   )
+  (setq
+   recentf-exclude
+   '(".cache"
+     ".cask"
+     "bookmarks$"
+     "/G?TAGS$"
+     "COMMIT_EDITMSG\\'"
+     "/ssh:"
+     "/sudo:"
+     "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\|zip\\|xz\\)$"
+     "^/tmp/"
+     (lambda (file) (file-in-directory-p file package-user-dir))))
+  :hook (after-init . recentf-mode)
+  :config
+  ;; 去掉不必要的hook
+  (defconst recentf-used-hooks
+    '((find-file-hook recentf-track-opened-file)
+      (kill-emacs-hook recentf-save-list))
+    "Hooks used by recentf."))
+
+
+;; 用session就够了
+(use-package savehist
+  :disabled
+  :if (bound-and-true-p enable-feature-builtin)
+  :init
+  (setq savehist-file
+        (expand-file-name ".savehist" user-emacs-directory))
+  ;;(setq history-delete-duplicates nil)
+  (setq savehist-autosave-interval nil) ; 只emacs退出时保存，不要timer
+  (setq savehist-save-minibuffer-history nil) ;; 我们只给dired的sort用
+  :config
+  (defun my-init-savehist ()
+    (savehist-mode +1)
+    (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)))
+
+
+;; display-line-numbers是C实现的，最快！
+(use-package display-line-numbers
+  :if (bound-and-true-p enable-feature-builtin)
+  :commands (display-line-numbers-mode)
+  :init
+  (setq display-line-numbers-width-start 3)
+  (defun enable-display-line-numbers-mode ()
+    ;; org会开启`olivetti'，为了美观不需要显示行号
+    (unless (eq major-mode 'org-mode)
+      (display-line-numbers-mode)))
+  :hook (find-file . enable-display-line-numbers-mode))
+
+(use-package so-long
+  :disabled
+  :if (bound-and-true-p enable-feature-builtin)
+  :defer 1.3
+  :config (global-so-long-mode))
+
+(use-package hl-line
+  :disabled
+  :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
+  :defer 0.6
+  :config (global-hl-line-mode t))
