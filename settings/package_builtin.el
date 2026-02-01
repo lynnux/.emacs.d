@@ -908,3 +908,56 @@ Run occur in all buffers whose names match this type for REXP."
      (goto-char (point-max))
      (recenter -10)
      (pop-to-buffer curbuf))))
+
+
+(use-package eldoc
+  :if (bound-and-true-p enable-feature-builtin)
+  :defer t
+  :diminish (eldoc-mode)
+  :init
+  (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
+  :config
+  (advice-add 'eldoc-pre-command-refresh-echo-area :override #'ignore) ;; 在pre-command-hook里影响性能
+
+  ;; 使用tooltip显示eldoc，`x-show-tip'是原生c实现的，不卡
+  (defun get-eldoc-msg ()
+    (or eldoc-last-message
+        (when eldoc--doc-buffer
+          (with-current-buffer eldoc--doc-buffer
+            (buffer-substring
+             (goto-char (point-min))
+             (progn
+               (end-of-visible-line)
+               (point)))))))
+  (defun eldoc-tooltip-display (docs _interactive)
+    ;; 可能在focus-out后才会调用到，这里检查是否已经focus-out了
+    (when (frame-parameter nil 'last-focus-update)
+      (let* ((p (window-absolute-pixel-position))
+             (x (car p))
+             (h (line-pixel-height))
+             (y
+              (if header-line-format
+                  (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
+                (cdr p)))
+             (text (get-eldoc-msg)))
+        (when (and p text (not (equal text "")))
+          (setq y (+ y h))
+          ;; (add-face-text-property 0 (length text) 'tooltip t text)
+          (x-show-tip
+           text
+           (selected-frame)
+           `((name . "tooltip")
+             (internal-border-width . 2)
+             (border-width . 1)
+             (no-special-glyphs . t)
+             (left . ,x) ;; 设置left后会忽略`x-show-tip'最后的DX参数
+             (top . ,y) ;; 设置top后会忽略`x-show-tip'最后的DY参数
+             (foreground-color
+              . ,(face-attribute 'tooltip :foreground))
+             (background-color
+              . ,(face-attribute 'tooltip :background))
+             ;; (border-color . "#ffff00")
+             )
+           20
+           0
+           0))))))

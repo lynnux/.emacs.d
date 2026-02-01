@@ -212,70 +212,7 @@
   :commands (f-mkdir-full-path f-touch)
   :init (provide 'f-shortdoc))
 
-(use-package eldoc
-  :if (bound-and-true-p enable-feature-builtin)
-  :defer t
-  :diminish (eldoc-mode)
-  :init
-  (setq eldoc-echo-area-use-multiline-p nil) ;; 不要多行显示
-  :config
-  (advice-add 'eldoc-pre-command-refresh-echo-area :override #'ignore) ;; 在pre-command-hook里影响性能
-  (with-eval-after-load 'grammatical-edit
-    ;; 自作聪明就给加了eldoc
-    (eldoc-remove-command-completions "grammatical-edit-"))
-  (with-eval-after-load 'fingertip
-    ;; 自作聪明就给加了eldoc
-    (eldoc-remove-command-completions "fingertip-"))
 
-  ;; 使用tooltip显示eldoc，`x-show-tip'是原生c实现的，不卡
-  (defun get-eldoc-msg ()
-    (or eldoc-last-message
-        (when eldoc--doc-buffer
-          (with-current-buffer eldoc--doc-buffer
-            (buffer-substring
-             (goto-char (point-min))
-             (progn
-               (end-of-visible-line)
-               (point)))))))
-  (defun eldoc-tooltip-display (docs _interactive)
-    ;; 可能在focus-out后才会调用到，这里检查是否已经focus-out了
-    (when (frame-parameter nil 'last-focus-update)
-      (let* ((p (window-absolute-pixel-position))
-             (x (car p))
-             (h (line-pixel-height))
-             (y
-              (if header-line-format
-                  (- (cdr p) h) ;; 修复开启`header-line-format'时y值不正确
-                (cdr p)))
-             (text (get-eldoc-msg)))
-        (when (and p text (not (equal text "")))
-          (setq y (+ y h))
-          ;; (add-face-text-property 0 (length text) 'tooltip t text)
-          (x-show-tip
-           text
-           (selected-frame)
-           `((name . "tooltip")
-             (internal-border-width . 2)
-             (border-width . 1)
-             (no-special-glyphs . t)
-             (left . ,x) ;; 设置left后会忽略`x-show-tip'最后的DX参数
-             (top . ,y) ;; 设置top后会忽略`x-show-tip'最后的DY参数
-             (foreground-color
-              . ,(face-attribute 'tooltip :foreground))
-             (background-color
-              . ,(face-attribute 'tooltip :background))
-             ;; (border-color . "#ffff00")
-             )
-           20
-           0
-           0)))))
-  ;; 目前就仅在dape调试时用吧
-  (with-eval-after-load 'dape
-    (define-advice dape--add-eldoc-hook (:after (&rest args) my2)
-      ;; 因为我们是用的`eldoc--doc-buffer'，所以必须运行在它更新后
-      (add-hook 'eldoc-display-functions #'eldoc-tooltip-display 10 t)
-      (add-hook 'pre-command-hook 'x-hide-tip nil t) ;; 不隐藏的话，就一直显示不太好
-      (add-hook 'focus-out-hook 'x-hide-tip nil t))))
 
 (autoload 'defhydra "hydra" nil t)
 
@@ -491,28 +428,6 @@ _q_uit
       (call-interactively 'dired-do-rename)))
   (define-key
    dired-mode-map [remap dired-do-rename] 'my-dired-do-rename)
-
-
-  ;; 给目录加上[]以便跟普通buffer区分开。会影响如sidebar
-  ;; (add-hook
-  ;;  'dired-after-readin-hook
-  ;;  (lambda ()
-  ;;    (ignore-errors
-  ;;      (unless (eq major-mode 'dired-sidebar-mode)
-  ;;        (let ((count 1)
-  ;;              (name
-  ;;               (format "[%s]"
-  ;;                       (file-name-nondirectory
-  ;;                        (directory-file-name dired-directory)))))
-  ;;          ;; buffer名不能重名
-  ;;          (while (get-buffer name)
-  ;;            (setq name
-  ;;                  (format "[%s]%d"
-  ;;                          (file-name-nondirectory
-  ;;                           (directory-file-name dired-directory))
-  ;;                          count))
-  ;;            (setq count (+ count 1)))
-  ;;          (rename-buffer name))))))
 
   (add-hook
    'dired-mode-hook
@@ -4039,7 +3954,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   (setq rainbow-x-colors nil))
 
 
-;; grammatical-edit bug太多了，pair用这个就够了
 (use-package elec-pair
   :if (bound-and-true-p enable-feature-edit)
   :init
@@ -5244,6 +5158,7 @@ _q_uit
         (call-interactively 'dape-continue)
       (call-interactively 'dape)))
   :config
+
   (define-advice dape--overlay-icon (:around (orig-fn &rest args) my)
     "修复断点被diff-hl遮挡问题，使用跟terminal一样的样式"
     (cl-letf (((symbol-function #'window-system)
@@ -5259,10 +5174,6 @@ _q_uit
       (cl-letf (((symbol-function #'read-from-minibuffer)
                  (lambda (&rest _) (car dape-history))))
         (apply orig-fn args))))
-  (define-advice dape--add-eldoc-hook (:after (&rest args) my)
-    "只能在after开启eldoc-mode"
-    (unless (bound-and-true-p eldoc-mode)
-      (eldoc-mode 1)))
   (setq dape-autoport 1890)
   (define-advice dape-config-autoport
       (:around (orig-fn &rest args) my)
@@ -5907,7 +5818,9 @@ DEFAULT specifies which file to return on empty input."
             'typescript-ts-mode-hook))
     (add-hook hook #'(lambda () (fingertip-mode 1))))
   :config (define-key fingertip-mode-map (kbd "C-k") 'fingertip-kill)
-
+  ;; 自作聪明就给加了eldoc
+  (eldoc-remove-command-completions "fingertip-")
+    
   ;; 也可以C-q 选中在直接(，[等
   (define-key
    fingertip-mode-map (kbd "M-\"") 'fingertip-wrap-double-quote)
