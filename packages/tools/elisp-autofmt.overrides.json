@@ -44,6 +44,7 @@
 
 "fset": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
 "setf": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
+"setopt": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
 "setq": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
 "setq-default": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
 "setq-local": ["func", 2, "many", {"break": "multi", "break_point": "overflow", "group": [0, 2]}],
