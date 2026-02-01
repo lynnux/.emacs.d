@@ -1801,40 +1801,26 @@ _c_: hide comment        _q_uit
     (use-package orderless
       ;; 启动用无序匹配，本质是一个自动正则生成器，结果给completion-styles用
       :config
+      (require 'orderless-kwd) ;; `orderless-kwd-dispatch'，:mod:org这样的形式
       ;; https://github.com/minad/consult/wiki#minads-orderless-configuration
       (defun +orderless--consult-suffix ()
         "Regexp which matches the end of string with Consult tofu support."
-        (if (and (boundp 'consult--tofu-char)
-                 (boundp 'consult--tofu-range))
-            (format "[%c-%c]*$"
-                    consult--tofu-char
-                    (+ consult--tofu-char consult--tofu-range -1))
-          "$"))
-      ;; 以这些开头或者结尾都是可以的
-      ;; (defcustom orderless-affix-dispatch-alist
-      ;;   `((?% . ,#'char-fold-to-regexp) ;; 默认就是支持regex，这里%可以转换欧州那些字母为英文
-      ;;     (?! . ,#'orderless-without-literal) ;; !不包含文本
-      ;;     (?, . ,#'orderless-initialism) ;; 每个字母都是一个词的开头，如,or匹配oaaa rbbb
-      ;;     (?= . ,#'orderless-literal) ;; 纯文本包含(regexp-quote实现)
-      ;;     (?~ . ,#'orderless-flex))) ;; fuzzy，不过是有顺序的
+        (if (boundp 'consult--tofu-regexp)
+            (concat consult--tofu-regexp "*\\'")
+          "\\'"))
+      ;; Recognizes the following patterns:
+      ;; * .ext (file extension)
+      ;; * regexp$ (regexp matching at end)
       (defun +orderless-consult-dispatch (word _index _total)
         (cond
          ;; Ensure that $ works with Consult commands, which add disambiguation suffixes
          ((string-suffix-p "$" word)
-          `(orderless-regexp
-            .
-            ,(concat
-              (substring word 0 -1) (+orderless--consult-suffix))))
+          `(orderless-regexp . ,(concat (substring word 0 -1) (+orderless--consult-suffix))))
          ;; File extensions
          ((and (or minibuffer-completing-file-name
                    (derived-mode-p 'eshell-mode))
                (string-match-p "\\`\\.." word))
-          `(orderless-regexp
-            .
-            ,(concat
-              "\\."
-              (substring word 1)
-              (+orderless--consult-suffix))))))
+          `(orderless-regexp . ,(concat "\\." (substring word 1) (+orderless--consult-suffix))))))
 
       ;; +orderless-with-initialism直接进completion-styles-alist了
       (orderless-define-completion-style
@@ -1868,7 +1854,7 @@ _c_: hide comment        _q_uit
        orderless-component-separator #'orderless-escapable-split-on-space ;; allow escaping space with backslash!
        orderless-style-dispatchers
        (list
-        #'+orderless-consult-dispatch #'orderless-affix-dispatch))
+        #'+orderless-consult-dispatch #'orderless-kwd-dispatch #'orderless-affix-dispatch))
 
       ;; https://github.com/minad/consult/wiki#use-orderless-as-pattern-compiler-for-consult-grepripgrepfind
       ;; 让rg也用上上面的特殊符号等，这个很爽！
