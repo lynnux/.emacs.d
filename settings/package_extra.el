@@ -2347,7 +2347,7 @@ _c_: hide comment        _q_uit
                      orderless-match-face-2
                      orderless-match-face-3]))
             result))))
-    (global-set-key [remap find-file] 'my-find-file)
+    ;; (global-set-key [remap find-file] 'my-find-file)
 
     (defun my-project-imenu ()
       (interactive)
