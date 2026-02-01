@@ -293,73 +293,6 @@ _q_uit
  ("q" nil "nil" :color blue))
 (global-set-key (kbd "C-c b") 'hydra-bookmark/body)
 
-(use-package neotree
-  :disabled
-  :commands (neotree-toggle)
-  :init
-  (setq
-   neo-theme 'nerd
-   neo-window-width 32
-   neo-create-file-auto-open t
-   neo-show-updir-line t
-   neo-mode-line-type 'neotree
-   neo-smart-open t
-   neo-show-hidden-files t
-   neo-auto-indent-point t
-   neo-vc-integration nil)
-  (global-set-key (kbd "<C-f1>") 'neotree-toggle)
-  :config
- (add-hook
-  'neotree-mode-hook
-  (lambda ()
-    (hl-line-mode 1) ;; 指明当前行
-    (face-remap-add-relative 'hl-line '(:background "#666")) ;; 使更清楚
-    ;; (face-remap-add-relative 'default :height 105) ;; 仅大小
-    (defface neotree-face
-      '((t :family "BlinkMacSystemFont" :height 110)) ;; 参考的github字体
-      "")
-    ;; (buffer-face-set 'neotree-face)
-    ;; (setq line-spacing 0.1) ;; 行高
-    ))
-  (define-key neotree-mode-map (kbd "C-l") 'neotree-select-up-node)
-  (defun projectile-project-root ()
-    (project-root (project-current t)))
-  (defun projectile-project-p ()
-    (project-current nil))
-  
-  ;; 实现自动follow
-  (defvar neotree-follow-to-file-timer nil)
-  (defvar neotree-follow-file-idle-delay 0.5)
-  (defun neotree-follow-file-advice (&rest args)
-    (when (neo-global--window-exists-p)
-      (when neotree-follow-to-file-timer
-        (cancel-timer neotree-follow-to-file-timer))
-      (setq neotree-follow-to-file-timer
-            (run-with-idle-timer
-             neotree-follow-file-idle-delay
-             nil
-             #'neotree-follow-to-file))))
- (defvar neotree-follow-file-commands
-   '(volatile-kill-buffer
-     switch-to-buffer
-     xref-pop-to-location ;; for all xref
-     ))
-  (cl-dolist
-      (jc neotree-follow-file-commands)
-    (advice-add jc :after #'neotree-follow-file-advice))
-  (defun neotree-follow-to-file ()
-    "直接用neotree-follow-file，hl-line的行有问题，这里修复下"
-    (interactive)
-    (ignore-errors
-      (let ((neo-toggle-window-keep-p t)) ;; 不选中neotree窗口
-        (neotree-show))
-      ;; 修复高亮
-      (when (neo-global--window-exists-p)
-        (with-current-buffer (neo-global--get-buffer nil)
-          (hl-line-highlight)
-          ))
-      ))
-  )
 
 ;; helm M-x也会导致dired被加载，加载tree-sittr也会，只能在scratch里执行(featurep 'dired+)看
 (use-package dired
@@ -1276,10 +1209,6 @@ _c_: hide comment        _q_uit
   ;; (setq curchg-default-cursor-type '(hbar . 3)) ;; F1 v查看`cursor-type'有哪些类型
   (change-cursor-mode 1))
 
-;;crosshairs不好用，只要vline就行了		
-(autoload 'vline-mode "vline" nil t)
-(global-set-key [(control ?|)] 'vline-mode)
-
 (use-package hl-line
   :disabled
   :if (and (display-graphic-p) (bound-and-true-p enable-feature-gui))
@@ -1547,18 +1476,6 @@ _c_: hide comment        _q_uit
         ((comment-start "-ts")) ;; 默认是显示comment style，没什么用来显示是否启动ts
       (apply orig-fn args))))
 
-(autoload 'nsis-mode "nsis-mode" "NSIS mode" t)
-(setq auto-mode-alist
-      (append
-       '(("\\.\\([Nn][Ss][Ii]\\)$" . nsis-mode)) auto-mode-alist))
-(setq auto-mode-alist
-      (append
-       '(("\\.\\([Nn][Ss][Hh]\\)$" . nsis-mode)) auto-mode-alist))
-
-(autoload 'protobuf-mode "protobuf-mode" "protobuf mode" t)
-(setq auto-mode-alist
-      (append '(("\\.proto\\'" . protobuf-mode)) auto-mode-alist))
-
 ;; 这个hook了`push-mark'对内置`marker'支持很好！
 (use-package backward-forward
   :if (bound-and-true-p enable-feature-navigation)
@@ -1625,16 +1542,6 @@ _c_: hide comment        _q_uit
 ;; back-button global跟local是区分开的，这就很麻烦了
 ;; history可能会
 
-(use-package iss-mode
-  :if (bound-and-true-p enable-feature-prog)
-  :init
-  (setq iss-compiler-path "D:/Programme/Inno Setup 5/")
-  (setq auto-mode-alist
-        (append '(("\\.iss$" . iss-mode)) auto-mode-alist))
-  :commands (iss-mode)
-  :config
-  (define-key iss-mode-map [f6] 'iss-compile)
-  (define-key iss-mode-map [(meta f6)] 'iss-run-installer))
 
 (autoload 'cmake-mode "cmake-mode" "cmake-mode" t)
 (setq auto-mode-alist
@@ -1847,10 +1754,10 @@ _c_: hide comment        _q_uit
   :bind (("M-z" . avy-zap-to-char-dwim) ("M-Z" . avy-zap-up-to-char-dwim)))
 
 ;;; autohotkey文件编辑
-(autoload 'xahk-mode "xahk-mode"
+(autoload 'ahk-mode "ahk-mode"
   "Major mode for editing Markdown files"
   t)
-(add-to-list 'auto-mode-alist '("\\.ahk\\'" . xahk-mode))
+(add-to-list 'auto-mode-alist '("\\.ahk\\'" . ahk-mode))
 
 ;;; rust mode
 (autoload 'rust-mode "rust-mode" nil t)
@@ -1862,46 +1769,6 @@ _c_: hide comment        _q_uit
   ;; `rust-ts-mode'没有compile error的正则
   (require 'rust-mode)
   )
-
-(use-package sr-speedbar
-  :if (bound-and-true-p enable-feature-navigation)
-  :commands (sr-speedbar-toggle)
-  :init
-  (setq
-   sr-speedbar-right-side nil
-   sr-speedbar-auto-refresh t
-   dframe-update-speed 0.2 ;; 自动刷新时间
-   speedbar-show-unknown-files t ;; 我去rust文件都不认识？
-   speedbar-obj-do-check nil ;; 默认检查如c文件的obj文件是否更新
-   speedbar-vc-do-check nil ;; 好像不支持git吧
-   speedbar-directory-unshown-regexp "^\(\.\.*$\)\'" ;; 显示unkown dir
-   ;; speedbar-hide-button-brackets-flag t
-   speedbar-use-images t ;; 图标太丑了，或许可以用all-the-icon?
-   ;; 关键函数 speedbar-make-tag-line  speedbar-image-dump 可以查看所有图标
-   )
-  ;; (global-set-key (kbd "<C-f1>") 'sr-speedbar-toggle)
-  :config
-  (unless sr-speedbar-auto-refresh
-    ;; 重新打开时更新目录
-    (define-advice sr-speedbar-toggle (:before (&rest args) my)
-      (unless (sr-speedbar-exist-p)
-        (message default-directory)
-        (sr-speedbar-refresh)
-        t)))
-  (define-key speedbar-mode-map (kbd "q") 'sr-speedbar-close)
-  (define-key speedbar-mode-map (kbd "l") 'speedbar-up-directory)
-  (define-key speedbar-mode-map (kbd "w") 'speedbar-scroll-down)
-  (define-key speedbar-mode-map (kbd "SPC") 'speedbar-scroll-up)
-  (define-key speedbar-file-key-map (kbd "<") 'beginning-of-buffer)
-  (define-key speedbar-file-key-map (kbd ">") 'end-of-buffer)
-  (define-key speedbar-file-key-map (kbd "SPC") 'speedbar-scroll-up)
-  (define-key
-   speedbar-file-key-map (kbd "S-SPC") 'speedbar-scroll-down)
-  (define-key
-   speedbar-file-key-map (kbd "RET")
-   'speedbar-toggle-line-expansion) ;; 原来是直接进入目录，只需要展开就行了
-  )
-
 
 (use-package imenu-list
   :if (bound-and-true-p enable-feature-navigation)
@@ -2818,9 +2685,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ("q" nil "" :color blue))))
 (global-set-key (kbd "C-3") 'hydra-copybf3/body)
 
-;; go lang
-(autoload 'go-mode "go-mode" nil t)
-(add-to-list 'auto-mode-alist (cons "\\.go\\'" 'go-mode))
 
 ;; https://stackoverflow.com/a/750933
 (aset standard-display-table ?\^M []) ;; 直接全局不显示^M
@@ -4214,42 +4078,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
         ((memq major-mode '(python-mode python-ts-mode))
          (eglot-ensure)))))))
 
-;; tfs，还有Team Explorer Everywhere但没用起来，直接用vs自带的根本不用配置(前提在vs项目里用过)
-;; 请在init里设置tfs/tf-exe
-(defun hydra-tfs-select1 ()
-  (interactive)
-  (unless (functionp 'hydra-tfs-select/body)
-    (require 'tfs)
-    (defhydra
-     hydra-tfs-select
-     ()
-     "
-_o_: checkout _i_: checkin
-_r_: rename   _g_: get
-_a_: add      _d_: delete
-_u_: undo     _p_: properties
-_h_: history  _s_: status
-_q_uit
-"
-     ("o" tfs/checkout nil :color blue)
-     ("i" tfs/checkin nil :color blue)
-     ("r" tfs/rename nil :color blue)
-     ("g" tfs/get nil :color blue)
-     ("a" tfs/add nil :color blue)
-     ("d" tfs/delete nil :color blue)
-     ("u" tfs/undo nil :color blue)
-     ("p" tfs/properties nil :color blue)
-     ("h" tfs/history nil :color blue)
-     ("s" tfs/status nil :color blue)
-     ("q" nil "nil" :color blue)))
-  (funcall 'hydra-tfs-select/body))
-(global-set-key "\C-ct" 'hydra-tfs-select1)
-;; 解决checkout后revert buffer光标位置不对的问题
-(with-eval-after-load 'tfs
-  (when (featurep 'saveplace)
-    (define-advice tfs/checkout (:before (&rest args) my)
-      (save-place-to-alist))))
-
 ;; 自动转换文本中的RGB颜色
 (use-package rainbow-mode
   :if (bound-and-true-p enable-feature-gui)
@@ -4589,11 +4417,6 @@ _q_uit
   (scroll-on-jump-advice-add diff-hl-previous-hunk)
   ;; 调用了set-window-start的，要用scroll-on-jump-with-scroll-..
   )
-
-;; 对于scroll-on-jump没效果的，可以手动开启centered-cursor-mode
-(use-package centered-cursor-mode
-  :if (bound-and-true-p enable-feature-navigation)
-  :commands (centered-cursor-mode))
 
 (use-package yaml-mode
   :if (bound-and-true-p enable-feature-prog)
@@ -5328,33 +5151,6 @@ _q_uit
     (w32explore
      (or file (buffer-file-name (current-buffer)) default-directory)))
   (global-set-key (kbd "C-x C-d") 'browse-file-in-explorer))
-
-;; 需要删除gud-cdb.elc，不然运行报错
-(use-package gud-cdb
-  :if (bound-and-true-p enable-feature-win32-only)
-  ;; from https://github.com/junjiemars/.emacs.d/blob/master/config/gud-cdb.el，目前就只有这个在一直更新
-  ;; 唯一不足的是不支持speedbar，还有attach    
-  :commands (cdb)
-  :init
-  (defalias 'defcustom% 'defcustom)
-  (defalias 'ignore* 'ignore)
-  (defalias 'loop* 'loop)
-  (defalias 'assoc** 'assoc)
-  (defvar cdb-add-g nil)
-  :config
-  (define-advice cdb-command-line-list-source
-      (:around (orig-fn &rest args) my)
-    "追加-2参数让启动后新开一个命令窗口，-G忽略进程退出的breakpoint, 禁止从网络下载symbol"
-    ;; TODO: "-g"忽略初始化breakpoint，目前需要在启动breakpoint时设置断点，还不支持预先设置断点和记忆断点
-    (let ((result (apply orig-fn args)))
-      (setq result
-            (append
-             result
-             (if cdb-add-g
-                 '("-2" "-G" "-netsymsno" "-g")
-               '("-2" "-G" "-netsymsno"))))
-      result)) ;; cdb /?不对啦(跟.netsyms命令对得上)
-  )
 
 (use-package gud
   :if (bound-and-true-p enable-feature-lsp-dap)
@@ -6353,20 +6149,6 @@ DEFAULT specifies which file to return on empty input."
            (unless (looking-back "[[:space:]\n]" 1)
              #'grammatical-edit-backward-delete)))))))
 
-;; 保存当前windows配置为bookmark
-(use-package burly
-  :if (bound-and-true-p enable-feature-tools)
-  :commands
-  (burly-bookmark-handler
-   burly-bookmark-windows
-   ;; burly-bookmark-frames
-   burly-kill-buffer-url
-   ;; burly-kill-frames-url
-   burly-kill-windows-url
-   burly-open-bookmark
-   burly-open-last-bookmark
-   burly-open-url))
-
 (use-package elisp-autofmt
   :if (bound-and-true-p enable-feature-tools)
   :defer t
@@ -6469,19 +6251,6 @@ DEFAULT specifies which file to return on empty input."
      (kill-buffer-on-shell-logout)
      (set-no-process-query-on-exit))))
 
-
-;; 这个比shell更好的是prompt删不掉，但不支持powershell自身的快捷键
-(use-package powershell
-  :commands (powershell)
-  :config
-  (define-advice powershell (:after (&rest args) my)
-    "解决kill*powershell*窗口延迟3秒的问题"
-    (remove-hook 'kill-buffer-hook 'powershell-delete-process))
-  (define-advice powershell--get-max-window-width
-      (:around (orig-fn &rest args) my)
-    "解决启动延迟3秒问题"
-    ;; powershell里得到的是240，但emacs里得到是200，改为240有问题。写死应该是没问题的
-    (setq powershell--max-window-width 200)))
 
 (use-package eshell
   :defer t
@@ -6639,17 +6408,6 @@ DEFAULT specifies which file to return on empty input."
            " " (get-chinese-wannianli))))
   (display-time-update))
 
-;; 这个mode各种问题，将就用就行
-(use-package antlr-mode
-  :defer t
-  :config
-  ;; 解决编辑报错，导致`delete-selection-mode'出问题
-  (add-hook 'antlr-delayed-mode-hook
-            (lambda ()
-              (setq-local
-               font-lock-extend-after-change-region-function nil))
-            50 ;; 一定要在自带hook的后面执行
-            ))
 
 ;; 代替`eval-expression'M-;
 (use-package ielm
@@ -6814,10 +6572,6 @@ DEFAULT specifies which file to return on empty input."
         (lambda (action cand)
           (let ((disable-beacon t))
             (funcall org-ret action cand)))))))
-
-(use-package gn-mode
-  :commands (gn-mode)
-  :init (add-to-list 'auto-mode-alist '("\\.gni?\\'" . gn-mode)))
 
 (use-package devdocs
   :if (bound-and-true-p enable-feature-tools)
