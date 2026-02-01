@@ -74,8 +74,31 @@ string) for appending current selection to previous kill."
   :type '(repeat symbol)
   :group 'killing)
 
+(defcustom easy-kill-exit-hook nil
+  "A list of functions to be called when `easy-kill' exits.
+
+At the moment they are run, the current candidate is still accessible
+and `this-command' has the command that is to put an end to the
+easy-kill mode."
+  :type '(repeat function)
+  :group 'killing)
+
 (defcustom easy-mark-try-things '(url email uuid sexp)
   "A list of things for `easy-mark' to try."
+  :type '(repeat symbol)
+  :group 'killing)
+
+(defcustom easy-mark-exit-hook nil
+  "A list of functions to be called when `easy-mark' exits.
+
+At the moment they are run, the current candidate is still accessible
+and `this-command' has the command that is to put an end to the
+easy-mark mode."
+  :type '(repeat function)
+  :group 'killing)
+
+(defcustom easy-dup-try-things '(line)
+  "A list of things for `easy-dup-before' and `easy-dup-after' to try."
   :type '(repeat symbol)
   :group 'killing)
 
@@ -484,13 +507,24 @@ checked."
       (easy-kill-adjust-candidate (easy-kill-get thing)))))
 
 (easy-kill-defun easy-kill-abort ()
+  "Abort `easy-kill'/`easy-mark'."
   (interactive)
-  (when (easy-kill-get mark)
-    ;; The after-string may interfere with `goto-char'.
-    (overlay-put (easy-kill-get origin-indicator) 'after-string nil)
-    (goto-char (easy-kill-get origin))
-    (setq deactivate-mark t))
+  (and (easy-kill-get mark)
+       (easy-kill-terminate))
   (ding))
+
+(easy-kill-defun easy-kill-terminate ()
+  "Terminate `easy-mark', or save selection and terminate `easy-kill'."
+  (interactive)
+  (if (easy-kill-get mark)
+      (progn
+        ;; The after-string may interfere with `goto-char'.
+        (overlay-put (easy-kill-get origin-indicator) 'after-string nil)
+        (goto-char (easy-kill-get origin))
+        (setq deactivate-mark t))
+    (pcase (easy-kill-get bounds)
+      (`(,x . ,x) (ignore x))
+      (`(,beg . ,end) (kill-ring-save beg end)))))
 
 (easy-kill-defun easy-kill-region ()
   "Kill current selection and exit."
@@ -500,6 +534,7 @@ checked."
     (`(,beg . ,end) (kill-region beg end))))
 
 (easy-kill-defun easy-kill-mark-region ()
+  "Mark current selection and exit."
   (interactive)
   (pcase (easy-kill-get bounds)
     (`(,x . ,x) (ignore x) (easy-kill-echo "Empty region"))
@@ -555,8 +590,11 @@ checked."
                           (command-remapping cmd nil (list map)))))
                (ignore
                 (easy-kill-destroy-candidate)
-                (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
-                  (easy-kill-save-candidate))))
+                (if (easy-kill-get mark)
+                    (run-hooks 'easy-mark-exit-hook)
+                  (or (easy-kill-exit-p this-command)
+                      (easy-kill-save-candidate))
+                  (run-hooks 'easy-kill-exit-hook))))
          (error (message "%s:%s" this-command (error-message-string err))
                 nil))))))
 
@@ -602,6 +640,68 @@ Temporally activate additional key bindings as follows:
     (unless (easy-kill-get thing)
       (setf (easy-kill-get thing) 'sexp)
       (easy-kill-thing 'sexp n))))
+
+(declare-function rectangle--duplicate-right "rect" (n displacement))
+
+;;;###autoload
+(defun easy-dup (&optional n before)
+  "Insert a copy of the current selection after it, or before it if BEFORE.
+When not in easy-kill/easy-mark, enter `easy-mark' mode using the active
+region if available, or using `easy-dup-try-things' to select something
+to duplicate.  When in `rectangle-mark-mode', duplicate the rectangle
+region and keep the mode active without entering `easy-mark'.
+
+N specifies the number of copies to insert."
+  (interactive "*p")
+  (or
+   (pcase (if easy-kill-candidate (easy-kill-get bounds) '(nil . nil))
+     (`(,x . ,x)
+      (ignore x)
+      (cond
+       ((bound-and-true-p rectangle-mark-mode)
+        (rectangle--duplicate-right n (if before n 0))
+        t)
+       ((use-region-p)
+        (let* ((beg (region-beginning))
+               (end (region-end))
+               (easy-kill-try-things nil))
+          (easy-kill-init-candidate 1 'mark)
+          (setf (easy-kill-get thing) 'word)
+          (setf (easy-kill-get bounds) (cons beg end))
+          (setf (easy-kill-get mark) 'start)
+          (easy-kill-indicate-origin)
+          (easy-kill-activate-keymap)
+          nil))
+       (t (let ((easy-mark-try-things easy-dup-try-things))
+            (easy-mark 1)
+            nil)))))
+   (pcase (easy-kill-get bounds)
+     (`(,x . ,x) (ignore x) (easy-kill-echo "Empty region"))
+     (`(,beg . ,end)
+      (let ((text (buffer-substring beg end)))
+        (save-excursion
+          (goto-char (if before beg end))
+          (if before
+              (dotimes (_ (or n 1)) (insert-before-markers text))
+            (dotimes (_ (or n 1)) (insert text))))
+        (and before
+             (setf (easy-kill-get origin) (easy-kill-get start)))))))
+  (setq deactivate-mark nil))
+
+;;;###autoload
+(defalias 'easy-dup-after #'easy-dup)
+
+;;;###autoload
+(defun easy-dup-before (&optional n)
+  "Insert a copy of the current selection before it.
+When not in easy-kill/easy-mark, enter `easy-mark' mode using the active
+region if available, or using `easy-dup-try-things' to select something
+to duplicate.  When in `rectangle-mark-mode', duplicate the rectangle
+region and keep the mode active without entering `easy-mark'.
+
+N specifies the number of copies to insert."
+  (interactive "*p")
+  (easy-dup n t))
 
 ;;;; Extended things
 
