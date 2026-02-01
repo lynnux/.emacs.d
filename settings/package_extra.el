@@ -1932,6 +1932,8 @@ _c_: hide comment        _q_uit
     (use-package vertico-reverse
       :commands (vertico-multiform-reverse vertico-reverse-mode)
       :init (define-key vertico-map "\M-R" #'vertico-multiform-reverse))
+    (use-package vertico-sort
+      :commands(vertico-sort-history-alpha vertico-sort-history-length-alpha vertico-sort-length-alpha vertico-sort-alpha))
     (use-package vertico-multiform
       :after (vertico)
       :init
@@ -2061,12 +2063,10 @@ _c_: hide comment        _q_uit
 
       ;; https://github.com/minad/consult/wiki#use-orderless-as-pattern-compiler-for-consult-grepripgrepfind
       ;; 让rg也用上上面的特殊符号等，这个很爽！
-      (defun consult--orderless-regexp-compiler
-          (input type &rest _config)
-        (setq input (orderless-pattern-compiler input))
+      (defun consult--orderless-regexp-compiler (input type &rest _config)
+        (setq input (cdr (orderless-compile input)))
         (cons
-         (mapcar
-          (lambda (r) (consult--convert-regexp r type)) input)
+         (mapcar (lambda (r) (consult--convert-regexp r type)) input)
          (lambda (str) (orderless--highlight input t str))))
       (setq consult--regexp-compiler
             #'consult--orderless-regexp-compiler))
@@ -2135,7 +2135,8 @@ _c_: hide comment        _q_uit
       :init (marginalia-mode)
       :config
       ;; 去掉file等，因为consult-fd可能上万文件，会影响速度
-      (setf (alist-get 'file marginalia-annotator-registry) '(none)))
+      ;; (setf (alist-get 'file marginalia-annotator-registry) '(none))
+      )
     (use-package embark
       :load-path "~/.emacs.d/packages/minibuffer/embark-master"
       :commands
@@ -2319,36 +2320,6 @@ _c_: hide comment        _q_uit
         (consult-fd nil (or initial ".*;"))))
     (global-set-key [(control f2)] 'my-find-file-prj)
 
-    ;; 带递归的find-file，直接展示所有文件，并用上了consult的filter过滤无须再启动async进程
-    (defun my-find-file (&optional dir initial)
-      (interactive)
-      (when (autoloadp (symbol-function 'consult-fd))
-        (require 'consult))
-      (let
-          ((consult-async-split-style 'semicolon) ;; perl的话C-l会额外多出一个#，用`semicolon'和`comma'都可以
-           ;; 禁用高亮，这样embark-select选中就有效果了。最终调用`add-face-text-property'参数3填nil也没事
-           ;; 在`consult--async-indicator'中检测状态恢复高亮
-           (orderless-match-faces
-            [nil
-             orderless-match-face-1
-             orderless-match-face-2
-             orderless-match-face-3]))
-        (consult-fd (or dir default-directory) (or initial ".*;"))))
-    (define-advice consult--async-indicator
-        (:around (orig-fn &rest args))
-      (let ((org-ret (apply orig-fn args)))
-        (lambda (action &optional state)
-          (let ((result (funcall org-ret action state)))
-            (when (and (eq action 'indicator) (eq state 'finished))
-              ;; 恢复正常高亮匹配
-              (setq orderless-match-faces
-                    [orderless-match-face-0
-                     orderless-match-face-1
-                     orderless-match-face-2
-                     orderless-match-face-3]))
-            result))))
-    ;; (global-set-key [remap find-file] 'my-find-file)
-
     (defun my-project-imenu ()
       (interactive)
       (cond
@@ -2464,26 +2435,6 @@ _c_: hide comment        _q_uit
            (abort-recursive-edit) ;; 用vertio-exit C-g就不能回到原来位置
            )))
 
-    ;; C-x C-f的C-j为创建文件
-    (defun my-find-file-create (&rest args)
-      (interactive)
-      (let* ((str
-              (buffer-substring-no-properties
-               (minibuffer-prompt-end) (point-max))))
-        ;; .*;aaa取aaa，aaa就取aaa
-        (when (string-match ".*;" str)
-          (setq str (replace-regexp-in-string ".*;" "" str)))
-        ;; (message "%S" str    )
-        (delete-minibuffer-contents)
-        (insert str)
-        (find-file str))
-      (vertico-exit-input))
-    (defvar my-find-file-map
-      (let ((map (make-sparse-keymap)))
-        (define-key map "\C-j" #'my-find-file-create)
-        (define-key map "\C-l" (run-cmd-parent-dir my-find-file))
-        map))
-    (consult-customize my-find-file :keymap my-find-file-map)
 
     (defvar my-consult-ripgrep-map
       (let ((map (make-sparse-keymap)))
@@ -4136,7 +4087,7 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
                      (call-interactively 'new-line-dwim))))))))
        (eval `(global-set-key ,key_str ',(intern key-name)))))
 
-    (with-eval-after-load 'corfu
+    (with-eval-after-load 'corfu-auto
       (add-to-list 'corfu-auto-commands "my-elec-pair.*")))
 
   ;; 修复eldoc不显示参数名问题

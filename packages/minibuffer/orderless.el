@@ -1,13 +1,13 @@
 ;;; orderless.el --- Completion style for matching regexps in any order  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
 ;; Author: Omar Antolín Camarena <omar@matem.unam.mx>
 ;; Maintainer: Omar Antolín Camarena <omar@matem.unam.mx>, Daniel Mendler <mail@daniel-mendler.de>
-;; Keywords: extensions
-;; Version: 1.1
-;; Homepage: https://github.com/oantolin/orderless
-;; Package-Requires: ((emacs "27.1"))
+;; Keywords: matching, completion
+;; Version: 1.6
+;; URL: https://github.com/oantolin/orderless
+;; Package-Requires: ((emacs "27.1") (compat "30"))
 
 ;; This file is part of GNU Emacs.
 
@@ -55,10 +55,14 @@
 
 ;;; Code:
 
+(require 'compat)
 (eval-when-compile (require 'cl-lib))
 
 (defgroup orderless nil
   "Completion method that matches space-separated regexps in any order."
+  :link '(info-link :tag "Info Manual" "(orderless)")
+  :link '(url-link :tag "Website" "https://github.com/oantolin/orderless")
+  :link '(emacs-library-link :tag "Library Source" "orderless.el")
   :group 'minibuffer)
 
 (defface orderless-match-face-0
@@ -120,7 +124,7 @@ The returned regexps can be either strings or s-expressions in
 the entire match is highlighted, otherwise just the captured
 groups are.  Several are provided with this package: try
 customizing this variable to see a list of them."
-  :type 'hook
+  :type '(repeat function)
   :options (list #'orderless-regexp
                  #'orderless-literal
                  #'orderless-initialism
@@ -169,10 +173,10 @@ style associated to the character."
        ;; Ignore single dispatcher character
        ((and (= len 1) (alist-get (aref component 0) alist)) #'ignore)
        ;; Prefix
-       ((when-let ((style (alist-get (aref component 0) alist)))
+       ((when-let* ((style (alist-get (aref component 0) alist)))
           (cons style (substring component 1))))
        ;; Suffix
-       ((when-let ((style (alist-get (aref component (1- len)) alist)))
+       ((when-let* ((style (alist-get (aref component (1- len)) alist)))
           (cons style (substring component 0 -1))))))))
 
 (defcustom orderless-style-dispatchers (list #'orderless-affix-dispatch)
@@ -195,7 +199,7 @@ the component in the `orderless-flex' style.  See
 `orderless-affix-dispatch' and `orderless-affix-dispatch-alist'
 for such a configuration.  For more information on how this
 variable is used, see `orderless-compile'."
-  :type 'hook)
+  :type '(repeat function))
 
 (defcustom orderless-smart-case t
   "Whether to use smart case.
@@ -210,6 +214,18 @@ is determined by the values of `completion-ignore-case',
 `read-file-name-completion-ignore-case' and
 `read-buffer-completion-ignore-case', as usual for completion."
   :type 'boolean)
+
+(defcustom orderless-expand-substring 'prefix
+  "Whether to perform literal substring expansion.
+This configuration option affects the behavior of some completion
+interfaces when pressing TAB.  If enabled `orderless-try-completion'
+will first attempt literal substring expansion.  If disabled,
+expansion is only performed for single unique matches.  For
+performance reasons only `prefix' expansion is enabled by default.
+Set the variable to `substring' for full substring expansion."
+  :type '(choice (const :tag "No expansion" nil)
+                 (const :tag "Substring" substring)
+                 (const :tag "Prefix (efficient)" prefix)))
 
 ;;; Matching styles
 
@@ -285,7 +301,9 @@ which can invert any predicate or regexp."
   "Return t if STR matches PRED and REGEXP."
   (and str
        (or (not pred) (funcall pred str))
-       (or (not regexp) (string-match-p regexp str))))
+       (or (not regexp)
+           (let ((case-fold-search completion-ignore-case))
+             (string-match-p regexp str)))))
 
 (defun orderless-not (pred regexp)
   "Match strings that do *not* match PRED and REGEXP."
@@ -294,8 +312,8 @@ which can invert any predicate or regexp."
 
 (defun orderless--metadata ()
   "Return completion metadata iff inside minibuffer."
-  (when-let (((minibufferp))
-             (table minibuffer-completion-table))
+  (when-let* (((minibufferp))
+              (table minibuffer-completion-table))
     ;; Return non-nil metadata iff inside minibuffer
     (or (completion-metadata (buffer-substring-no-properties
                               (minibuffer-prompt-end) (point))
@@ -304,18 +322,13 @@ which can invert any predicate or regexp."
 
 (defun orderless-annotation (pred regexp)
   "Match candidates where the annotation matches PRED and REGEXP."
-  (when-let ((metadata (orderless--metadata))
-             (fun (or (completion-metadata-get
-                       metadata 'annotation-function)
-                      (plist-get completion-extra-properties
-                                 :annotation-function)
-                      (when-let ((aff (or (completion-metadata-get
-                                           metadata 'affixation-function)
-                                          (plist-get completion-extra-properties
-                                                     :affixation-function))))
-                        (lambda (cand) (caddr (funcall aff (list cand))))))))
-    (lambda (str)
-      (orderless--match-p pred regexp (funcall fun str)))))
+  (let ((md (orderless--metadata)))
+    (if-let* ((fun (compat-call completion-metadata-get md 'affixation-function)))
+        (lambda (str)
+          (cl-loop for s in (cdar (funcall fun (list str)))
+                   thereis (orderless--match-p pred regexp s)))
+      (when-let* ((fun (compat-call completion-metadata-get md 'annotation-function)))
+          (lambda (str) (orderless--match-p pred regexp (funcall fun str)))))))
 
 ;;; Highlighting matches
 
@@ -357,9 +370,8 @@ converted to a list of regexps according to the value of
                   "\\\\\\\\\\|\\\\ "
                   (lambda (x) (if (equal x "\\ ") (string 0) x))
                   string 'fixedcase 'literal)
-                 " +" t)))
+                 " +")))
 
-(define-obsolete-function-alias 'orderless-dispatch 'orderless--dispatch "1.0")
 (defun orderless--dispatch (dispatchers default string index total)
   "Run DISPATCHERS to compute matching styles for STRING.
 
@@ -413,8 +425,8 @@ DEFAULT as the list of styles."
    for res = (condition-case nil
                  (funcall style newcomp)
                (wrong-number-of-arguments
-                (when-let ((res (orderless--compile-component
-                                 newcomp index total styles dispatchers)))
+                (when-let* ((res (orderless--compile-component
+                                  newcomp index total styles dispatchers)))
                   (funcall style (car res) (cdr res)))))
    if (functionp res) do (cl-callf orderless--predicate-and pred res)
    else if res collect (if (stringp res) `(regexp ,res) res) into regexps
@@ -445,9 +457,10 @@ string as argument."
   (unless dispatchers (setq dispatchers orderless-style-dispatchers))
   (cl-loop
    with predicate = nil
-   with components = (if (functionp orderless-component-separator)
-                         (funcall orderless-component-separator pattern)
-                       (split-string pattern orderless-component-separator t))
+   with temp = (if (functionp orderless-component-separator)
+                   (funcall orderless-component-separator pattern)
+                 (split-string pattern orderless-component-separator))
+   with components = (if (equal (car (last temp)) "") (nbutlast temp) temp)
    with total = (length components)
    for comp in components and index from 0
    for (pred . regexp) = (orderless--compile-component
@@ -455,12 +468,6 @@ string as argument."
    when regexp collect regexp into regexps
    when pred do (cl-callf orderless--predicate-and predicate pred)
    finally return (cons predicate regexps)))
-
-(defun orderless-pattern-compiler (pattern &optional styles dispatchers)
-  "Obsolete function, use `orderless-compile' instead.
-See `orderless-compile' for the arguments PATTERN, STYLES and DISPATCHERS."
-  (cdr (orderless-compile pattern styles dispatchers)))
-(make-obsolete 'orderless-pattern-compiler 'orderless-compile "1.0")
 
 ;;; Completion style implementation
 
@@ -492,7 +499,7 @@ The predicate PRED is used to constrain the entries in TABLE."
                (prefix (substring string 0 limit))
                (pattern (substring string limit))
                (`(,fun . ,regexps) (orderless-compile pattern)))
-    (list prefix regexps (orderless--ignore-case-p regexps)
+    (list prefix regexps (orderless--ignore-case-p pattern)
           (orderless--predicate-normalized-and pred fun))))
 
 ;; Thanks to @jakanakaevangeli for writing a version of this function:
@@ -513,7 +520,7 @@ then return (cons REGEXP u); else return nil."
 (defun orderless--ignore-case-p (regexps)
   "Return non-nil if case should be ignored for REGEXPS."
   (if orderless-smart-case
-      (cl-loop for regexp in regexps
+      (cl-loop for regexp in (ensure-list regexps)
                always (isearch-no-upper-case-p regexp t))
     completion-ignore-case))
 
@@ -544,11 +551,10 @@ The predicate PRED is used to constrain the entries in TABLE."
 The predicate PRED is used to constrain the entries in TABLE.  The
 matching portions of each candidate are highlighted.
 This function is part of the `orderless' completion style."
-  (defvar completion-lazy-hilit-fn)
   (pcase-let ((`(,prefix ,regexps ,ignore-case ,pred)
                (orderless--compile string table pred)))
-    (when-let ((completions (orderless--filter prefix regexps ignore-case table pred)))
-      (if (bound-and-true-p completion-lazy-hilit)
+    (when-let* ((completions (orderless--filter prefix regexps ignore-case table pred)))
+      (if completion-lazy-hilit
           (setq completion-lazy-hilit-fn
                 (apply-partially #'orderless--highlight regexps ignore-case))
         (cl-loop for str in-ref completions do
@@ -564,38 +570,43 @@ match, it completes to that match.  If there are no matches, it
 returns nil.  In any other case it \"completes\" STRING to
 itself, without moving POINT.
 This function is part of the `orderless' completion style."
-  (catch 'orderless--many
-    (pcase-let ((`(,prefix ,regexps ,ignore-case ,pred)
-                 (orderless--compile string table pred))
-                (one nil))
-      ;; Abuse all-completions/orderless--filter as a fast search loop.
-      ;; Should be almost allocation-free since our "predicate" is not
-      ;; called more than two times.
-      (orderless--filter
-       prefix regexps ignore-case table
-       (orderless--predicate-normalized-and
-        pred
-        (lambda (arg)
-          ;; Check if there is more than a single match (= many).
-          (when (and one (not (equal one arg)))
-            (throw 'orderless--many (cons string point)))
-          (setq one arg)
-          t)))
-      (when one
-        ;; Prepend prefix if the candidate does not already have the same
-        ;; prefix.  This workaround is needed since the predicate may either
-        ;; receive an unprefixed or a prefixed candidate as argument.  Most
-        ;; completion tables consistently call the predicate with unprefixed
-        ;; candidates, for example `completion-file-name-table'.  In contrast,
-        ;; `completion-table-with-context' calls the predicate with prefixed
-        ;; candidates.  This could be an unintended bug or oversight in
-        ;; `completion-table-with-context'.
-        (unless (or (equal prefix "")
-                    (and (string-prefix-p prefix one)
-                         (test-completion one table pred)))
-          (setq one (concat prefix one)))
-        (or (equal string one) ;; Return t for unique exact match
-            (cons one (length one)))))))
+  (or
+   (pcase orderless-expand-substring
+     ('nil nil)
+     ('prefix (completion-emacs21-try-completion string table pred point))
+     (_ (completion-substring-try-completion string table pred point)))
+   (catch 'orderless--many
+     (pcase-let ((`(,prefix ,regexps ,ignore-case ,pred)
+                  (orderless--compile string table pred))
+                 (one nil))
+       ;; Abuse all-completions/orderless--filter as a fast search loop.
+       ;; Should be almost allocation-free since our "predicate" is not
+       ;; called more than two times.
+       (orderless--filter
+        prefix regexps ignore-case table
+        (orderless--predicate-normalized-and
+         pred
+         (lambda (arg)
+           ;; Check if there is more than a single match (= many).
+           (when (and one (not (equal one arg)))
+             (throw 'orderless--many (cons string point)))
+           (setq one arg)
+           t)))
+       (when one
+         ;; Prepend prefix if the candidate does not already have the same
+         ;; prefix.  This workaround is needed since the predicate may either
+         ;; receive an unprefixed or a prefixed candidate as argument.  Most
+         ;; completion tables consistently call the predicate with unprefixed
+         ;; candidates, for example `completion-file-name-table'.  In contrast,
+         ;; `completion-table-with-context' calls the predicate with prefixed
+         ;; candidates.  This could be an unintended bug or oversight in
+         ;; `completion-table-with-context'.
+         (unless (or (equal prefix "")
+                     (and (string-prefix-p prefix one)
+                          (test-completion one table pred)))
+           (setq one (concat prefix one)))
+         (or (equal string one) ;; Return t for unique exact match
+             (cons one (length one))))))))
 
 ;;;###autoload
 (add-to-list 'completion-styles-alist

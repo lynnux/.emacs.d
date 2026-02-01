@@ -1,6 +1,6 @@
 ;;; cape-keyword.el --- Keyword completion function -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -266,10 +266,10 @@
      "in" "infix" "infixl" "infixr" "instance" "let" "module" "newtype" "of"
      "then" "type" "where")
     (python-mode ;; https://docs.python.org/3/reference/lexical_analysis.html#keywords
-     "False" "None" "True" "and" "as" "assert" "break" "case" "class" "continue"
-     "def" "del" "elif" "else" "except" "exec" "finally" "for" "from" "global"
-     "if" "import" "in" "is" "lambda" "match" "nonlocal" "not" "or" "pass"
-     "print" "raise" "return" "try" "while" "with" "yield")
+     "False" "None" "True" "and" "as" "assert" "async" "await" "break" "case"
+     "class" "continue" "def" "del" "elif" "else" "except" "exec" "finally"
+     "for" "from" "global" "if" "import" "in" "is" "lambda" "match" "nonlocal"
+     "not" "or" "pass" "print" "raise" "return" "try" "while" "with" "yield")
     (ruby-mode
      "BEGIN" "END" "alias" "and" "begin" "break" "case" "class" "def" "defined?"
      "do" "else" "elsif" "end" "ensure" "false" "for" "if" "in" "module" "next"
@@ -364,6 +364,11 @@
      "binary" "bool" "byte" "const" "double" "enum" "exception" "extends" "i16"
      "i32" "i64" "include" "list" "map" "oneway" "optional" "required" "service"
      "set" "string" "struct" "throws" "typedef" "void")
+    (sh-mode
+     "break" "case" "continue" "do" "done" "elif" "else" "esac" "eval"
+     "exec" "exit" "export" "false" "fi" "for" "function" "if" "in" "readonly"
+     "return" "set" "shift" "test" "then" "time" "times" "trap" "true" "unset"
+     "until" "while")
     ;; Aliases
     (cperl-mode perl-mode)
     (enh-ruby-mode ruby-mode)
@@ -387,22 +392,27 @@
     (go-ts-mode go-mode)
     (java-ts-mode java-mode)
     (js-ts-mode javascript-mode)
+    (lua-ts-mode lua-mode)
     (python-ts-mode python-mode)
     (ruby-ts-mode ruby-mode)
-    (rust-ts-mode rust-mode))
+    (rust-ts-mode rust-mode)
+    (bash-ts-mode sh-mode))
   "Alist of major modes and keywords."
   :type 'alist
   :group 'cape)
 
 (defun cape--keyword-list ()
   "Return keywords for current major mode."
-  (when-let (kw (alist-get major-mode cape-keyword-list))
+  (when-let* ((kw (or (alist-get major-mode cape-keyword-list)
+                      (when-let* ((remap (rassq major-mode major-mode-remap-alist)))
+                        (alist-get (car remap) cape-keyword-list)))))
     (if (symbolp (car kw)) (alist-get (car kw) cape-keyword-list) kw)))
 
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
         :company-kind (lambda (_) 'keyword)
-        :exclusive 'no)
+        :exclusive 'no
+        :category 'cape-keyword)
   "Completion extra properties for `cape-keyword'.")
 
 ;;;###autoload
@@ -413,11 +423,9 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-keyword)
-    (when-let (keywords (cape--keyword-list))
-      (let ((bounds (cape--bounds 'symbol)))
-        `(,(car bounds) ,(cdr bounds)
-          ,(cape--properties-table keywords :category 'cape-keyword)
-          ,@cape--keyword-properties)))))
+    (when-let* ((keywords (cape--keyword-list))
+                (bounds (cape--bounds 'symbol)))
+      `(,(car bounds) ,(cdr bounds) ,keywords ,@cape--keyword-properties))))
 
 (provide 'cape-keyword)
 ;;; cape-keyword.el ends here
