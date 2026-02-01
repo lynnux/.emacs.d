@@ -6,7 +6,7 @@
 ;; Author: Feng Shu <tumashu@163.com>
 ;; URL: https://github.com/tumashu/cnfonts
 ;; Package-Requires: ((emacs "24"))
-;; Version: 1.1.1
+;; Version: 1.1.3
 ;; Keywords: convenience, Chinese, font
 
 ;; This file is not part of GNU Emacs.
@@ -41,6 +41,8 @@
 
 ;; * 代码                                                                 :code:
 (require 'cl-lib)
+(require 'mwheel)
+(require 'touch-screen nil t)
 
 (defgroup cnfonts nil
   "Chinese fonts setup."
@@ -98,8 +100,16 @@ It record the current profile and profile fontsize."
   "A hook, by which user can set additional fonts."
   :type 'hook)
 
-(defvar cnfonts-mode-map (make-sparse-keymap)
-  "Keymap for `cnfonts-mode'.")
+(defvar cnfonts-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-<mouse-5>") #'cnfonts-mouse-wheel)
+    (define-key map (kbd "C-<mouse-4>") #'cnfonts-mouse-wheel)
+    (define-key map (kbd "C-<wheel-down>") #'cnfonts-mouse-wheel)
+    (define-key map (kbd "C-<wheel-up>") #'cnfonts-mouse-wheel)
+    (define-key map (kbd "<touchscreen-pinch>") #'cnfonts-touch-screen-pinch)
+    map)
+  "Keymap used by `cnfonts-mode'.")
+
 
 (defvar cnfonts--config-info nil
   "The cofonts config info read from config file.")
@@ -451,13 +461,13 @@ file's name."
 
 (defun cnfonts--font-exists-p (font &optional fast)
   "测试 FONT 是否存在，如果存在，则返回可用字体名称."
-  (or (when-let ((xlfd (car (x-list-fonts font nil nil 1)))
-                 (lst (split-string xlfd "-"))
-                 (name (string-join
-                        (cl-subseq lst 2 (- (length lst) 12))
-                        "-"))
-                 ;; 名称只包含数字的字体不做处理。
-                 (non-num-p (string-match-p "[^0-9]" font)))
+  (or (when-let* ((xlfd (car (x-list-fonts font nil nil 1)))
+                  (lst (split-string xlfd "-"))
+                  (name (string-join
+                         (cl-subseq lst 2 (- (length lst) 12))
+                         "-"))
+                  ;; 名称只包含数字的字体不做处理。
+                  (non-num-p (string-match-p "[^0-9]" font)))
         name)
       (unless fast
         (cl-find-if
@@ -567,7 +577,7 @@ file's name."
     ;; 设置中文字体，注意，不要使用 'unicode charset,
     ;; 否则上面的英文字体设置将会失效。
     (when (cnfonts--fontspec-valid-p chinese-fontspec)
-      (dolist (charset '(kana han cjk-misc bopomofo gb18030))
+      (dolist (charset '(kana han cjk-misc bopomofo hangul))
         (set-fontset-font
          "fontset-default"
          charset chinese-fontspec)))
@@ -621,6 +631,8 @@ file's name."
   "Save FONTNAMES and FONTSIZES to current profile.
 When PROFILE-NAME is non-nil, save to this profile instead."
   (with-temp-buffer
+    (insert ";; -*- lexical-binding: t; -*-")
+    (insert "\n")
     (insert (concat
              ";; `cnfonts--custom-set-fontsnames' 结构"
              "与 `cnfonts--fontnames-fallback' 相同。"))
@@ -682,11 +694,12 @@ When PROFILE-NAME is non-nil, save to this profile instead."
              incf-x)))
 
 ;;;###autoload
-(defun cnfonts-increase-fontsize ()
+(defun cnfonts-increase-fontsize (&optional arg)
   "Cnfonts 增大字体."
   (interactive)
-  (cnfonts--next-fontsize 1))
+  (cnfonts--next-fontsize (or arg 1)))
 
+;;;###autoload
 (defun cnfonts--next-fontsize (n)
   "使用下 N 个字号."
   (if (not (display-graphic-p))
@@ -709,16 +722,54 @@ When PROFILE-NAME is non-nil, save to this profile instead."
         (message cnfonts--minibuffer-echo-string)))))
 
 ;;;###autoload
-(defun cnfonts-decrease-fontsize ()
+(defun cnfonts-decrease-fontsize (&optional arg)
   "Cnfonts 减小字体."
   (interactive)
-  (cnfonts--next-fontsize -1))
+  (cnfonts--next-fontsize (if arg (* arg -1) -1)))
 
 ;;;###autoload
 (defun cnfonts-reset-fontsize ()
   "使用 `cnfonts-default-fontsize' 重置字号."
   (interactive)
   (cnfonts--next-fontsize 0))
+
+;;;###autoload
+(defun cnfonts-mouse-wheel (event)
+  "使用 mouse wheel 调整字体大小，类似 `mouse-wheel-text-scale'."
+  (interactive (list last-input-event))
+  (if (functionp 'mouse-wheel-text-scale)
+      (cl-letf (((symbol-function 'text-scale-increase)
+                 #'cnfonts-increase-fontsize)
+                ((symbol-function 'text-scale-decrease)
+                 #'cnfonts-decrease-fontsize))
+        (mouse-wheel-text-scale event))
+    (message "当前 Emacs 版本没有 `mouse-wheel-text-scale' 命令。")))
+
+;; Fix warns
+(defvar text-scale-mode)
+(defvar text-scale-mode-amount)
+(defvar touch-screen-aux-tool)
+
+;;;###autoload
+(defun cnfonts-touch-screen-pinch (event)
+  "使用 touch screen pinch 调整字体大小，类似: `touch-screen-pinch'."
+  (interactive "e")
+  (if (functionp 'touch-screen-pinch)
+      (cl-letf (((symbol-function 'text-scale-set)
+                 (lambda (x)
+                   (let* ((current-scale
+                           (if text-scale-mode
+                               text-scale-mode-amount
+                             0))
+                          (start-scale
+                           (or (aref touch-screen-aux-tool 7)
+                               (aset touch-screen-aux-tool 7
+                                     current-scale))))
+                     (if (> (- x start-scale) 0)
+                         (cnfonts-increase-fontsize)
+                       (cnfonts-decrease-fontsize))))))
+        (touch-screen-pinch event))
+    (message "当前 Emacs 版本没有 `touch-screen-pinch' 命令。")))
 
 ;;;###autoload
 (defun cnfonts-switch-profile ()
