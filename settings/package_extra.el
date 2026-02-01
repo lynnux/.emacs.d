@@ -2069,8 +2069,8 @@ _c_: hide comment        _q_uit
      bs--intern-show-never "^#xa12$" ;; consult-buffer-sources不再显示隐藏buffer，用C-x b来显示
      bs--show-all t
      consult-buffer-sources
-     '(consult--source-buffer
-       consult--source-recent-file consult--source-bookmark))
+     '(consult-source-buffer
+       consult-source-recent-file consult-source-bookmark))
     ;; consult的异步没有通过cmd proxy，这点很棒！
     (add-to-list
      'process-coding-system-alist
