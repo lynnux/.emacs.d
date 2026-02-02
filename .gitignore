@@ -117,3 +117,4 @@ bin/gtags.conf
 
 packages/company/company-mode-master/
 devdocs/
+/packages/magit/magit-main/

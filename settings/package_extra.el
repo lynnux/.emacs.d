@@ -57,7 +57,7 @@
   (ensure-latest "~/.emacs.d/packages/minibuffer/embark-master.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/consult-main.zip")
   (ensure-latest "~/.emacs.d/packages/minibuffer/compat-main.zip")
-  (ensure-latest "~/.emacs.d/packages/magit/magit-master.zip")
+  (ensure-latest "~/.emacs.d/packages/magit/magit-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/org-roam-main.zip")
   (ensure-latest "~/.emacs.d/packages/org/emacsql-master.zip")
   (ensure-latest "~/.emacs.d/packages/tools/rg.el-master.zip")
@@ -2507,22 +2507,20 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
-  (use-package magit-base
-    :defer t
-    :config
-    (delay-require-libs
-     "~/.emacs.d/packages/magit"
-     (if (symbol-function 'transient-define-prefix) ;; emacs高版本自带`transient'
-         '(with-editor)
-       '(with-editor transient))))
-  (dec-placeholder-fun magit-status
-                       magit
-                       "~/.emacs.d/packages/magit/magit-master/lisp"
-                       '(magit magit-status))
-
+  (defun my-project-magit ()
+    (interactive)
+    (unless (featurep 'with-editor)
+      (delay-require-libs
+       "~/.emacs.d/packages/magit"
+       (if (symbol-function 'transient-insert-suffix) ;; emacs高版本自带`transient'
+           '(with-editor cond-let llama)
+         '(with-editor cond-let llama transient))))
+    (unless (featurep 'magit)
+      (delay-require-libs "~/.emacs.d/packages/magit/magit-main/lisp" '(magit magit-status)))
+    (magit-status (project-root (project-current t))))
   (modify-coding-system-alist 'file "\\.git/COMMIT_EDITMSG\\'" 'utf-8)
   (setq
-   magit-version "3.3.0"
+   magit-version "4.5.0"
    magit-commit-show-diff nil ;; commit时不用显示diff，在stage时一般就检查了
    magit-diff-hide-trailing-cr-characters nil ;; 会影响性能
    magit-status-sections-hook
@@ -3159,9 +3157,6 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
     ;; projectile那个tags太简单了，不能指定语言很慢
     (when (functionp 'citre-update-this-tags-file)
       (call-interactively 'citre-update-this-tags-file)))
-  (defun my-project-magit ()
-    (interactive)
-    (magit-status (project-root (project-current t))))
   ;; p切换project时显示的命令
   (setq
    project-switch-commands
@@ -4179,7 +4174,7 @@ _q_uit
         (delay-require-libs
          "~/.emacs.d/packages/org" '(emacsql-sqlite-builtin)))
       (delay-require-libs
-       "~/.emacs.d/packages/magit/magit-master/lisp" '(magit-section))
+       "~/.emacs.d/packages/magit/magit-main/lisp" '(magit-section))
       (delay-require-libs
        "~/.emacs.d/packages/org/org-roam-main" '(org-roam)))
     (apply orig-fn args))
