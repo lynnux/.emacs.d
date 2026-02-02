@@ -1,12 +1,12 @@
 ;;; hotfuzz.el --- Fuzzy completion style  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021 Axel Forsman
+;; Copyright (C) Axel Forsman
 
 ;; Author: Axel Forsman <axel@axelf.se>
-;; Version: 0.1
+;; Version: 1.0
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: matching
-;; Homepage: https://github.com/axelf4/hotfuzz
+;; URL: https://github.com/axelf4/hotfuzz
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
@@ -20,30 +20,30 @@
 
 ;;; Code:
 
-;; See: Myers, Eugene W., and Webb Miller. "Optimal alignments in
-;;      linear space." Bioinformatics 4.1 (1988): 11-17.
+;; See: GOTOH, Osamu. An improved algorithm for matching biological
+;;      sequences. Journal of molecular biology, 1982, 162.3: 705-708.
 
 (eval-when-compile (require 'cl-lib))
+(require 'hotfuzz-module nil t)
 (declare-function hotfuzz--filter-c "hotfuzz-module")
 
-(defgroup hotfuzz nil
-  "Fuzzy completion style."
-  :group 'minibuffer)
+(defgroup hotfuzz () "Fuzzy completion style." :group 'minibuffer)
 
 (defcustom hotfuzz-max-highlighted-completions 25
   "The number of top-ranking completions that should be highlighted.
 Large values will decrease performance."
   :type 'integer)
 
-;; Since the vectors are pre-allocated the optimization where
-;; symmetricity w.r.t. to insertions/deletions means it suffices to
-;; allocate min(#needle, #haystack) for C/D when only calculating the
-;; cost does not apply.
+;; Pre-allocated vectors make the cost-only calculation optimization
+;; where symmetricity w.r.t. insertions/deletions means it suffices to
+;; allocate min(#needle, #haystack) for C/D inapplicable.
 (defconst hotfuzz--max-needle-len 128)
 (defconst hotfuzz--max-haystack-len 512)
 (defvar hotfuzz--c (make-vector hotfuzz--max-needle-len 0))
 (defvar hotfuzz--d (make-vector hotfuzz--max-needle-len 0))
 (defvar hotfuzz--bonus (make-vector hotfuzz--max-haystack-len 0))
+
+(defvar hotfuzz--filtering-p nil)
 
 (defconst hotfuzz--bonus-lut
   (eval-when-compile
@@ -71,20 +71,20 @@ Large values will decrease performance."
   "Calculate costs for transforming Aᵢ to Bⱼ with deletions for all j.
 The matrix C[i][j] represents the minimum cost of a conversion, and D,
 the minimum cost when aᵢ is deleted. The costs for row I are written
-into NC/ND, using the costs for row I-1 in PC/PD. The vectors NC/PC
-and ND/PD respectively may alias."
+into NC/ND, using the row I-1 in PC/PD. The vectors NC/PC and ND/PD
+respectively may alias."
   (cl-loop
    with m = (length b)
-   and g = 100 and h = 5 ; Every k-symbol gap is penalized by g+hk
+   and g = 100 and h = 10 ; Every k-symbol gap is penalized by g+hk
    ;; s threads the old value C[i-1][j-1] throughout the loop
-   for j below m and s = (if (zerop i) 0 (+ g (* h i))) then oldc
+   for j below m and s = (if (zerop i) 0 (+ g (* 5 i))) then oldc
    for oldc = (aref pc j) do
    ;; Either extend optimal conversion of (i) Aᵢ₋₁ to Bⱼ₋₁, by
    ;; matching bⱼ (C[i-1,j-1]-bonus); or (ii) Aᵢ₋₁ to Bⱼ, by deleting
    ;; aᵢ and opening a new gap (C[i-1,j]+g+h) or enlarging the
    ;; previous gap (D[i-1,j]+h).
-   (aset nc j (min (aset nd j (+ (min (aref pd j) (+ oldc g))
-                                 (if (= j (1- m)) h (* 2 h))))
+   (aset nc j (min (aset nd j (+ h (min (+ oldc (if (< j (1- m)) g 0))
+                                        (aref pd j))))
                    (if (char-equal (aref a i) (aref b j))
                        (- s (aref hotfuzz--bonus i))
                      most-positive-fixnum)))))
@@ -97,21 +97,19 @@ and ND/PD respectively may alias."
       (hotfuzz--calc-bonus haystack)
       (let ((c (fillarray hotfuzz--c 10000)) (d (fillarray hotfuzz--d 10000)))
         (dotimes (i n) (hotfuzz--match-row haystack needle i c d c d))
-        (aref c (1- m)))))) ; Final cost
+        (aref c (1- m))))))
 
 (defun hotfuzz-highlight (needle haystack)
-  "Highlight the characters that NEEDLE matched in HAYSTACK.
+  "Highlight destructively the characters NEEDLE matched in HAYSTACK.
 HAYSTACK has to be a match according to `hotfuzz-all-completions'."
   (let ((n (length haystack)) (m (length needle))
-        (c hotfuzz--c) (d hotfuzz--d)
         (case-fold-search completion-ignore-case))
     (unless (or (> n hotfuzz--max-haystack-len) (> m hotfuzz--max-needle-len))
-      (fillarray c 10000)
-      (fillarray d 10000)
       (hotfuzz--calc-bonus haystack)
       (cl-loop
        with rows initially
-       (cl-loop for i below n and pc = c then nc and pd = d then nd
+       (cl-loop for i below n and pc = (fillarray hotfuzz--c 10000) then nc
+                and pd = (fillarray hotfuzz--d 10000) then nd
                 and nc = (make-vector m 0) and nd = (make-vector m 0) do
                 (hotfuzz--match-row haystack needle i nc nd pc pd)
                 (push (cons nc nd) rows))
@@ -128,16 +126,15 @@ HAYSTACK has to be a match according to `hotfuzz-all-completions'."
 (defun hotfuzz-all-completions (string table &optional pred point)
   "Get hotfuzz-completions of STRING in TABLE.
 See `completion-all-completions' for the semantics of PRED and POINT.
-This function prematurely sorts the completions; mutating the returned
-list before passing it to `display-sort-function' or
-`cycle-sort-function' will lead to inaccuracies."
-  (unless point (setq point (length string)))
+This function prematurely sorts the completions; mutating the result
+before passing it to `display-sort-function' or `cycle-sort-function'
+will lead to inaccuracies."
   (let* ((beforepoint (substring string 0 point))
-         (afterpoint (substring string point))
+         (afterpoint (if point (substring string point) ""))
          (bounds (completion-boundaries beforepoint table pred afterpoint))
          (prefix (substring beforepoint 0 (car bounds)))
          (needle (substring beforepoint (car bounds)))
-         (use-module-p (require 'hotfuzz-module nil t))
+         (use-module-p (fboundp 'hotfuzz--filter-c))
          (case-fold-search completion-ignore-case)
          (completion-regexp-list
           (if use-module-p completion-regexp-list
@@ -146,53 +143,41 @@ list before passing it to `display-sort-function' or
                                       (concat "[^" s "]*" (regexp-quote s))))
                        needle "")))
               (cons (concat "\\`" re) completion-regexp-list))))
-         (all (if (and (string= prefix "") (or (stringp (car-safe table)) (null table))
+         (all (if (and (string= prefix "") (stringp (car-safe table))
                        (not (or pred completion-regexp-list (string= needle ""))))
-                  table
-                (all-completions prefix table pred))))
+                  table (all-completions prefix table pred))))
     ;; `completion-pcm--all-completions' tests completion-regexp-list
     ;; again with functional tables even though they should handle it.
     (cond
      ((or (null all) (string= needle "")))
      (use-module-p (setq all (hotfuzz--filter-c needle all completion-ignore-case)))
      ((> (length needle) hotfuzz--max-needle-len))
-     (t (cl-loop for x in-ref all do (setf x (cons (hotfuzz--cost needle x) x))
-                 finally (setq all (mapcar #'cdr (sort all #'car-less-than-car))))))
-    (when all
-      (unless (string= needle "")
-        (defvar completion-lazy-hilit-fn) ; Introduced in Emacs 30 (bug#47711)
-        (if (bound-and-true-p completion-lazy-hilit)
-            (setq completion-lazy-hilit-fn (apply-partially #'hotfuzz-highlight needle))
-          (cl-loop repeat hotfuzz-max-highlighted-completions and for x in-ref all
-                   do (setf x (hotfuzz-highlight needle (copy-sequence x)))))
-        (setcar all (propertize (car all) 'completion-sorted t)))
-      (if (string= prefix "") all (nconc all (length prefix))))))
+     (t (cl-loop for x in-ref all do (setf x (cons (hotfuzz--cost needle x) x)))
+        (cl-loop for y in-ref (setq all (sort all #'car-less-than-car))
+                 do (setf y (cdr y)))))
+    (setq hotfuzz--filtering-p (not (string= needle "")))
+    (defvar completion-lazy-hilit-fn) ; Introduced in Emacs 30 (bug#47711)
+    (if (bound-and-true-p completion-lazy-hilit)
+        (setq completion-lazy-hilit-fn (apply-partially #'hotfuzz-highlight needle))
+      (cl-loop repeat hotfuzz-max-highlighted-completions and for x in-ref all
+               do (setf x (hotfuzz-highlight needle (copy-sequence x)))))
+    (and all (if (string= prefix "") all (nconc all (length prefix))))))
 
+;;;###autoload
 (defun hotfuzz--adjust-metadata (metadata)
   "Adjust completion METADATA for hotfuzz sorting."
-  (let ((existing-dsf (completion-metadata-get metadata 'display-sort-function))
-        (existing-csf (completion-metadata-get metadata 'cycle-sort-function)))
-    (cl-flet ((compose-sort-fn (existing-sort-fn)
-                (lambda (completions)
-                  (if (or (null completions)
-                          (get-text-property 0 'completion-sorted (car completions)))
-                      completions
-                    (funcall existing-sort-fn completions)))))
-      `(metadata
-        (display-sort-function . ,(compose-sort-fn (or existing-dsf #'identity)))
-        (cycle-sort-function . ,(compose-sort-fn (or existing-csf #'identity)))
-        . ,(cdr metadata)))))
+  (if hotfuzz--filtering-p
+      `(metadata (display-sort-function . identity) (cycle-sort-function . identity)
+                 . ,(cdr metadata))
+    metadata))
 
 ;;;###autoload
 (progn
-  ;; Why is the Emacs completions API so cursed?
-  (put 'hotfuzz 'completion--adjust-metadata #'hotfuzz--adjust-metadata)
   (add-to-list 'completion-styles-alist
                '(hotfuzz completion-flex-try-completion hotfuzz-all-completions
-                         "Fuzzy completion.")))
-
-;;;###autoload
-(define-obsolete-function-alias 'hotfuzz-vertico-mode #'ignore "0.1")
+                         "Fuzzy completion."))
+  ;; Why is the Emacs completion API so cursed?
+  (put 'hotfuzz 'completion--adjust-metadata #'hotfuzz--adjust-metadata))
 
 (provide 'hotfuzz)
 ;;; hotfuzz.el ends here
