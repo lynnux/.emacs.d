@@ -1,13 +1,13 @@
 ;;; org-modern.el --- Modern looks for Org -*- lexical-binding: t -*-
 
-;; Copyright (C) 2022-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2022
-;; Version: 1.1
-;; Package-Requires: ((emacs "27.1") (compat "29.1.4.4"))
-;; Homepage: https://github.com/minad/org-modern
+;; Version: 1.12
+;; Package-Requires: ((emacs "29.1") (org "9.6") (compat "30"))
+;; URL: https://github.com/minad/org-modern
 ;; Keywords: outlines, hypermedia, text
 
 ;; This file is part of GNU Emacs.
@@ -29,7 +29,7 @@
 
 ;; This package adds some styling to your Org buffer, which gives it a
 ;; modern look.  Enable the styling by default with:
-;;   (add-hook 'org-mode-hook 'org-modern-mode)
+;;   (global-org-modern-mode)
 
 ;;; Code:
 
@@ -42,28 +42,45 @@
 (defgroup org-modern nil
   "Modern looks for Org."
   :link '(info-link :tag "Info Manual" "(org-modern)")
-  :link '(url-link :tag "Homepage" "https://github.com/minad/org-modern")
+  :link '(url-link :tag "Website" "https://github.com/minad/org-modern")
   :link '(emacs-library-link :tag "Library Source" "org-modern.el")
   :group 'org
   :prefix "org-modern-")
 
-(defcustom org-modern-label-border 'auto
+(defcustom org-modern-label-border 0.1
   "Line width used for tag label borders.
-If set to `auto' the border width is computed based on the `line-spacing'.
-A value between 0.1 and 0.4 of `line-spacing' is recommended."
-  :type '(choice (const nil) (const auto) integer))
+Integers are interpreted as pixels and floats as fraction of the
+character height."
+  :type '(choice (const nil) function number))
 
-(defcustom org-modern-star '("◉" "○" "◈" "◇" "✳")
-  "Replacement strings for headline stars for each level.
-Set to nil to disable styling the headlines."
-  :type '(repeat string))
+(defcustom org-modern-star 'fold
+  "Style heading stars.
+Can be nil, fold or replace.  See `org-modern-fold-stars' and
+`org-modern-replace-stars' for the respective configurations."
+  :type '(choice (const :tag "No styling" nil)
+                 (const :tag "Folding indicators" fold)
+                 (const :tag "Replace" replace)))
+
+(defcustom org-modern-replace-stars "◉○◈◇✳"
+  "Replacement strings for headline stars for each level."
+  :type '(choice string (repeat string)))
+
+(defcustom org-modern-fold-stars
+  '(("▶" . "▼") ("▷" . "▽") ("⯈" . "⯆") ("▹" . "▿") ("▸" . "▾"))
+  "Folding indicators for headings.
+Replace headings' stars with an indicator showing whether its
+tree is folded or expanded."
+  :type '(repeat (cons (string :tag "Folded")
+                       (string :tag "Expanded"))))
 
 (defcustom org-modern-hide-stars 'leading
   "Changes the displays of the stars.
-Can be leading, t, or a string replacement for each leading star.
-Set to nil to disable."
+Can be leading, t, or a string/character replacement for each leading
+star.  Set to nil to disable.  This feature is automatically disabled if
+`org-indent-mode' is enabled."
   :type '(choice
           (string :tag "Replacement string for leading stars")
+          (character :tag "Replacement character for leading stars")
           (const :tag "Do not hide stars" nil)
           (const :tag "Hide all stars" t)
           (const :tag "Hide leading stars" leading)))
@@ -137,12 +154,24 @@ replacement expression, e.g., a string."
 
 (defcustom org-modern-todo-faces nil
   "Faces for todo keywords.
-This is an alist, with todo keywords in the car
-and faces in the cdr.  Example:
+This is an alist, with todo keywords in the car and faces in the
+cdr.  Example:
 
   (setq org-modern-todo-faces
-    (quote ((\"TODO\" :background \"red\"
-                    :foreground \"yellow\"))))"
+    (quote ((\"TODO\" :background \"red\" :foreground \"yellow\"))))"
+  :type '(repeat
+          (cons (choice
+                  (string :tag "Keyword")
+                  (const :tag "Default" t))
+                (sexp :tag "Face   "))))
+
+(defcustom org-modern-tag-faces nil
+  "Faces for tags keywords.
+This is an alist, with tag the car and faces in the cdr.
+Example:
+
+  (setq org-modern-tag-faces
+    (quote ((\"emacs\" :background \"red\" :foreground \"yellow\"))))"
   :type '(repeat
           (cons (choice
                   (string :tag "Keyword")
@@ -192,9 +221,10 @@ all other blocks."
 
 (defcustom org-modern-block-fringe 2
   "Add a border to the blocks in the fringe.
-This variable can also be set to an integer between 0 and 16,
-which specifies the offset of the block border from the edge of
-the window."
+This variable can also be set to an integer between 0 and 16, which
+specifies the offset of the block border from the edge of the
+window.  This feature is automatically disabled if `org-indent-mode' is
+enabled."
   :type '(choice boolean natnum))
 
 (defcustom org-modern-keyword t
@@ -230,14 +260,11 @@ references."
   "Prettify radio link targets, e.g., <<<radio>>>."
   :type '(choice (const nil) (list string boolean string)))
 
-(defcustom org-modern-statistics t
-  "Prettify todo statistics."
-  :type 'boolean)
-
-(defcustom org-modern-progress '("○" "◔" "◑" "◕" "●")
-  "Add a progress indicator to the todo statistics.
-Set to nil to disable the indicator."
-  :type '(repeat string))
+(defcustom org-modern-progress 12
+  "Width in characters to draw progress bars.
+Set to nil to disable bars."
+  :type '(choice (const :tag "Disable progress bar" nil)
+                 (natnum :tag "Bar width")))
 
 (defgroup org-modern-faces nil
   "Faces used by `org-modern'."
@@ -259,9 +286,23 @@ on their font, e.g., the :width or :height parameters.  Themes
 should not override this face, since themes usually don't control
 the font.")
 
+(defface org-modern-habit nil
+  "Parent face for habits.")
+
 (defface org-modern-block-name
   '((t :height 0.8 :weight light))
   "Face used for block keywords.")
+
+(defface org-modern-progress-complete
+  '((((background light))
+     :background "gray35" :foreground "white")
+    (t :background "gray75" :foreground "black"))
+  "Face used for completed section of progress bars (colors only).")
+
+(defface org-modern-progress-incomplete
+  '((((background light)) :background "gray90" :foreground "black")
+    (t :background "gray20" :foreground "white"))
+  "Face used for incomplete section of progress bars (colors only).")
 
 (defface org-modern-tag
   '((default :inherit (secondary-selection org-modern-label))
@@ -281,7 +322,7 @@ the font.")
   '((default :inherit org-modern-label)
     (((background light)) :background "gray90" :foreground "black")
     (t :background "gray20" :foreground "white"))
-  "Face used for done labels.")
+  "Default face used for done labels.")
 
 (defface org-modern-todo
   ;; `:inverse-video' to use todo foreground as label background
@@ -295,12 +336,10 @@ the font.")
        :weight semibold :inverse-video t))
   "Default face used for priority labels.")
 
-(defface org-modern-statistics
-  '((t :inherit org-modern-done))
-  "Face used for todo statistics labels.")
-
 (defface org-modern-date-active
-  '((t :inherit org-modern-done))
+  '((default :inherit org-modern-label)
+    (((background light)) :background "gray90" :foreground "black")
+    (t :background "gray20" :foreground "white"))
   "Face used for active date labels.")
 
 (defface org-modern-time-active
@@ -326,16 +365,15 @@ the font.")
   "Face used for inactive time labels.")
 
 (defface org-modern-horizontal-rule
-  '((default :inherit org-hide)
-    (((background light)) :strike-through "gray70")
-    (t :strike-through "gray30"))
+  '((((background light)) :underline "gray70" :extend t)
+    (t :underline "gray30" :extend t))
   "Face used for horizontal ruler.")
 
 (defvar-local org-modern--font-lock-keywords nil)
-(defvar-local org-modern--star-cache nil)
+(defvar-local org-modern--folded-star-cache nil)
+(defvar-local org-modern--expanded-star-cache nil)
 (defvar-local org-modern--hide-stars-cache nil)
 (defvar-local org-modern--checkbox-cache nil)
-(defvar-local org-modern--progress-cache nil)
 (defvar-local org-modern--table-sp-width 0)
 (defconst org-modern--table-overline '(:overline t))
 (defconst org-modern--table-sp '((space :width (org-modern--table-sp-width))
@@ -354,7 +392,8 @@ the font.")
   (let ((beg (match-beginning 0))
         (end (match-end 0))
         (rep (and (listp org-modern-keyword)
-                  (cdr (assoc (downcase (match-string 2)) org-modern-keyword)))))
+                  (cdr (assoc (downcase (match-string-no-properties 2))
+                              org-modern-keyword)))))
     (unless rep
       (setq rep (cdr (assq t org-modern-keyword)) end (match-end 1)))
     (pcase rep
@@ -367,31 +406,44 @@ the font.")
   (let* ((beg (match-beginning 1))
          (end (match-end 1))
          (prio (char-before (1- end))))
-    (if-let ((rep (and (consp org-modern-priority)
-                       (cdr (assq prio org-modern-priority)))))
+    (if-let* ((rep (and (consp org-modern-priority)
+                        (cdr (assq prio org-modern-priority)))))
         (put-text-property beg end 'display rep)
       (put-text-property beg (1+ beg) 'display " ")
       (put-text-property (1- end) end 'display " ")
       (put-text-property
        beg end 'face
-       (if-let ((face (or (cdr (assq prio org-modern-priority-faces))
-                          (cdr (assq t org-modern-priority-faces)))))
-           `(:inherit (,face org-modern-label))
+       (if-let* ((face (or (cdr (assq prio org-modern-priority-faces))
+                           (cdr (assq t org-modern-priority-faces)))))
+           `(,face org-modern-label)
          'org-modern-priority)))))
 
 (defun org-modern--progress ()
-  "Prettify headline todo progress."
-  (put-text-property
-   (match-beginning 2) (match-end 2) 'display
-   (aref org-modern--progress-cache
-         (floor
-          (* (1- (length org-modern--progress-cache))
-             (if (match-beginning 3)
-                 (* 0.01 (string-to-number (match-string 3)))
-               (let ((q (string-to-number (match-string 5))))
-                 (if (= q 0)
-                     1.0
-                   (/ (* 1.0 (string-to-number (match-string 4))) q)))))))))
+  "Prettify progress as color-coded bar."
+  (let* ((beg (match-beginning 1))
+         (end (match-end 1))
+         (val (min 1.0
+                   (if (match-beginning 2)
+                       (* 0.01 (string-to-number (match-string-no-properties 2)))
+                     (let ((q (string-to-number (match-string-no-properties 4))))
+                       (if (= q 0)
+                           1.0
+                         (/ (* 1.0 (string-to-number (match-string-no-properties 3))) q))))))
+         (w org-modern-progress)
+         (complete (floor (* w val)))
+         (w0 (- end beg 2))
+         (w1 (/ (- w w0) 2))
+         (bar (concat (make-string w1 ?\s)
+                      (buffer-substring-no-properties (1+ beg) (1- end))
+                      (make-string (- w w1 w0) ?\s))))
+    (put-text-property 0 complete 'face 'org-modern-progress-complete bar)
+    (put-text-property complete w 'face 'org-modern-progress-incomplete bar)
+    (put-text-property beg end 'face 'org-modern-label)
+    (put-text-property beg (1+ beg) 'display (substring bar 0 w1))
+    (put-text-property (1- end) end 'display (substring bar (+ w1 w0) w))
+    (dotimes (i w0)
+      (put-text-property (+ 1 beg i) (+ 2 beg i)
+                         'display (substring bar (+ w1 i) (+ w1 i 1))))))
 
 (defun org-modern--tag ()
   "Prettify headline tags."
@@ -410,13 +462,19 @@ the font.")
                                (format #(" %c" 1 3 (cursor t)) (char-after colon-end)))
             (put-text-property (1- cbeg) cbeg 'display
                                (string (char-before cbeg) ?\s))
-            (put-text-property colon-end cbeg 'face 'org-modern-tag))
+            (put-text-property
+             colon-end cbeg 'face
+             (if-let* ((faces org-modern-tag-faces)
+                       (face (or (cdr (assoc (buffer-substring-no-properties colon-end cbeg) faces))
+                                 (cdr (assq t faces)))))
+                 `(,face org-modern-tag)
+               'org-modern-tag)))
           (add-text-properties cbeg cend colon-props)
           (setq colon-beg cbeg colon-end cend))))))
 
 (defun org-modern--todo ()
   "Prettify headline todo keywords."
-  (let ((todo (match-string 1))
+  (let ((todo (match-string-no-properties 1))
         (beg (match-beginning 1))
         (end (match-end 1)))
     (put-text-property beg (1+ beg) 'display
@@ -424,16 +482,15 @@ the font.")
     (put-text-property (1- end) end 'display (string (char-before end) ?\s))
     (put-text-property
      beg end 'face
-     (if-let ((face (or (cdr (assoc todo org-modern-todo-faces))
-                        (cdr (assq t org-modern-todo-faces)))))
-         `(:inherit (,face org-modern-label))
-       (if (member todo org-done-keywords)
-           'org-modern-done
-         'org-modern-todo)))))
+     (if-let* ((face (or (cdr (assoc todo org-modern-todo-faces))
+                         (cdr (assq t org-modern-todo-faces)))))
+         `(,face org-modern-label)
+       (if (string-match-p org-not-done-regexp todo)
+           'org-modern-todo 'org-modern-done)))))
 
 (defun org-modern--timestamp ()
   "Prettify timestamps."
-  (let* ((beg (match-beginning 0))
+  (let* ((beg (1- (match-beginning 1)))
          (end (match-end 0))
          (tbeg (match-beginning 2))
          (tend (match-end 2))
@@ -475,20 +532,33 @@ the font.")
   "Prettify headline stars."
   (let* ((beg (match-beginning 1))
          (end (match-end 1))
-         (level (- end beg)))
+         (level (- end beg))
+         (hide-leading (and (eq org-modern-hide-stars 'leading)
+                            (not (bound-and-true-p org-indent-mode)))))
     (when (and org-modern--hide-stars-cache (not (eq beg end)))
       (cl-loop for i from beg below end do
                (put-text-property i (1+ i) 'display
                                   (nth (logand i 1)
                                        org-modern--hide-stars-cache))))
     (when org-modern-star
-      (when (and (eq org-modern-hide-stars 'leading) org-hide-leading-stars)
+      (when (and hide-leading org-hide-leading-stars)
         (put-text-property beg (1+ end) 'face (get-text-property end 'face)))
       (put-text-property
-       (if (eq org-modern-hide-stars 'leading) beg end)
+       (if hide-leading beg end)
        (1+ end) 'display
-       (aref org-modern--star-cache
-             (min (1- (length org-modern--star-cache)) level))))))
+       (let ((cache (if (and org-modern--folded-star-cache
+                             (org-invisible-p (pos-eol)))
+                        org-modern--folded-star-cache
+                      org-modern--expanded-star-cache)))
+         (aref cache (min (1- (length cache)) level)))))))
+
+(defun org-modern--cycle (state)
+  "Flush font-lock for buffer or line at point for `org-cycle-hook'.
+When STATE is `overview', `contents', or `all', flush for the
+whole buffer; otherwise, for the line at point."
+  (pcase state
+    ((or 'overview 'contents 'all) (font-lock-flush))
+    (_ (font-lock-flush (pos-bol) (pos-eol)))))
 
 (defun org-modern--table ()
   "Prettify vertical table lines."
@@ -522,7 +592,7 @@ the font.")
       (when separator
         (when (numberp org-modern-table-horizontal)
           (add-face-text-property tbeg tend org-modern--table-overline 'append)
-          (add-face-text-property beg (1+ end) `(:height ,org-modern-table-horizontal) 'append))
+          (add-face-text-property beg (min (1+ end) (point-max)) `(:height ,org-modern-table-horizontal) 'append))
         (while (re-search-forward "[^|+]+" tend 'noerror)
           (let ((a (match-beginning 0))
                 (b (match-end 0)))
@@ -538,7 +608,7 @@ the font.")
          (beg-name (match-beginning 3))
          (end-name (match-end 3))
          (names (and (listp org-modern-block-name) org-modern-block-name))
-         (rep (cdr (assoc (downcase (match-string 3)) names)))
+         (rep (cdr (assoc (downcase (match-string-no-properties 3)) names)))
          (fringe (and org-modern-block-fringe (not (bound-and-true-p org-indent-mode)))))
     (unless rep
       (setq rep (cdr (assq t names)) end-rep beg-name))
@@ -591,36 +661,35 @@ the font.")
 
 (defun org-modern--pre-redisplay (_)
   "Compute font parameters before redisplay."
-  (when-let ((box (and org-modern-label-border
-                       (face-attribute 'org-modern-label :box nil t))))
+  (when-let* ((box (and org-modern-label-border
+                        (face-attribute 'org-modern-label :box nil t))))
     (unless (equal (and (listp box) (plist-get box :color))
                    (face-attribute 'default :background nil t))
-      (org-modern--update-label-face)))
-  (setf org-modern--table-sp-width (default-font-width)
-        (cadr org-modern--table-overline) (face-attribute 'org-table :foreground nil t)))
+      (org-modern--update-faces)))
+  (let ((face-remapping-alist
+         `((default org-table
+            ,@(or (ensure-list (cdr (assq 'default face-remapping-alist)))
+                  '(default)))
+           ,@face-remapping-alist)))
+    (setq org-modern--table-sp-width (default-font-width)))
+  (setf (cadr org-modern--table-overline) (face-attribute 'org-table :foreground nil t)))
 
-(defun org-modern--update-label-face ()
+(defun org-modern--update-faces ()
   "Update border of the `org-modern-label' face."
-  (set-face-attribute
-   'org-modern-label nil
-   :box
-   (when org-modern-label-border
-     (let ((border (if (eq org-modern-label-border 'auto)
-                       (max 3 (cond
-                               ((integerp line-spacing)
-                                line-spacing)
-                               ((floatp line-spacing)
-                                (ceiling (* line-spacing (frame-char-height))))
-                               (t (/ (frame-char-height) 10))))
-                     org-modern-label-border)))
-       (list :color (face-attribute 'default :background nil t)
-             :line-width
-             ;; Emacs 28 supports different line horizontal and vertical line widths
-             (if (eval-when-compile (>= emacs-major-version 28))
-                 (cons -1 (- border))
-               (- border)))))))
+  (let* ((border (pcase org-modern-label-border
+                   ((pred integerp)
+                    org-modern-label-border)
+                   ((pred floatp)
+                    (ceiling (* (frame-char-height) org-modern-label-border)))
+                   ((pred functionp)
+                    (funcall org-modern-label-border))
+                   (_ 2)))
+         (box (list :color (face-attribute 'default :background nil t)
+                    :line-width (cons -1 (- border)))))
+    (set-face-attribute 'org-modern-label nil :box box)
+    (set-face-attribute 'org-modern-habit nil :box box)))
 
-(defun org-modern--update-fringe-bitmaps ()
+(defun org-modern--update-bitmaps ()
   "Update fringe bitmaps."
   (when (and org-modern-block-fringe
              (fboundp 'fringe-bitmap-p)
@@ -639,49 +708,51 @@ the font.")
 
 (defun org-modern--symbol (str)
   "Add `org-modern-symbol' face to STR."
-  (setq str (copy-sequence str))
+  (setq str (if (stringp str) (copy-sequence str) (char-to-string str)))
   (add-face-text-property 0 (length str) 'org-modern-symbol 'append str)
   str)
 
 (defun org-modern--make-font-lock-keywords ()
   "Compute font-lock keywords."
   (append
-   (when-let ((bullet (alist-get ?+ org-modern-list)))
+   (when-let* ((bullet (alist-get ?+ org-modern-list)))
      `(("^[ \t]*\\(+\\)[ \t]" 1 '(face nil display ,bullet))))
-   (when-let ((bullet (alist-get ?- org-modern-list)))
+   (when-let* ((bullet (alist-get ?- org-modern-list)))
      `(("^[ \t]*\\(-\\)[ \t]" 1 '(face nil display ,bullet))))
-   (when-let ((bullet (alist-get ?* org-modern-list)))
+   (when-let* ((bullet (alist-get ?* org-modern-list)))
      `(("^[ \t]+\\(*\\)[ \t]" 1 '(face nil display ,bullet))))
    (when org-modern-priority
      `(("^\\*+.*? \\(\\(\\[\\)#.\\(\\]\\)\\) "
         (1 (org-modern--priority)))))
    (when org-modern-todo
-     `((,(format "^\\*+ +%s " (regexp-opt org-todo-keywords-1 t))
+     `((,(format "^\\*+ +%s\\(?: \\|$\\)" (regexp-opt org-todo-keywords-1 t))
         (0 (org-modern--todo)))))
    (when org-modern-checkbox
      `((,org-list-full-item-re
         (3 (org-modern--checkbox) nil t))))
-   (when (or org-modern-star org-modern-hide-stars)
+   (when (or org-modern-star (and org-modern-hide-stars
+                                  (not (bound-and-true-p org-indent-mode))))
      `(("^\\(\\**\\)\\* "
-        (0 ,(if (eq org-modern-hide-stars t)
+        (0 ,(if (and (eq org-modern-hide-stars t)
+                     (not (bound-and-true-p org-indent-mode)))
                 ''(face nil invisible org-modern)
               '(org-modern--star))))))
    (when org-modern-horizontal-rule
-     `(("^[ \t]*-\\{5,\\}$" 0
-        '(face org-modern-horizontal-rule display
-               ,(if (eq org-modern-horizontal-rule t)
-                    '(space :width text)
-                  org-modern-horizontal-rule)))))
+     `(("\\(^[ \t]*-\\{5,\\}\\)\r?\n"
+        ,@(if (stringp org-modern-horizontal-rule)
+              `(1 '(face nil display ,org-modern-horizontal-rule))
+            '((1 '(face nil display " "))
+              (0 '(face org-modern-horizontal-rule)))))))
    (when org-modern-table
      '(("^[ \t]*\\(|.*|\\)[ \t]*$" (0 (org-modern--table)))))
    (when org-modern-footnote
      `(("^\\(\\[fn:\\)[[:word:]-_]+\\]" ;; Definition
-        ,@(if-let ((x (car org-modern-footnote)))
+        ,@(if-let* ((x (car org-modern-footnote)))
               `((0 '(face nil display ,x))
                 (1 '(face nil display ,(propertize "[" 'display x))))
             '((1 '(face nil display "[")))))
        ("[^\n]\\(\\(\\[fn:\\)[[:word:]-_]+\\]\\)" ;; Reference
-        ,@(if-let ((x (cdr org-modern-footnote)))
+        ,@(if-let* ((x (cdr org-modern-footnote)))
               `((1 '(face nil display ,x))
                 (2 '(face nil display ,(propertize "[" 'display x))))
             '((2 '(face nil display "[")))))))
@@ -701,17 +772,9 @@ the font.")
            (3 '(face nil display ,(org-modern--symbol (caddr org-modern-radio-target))))
            ,@(unless (cadr org-modern-radio-target)
                '((2 '(face nil invisible org-modern)))))))))
-   (when org-modern-timestamp
-     '(("\\(?:<\\|\\[\\)\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\(?: [[:word:]]+\\.?\\)?\\(?: [.+-]+[0-9ymwdh/]+\\)*\\)\\(\\(?: [0-9:-]+\\)?\\(?: [.+-]+[0-9ymwdh/]+\\)*\\)\\(?:>\\|\\]\\)"
-        (0 (org-modern--timestamp)))
-       ("<[^>]+>\\(-\\)\\(-\\)<[^>]+>\\|\\[[^]]+\\]\\(?1:-\\)\\(?2:-\\)\\[[^]]+\\]"
-        (1 '(face org-modern-label display #("  " 1 2 (face (:strike-through t) cursor t))) t)
-        (2 '(face org-modern-label display #("  " 0 1 (face (:strike-through t)))) t))))
-   (when org-modern-statistics
-     `((" \\(\\(\\[\\)\\(?:\\([0-9]+\\)%\\|\\([0-9]+\\)/\\([0-9]+\\)\\)\\(\\]\\)\\)"
-        (1 '(face org-modern-statistics) t)
-        (2 ,(if org-modern-progress '(org-modern--progress) ''(face nil display " ")))
-        (6 '(face nil display " ")))))
+   (when (integerp org-modern-progress)
+     `((" \\(\\[\\(?:\\([0-9]+\\)%\\|\\([0-9]+\\)/\\([0-9]+\\)\\)]\\)"
+        (0 (org-modern--progress)))))
    (when org-modern-tag
      `((,(concat "^\\*+.*?\\( \\)\\(:\\(?:" org-tag-re ":\\)+\\)[ \t]*$")
         (0 (org-modern--tag)))))
@@ -729,6 +792,13 @@ the font.")
             ('t '(1 '(face nil invisible org-modern)))
             ((pred stringp) `(1 '(face nil display ,org-modern-keyword)))
             (_ '(0 (org-modern--keyword)))))))
+   ;; Timestamps can come after keywords
+   (when org-modern-timestamp
+     '(("\\(?:<\\|^\\[\\|[^]]\\[\\)\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\(?: [[:word:]]+\\.?\\)?\\(?: [.+-]+[0-9ymwdh/]+\\)*\\)\\(\\(?: [0-9:-]+\\)?\\(?: [.+-]+[0-9ymwdh/]+\\)*\\)\\(?:>\\|\\]\\)"
+        (0 (org-modern--timestamp)))
+       ("<[^>]+>\\(-\\)\\(-\\)<[^>]+>\\|\\[[^]]+\\]\\(?1:-\\)\\(?2:-\\)\\[[^]]+\\]"
+        (1 '(face org-modern-label display #("  " 1 2 (face (:strike-through t) cursor t))) t)
+        (2 '(face org-modern-label display #("  " 0 1 (face (:strike-through t)))) t))))
    ;; Do not add source block fringe markers if org-indent-mode is
    ;; enabled. org-indent-mode uses line prefixes for indentation.
    ;; Therefore we cannot have both.
@@ -753,7 +823,9 @@ the font.")
        `(("^\\([ \t]*\\)\\(#\\+\\(?:begin\\|BEGIN\\)_\\)\\(\\S-+\\).*"
           ,@(car specs))
          ("^\\([ \t]*\\)\\(#\\+\\(?:end\\|END\\)_\\)\\(\\S-+\\).*"
-          ,@(cdr specs)))))))
+          ,@(cdr specs)))))
+   (when (fboundp 'org-activate-folds) ;; Since Org 9.7.25
+     '(org-activate-folds))))
 
 ;;;###autoload
 (define-minor-mode org-modern-mode
@@ -766,21 +838,26 @@ the font.")
    (org-modern-mode
     (add-to-invisibility-spec 'org-modern)
     (setq
-     org-modern--star-cache
-     (vconcat (mapcar #'org-modern--symbol org-modern-star))
+     org-modern--folded-star-cache
+     (and (eq org-modern-star 'fold)
+          (vconcat (mapcar #'org-modern--symbol (mapcar #'car org-modern-fold-stars))))
+     org-modern--expanded-star-cache
+     (and org-modern-star
+          (vconcat (mapcar #'org-modern--symbol (if (eq org-modern-star 'fold)
+                                                    (mapcar #'cdr org-modern-fold-stars)
+                                                  org-modern-replace-stars))))
      org-modern--hide-stars-cache
-     (and (stringp org-modern-hide-stars)
+     (and (and (char-or-string-p org-modern-hide-stars)
+               (not (bound-and-true-p org-indent-mode)))
           (list (org-modern--symbol org-modern-hide-stars)
                 (org-modern--symbol org-modern-hide-stars)))
-     org-modern--progress-cache
-     (vconcat (mapcar
-               (lambda (x) (concat " " (org-modern--symbol x) " "))
-               org-modern-progress))
      org-modern--checkbox-cache
      (mapcar (pcase-lambda (`(,k . ,v)) (cons k (org-modern--symbol v)))
              org-modern-checkbox)
      org-modern--font-lock-keywords
-     (append (remove '(org-fontify-meta-lines-and-blocks) org-font-lock-keywords)
+     (append (remove '(org-fontify-meta-lines-and-blocks)
+                     (remove '(org-activate-folds)
+                             org-font-lock-keywords))
              (org-modern--make-font-lock-keywords)))
     (font-lock-remove-keywords nil org-font-lock-keywords)
     (font-lock-add-keywords nil org-modern--font-lock-keywords)
@@ -788,8 +865,10 @@ the font.")
     (add-hook 'pre-redisplay-functions #'org-modern--pre-redisplay nil 'local)
     (add-hook 'org-after-promote-entry-hook #'org-modern--unfontify-line nil 'local)
     (add-hook 'org-after-demote-entry-hook #'org-modern--unfontify-line nil 'local)
-    (org-modern--update-label-face)
-    (org-modern--update-fringe-bitmaps))
+    (when (eq org-modern-star 'fold)
+      (add-hook 'org-cycle-hook #'org-modern--cycle nil 'local))
+    (org-modern--update-faces)
+    (org-modern--update-bitmaps))
    (t
     (remove-from-invisibility-spec 'org-modern)
     (font-lock-remove-keywords nil org-modern--font-lock-keywords)
@@ -797,7 +876,9 @@ the font.")
     (setq-local font-lock-unfontify-region-function #'org-unfontify-region)
     (remove-hook 'pre-redisplay-functions #'org-modern--pre-redisplay 'local)
     (remove-hook 'org-after-promote-entry-hook #'org-modern--unfontify-line 'local)
-    (remove-hook 'org-after-demote-entry-hook #'org-modern--unfontify-line 'local)))
+    (remove-hook 'org-after-demote-entry-hook #'org-modern--unfontify-line 'local)
+    (when (eq org-modern-star 'fold)
+      (remove-hook 'org-cycle-hook #'org-modern--cycle 'local))))
   (without-restriction
     (with-silent-modifications
       (org-modern--unfontify (point-min) (point-max)))
@@ -824,18 +905,24 @@ the font.")
   (remove-from-invisibility-spec 'org-modern)
   (add-to-invisibility-spec 'org-modern) ;; Not idempotent?!
   (add-hook 'pre-redisplay-functions #'org-modern--pre-redisplay nil 'local)
+  (setq-local face-remapping-alist (copy-tree face-remapping-alist))
+  (maphash (lambda (face _spec)
+             (when (string-prefix-p "org-habit-" (symbol-name face))
+               (setf (alist-get face face-remapping-alist nil 'remove)
+                     (and org-modern-label-border `(org-modern-habit ,face)))))
+           face--new-frame-defaults)
   (save-excursion
     (save-match-data
       (let (case-fold-search)
         (when org-modern-todo
           (goto-char (point-min))
-          (let ((re (format " %s "
-                            (regexp-opt
-                             (append org-todo-keywords-for-agenda
-                                     org-done-keywords-for-agenda) t)))
-                (org-done-keywords org-done-keywords-for-agenda))
-            (while (re-search-forward re nil 'noerror)
-              (org-modern--todo))))
+          (while (< (point) (point-max))
+            (when-let* ((org-not-done-regexp (get-text-property (point) 'org-not-done-regexp))
+                        (re (get-text-property (point) 'org-todo-regexp))
+                        (re (concat "[: ]" re " "))
+                        ((re-search-forward re (pos-eol) 'noerror)))
+              (org-modern--todo))
+            (goto-char (min (1+ (pos-eol)) (point-max)))))
         (when org-modern-tag
           (goto-char (point-min))
           (let ((re (concat "\\( \\)\\(:\\(?:" org-tag-re "::?\\)+\\)[ \t]*$")))
@@ -845,7 +932,7 @@ the font.")
           (goto-char (point-min))
           (while (re-search-forward "\\(\\[#.\\]\\)" nil 'noerror)
             ;; For some reason the org-agenda-fontify-priorities adds overlays?!
-            (when-let ((ov (overlays-at (match-beginning 0))))
+            (when-let* ((ov (overlays-at (match-beginning 0))))
               (overlay-put (car ov) 'face nil))
             (org-modern--priority)))))))
 

@@ -44,8 +44,8 @@
    org-directory "D:/autosync/autosync/org"
    org-agenda-files
    (list
-    "D:/autosync/autosync/org/idea.org"
-    "D:/autosync/autosync/org/todo.org")
+    "D:/doc/mynote/生活/idea.org"
+    "D:/doc/mynote/生活/todo.org")
    org-default-notes-file "D:/autosync/autosync/org/default.org"
    org-roam-directory (file-truename "d:/doc/mynote"))
   (add-path-to-execute-path "C:/Program Files/7-Zip") ;; for dired，and `update-all-packages'

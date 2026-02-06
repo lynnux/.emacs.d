@@ -2507,14 +2507,16 @@ Copy Buffer Name: _f_ull, _d_irectoy, n_a_me ?
   :if (bound-and-true-p enable-feature-tools)
   :defer t
   :init
-  (defun my-project-magit ()
-    (interactive)
+  (defun magit-init-depends()
     (unless (featurep 'with-editor)
       (delay-require-libs
        "~/.emacs.d/packages/magit"
        (if (symbol-function 'transient-insert-suffix) ;; emacs高版本自带`transient'
            '(with-editor cond-let llama)
-         '(with-editor cond-let llama transient))))
+         '(with-editor cond-let llama transient)))))
+  (defun my-project-magit ()
+    (interactive)
+    (magit-init-depends)
     (unless (featurep 'magit)
       (delay-require-libs "~/.emacs.d/packages/magit/magit-main/lisp" '(magit magit-status)))
     (magit-status (project-root (project-current t))))
@@ -4173,6 +4175,7 @@ _q_uit
       (unless (version< emacs-version "29")
         (delay-require-libs
          "~/.emacs.d/packages/org" '(emacsql-sqlite-builtin)))
+      (magit-init-depends)
       (delay-require-libs
        "~/.emacs.d/packages/magit/magit-main/lisp" '(magit-section))
       (delay-require-libs
@@ -4203,10 +4206,11 @@ _q_uit
   :defer t
   :init
   (setq
-   org-modern-star '("●" "●" "▶")
+   org-modern-star 'replace
+   org-modern-replace-stars "●●○" ;; '("●" "●" "▶")
    ;; '("●" "●" "▶") ;; "◌" '("●" "○" "▶") 突出标题让人更安心写内容
    ;; https://www.fuhaoku.net/block/Dingbats
-   org-modern-list '((?+ . "●") (?- . "●")) ;;'((?+ . "✚") (?- . "▬"))
+   org-modern-list '((?+ . "▶") (?- . "▶")) ;;'((?+ . "✚") (?- . "▬"))
    ) ;; ▶ ▬ ，*不好输出就算了
   :init (autoload 'org-modern-mode "org/org-modern" nil t)
   :hook (org-mode . org-modern-mode))
@@ -5986,13 +5990,13 @@ DEFAULT specifies which file to return on empty input."
  '(consult-async-running ((t (:inherit mode-line-inactive))))
  '(dashboard-items-face ((t (:weight unspecified))))
  `(org-level-1
-   ((t (:weight bold :foreground ,(doom-color 'blue) :height 1.2))))
+   ((t (:weight unspecified :foreground ,(doom-color 'blue) :height 1.15))))
  `(org-level-2
    ((t
-     (:weight bold :foreground ,(doom-color 'magenta) :height 1.15))))
+     (:weight unspecified :foreground ,(doom-color 'magenta) :height 1.1))))
  `(org-level-3
    ((t
-     (:weight bold :foreground ,(doom-color 'violet) :height 1.1)))))
+     (:weight unspecified :foreground ,(doom-color 'violet) :height 1.0)))))
 ;; (set-face-attribute 'hl-line nil :background "#2B2B2B")
 ;; 当前行加下划线
 ;; (custom-set-faces
