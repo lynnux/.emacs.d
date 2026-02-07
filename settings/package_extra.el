@@ -5990,13 +5990,13 @@ DEFAULT specifies which file to return on empty input."
  '(consult-async-running ((t (:inherit mode-line-inactive))))
  '(dashboard-items-face ((t (:weight unspecified))))
  `(org-level-1
-   ((t (:weight unspecified :foreground ,(doom-color 'blue) :height 1.15))))
+   ((t (:weight unspecified :foreground ,(doom-color 'red) :height 1.15))))
  `(org-level-2
    ((t
-     (:weight unspecified :foreground ,(doom-color 'magenta) :height 1.1))))
+     (:weight unspecified :foreground ,(doom-color 'blue) :height 1.1))))
  `(org-level-3
    ((t
-     (:weight unspecified :foreground ,(doom-color 'violet) :height 1.0)))))
+     (:weight unspecified :foreground ,(doom-color 'green) :height 1.0)))))
 ;; (set-face-attribute 'hl-line nil :background "#2B2B2B")
 ;; 当前行加下划线
 ;; (custom-set-faces
